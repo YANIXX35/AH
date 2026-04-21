@@ -1,0 +1,28 @@
+FACTURE D'ACHAT
+N° FAC-ACHAT-2026-001
+
+Fournisseur: SARL TECHNO SUPPLY
+Adresse: 123 Rue de l'Industrie, Dakar, Sénégal
+Téléphone: +221 33 123 45 67
+Email: contact@technosupply.sn
+
+Client: Sitiam Capitale
+Adresse: 456 Avenue des Affaires, Dakar, Sénégal
+
+Date de facture: 07/04/2026
+Date d'échéance: 07/05/2026
+
+DESIGNATION                    QUANTITE    PRIX UNIT    MONTANT HT
+Ordinateur portable Dell       2           750000      1500000
+Clavier mécanique Logitech     5           25000       125000
+Souris optique                 10          5000        50000
+
+SOUS-TOTAL HT:                 1675000 FCFA
+TVA (18%):                     301500 FCFA
+TOTAL TTC:                     1976500 FCFA
+
+Conditions de paiement: 30 jours
+Mode de règlement: Virement bancaire
+
+Signature fournisseur: ____________________
+Date: ____________________

@@ -1,0 +1,39 @@
+FACTURE DE VENTE
+N° FAC-VENTE-2026-001
+
+Vendeur: Sitiam Capitale SARL
+Adresse: 456 Avenue des Affaires, Dakar, Sénégal
+Téléphone: +221 33 987 65 43
+Email: contact@sitiam-capitale.sn
+RCCM: SN-DKR-2020-B-12345
+NINEA: 123456789
+
+Client: Société ABC Import-Export
+Adresse: 789 Boulevard du Commerce, Dakar, Sénégal
+Contact: M. Diallo Amadou
+Téléphone: +221 77 123 45 67
+
+Date de facture: 07/04/2026
+Date de livraison: 10/04/2026
+
+REFERENCE      DESIGNATION                    QUANTITE    PRIX UNIT    MONTANT HT
+CONS-001       Conseil en gestion             20h         50000        1000000
+FORM-002       Formation digitale             15j         75000        1125000
+AUD-003        Audit comptable                5j          100000       500000
+
+SOUS-TOTAL HT:                 2625000 FCFA
+TVA (18%):                     472500 FCFA
+TOTAL TTC:                     3097500 FCFA
+
+Conditions de paiement: 30 jours fin de mois
+Mode de règlement: Chèque ou virement
+
+Remarques:
+- Prestations réalisées selon devis n° DEV-2026-045
+- TVA applicable selon règlement n° 2020-01 du 15 janvier 2020
+
+Signature vendeur: ____________________
+Cachet société
+
+Reçu par: ____________________
+Date: ____________________

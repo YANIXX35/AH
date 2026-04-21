@@ -1,0 +1,12 @@
+---
+description: Imposer des commentaires de code en français
+alwaysApply: true
+---
+
+# Commentaires en francais
+
+- Rediger les commentaires de code en francais.
+- Preferer des commentaires courts, utiles et axes sur l'intention.
+- Ne pas ajouter de commentaires triviaux qui paraphrasent le code.
+- Si un commentaire existe deja en anglais, le remplacer en francais lors de la modification du bloc.
+- Garder les identifiants techniques (noms de classes, fonctions, variables) inchanges.

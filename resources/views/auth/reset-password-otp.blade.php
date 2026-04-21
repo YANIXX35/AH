@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Réinitialiser mot de passe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-50">
+<div class="mx-auto max-w-md px-4 py-12">
+    <div class="rounded-2xl bg-white p-6 shadow">
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">Réinitialiser le mot de passe</h1>
+        <p class="text-sm text-slate-600 mb-6">Saisissez l’e-mail, le code OTP reçu, puis votre nouveau mot de passe.</p>
+
+        @if(session('status'))
+            <div class="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">{{ session('status') }}</div>
+        @endif
+
+        @if($errors->any())
+            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                <ul class="space-y-1">@foreach($errors->all() as $err)<li>{{ $err }}</li>@endforeach</ul>
+            </div>
+        @endif
+
+        <form method="post" action="{{ route('password.otp.reset') }}" class="space-y-4">
+            @csrf
+            <div>
+                <label class="mb-1 block text-sm font-medium text-slate-700">E-mail</label>
+                <input type="email" name="email" value="{{ old('email', $prefilledEmail ?? '') }}" required class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200">
+            </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium text-slate-700">Code OTP</label>
+                <input type="text" name="otp" value="{{ old('otp') }}" required maxlength="6" class="w-full rounded-xl border border-slate-300 px-4 py-3 tracking-[0.3em] focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200">
+            </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium text-slate-700">Nouveau mot de passe</label>
+                <input type="password" name="password" required class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200">
+            </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium text-slate-700">Confirmation</label>
+                <input type="password" name="password_confirmation" required class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200">
+            </div>
+            <button type="submit" class="w-full rounded-xl bg-orange-500 px-4 py-3 font-semibold text-white hover:bg-orange-600">Réinitialiser</button>
+        </form>
+
+        <div class="mt-4 border-t border-slate-200 pt-4">
+            <p class="mb-2 text-xs text-slate-500">Vous n’avez pas reçu le code ? Demandez un nouveau code OTP (attente minimale de 60 secondes).</p>
+            <form method="post" action="{{ route('password.otp.send') }}">
+                @csrf
+                <input type="hidden" name="email" value="{{ old('email', $prefilledEmail ?? '') }}">
+                <button type="submit" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                    Renvoyer le code OTP
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
