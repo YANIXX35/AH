@@ -221,7 +221,9 @@
                         - Cartes bancaires (Visa, Mastercard, Amex)<br>
                         - Virements bancaires ACH / SEPA
                     </div>
-                    @php($stripePaymentLink = trim((string) config('services.stripe.payment_link_url', '')))
+                    @php
+                        $stripePaymentLink = trim((string) config('services.stripe.payment_link_url', ''));
+                    @endphp
                     @if($stripePaymentLink !== '')
                         <a href="{{ $stripePaymentLink }}" class="btn btn-outline-dark btn-sm w-100 mb-3" target="_blank" rel="noopener">
                             Ouvrir le lien de paiement Stripe
@@ -246,7 +248,9 @@
                     </div>
                     <p class="text-muted small mb-3">Derniers paiements enregistrés avec référence et statut.</p>
 
-                    @php($recentPayments = $recentPayments ?? collect())
+                    @php
+                        $recentPayments = $recentPayments ?? collect();
+                    @endphp
                     @if($recentPayments->isEmpty())
                         <div class="text-muted small">Aucun paiement récent à tracer pour le moment.</div>
                     @else
