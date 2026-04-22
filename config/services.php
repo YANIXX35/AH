@@ -52,6 +52,7 @@ return [
             'payment_page_currency' => env('FEDAPAY_SANDBOX_PAYMENT_PAGE_CURRENCY', 'CFA'),
             'payment_page_method' => env('FEDAPAY_SANDBOX_PAYMENT_PAGE_METHOD', 'WAVE'),
             'payment_page_country' => env('FEDAPAY_SANDBOX_PAYMENT_PAGE_COUNTRY', 'CIV'),
+            'fallback_to_payment_page' => (bool) env('FEDAPAY_SANDBOX_FALLBACK_TO_PAYMENT_PAGE', true),
             'mobile_methods' => array_values(array_filter(array_map('trim', explode(',', (string) env(
                 'FEDAPAY_SANDBOX_MOBILE_METHODS',
                 'WAVE,MTN_MOMO,ORANGE_MONEY,MOOV_MONEY,CELTIIS_MONEY,FLOOZ'

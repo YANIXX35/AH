@@ -574,6 +574,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/treasury/{transaction}/edit', [TreasuryController::class, 'edit'])->name('treasury.edit');
     Route::put('/treasury/{transaction}', [TreasuryController::class, 'update'])->name('treasury.update');
     Route::delete('/treasury/{transaction}', [TreasuryController::class, 'destroy'])->name('treasury.destroy');
+    Route::get('/treasury/{transaction}/fedapay/checkout', [TreasuryController::class, 'fedapayCheckoutForm'])->name('treasury.fedapay.checkout.form');
+    Route::post('/treasury/{transaction}/fedapay/checkout', [TreasuryController::class, 'fedapayCheckoutStart'])->name('treasury.fedapay.checkout.start');
     Route::get('/treasury/{transaction}/stripe/success', [TreasuryController::class, 'stripeSuccess'])->name('treasury.stripe.success');
     Route::get('/treasury/{transaction}/stripe/cancel', [TreasuryController::class, 'stripeCancel'])->name('treasury.stripe.cancel');
 

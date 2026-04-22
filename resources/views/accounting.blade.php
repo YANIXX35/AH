@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Comptabilité | Sitiame Capitale')
 @section('page_title', 'Moteur comptable')
@@ -560,6 +560,32 @@
     </div>
 
     <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card border border-primary border-opacity-25">
+                <div class="card-body">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <h6 class="mb-1"><i data-feather="upload" class="me-1"></i>Import rapide: uniquement le document</h6>
+                            <p class="text-muted mb-0 small">Dépose le justificatif (PDF/Image/Excel/CSV), puis le système extrait les données OCR pour créer les écritures et les mouvements bancaires après validation.</p>
+                        </div>
+                        <form action="{{ route('accounting.documents.upload') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row align-items-stretch gap-2">
+                            @csrf
+                            <input type="file" name="documents[]" class="form-control form-control-sm @error('documents') is-invalid @enderror @error('documents.*') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv" required>
+                            <button type="submit" class="btn btn-primary btn-sm text-nowrap">Charger le document</button>
+                        </form>
+                    </div>
+                    @error('documents')
+                        <div class="text-danger small mt-2">{{ $message }}</div>
+                    @enderror
+                    @error('documents.*')
+                        <div class="text-danger small mt-2">{{ $message }}</div>
+                    @enderror
+                    <div class="mt-2">
+                        <a href="{{ route('accounting.documents') }}" class="small">Ouvrir la file de validation des documents</a>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="col-6 col-md-4 col-lg-3">
             <a href="#moteur-ecritures" class="text-decoration-none text-reset">
                 <div class="card summary-card h-100 border shadow-sm">

@@ -1,38 +1,28 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Prévisions Trésorerie | Sitiame Capitale')
 @section('page_title', 'Prévisions de trésorerie')
 
 @push('styles')
 <style>
-    .treasury-forecast-shell {
+    .tracking-crypto {
         background: linear-gradient(180deg, #f5f7fb 0%, #eef3f9 100%);
         border-radius: 1rem;
         padding: 1rem;
     }
-    .forecast-hero {
-        background: linear-gradient(120deg, #0f2747 0%, #19477d 100%);
-        color: #fff;
-        border-radius: 1rem;
-        padding: 1.1rem 1.25rem;
-        box-shadow: 0 10px 28px rgba(16, 24, 40, 0.18);
+    .crypto-headline {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 1rem;
+        gap: .75rem;
     }
-    .forecast-hero .hero-title {
-        font-size: 1.15rem;
-        font-weight: 700;
-        margin: 0 0 0.25rem;
-    }
-    .forecast-hero .hero-sub {
-        margin: 0;
-        font-size: 0.88rem;
-        color: rgba(255, 255, 255, 0.88);
-    }
+    .crypto-actions .btn { border-radius: .65rem; }
     .crypto-kpi {
-        border: 0;
-        border-radius: 1rem;
-        box-shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
-        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        border-radius: .95rem;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
         height: 100%;
     }
     .crypto-kpi .kpi-label {
@@ -52,18 +42,17 @@
     .kpi-net { border-left: 4px solid #f59e0b; }
     .kpi-end { border-left: 4px solid #111827; }
     .treasury-forecast-card {
-        border: 0;
-        border-radius: 1rem;
-        box-shadow: 0 10px 28px rgba(16, 24, 40, 0.08);
-        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        border-radius: .95rem;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
     }
     .treasury-forecast-card .card-header {
-        background: #0f2747;
-        color: #fff;
-        border-bottom: 0;
+        background: #f8fafc;
+        border-bottom: 1px solid #e5e7eb;
     }
     .treasury-forecast-card .card-title {
-        color: #fff;
+        color: #0f172a;
         margin: 0;
         font-weight: 600;
     }
@@ -136,19 +125,67 @@
         font-size: 0.72rem;
         word-break: break-word;
     }
+    .scenario-compact {
+        border: 1px solid #e5e7eb;
+        border-radius: .95rem;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
+        padding: 0.9rem 1rem;
+    }
+    .scenario-compact .scenario-title {
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: #64748b;
+        font-weight: 700;
+        margin-bottom: .45rem;
+    }
+    .scenario-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .75rem;
+    }
+    .scenario-item {
+        border: 1px solid #e6ebf3;
+        border-radius: .7rem;
+        padding: .6rem .65rem;
+        background: #fafcff;
+    }
+    .scenario-item-label {
+        font-size: .68rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: #667085;
+        font-weight: 700;
+        margin-bottom: .2rem;
+    }
+    .scenario-item-value {
+        font-weight: 700;
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+    @media (max-width: 991.98px) {
+        .scenario-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 575.98px) {
+        .scenario-grid { grid-template-columns: 1fr; }
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="page-wrapper">
-    <div class="container-xl">
-        <div class="treasury-forecast-shell">
-            <div class="forecast-hero">
-                <h2 class="hero-title">Prévision de trésorerie</h2>
-                <p class="hero-sub">
-                    Horizon {{ $horizon }} jours — jusqu'au {{ $periodEnd->format('d/m/Y') }}.
-                    Les courbes intègrent uniquement les opérations <strong>planifiées</strong> sur la période (solde de départ = réalisé à date).
-                </p>
+<div class="container-fluid p-0 tracking-crypto">
+            <div class="crypto-headline">
+                <div>
+                    <h2 class="h3 mb-1"><strong>Tableau de bord</strong> Prévisions trésorerie</h2>
+                    <p class="text-muted mb-0">
+                        Horizon {{ $horizon }} jours — jusqu'au {{ $periodEnd->format('d/m/Y') }}.
+                    </p>
+                </div>
+                <div class="crypto-actions d-flex gap-2">
+                    <a href="{{ route('treasury.tracking') }}" class="btn btn-primary btn-sm">Retour suivi</a>
+                    <a href="{{ route('treasury.create') }}" class="btn btn-outline-secondary btn-sm">Nouvelle transaction</a>
+                </div>
             </div>
 
             @error('period_month')
@@ -375,39 +412,30 @@
                 </div>
             </div>
 
-            <div class="row g-3 mb-4">
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card crypto-kpi kpi-in">
-                        <div class="card-body py-3">
-                            <small class="kpi-label d-block">Encaissements (scénario)</small>
-                            <div class="kpi-value text-success">{{ number_format($scenarioPlannedIn ?? 0, 0, ',', ' ') }} FCFA</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card crypto-kpi kpi-out">
-                        <div class="card-body py-3">
-                            <small class="kpi-label d-block">Décaissements (scénario)</small>
-                            <div class="kpi-value text-danger">{{ number_format($scenarioPlannedOut ?? 0, 0, ',', ' ') }} FCFA</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card crypto-kpi kpi-net">
-                        <div class="card-body py-3">
-                            <small class="kpi-label d-block">Net (scénario)</small>
-                            <div class="kpi-value {{ ($scenarioNet ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
-                                {{ ($scenarioNet ?? 0) >= 0 ? '+' : '' }}{{ number_format($scenarioNet ?? 0, 0, ',', ' ') }} FCFA
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="scenario-compact">
+                        <div class="scenario-title">Vue scénario : {{ $scenarioLabel ?? 'Réaliste' }}</div>
+                        <div class="scenario-grid">
+                            <div class="scenario-item">
+                                <div class="scenario-item-label">Encaissements</div>
+                                <div class="scenario-item-value text-success">{{ number_format($scenarioPlannedIn ?? 0, 0, ',', ' ') }} FCFA</div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card crypto-kpi kpi-end">
-                        <div class="card-body py-3">
-                            <small class="kpi-label d-block">Solde min. période</small>
-                            <div class="kpi-value {{ ($minScenarioBalance ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
-                                {{ number_format($minScenarioBalance ?? 0, 0, ',', ' ') }} FCFA
+                            <div class="scenario-item">
+                                <div class="scenario-item-label">Décaissements</div>
+                                <div class="scenario-item-value text-danger">{{ number_format($scenarioPlannedOut ?? 0, 0, ',', ' ') }} FCFA</div>
+                            </div>
+                            <div class="scenario-item">
+                                <div class="scenario-item-label">Net</div>
+                                <div class="scenario-item-value {{ ($scenarioNet ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ ($scenarioNet ?? 0) >= 0 ? '+' : '' }}{{ number_format($scenarioNet ?? 0, 0, ',', ' ') }} FCFA
+                                </div>
+                            </div>
+                            <div class="scenario-item">
+                                <div class="scenario-item-label">Solde minimum</div>
+                                <div class="scenario-item-value {{ ($minScenarioBalance ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ number_format($minScenarioBalance ?? 0, 0, ',', ' ') }} FCFA
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -704,7 +732,5 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 </div>
 @endsection

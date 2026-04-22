@@ -83,26 +83,47 @@ class StripeTreasuryService
     {
         $client = $this->client();
         $scheme = (string) ($transaction->stripe_bank_scheme ?? 'sepa');
-        $currency = $this->resolvePayoutCurrency();
-        $amountInMinor = $this->toStripeAmount((float) $transaction->amount, $currency);
+        $fallbackCurrencies = array_values(array_unique(array_filter([
+            $this->resolvePayoutCurrency(),
+            'usd',
+            'eur',
+        ])));
+        $lastException = null;
 
-        $payout = $client->payouts->create([
-            'amount' => $amountInMinor,
-            'currency' => $currency,
-            'metadata' => [
-                'treasury_transaction_id' => (string) $transaction->id,
-                'workspace_user_id' => (string) $transaction->user_id,
-                'type' => (string) $transaction->type,
-                'stripe_payment_channel' => (string) ($transaction->stripe_payment_channel ?? 'bank_debit'),
-                'stripe_bank_scheme' => $scheme,
-            ],
-        ]);
+        foreach ($fallbackCurrencies as $currency) {
+            try {
+                $amountInMinor = $this->toStripeAmount((float) $transaction->amount, $currency);
+                $payout = $client->payouts->create([
+                    'amount' => $amountInMinor,
+                    'currency' => $currency,
+                    'metadata' => [
+                        'treasury_transaction_id' => (string) $transaction->id,
+                        'workspace_user_id' => (string) $transaction->user_id,
+                        'type' => (string) $transaction->type,
+                        'stripe_payment_channel' => (string) ($transaction->stripe_payment_channel ?? 'bank_debit'),
+                        'stripe_bank_scheme' => $scheme,
+                    ],
+                ]);
 
-        return [
-            'id' => (string) $payout->id,
-            'status' => (string) ($payout->status ?? 'pending'),
-            'arrival_date' => isset($payout->arrival_date) ? (int) $payout->arrival_date : null,
-        ];
+                return [
+                    'id' => (string) $payout->id,
+                    'status' => (string) ($payout->status ?? 'pending'),
+                    'arrival_date' => isset($payout->arrival_date) ? (int) $payout->arrival_date : null,
+                    'currency' => $currency,
+                ];
+            } catch (\Throwable $e) {
+                if (! $this->isCurrencyAvailabilityError($e)) {
+                    throw $e;
+                }
+                $lastException = $e;
+            }
+        }
+
+        if ($lastException !== null) {
+            throw $lastException;
+        }
+
+        throw new \RuntimeException('Aucune devise Stripe disponible pour le décaissement.');
     }
 
     /**
@@ -158,5 +179,13 @@ class StripeTreasuryService
         }
 
         return (int) round($amount * 100);
+    }
+
+    private function isCurrencyAvailabilityError(\Throwable $e): bool
+    {
+        $message = strtolower((string) $e->getMessage());
+
+        return str_contains($message, 'external accounts in that currency')
+            || (str_contains($message, 'currency') && str_contains($message, 'not supported'));
     }
 }

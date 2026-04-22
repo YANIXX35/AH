@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TreasuryAuditLog;
 use App\Models\TreasuryPeriodLock;
 use App\Models\TreasuryTransaction;
+use App\Services\FedaPaySandboxService;
 use App\Services\StripeTreasuryService;
 use App\Services\TreasuryAudit;
 use Carbon\Carbon;
@@ -612,10 +613,7 @@ class TreasuryController extends Controller
     {
         $userIds = $this->workspaceDataUserIds();
         $recentPayments = TreasuryTransaction::whereIn('user_id', $userIds)
-            ->where(function ($query) {
-                $query->where('payment_module', 'stripe')
-                    ->orWhere('transaction_type', 'like', 'Paiement%');
-            })
+            ->whereIn('payment_module', ['stripe', 'fedapay_mobile'])
             ->orderByDesc('transaction_date')
             ->orderByDesc('id')
             ->limit(8)
@@ -646,10 +644,13 @@ class TreasuryController extends Controller
         $validated = $request->validate([
             'type' => 'required|in:encaissement,decaissement',
             'transaction_type' => 'required|string',
-            'payment_module' => 'required|in:stripe',
+            'payment_module' => 'required|in:stripe,fedapay_mobile',
             'payment_provider' => 'nullable|string|max:60',
-            'stripe_payment_channel' => 'required|in:card,bank_debit',
+            'stripe_payment_channel' => 'nullable|required_if:payment_module,stripe|in:card,bank_debit',
             'stripe_bank_scheme' => 'nullable|in:ach,sepa',
+            'mobile_method' => 'nullable|required_if:payment_module,fedapay_mobile|in:orange_money,mtn_money,moov_money,wave',
+            'mobile_number' => 'nullable|required_if:payment_module,fedapay_mobile|string|max:30',
+            'fedapay_country' => 'nullable|in:CIV,SEN,BEN,TGO,CMR',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string|max:255',
             'transaction_date' => 'required|date',
@@ -674,9 +675,9 @@ class TreasuryController extends Controller
             'transaction_date' => $transaction->transaction_date->toDateString(),
         ]);
 
-        $stripeRedirect = $this->maybeStartStripeCheckout($request, $transaction, $stripe);
-        if ($stripeRedirect !== null) {
-            return $stripeRedirect;
+        $providerRedirect = $this->maybeStartProviderCheckout($request, $transaction, $stripe);
+        if ($providerRedirect !== null) {
+            return $providerRedirect;
         }
 
         return redirect()->route('treasury.index')->with('success', 'Transaction ajoutée avec succès.');
@@ -701,10 +702,13 @@ class TreasuryController extends Controller
         $validated = $request->validate([
             'type' => 'required|in:encaissement,decaissement',
             'transaction_type' => 'required|string',
-            'payment_module' => 'required|in:stripe',
+            'payment_module' => 'required|in:stripe,fedapay_mobile',
             'payment_provider' => 'nullable|string|max:60',
-            'stripe_payment_channel' => 'required|in:card,bank_debit',
+            'stripe_payment_channel' => 'nullable|required_if:payment_module,stripe|in:card,bank_debit',
             'stripe_bank_scheme' => 'nullable|in:ach,sepa',
+            'mobile_method' => 'nullable|required_if:payment_module,fedapay_mobile|in:orange_money,mtn_money,moov_money,wave',
+            'mobile_number' => 'nullable|required_if:payment_module,fedapay_mobile|string|max:30',
+            'fedapay_country' => 'nullable|in:CIV,SEN,BEN,TGO,CMR',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string|max:255',
             'transaction_date' => 'required|date',
@@ -730,9 +734,9 @@ class TreasuryController extends Controller
             'after' => $transaction->only(['type', 'amount', 'transaction_date', 'status']),
         ]);
 
-        $stripeRedirect = $this->maybeStartStripeCheckout($request, $transaction, $stripe);
-        if ($stripeRedirect !== null) {
-            return $stripeRedirect;
+        $providerRedirect = $this->maybeStartProviderCheckout($request, $transaction, $stripe);
+        if ($providerRedirect !== null) {
+            return $providerRedirect;
         }
 
         return redirect()->route('treasury.index')->with('success', 'Transaction mise à jour avec succès.');
@@ -805,6 +809,153 @@ class TreasuryController extends Controller
 
         return redirect()->route('treasury.tracking')
             ->withErrors(['stripe' => 'Paiement Stripe annulé.']);
+    }
+
+    public function fedapayCheckoutForm(Request $request, TreasuryTransaction $transaction)
+    {
+        $this->authorize('own', $transaction);
+
+        if ($transaction->payment_module !== 'fedapay_mobile') {
+            return redirect()->route('treasury.tracking')
+                ->withErrors(['fedapay' => 'Cette transaction n\'utilise pas FedaPay Mobile Money.']);
+        }
+
+        $country = strtoupper((string) $request->query('country', 'CIV'));
+        if (! in_array($country, ['CIV', 'SEN', 'BEN', 'TGO', 'CMR'], true)) {
+            $country = 'CIV';
+        }
+
+        $user = $request->user();
+        [$lastName, $firstName] = $this->splitUserDisplayName((string) ($user->name ?? ''));
+
+        return view('treasury.fedapay-checkout', [
+            'transaction' => $transaction,
+            'country' => $country,
+            'payer' => [
+                'last_name' => $lastName,
+                'first_name' => $firstName,
+                'email' => (string) ($user->email ?? ''),
+                'country' => $country,
+                'phone' => (string) ($transaction->mobile_number ?? ''),
+            ],
+        ]);
+    }
+
+    public function fedapayCheckoutStart(Request $request, TreasuryTransaction $transaction, FedaPaySandboxService $fedapay): RedirectResponse
+    {
+        $this->authorize('own', $transaction);
+
+        if ($transaction->payment_module !== 'fedapay_mobile') {
+            return redirect()->route('treasury.tracking')
+                ->withErrors(['fedapay' => 'Cette transaction n\'utilise pas FedaPay Mobile Money.']);
+        }
+
+        if ($transaction->type === 'decaissement') {
+            return redirect()->route('treasury.tracking')
+                ->withErrors(['fedapay' => 'Les décaissements Mobile Money doivent être suivis manuellement (pas de payout automatique FedaPay ici).']);
+        }
+
+        $validated = $request->validate([
+            'fedapay_country' => 'required|in:CIV,SEN,BEN,TGO,CMR',
+        ]);
+
+        $country = strtoupper((string) $validated['fedapay_country']);
+        $correspondentCandidates = $this->resolveFedapayCorrespondentCandidates($country, (string) $transaction->mobile_method);
+        if (empty($correspondentCandidates)) {
+            return back()->withErrors(['fedapay' => 'Canal Mobile Money non disponible pour ce pays.']);
+        }
+
+        $result = null;
+        $attemptErrors = [];
+        foreach ($correspondentCandidates as $correspondent) {
+            $attempt = $fedapay->createTransaction($request->user(), [
+                'amount' => (float) $transaction->amount,
+                'currency' => $this->resolveFedapayCurrency($country),
+                'country' => $country,
+                'correspondent' => $correspondent,
+                'payer_msisdn' => (string) ($transaction->mobile_number ?? ''),
+            ]);
+
+            if (($attempt['success'] ?? false) === true) {
+                $result = $attempt;
+                break;
+            }
+
+            $attemptErrors[] = $correspondent.': '.((string) ($attempt['message'] ?? 'Erreur inconnue'));
+            $result = $attempt;
+        }
+
+        if ($result === null) {
+            return back()->withErrors(['fedapay' => 'Impossible d\'initialiser la transaction FedaPay.']);
+        }
+
+        if (! $result['success']) {
+            $apiDetail = $this->extractFedapayErrorDetail($result['response_payload'] ?? null);
+            $attemptDetail = empty($attemptErrors) ? '' : (' | Tentatives: '.implode(' ; ', array_slice($attemptErrors, 0, 4)));
+
+            $fallbackToHostedPage = (bool) config('services.fedapay.sandbox.fallback_to_payment_page', true);
+            $hostedPaymentUrl = trim((string) config('services.fedapay.sandbox.payment_page_url', ''));
+            if ($fallbackToHostedPage && $hostedPaymentUrl !== '' && filter_var($hostedPaymentUrl, FILTER_VALIDATE_URL)) {
+                $fallbackReference = 'FDP-PAGE-'.Carbon::now()->format('YmdHis').'-'.Str::upper(Str::random(4));
+                $transaction->update([
+                    'status' => 'planifie',
+                    'bank_reference' => $fallbackReference,
+                    'payment_provider' => 'FedaPay',
+                    'notes' => trim(((string) ($transaction->notes ?? '')).' | Fallback page FedaPay: '.$result['message'].' '.$apiDetail.$attemptDetail),
+                ]);
+
+                TreasuryAudit::log($this->workspaceUserId(), 'treasury.transaction.fedapay.checkout.fallback_page', $transaction, [
+                    'provider_reference' => $fallbackReference,
+                    'country' => $country,
+                    'mobile_method' => $transaction->mobile_method,
+                    'api_error' => $result['message'] ?? null,
+                    'api_detail' => $apiDetail,
+                    'attempts' => $attemptErrors,
+                ]);
+
+                $hostedUrlWithPrefill = $this->buildFedapayHostedPaymentUrl(
+                    $hostedPaymentUrl,
+                    $request->user(),
+                    $country,
+                    (string) ($transaction->mobile_number ?? '')
+                );
+
+                return redirect()->away($hostedUrlWithPrefill)
+                    ->with('status', 'API FedaPay indisponible (sandbox). Redirection vers la page de paiement hébergée.');
+            }
+
+            $transaction->update([
+                'status' => 'planifie',
+                'bank_reference' => (string) ($result['provider_reference'] ?? ''),
+                'notes' => trim(((string) ($transaction->notes ?? '')).' | FedaPay error: '.$result['message'].' '.$apiDetail.$attemptDetail),
+            ]);
+
+            return back()->withErrors([
+                'fedapay' => 'Création API FedaPay impossible : '.$result['message'].($apiDetail !== '' ? ' | Détail: '.$apiDetail : '').$attemptDetail.' Veuillez réessayer avec un autre opérateur ou vérifier la configuration sandbox.',
+            ]);
+        }
+
+        $transaction->update([
+            'status' => 'planifie',
+            'bank_reference' => (string) ($result['provider_reference'] ?? ''),
+            'payment_provider' => 'FedaPay',
+        ]);
+
+        TreasuryAudit::log($this->workspaceUserId(), 'treasury.transaction.fedapay.checkout', $transaction, [
+            'provider_reference' => $result['provider_reference'] ?? null,
+            'mobile_method' => $transaction->mobile_method,
+            'mobile_number' => $transaction->mobile_number,
+            'country' => $country,
+        ]);
+
+        $checkoutUrl = trim((string) ($result['checkout_url'] ?? ''));
+        if ($checkoutUrl !== '') {
+            return redirect()->away($checkoutUrl);
+        }
+
+        return back()->withErrors([
+            'fedapay' => 'Transaction API créée mais aucun checkout_url n\'a été retourné par FedaPay.',
+        ]);
     }
 
     public function stripeWebhook(Request $request, StripeTreasuryService $stripe): Response
@@ -1296,8 +1447,30 @@ class TreasuryController extends Controller
 
     private function normalizePaymentFields(array $validated): array
     {
+        if (($validated['payment_module'] ?? 'stripe') === 'fedapay_mobile') {
+            $validated['payment_provider'] = 'FedaPay';
+            $validated['mobile_method'] = $validated['mobile_method'] ?? 'wave';
+            unset($validated['fedapay_country']);
+            $validated['stripe_payment_channel'] = null;
+            $validated['stripe_bank_scheme'] = null;
+            $validated['card_network'] = null;
+            $validated['card_last4'] = null;
+            $validated['bank_name'] = null;
+            $validated['stripe_checkout_session_id'] = null;
+            $validated['stripe_payment_intent_id'] = null;
+            $validated['stripe_charge_id'] = null;
+            $validated['stripe_payout_id'] = null;
+            $validated['stripe_status'] = null;
+            $validated['stripe_failure_reason'] = null;
+            $validated['stripe_paid_at'] = null;
+            $validated['stripe_last_event_id'] = null;
+
+            return $validated;
+        }
+
         $validated['payment_module'] = 'stripe';
         $validated['payment_provider'] = 'Stripe';
+        unset($validated['fedapay_country']);
 
         if (($validated['stripe_payment_channel'] ?? '') !== 'bank_debit') {
             $validated['stripe_bank_scheme'] = null;
@@ -1331,6 +1504,123 @@ class TreasuryController extends Controller
         $validated['reference'] = 'TRS-'.$datePart.'-'.Str::upper(Str::random(6));
 
         return $validated;
+    }
+
+    private function maybeStartProviderCheckout(
+        Request $request,
+        TreasuryTransaction $transaction,
+        StripeTreasuryService $stripe
+    ): ?RedirectResponse
+    {
+        if ($transaction->payment_module === 'fedapay_mobile') {
+            return $this->maybeStartFedaPayCheckout($request, $transaction);
+        }
+
+        return $this->maybeStartStripeCheckout($request, $transaction, $stripe);
+    }
+
+    private function maybeStartFedaPayCheckout(
+        Request $request,
+        TreasuryTransaction $transaction
+    ): ?RedirectResponse
+    {
+        if ($transaction->payment_module !== 'fedapay_mobile' || $transaction->status !== 'effectue') {
+            return null;
+        }
+
+        $country = strtoupper((string) $request->input('fedapay_country', 'CIV'));
+
+        return redirect()->route('treasury.fedapay.checkout.form', [
+            'transaction' => $transaction->id,
+            'country' => $country,
+        ]);
+    }
+
+    private function resolveFedapayCurrency(string $country): string
+    {
+        return in_array($country, ['CMR'], true) ? 'XAF' : 'XOF';
+    }
+
+    private function resolveFedapayCorrespondentCandidates(string $country, string $method): array
+    {
+        $countryGeneric = match ($country) {
+            'SEN' => 'mobile_money_sen',
+            'BEN', 'TGO' => 'mobile_money_ben',
+            'CMR' => 'mobile_money_cmr',
+            default => 'mobile_money_ci',
+        };
+
+        $method = strtolower($method);
+        $candidates = match ($method) {
+            'wave' => in_array($country, ['CIV', 'SEN'], true)
+                ? ['wave', 'WAVE', $countryGeneric]
+                : [$countryGeneric],
+            'mtn_money' => ['MTN_MOMO', $countryGeneric],
+            'orange_money' => ['ORANGE_MONEY', $countryGeneric],
+            'moov_money' => ['MOOV_MONEY', $countryGeneric],
+            default => [$countryGeneric],
+        };
+
+        return array_values(array_unique(array_filter($candidates, fn ($value) => is_string($value) && trim($value) !== '')));
+    }
+
+    private function extractFedapayErrorDetail($responsePayload): string
+    {
+        if (! is_array($responsePayload)) {
+            return '';
+        }
+
+        $candidates = [
+            (string) ($responsePayload['message'] ?? ''),
+            (string) ($responsePayload['error'] ?? ''),
+            (string) ($responsePayload['errors'][0]['message'] ?? ''),
+            (string) ($responsePayload['errors'][0]['description'] ?? ''),
+        ];
+
+        foreach ($candidates as $detail) {
+            $detail = trim($detail);
+            if ($detail !== '') {
+                return $detail;
+            }
+        }
+
+        return '';
+    }
+
+    private function splitUserDisplayName(string $displayName): array
+    {
+        $displayName = trim($displayName);
+        if ($displayName === '') {
+            return ['', ''];
+        }
+
+        $parts = preg_split('/\s+/', $displayName) ?: [];
+        if (count($parts) === 1) {
+            return [$parts[0], $parts[0]];
+        }
+
+        $lastName = array_shift($parts) ?: '';
+        $firstName = trim(implode(' ', $parts));
+
+        return [$lastName, $firstName];
+    }
+
+    private function buildFedapayHostedPaymentUrl(string $baseUrl, $user, string $country, string $mobileNumber): string
+    {
+        [$lastName, $firstName] = $this->splitUserDisplayName((string) ($user->name ?? ''));
+        $params = [
+            'lastname' => $lastName,
+            'firstname' => $firstName,
+            'email' => (string) ($user->email ?? ''),
+            'country' => strtoupper($country),
+            'phone_number' => $mobileNumber,
+            'phone' => $mobileNumber,
+            'msisdn' => $mobileNumber,
+        ];
+
+        $separator = str_contains($baseUrl, '?') ? '&' : '?';
+
+        return $baseUrl.$separator.http_build_query(array_filter($params, fn ($value) => trim((string) $value) !== ''));
     }
 
     private function maybeStartStripeCheckout(Request $request, TreasuryTransaction $transaction, StripeTreasuryService $stripe): ?RedirectResponse
@@ -1369,12 +1659,43 @@ class TreasuryController extends Controller
                 TreasuryAudit::log($this->workspaceUserId(), 'treasury.transaction.stripe.payout', $transaction, [
                     'stripe_payout_id' => $payout['id'],
                     'stripe_payout_status' => $payout['status'],
+                    'stripe_payout_currency' => $payout['currency'] ?? null,
                     'amount' => (string) $transaction->amount,
                 ]);
 
                 return redirect()->route('treasury.tracking')
-                    ->with('status', 'Décaissement Stripe lancé. ID payout: '.$payout['id']);
+                    ->with('status', 'Décaissement Stripe lancé. ID payout: '.$payout['id'].' | Devise: '.strtoupper((string) ($payout['currency'] ?? 'n/a')));
             } catch (\Throwable $e) {
+                if ($this->isStripeExternalAccountMissingError($e)) {
+                    $transaction->update([
+                        'stripe_status' => 'payout_manual_required',
+                        'stripe_failure_reason' => $e->getMessage(),
+                        'status' => 'planifie',
+                    ]);
+
+                    TreasuryAudit::log($this->workspaceUserId(), 'treasury.transaction.stripe.payout.manual_required', $transaction, [
+                        'reason' => $e->getMessage(),
+                    ]);
+
+                    return redirect()->route('treasury.tracking')
+                        ->with('status', 'Décaissement Stripe planifié en manuel : ajoutez un compte externe payout dans Stripe, puis relancez la transaction.');
+                }
+
+                if ($this->isStripeInsufficientFundsError($e)) {
+                    $transaction->update([
+                        'stripe_status' => 'payout_insufficient_funds',
+                        'stripe_failure_reason' => $e->getMessage(),
+                        'status' => 'planifie',
+                    ]);
+
+                    TreasuryAudit::log($this->workspaceUserId(), 'treasury.transaction.stripe.payout.insufficient_funds', $transaction, [
+                        'reason' => $e->getMessage(),
+                    ]);
+
+                    return redirect()->route('treasury.tracking')
+                        ->with('status', 'Décaissement Stripe planifié : solde insuffisant. Approvisionnez Stripe puis relancez la transaction.');
+                }
+
                 $transaction->update([
                     'stripe_status' => 'payout_error',
                     'stripe_failure_reason' => $e->getMessage(),
@@ -1420,5 +1741,21 @@ class TreasuryController extends Controller
             return redirect()->route('treasury.tracking')
                 ->withErrors(['stripe' => 'Création du paiement Stripe impossible : '.$e->getMessage()]);
         }
+    }
+
+    private function isStripeExternalAccountMissingError(\Throwable $e): bool
+    {
+        $message = strtolower((string) $e->getMessage());
+
+        return str_contains($message, 'no external accounts')
+            || str_contains($message, 'external accounts in that currency');
+    }
+
+    private function isStripeInsufficientFundsError(\Throwable $e): bool
+    {
+        $message = strtolower((string) $e->getMessage());
+
+        return str_contains($message, 'insufficient funds')
+            || str_contains($message, 'balance is too low');
     }
 }

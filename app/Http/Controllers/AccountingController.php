@@ -9,6 +9,7 @@ use App\Models\PlanComptableAccount;
 use App\Models\PlanComptableImport;
 use App\Models\TreasuryTransaction;
 use App\Services\OcrService;
+use App\Services\OcrPipelineService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -337,6 +338,7 @@ class AccountingController extends Controller
         }
 
         $ocrService = new OcrService();
+        $ocrPipeline = new OcrPipelineService();
         $success = 0;
         $failed = 0;
         $skipped = 0;
@@ -503,7 +505,8 @@ class AccountingController extends Controller
 
         if ($extension === 'pdf') {
             $ocrService = new OcrService();
-            $ocrResult = $ocrService->extractText($storedPath);
+            $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
+            $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
             if (! $ocrResult['success']) {
                 Storage::disk('public')->delete($storedPath);
 
@@ -1309,7 +1312,7 @@ class AccountingController extends Controller
 
             if ($ocrResult['success']) {
                 $status = 'pending_validation';
-                $confidence = (float) ($ocrResult['confidence'] ?? 0);
+                $confidence = (float) ($pipelineResult['global_confidence'] ?? $ocrResult['confidence'] ?? 0);
 
                 $formDataForOcr = [
                     'document_reference' => '',
@@ -1324,20 +1327,29 @@ class AccountingController extends Controller
 
                 $verifyResult = $ocrService->verifyCompleteDocument($ocrResult['text'], $formDataForOcr);
                 $extracted = $verifyResult['extracted'] ?? [];
+                $richExtracted = (array) ($pipelineResult['rich_data'] ?? []);
+                if (empty($richExtracted)) {
+                    $richExtracted = $ocrService->extractRichDocumentData($ocrResult['text']);
+                }
                 $documentType = $this->detectDocumentTypeFromOcrText($ocrResult['text'], $documentType);
                 $accounts = $this->resolveAccountsForDocumentType($documentType);
+                $normalizedExtracted = $this->buildValidationExtractedData($ocrResult['text'], $extracted, $richExtracted);
 
                 $extractedData = [
-                    'partner' => $extracted['partner_name'] ?? null,
-                    'invoice_number' => $extracted['invoice_number'] ?? null,
-                    'invoice_date' => $extracted['date'] ?? now()->toDateString(),
-                    'amount_ht' => $extracted['amount_ht_fcfa'] ?? ($extracted['amount_ht'] ?? 0),
-                    'amount_ttc' => $extracted['amount_ttc_fcfa'] ?? ($extracted['amount_ttc'] ?? 0),
-                    'tva' => $extracted['amount_tva_fcfa'] ?? ($extracted['amount_tva'] ?? 0),
-                    'currency' => $extracted['currency'] ?? 'FCFA',
+                    'partner' => $normalizedExtracted['partner'],
+                    'invoice_number' => $normalizedExtracted['invoice_number'],
+                    'invoice_date' => $normalizedExtracted['invoice_date'],
+                    'amount_ht' => $normalizedExtracted['amount_ht'],
+                    'amount_ttc' => $normalizedExtracted['amount_ttc'],
+                    'tva' => $normalizedExtracted['tva'],
+                    'currency' => $normalizedExtracted['currency'],
                     'debit_account' => $accounts['debit'],
                     'credit_account' => $accounts['credit'],
                     'ocr_text' => $ocrResult['text'],
+                    'ocr_detected_fields' => $richExtracted,
+                    'ocr_field_confidence' => (array) ($pipelineResult['field_confidence'] ?? []),
+                    'ocr_low_confidence_fields' => (array) ($pipelineResult['low_confidence_fields'] ?? []),
+                    'ocr_review_required' => (bool) ($pipelineResult['review_required'] ?? false),
                     'ocr_error' => null,
                 ];
             } else {
@@ -1378,7 +1390,9 @@ class AccountingController extends Controller
         }
 
         $ocrService = new OcrService();
-        $ocrResult = $ocrService->extractText($document->stored_path);
+        $ocrPipeline = new OcrPipelineService();
+        $pipelineResult = $ocrPipeline->processStoredDocument($document->stored_path);
+        $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
 
         if (! $ocrResult['success']) {
             $data = (array) $document->extracted_data;
@@ -1406,26 +1420,35 @@ class AccountingController extends Controller
         ];
         $verifyResult = $ocrService->verifyCompleteDocument($ocrResult['text'], $formDataForOcr);
         $extracted = $verifyResult['extracted'] ?? [];
+        $richExtracted = (array) ($pipelineResult['rich_data'] ?? []);
+        if (empty($richExtracted)) {
+            $richExtracted = $ocrService->extractRichDocumentData($ocrResult['text']);
+        }
         $documentType = $this->detectDocumentTypeFromOcrText($ocrResult['text'], $document->document_type);
         $accounts = $this->resolveAccountsForDocumentType($documentType);
         $data = (array) $document->extracted_data;
+        $normalizedExtracted = $this->buildValidationExtractedData($ocrResult['text'], $extracted, $richExtracted);
 
-        $data['partner'] = $extracted['partner_name'] ?? ($data['partner'] ?? null);
-        $data['invoice_number'] = $extracted['invoice_number'] ?? ($data['invoice_number'] ?? null);
-        $data['invoice_date'] = $extracted['date'] ?? ($data['invoice_date'] ?? now()->toDateString());
-        $data['amount_ht'] = $extracted['amount_ht_fcfa'] ?? ($extracted['amount_ht'] ?? ($data['amount_ht'] ?? 0));
-        $data['amount_ttc'] = $extracted['amount_ttc_fcfa'] ?? ($extracted['amount_ttc'] ?? ($data['amount_ttc'] ?? 0));
-        $data['tva'] = $extracted['amount_tva_fcfa'] ?? ($extracted['amount_tva'] ?? ($data['tva'] ?? 0));
-        $data['currency'] = $extracted['currency'] ?? ($data['currency'] ?? 'FCFA');
+        $data['partner'] = $normalizedExtracted['partner'] ?? ($data['partner'] ?? null);
+        $data['invoice_number'] = $normalizedExtracted['invoice_number'] ?? ($data['invoice_number'] ?? null);
+        $data['invoice_date'] = $normalizedExtracted['invoice_date'] ?? ($data['invoice_date'] ?? now()->toDateString());
+        $data['amount_ht'] = $normalizedExtracted['amount_ht'] ?? ($data['amount_ht'] ?? 0);
+        $data['amount_ttc'] = $normalizedExtracted['amount_ttc'] ?? ($data['amount_ttc'] ?? 0);
+        $data['tva'] = $normalizedExtracted['tva'] ?? ($data['tva'] ?? 0);
+        $data['currency'] = $normalizedExtracted['currency'] ?? ($data['currency'] ?? 'FCFA');
         $data['debit_account'] = $accounts['debit'];
         $data['credit_account'] = $accounts['credit'];
         $data['ocr_text'] = $ocrResult['text'];
+        $data['ocr_detected_fields'] = $richExtracted;
+        $data['ocr_field_confidence'] = (array) ($pipelineResult['field_confidence'] ?? []);
+        $data['ocr_low_confidence_fields'] = (array) ($pipelineResult['low_confidence_fields'] ?? []);
+        $data['ocr_review_required'] = (bool) ($pipelineResult['review_required'] ?? false);
         $data['ocr_error'] = null;
 
         $document->update([
             'document_type' => $documentType,
             'status' => 'pending_validation',
-            'confidence' => (float) ($ocrResult['confidence'] ?? 0),
+            'confidence' => (float) ($pipelineResult['global_confidence'] ?? $ocrResult['confidence'] ?? 0),
             'extracted_data' => $data,
             'actor_user_id' => Auth::id(),
         ]);
@@ -1465,6 +1488,190 @@ class AccountingController extends Controller
         }
 
         return $fallback;
+    }
+
+    private function buildValidationExtractedData(string $ocrText, array $extracted, array $richExtracted = []): array
+    {
+        $invoiceDate = $this->normalizeOcrDate((string) ($extracted['date'] ?? ($richExtracted['primary']['invoice_date'] ?? '')));
+        if ($invoiceDate === null) {
+            $invoiceDate = $this->normalizeOcrDate((string) ($this->extractByPatterns(
+                $ocrText,
+                [
+                    '/\b(?:date|date facture|date d[\' ]?emission|date d[\' ]?édition)\s*[:\-]?\s*(\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4})/iu',
+                    '/\b(\d{4}[\/.\-]\d{1,2}[\/.\-]\d{1,2})\b/u',
+                    '/\b(\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{4})\b/u',
+                ]
+            ) ?? ''));
+        }
+
+        $invoiceNumber = trim((string) ($extracted['invoice_number'] ?? ($richExtracted['primary']['invoice_number'] ?? '')));
+        if ($invoiceNumber === '') {
+            $invoiceNumber = (string) ($this->extractByPatterns(
+                $ocrText,
+                [
+                    '/\b(?:facture|invoice)\s*(?:n[°ºo.]?|num(?:[ée]ro)?)?\s*[:#\-]?\s*([A-Z0-9][A-Z0-9\-\/_.]{2,})/iu',
+                    '/\b(?:ref(?:erence)?|r[ée]f)\s*(?:n[°ºo.]?)?\s*[:#\-]?\s*([A-Z0-9][A-Z0-9\-\/_.]{2,})/iu',
+                ]
+            ) ?? '');
+        }
+
+        $partner = trim((string) ($extracted['partner_name'] ?? ($richExtracted['primary']['partner_name'] ?? '')));
+        if ($partner === '') {
+            $partner = (string) ($this->extractByPatterns(
+                $ocrText,
+                [
+                    '/\b(?:client|customer|fournisseur|supplier|destinataire|societe|soci[ée]t[ée]|entreprise|company)\s*[:\-]\s*([^\n\r]{3,100})/iu',
+                ]
+            ) ?? '');
+        }
+
+        $amountHt = $this->toFloatOrNull($extracted['amount_ht_fcfa'] ?? $extracted['amount_ht'] ?? ($richExtracted['primary']['amount_ht'] ?? null));
+        $amountTva = $this->toFloatOrNull($extracted['amount_tva_fcfa'] ?? $extracted['amount_tva'] ?? ($richExtracted['primary']['amount_tva'] ?? null));
+        $amountTtc = $this->toFloatOrNull($extracted['amount_ttc_fcfa'] ?? $extracted['amount_ttc'] ?? ($richExtracted['primary']['amount_ttc'] ?? null));
+
+        if ($amountHt === null) {
+            $amountHt = $this->extractAmountFromText($ocrText, ['montant ht', 'total ht', 'sous-total', 'ht']);
+        }
+        if ($amountTva === null) {
+            $amountTva = $this->extractAmountFromText($ocrText, ['tva', 'taxe']);
+        }
+        if ($amountTtc === null) {
+            $amountTtc = $this->extractAmountFromText($ocrText, ['montant ttc', 'total ttc', 'net a payer', 'net à payer', 'total']);
+        }
+
+        if ($amountHt === null && $amountTtc !== null && $amountTva !== null) {
+            $amountHt = max(0.0, $amountTtc - $amountTva);
+        }
+        if ($amountTtc === null && $amountHt !== null && $amountTva !== null) {
+            $amountTtc = $amountHt + $amountTva;
+        }
+        if ($amountTva === null && $amountHt !== null && $amountTtc !== null && $amountTtc >= $amountHt) {
+            $amountTva = $amountTtc - $amountHt;
+        }
+
+        return [
+            'partner' => $partner !== '' ? $partner : null,
+            'invoice_number' => $invoiceNumber !== '' ? $invoiceNumber : null,
+            'invoice_date' => $invoiceDate ?? now()->toDateString(),
+            'amount_ht' => $amountHt ?? 0.0,
+            'amount_ttc' => $amountTtc ?? 0.0,
+            'tva' => $amountTva ?? 0.0,
+            'currency' => strtoupper((string) ($extracted['currency'] ?? ($richExtracted['primary']['currency'] ?? 'FCFA'))),
+        ];
+    }
+
+    private function extractByPatterns(string $text, array $patterns): ?string
+    {
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $matches)) {
+                $value = trim((string) ($matches[1] ?? ''));
+                if ($value !== '') {
+                    return $value;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function extractAmountFromText(string $text, array $keywords): ?float
+    {
+        $escapedKeywords = array_map(
+            fn (string $keyword) => preg_quote($keyword, '/'),
+            $keywords
+        );
+
+        $labelRegex = implode('|', $escapedKeywords);
+        $patterns = [
+            '/(?:' . $labelRegex . ')\s*[:\-]?\s*([0-9][0-9\s.,]{0,20})/iu',
+            '/([0-9][0-9\s.,]{0,20})\s*(?:' . $labelRegex . ')/iu',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match_all($pattern, $text, $matches)) {
+                foreach ((array) ($matches[1] ?? []) as $rawAmount) {
+                    $parsed = $this->parseNumericAmount((string) $rawAmount);
+                    if ($parsed !== null) {
+                        return $parsed;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function parseNumericAmount(string $rawAmount): ?float
+    {
+        $value = preg_replace('/[^\d,.\s]/u', '', $rawAmount);
+        if ($value === null) {
+            return null;
+        }
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (str_contains($value, ',') && str_contains($value, '.')) {
+            $value = str_replace(' ', '', $value);
+            if (strrpos($value, ',') > strrpos($value, '.')) {
+                $value = str_replace('.', '', $value);
+                $value = str_replace(',', '.', $value);
+            } else {
+                $value = str_replace(',', '', $value);
+            }
+        } else {
+            $value = str_replace(' ', '', $value);
+            if (substr_count($value, ',') === 1 && substr_count($value, '.') === 0) {
+                $value = str_replace(',', '.', $value);
+            } else {
+                $value = str_replace(',', '', $value);
+            }
+        }
+
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        return (float) $value;
+    }
+
+    private function toFloatOrNull(mixed $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        return $this->parseNumericAmount((string) $value);
+    }
+
+    private function normalizeOcrDate(string $date): ?string
+    {
+        $candidate = trim($date);
+        if ($candidate === '') {
+            return null;
+        }
+
+        $candidate = str_replace('.', '/', $candidate);
+        $candidate = str_replace('-', '/', $candidate);
+
+        $formats = ['Y/m/d', 'd/m/Y', 'd/m/y', 'm/d/Y', 'm/d/y'];
+        foreach ($formats as $format) {
+            try {
+                return Carbon::createFromFormat($format, $candidate)->format('Y-m-d');
+            } catch (\Throwable) {
+            }
+        }
+
+        try {
+            return Carbon::parse($candidate)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function extractFromTextFile(string $path): array

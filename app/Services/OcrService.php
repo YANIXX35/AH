@@ -245,6 +245,39 @@ class OcrService
     }
 
     /**
+     * Extrait un jeu de données OCR étendu pour exposer un maximum d'informations.
+     */
+    public function extractRichDocumentData(string $ocrText): array
+    {
+        $base = $this->extractDocumentInfo($ocrText);
+
+        return [
+            'document_title' => $this->extractDocumentTitle($ocrText),
+            'primary' => [
+                'invoice_number' => $base['invoice_number'] ?? null,
+                'invoice_date' => $base['date'] ?? null,
+                'partner_name' => $base['partner_name'] ?? null,
+                'currency' => $base['currency'] ?? 'FCFA',
+                'amount_ht' => $base['amount_ht_fcfa'] ?? $base['amount_ht'] ?? null,
+                'amount_tva' => $base['amount_tva_fcfa'] ?? $base['amount_tva'] ?? null,
+                'amount_ttc' => $base['amount_ttc_fcfa'] ?? $base['amount_ttc'] ?? null,
+                'tva_rate' => $base['tva_rate'] ?? null,
+            ],
+            'contacts' => [
+                'emails' => $this->extractEmails($ocrText),
+                'phones' => $this->extractPhones($ocrText),
+            ],
+            'identifiers' => [
+                'tax_ids' => $this->extractTaxIdentifiers($ocrText),
+                'references' => $this->extractReferenceCandidates($ocrText),
+            ],
+            'dates' => $this->extractDateCandidates($ocrText),
+            'amount_candidates' => $this->extractAmountCandidates($ocrText),
+            'key_values' => $this->extractKeyValueLines($ocrText),
+        ];
+    }
+
+    /**
      * Vérifier les informations COMPLÈTES du document
      */
     public function verifyCompleteDocument($ocrText, $formData)
@@ -398,6 +431,215 @@ class OcrService
         }
 
         return $amount * $this->getCurrencyToFcfaRate($currency);
+    }
+
+    /**
+     * Détecte un titre de document probable sur les premières lignes OCR.
+     */
+    private function extractDocumentTitle(string $text): ?string
+    {
+        $lines = preg_split('/\R/u', $text) ?: [];
+        foreach (array_slice($lines, 0, 8) as $line) {
+            $candidate = trim((string) $line);
+            if ($candidate === '' || mb_strlen($candidate) < 4) {
+                continue;
+            }
+            if (preg_match('/\b(facture|invoice|reçu|recu|bon de commande|avoir)\b/iu', $candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extrait les paires clé/valeur présentes dans le document.
+     */
+    private function extractKeyValueLines(string $text): array
+    {
+        $rows = [];
+        $lines = preg_split('/\R/u', $text) ?: [];
+        foreach ($lines as $line) {
+            $candidate = trim((string) $line);
+            if ($candidate === '' || mb_strlen($candidate) > 180) {
+                continue;
+            }
+            if (preg_match('/^([^:]{2,80})\s*:\s*(.{1,120})$/u', $candidate, $matches)) {
+                $rows[] = [
+                    'label' => trim($matches[1]),
+                    'value' => trim($matches[2]),
+                ];
+            }
+            if (count($rows) >= 30) {
+                break;
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Extrait les adresses e-mail reconnues dans le texte OCR.
+     */
+    private function extractEmails(string $text): array
+    {
+        preg_match_all('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/iu', $text, $matches);
+        return array_values(array_unique(array_map('trim', $matches[0] ?? [])));
+    }
+
+    /**
+     * Extrait les numéros de téléphone probables.
+     */
+    private function extractPhones(string $text): array
+    {
+        preg_match_all('/(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?){2,5}\d{2,4}/u', $text, $matches);
+        $phones = [];
+        foreach ($matches[0] ?? [] as $rawPhone) {
+            $phone = trim((string) $rawPhone);
+            $digits = preg_replace('/\D/u', '', $phone) ?? '';
+            if (strlen($digits) < 8 || strlen($digits) > 15) {
+                continue;
+            }
+            $phones[] = $phone;
+        }
+
+        return array_values(array_unique($phones));
+    }
+
+    /**
+     * Extrait les identifiants fiscaux possibles (IFU, RCCM, NIF, etc.).
+     */
+    private function extractTaxIdentifiers(string $text): array
+    {
+        $patterns = [
+            '/\b(?:NIF|IFU|RCCM|CCM|IDU|TVA)\s*[:#-]?\s*([A-Z0-9\-\/]{4,})/iu',
+            '/\b(?:RC|R\.C\.)\s*[:#-]?\s*([A-Z0-9\-\/]{4,})/iu',
+        ];
+
+        $ids = [];
+        foreach ($patterns as $pattern) {
+            if (preg_match_all($pattern, $text, $matches)) {
+                foreach ($matches[1] ?? [] as $id) {
+                    $ids[] = trim((string) $id);
+                }
+            }
+        }
+
+        return array_values(array_unique(array_filter($ids)));
+    }
+
+    /**
+     * Extrait les références génériques (facture, BC, BL, commande...).
+     */
+    private function extractReferenceCandidates(string $text): array
+    {
+        $patterns = [
+            '/\b(?:facture|invoice|référence|reference|ref|commande|bon de commande|bc|bl)\s*(?:n[°ºo.]?|num(?:[ée]ro)?)?\s*[:#-]?\s*([A-Z0-9][A-Z0-9\-\/_.]{2,})/iu',
+        ];
+        $refs = [];
+        foreach ($patterns as $pattern) {
+            if (preg_match_all($pattern, $text, $matches)) {
+                foreach ($matches[1] ?? [] as $reference) {
+                    $refs[] = trim((string) $reference);
+                }
+            }
+        }
+
+        return array_values(array_unique(array_filter($refs)));
+    }
+
+    /**
+     * Extrait toutes les dates détectées dans le texte OCR.
+     */
+    private function extractDateCandidates(string $text): array
+    {
+        $dates = $this->extractDates($text);
+        $extraPatterns = [
+            '/\b(\d{4}[\/.-]\d{1,2}[\/.-]\d{1,2})\b/u',
+        ];
+        foreach ($extraPatterns as $pattern) {
+            if (preg_match_all($pattern, $text, $matches)) {
+                foreach ($matches[1] ?? [] as $date) {
+                    $dates[] = trim((string) $date);
+                }
+            }
+        }
+
+        return array_values(array_unique(array_filter($dates)));
+    }
+
+    /**
+     * Extrait les montants détectés avec leurs libellés de proximité.
+     */
+    private function extractAmountCandidates(string $text): array
+    {
+        $rows = [];
+        $lines = preg_split('/\R/u', $text) ?: [];
+        foreach ($lines as $line) {
+            $candidate = trim((string) $line);
+            if ($candidate === '') {
+                continue;
+            }
+            if (preg_match_all('/([0-9][0-9\s.,]{0,20})/u', $candidate, $amountMatches)) {
+                foreach ($amountMatches[1] ?? [] as $rawAmount) {
+                    $amount = $this->normalizeSimpleAmount((string) $rawAmount);
+                    if ($amount === null) {
+                        continue;
+                    }
+                    $label = null;
+                    if (preg_match('/\b(ht|tva|ttc|total|net a payer|net à payer|sous-total)\b/iu', $candidate, $labelMatch)) {
+                        $label = mb_strtolower(trim((string) $labelMatch[1]));
+                    }
+                    $rows[] = [
+                        'label' => $label,
+                        'value' => $amount,
+                        'raw' => trim((string) $rawAmount),
+                    ];
+                    if (count($rows) >= 50) {
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Normalise un montant OCR pour faciliter la lecture.
+     */
+    private function normalizeSimpleAmount(string $rawAmount): ?float
+    {
+        $value = preg_replace('/[^\d,.\s]/u', '', $rawAmount);
+        if ($value === null) {
+            return null;
+        }
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (str_contains($value, ',') && str_contains($value, '.')) {
+            if (strrpos($value, ',') > strrpos($value, '.')) {
+                $value = str_replace('.', '', $value);
+                $value = str_replace(',', '.', $value);
+            } else {
+                $value = str_replace(',', '', $value);
+            }
+        } else {
+            if (substr_count($value, ',') === 1 && substr_count($value, '.') === 0) {
+                $value = str_replace(',', '.', $value);
+            } else {
+                $value = str_replace(',', '', $value);
+            }
+        }
+
+        $value = str_replace(' ', '', $value);
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        return (float) $value;
     }
 
     /**

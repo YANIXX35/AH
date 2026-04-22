@@ -70,7 +70,6 @@
     <div class="crypto-headline">
         <div>
             <h2 class="h3 mb-1"><strong>Tableau de bord</strong> Trésorerie</h2>
-            <p class="text-muted mb-0">Treasury tracking styled like AdminKit crypto dashboard.</p>
         </div>
         <div class="crypto-actions d-flex gap-2">
             <a href="{{ route('treasury.create') }}" class="btn btn-primary btn-sm">Nouvelle transaction</a>
@@ -167,6 +166,8 @@
                                             @else
                                                 <span class="badge bg-dark-subtle text-dark">Stripe Carte</span>
                                             @endif
+                                        @elseif($tx->payment_module === 'fedapay_mobile')
+                                            <span class="badge bg-warning-subtle text-warning">FedaPay Mobile</span>
                                         @else
                                             <span class="badge bg-light text-muted">Non défini</span>
                                         @endif
@@ -183,9 +184,15 @@
                                         @if($tx->payment_module === 'stripe' && $tx->stripe_payout_id)
                                             <div class="text-muted">Payout: {{ $tx->stripe_payout_id }}</div>
                                         @endif
+                                        @if($tx->payment_module === 'fedapay_mobile' && $tx->bank_reference)
+                                            <div class="text-muted">FedaPay: {{ $tx->bank_reference }}</div>
+                                        @endif
                                     </td>
                                     <td class="small"><span class="crypto-status {{ $statusClass }}">{{ strtoupper($tx->status) }}</span></td>
                                     <td class="small text-nowrap">
+                                        @if($tx->payment_module === 'fedapay_mobile' && $tx->type === 'encaissement' && $tx->status !== 'annule')
+                                            <a href="{{ route('treasury.fedapay.checkout.form', ['transaction' => $tx->id, 'country' => 'CIV']) }}" class="btn btn-sm btn-outline-success">Payer mobile</a>
+                                        @endif
                                         <a href="{{ route('treasury.edit', $tx) }}" class="btn btn-sm btn-outline-primary">Edit</a>
                                         <form action="{{ route('treasury.destroy', $tx) }}" method="POST" class="d-inline">
                                             @csrf
@@ -235,6 +242,7 @@
                             <select name="payment_module" class="form-select form-select-sm">
                                 <option value="all" {{ ($paymentModule ?? 'all') === 'all' ? 'selected' : '' }}>Tous</option>
                                 <option value="stripe" {{ ($paymentModule ?? 'all') === 'stripe' ? 'selected' : '' }}>Stripe</option>
+                                <option value="fedapay_mobile" {{ ($paymentModule ?? 'all') === 'fedapay_mobile' ? 'selected' : '' }}>FedaPay Mobile</option>
                                 <option value="none" {{ ($paymentModule ?? 'all') === 'none' ? 'selected' : '' }}>Non défini</option>
                             </select>
                         </div>
