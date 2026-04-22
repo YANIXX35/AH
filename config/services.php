@@ -70,4 +70,28 @@ return [
         'payment_link_url' => env('STRIPE_PAYMENT_LINK_URL'),
     ],
 
+    'ocr_space' => [
+        'endpoint' => env('OCR_SPACE_ENDPOINT', 'https://api.ocr.space/parse/image'),
+        'api_key' => env('OCR_SPACE_API_KEY'),
+        'language' => env('OCR_SPACE_LANGUAGE', 'fre'),
+        'engine' => (int) env('OCR_SPACE_ENGINE', 2),
+        'timeout' => (int) env('OCR_SPACE_TIMEOUT', 60),
+        'is_table' => (bool) env('OCR_SPACE_IS_TABLE', true),
+        'scale' => (bool) env('OCR_SPACE_SCALE', true),
+        'detect_orientation' => (bool) env('OCR_SPACE_DETECT_ORIENTATION', true),
+        'max_file_size_kb' => (int) env('OCR_SPACE_MAX_FILE_SIZE_KB', 1024),
+    ],
+
+    'paddle_ocr' => [
+        'enabled' => (bool) env('PADDLE_OCR_ENABLED', false),
+        'python_path' => env('PADDLE_OCR_PYTHON_PATH', 'python'),
+        'runner_path' => env('PADDLE_OCR_RUNNER_PATH', base_path('paddle_ocr_runner.py')),
+        'timeout' => (int) env('PADDLE_OCR_TIMEOUT', 180),
+        'preferred_device' => env('PADDLE_OCR_PREFERRED_DEVICE', 'gpu'),
+        'fallback_to_cpu' => (bool) env('PADDLE_OCR_FALLBACK_TO_CPU', true),
+        'page_num' => (int) env('PADDLE_OCR_PAGE_NUM', 0),
+        'language' => env('PADDLE_OCR_LANGUAGE', 'fr'),
+        'max_file_size_kb' => (int) env('PADDLE_OCR_MAX_FILE_SIZE_KB', 20480),
+    ],
+
 ];

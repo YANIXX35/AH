@@ -2,15 +2,14 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
+use Symfony\Component\Process\Process;
 
 class OcrService
 {
-    private const OCR_SPACE_API = 'https://api.ocr.space/parse/image';
-
     /**
-     * Extraire le texte du document uploadé via OCR (API OCR.space)
+     * Extraire le texte du document uploadé via OCR local.
      */
     public function extractText($filePath)
     {
@@ -24,7 +23,7 @@ class OcrService
                     'text' => '',
                     'error_code' => 'FILE_NOT_FOUND',
                     'error_location' => $fullPath,
-                    'endpoint' => self::OCR_SPACE_API,
+                    'endpoint' => $this->endpoint(),
                 ];
             }
 
@@ -71,56 +70,24 @@ class OcrService
                     'text' => '',
                     'error_code' => 'UNSUPPORTED_MIME',
                     'error_location' => $mimeType,
-                    'endpoint' => self::OCR_SPACE_API,
+                    'endpoint' => $this->endpoint(),
                 ];
             }
 
-            // Appeler l'API OCR.space
-            $response = Http::timeout(60)
-                ->attach('filename', fopen($fullPath, 'r'), basename($fullPath))
-                ->post(self::OCR_SPACE_API, [
-                    'language' => 'fre', // Français
-                    'apikey' => 'K87899142C88957', // Clé gratuite OCR.space
-                ]);
-
-            if (!$response->successful()) {
+            $maxFileSizeKb = (int) config('services.paddle_ocr.max_file_size_kb', 20480);
+            $fileSizeBytes = filesize($fullPath) ?: 0;
+            if ($maxFileSizeKb > 0 && $fileSizeBytes > ($maxFileSizeKb * 1024)) {
                 return [
                     'success' => false,
-                    'message' => 'Erreur API OCR: ' . $response->status(),
+                    'message' => "Fichier trop volumineux pour la configuration OCR locale actuelle (max {$maxFileSizeKb} KB).",
                     'text' => '',
-                    'error_code' => 'OCR_API_HTTP_ERROR',
-                    'http_status' => $response->status(),
-                    'error_location' => 'OCR.space endpoint',
-                    'endpoint' => self::OCR_SPACE_API,
+                    'error_code' => 'LOCAL_OCR_FILE_TOO_LARGE',
+                    'error_location' => basename($fullPath),
+                    'endpoint' => $this->endpoint(),
                 ];
             }
 
-            $result = $response->json();
-            $parsedText = trim((string) ($result['ParsedText'] ?? data_get($result, 'ParsedResults.0.ParsedText', '')));
-
-            if ($parsedText === '') {
-                $errorMessage = data_get($result, 'ErrorMessage.0')
-                    ?? data_get($result, 'ErrorMessage')
-                    ?? 'Aucun texte détecté dans le document';
-
-                return [
-                    'success' => false,
-                    'message' => $errorMessage,
-                    'text' => '',
-                    'error_code' => 'OCR_EMPTY_TEXT',
-                    'error_location' => 'OCR response payload',
-                    'endpoint' => self::OCR_SPACE_API,
-                ];
-            }
-
-            return [
-                'success' => true,
-                'message' => 'OCR réalisé avec succès (OCR.space)',
-                'text' => $parsedText,
-                'confidence' => $result['Confidence'] ?? 0,
-                'endpoint' => self::OCR_SPACE_API,
-            ];
-
+            return $this->runLocalPaddleOcr($fullPath);
         } catch (\Exception $e) {
             return [
                 'success' => false,
@@ -128,9 +95,224 @@ class OcrService
                 'text' => '',
                 'error_code' => 'OCR_EXCEPTION',
                 'error_location' => 'HTTP request to OCR API',
-                'endpoint' => self::OCR_SPACE_API,
+                'endpoint' => $this->endpoint(),
             ];
         }
+    }
+
+    private function endpoint(): string
+    {
+        return 'local_paddleocr_runner';
+    }
+
+    private function runLocalPaddleOcr(string $fullPath): array
+    {
+        if (! (bool) config('services.paddle_ocr.enabled', false)) {
+            return [
+                'success' => false,
+                'message' => 'Le moteur PaddleOCR local est désactivé. Activez PADDLE_OCR_ENABLED.',
+                'text' => '',
+                'error_code' => 'LOCAL_OCR_DISABLED',
+                'error_location' => 'config/services.php',
+                'endpoint' => $this->endpoint(),
+            ];
+        }
+
+        $pythonPath = trim((string) config('services.paddle_ocr.python_path', 'python'));
+        $runnerPath = trim((string) config('services.paddle_ocr.runner_path', ''));
+        if ($pythonPath === '' || $runnerPath === '') {
+            return [
+                'success' => false,
+                'message' => 'Configuration PaddleOCR incomplète. Vérifiez PADDLE_OCR_PYTHON_PATH et PADDLE_OCR_RUNNER_PATH.',
+                'text' => '',
+                'error_code' => 'LOCAL_OCR_CONFIG_MISSING',
+                'error_location' => 'config/services.php',
+                'endpoint' => $this->endpoint(),
+            ];
+        }
+
+        if (! file_exists($runnerPath)) {
+            return [
+                'success' => false,
+                'message' => 'Runner PaddleOCR introuvable.',
+                'text' => '',
+                'error_code' => 'LOCAL_OCR_RUNNER_NOT_FOUND',
+                'error_location' => $runnerPath,
+                'endpoint' => $this->endpoint(),
+            ];
+        }
+
+        $command = [
+            $pythonPath,
+            $runnerPath,
+            '--input',
+            $fullPath,
+            '--preferred-device',
+            (string) config('services.paddle_ocr.preferred_device', 'gpu'),
+            '--fallback-to-cpu',
+            $this->toBooleanString((bool) config('services.paddle_ocr.fallback_to_cpu', true)),
+            '--language',
+            (string) config('services.paddle_ocr.language', 'fr'),
+            '--page-num',
+            (string) max(0, (int) config('services.paddle_ocr.page_num', 0)),
+        ];
+
+        $process = new Process($command);
+        $timeout = max(1, (int) config('services.paddle_ocr.timeout', 180));
+        $this->extendPhpExecutionTime($timeout);
+        $process->setTimeout($timeout);
+        $process->setEnv([
+            'PYTHONUTF8' => '1',
+            'PYTHONUNBUFFERED' => '1',
+            'PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK' => 'True',
+        ]);
+
+        try {
+            $process->run();
+        } catch (ProcessTimedOutException $exception) {
+            return [
+                'success' => false,
+                'message' => 'Le runner PaddleOCR a dépassé le délai autorisé.',
+                'text' => '',
+                'error_code' => 'LOCAL_OCR_TIMEOUT',
+                'error_location' => $fullPath,
+                'endpoint' => $this->endpoint(),
+            ];
+        } catch (\Throwable $exception) {
+            return [
+                'success' => false,
+                'message' => 'Impossible d’exécuter le runner PaddleOCR: ' . $exception->getMessage(),
+                'text' => '',
+                'error_code' => 'LOCAL_OCR_PROCESS_ERROR',
+                'error_location' => $runnerPath,
+                'endpoint' => $this->endpoint(),
+            ];
+        }
+
+        $stdout = trim($process->getOutput());
+        $stderr = trim($process->getErrorOutput());
+        $decoded = json_decode($stdout, true);
+
+        if (! is_array($decoded)) {
+            return [
+                'success' => false,
+                'message' => 'Le runner PaddleOCR a renvoyé une réponse JSON invalide.',
+                'text' => '',
+                'error_code' => 'LOCAL_OCR_INVALID_JSON',
+                'error_location' => $runnerPath,
+                'endpoint' => $this->endpoint(),
+                'raw_response' => [
+                    'stdout' => $stdout,
+                    'stderr' => $stderr,
+                    'exit_code' => $process->getExitCode(),
+                ],
+            ];
+        }
+
+        $decoded['endpoint'] = $this->endpoint();
+        if (! empty($stderr)) {
+            $decoded['raw_stderr'] = $stderr;
+        }
+
+        if (
+            ($decoded['success'] ?? false)
+            && is_string($stderr)
+            && str_contains($stderr, 'Switching to CPU instead')
+        ) {
+            $decoded['mode'] = 'cpu';
+            $decoded['message'] = 'OCR local réalisé avec succès via PaddleOCR (cpu).';
+        }
+
+        if (! ($decoded['success'] ?? false)) {
+            $decoded['message'] = (string) ($decoded['message'] ?? 'Erreur PaddleOCR locale.');
+            $decoded['text'] = (string) ($decoded['text'] ?? '');
+            $decoded['error_code'] = (string) ($decoded['error_code'] ?? 'LOCAL_OCR_FAILED');
+            $decoded['error_location'] = (string) ($decoded['error_location'] ?? $fullPath);
+            return $decoded;
+        }
+
+        $decoded['message'] = (string) ($decoded['message'] ?? 'OCR local réalisé avec succès.');
+        $decoded['text'] = trim((string) ($decoded['text'] ?? ''));
+        $decoded['confidence'] = (float) ($decoded['confidence'] ?? 0);
+        $decoded['raw_response'] = (array) ($decoded['raw_response'] ?? []);
+
+        if ($decoded['text'] === '') {
+            return [
+                'success' => false,
+                'message' => 'Aucun texte détecté par PaddleOCR.',
+                'text' => '',
+                'error_code' => 'LOCAL_OCR_EMPTY_TEXT',
+                'error_location' => $fullPath,
+                'endpoint' => $this->endpoint(),
+                'raw_response' => $decoded['raw_response'],
+            ];
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * Allonge temporairement la limite d'exécution PHP pour laisser le runner OCR finir.
+     */
+    private function extendPhpExecutionTime(int $timeout): void
+    {
+        if (! function_exists('set_time_limit')) {
+            return;
+        }
+
+        $targetSeconds = max(120, $timeout + 30);
+
+        try {
+            @set_time_limit($targetSeconds);
+        } catch (\Throwable $exception) {
+            // Certains environnements verrouillent set_time_limit ; on garde alors la limite courante.
+        }
+    }
+
+    private function toBooleanString(bool $value): string
+    {
+        return $value ? 'true' : 'false';
+    }
+
+    private function extractParsedText(array $result): string
+    {
+        $pages = [];
+        foreach ((array) ($result['ParsedResults'] ?? []) as $parsedResult) {
+            $pageText = trim((string) ($parsedResult['ParsedText'] ?? ''));
+            if ($pageText !== '') {
+                $pages[] = $pageText;
+            }
+        }
+
+        if (!empty($pages)) {
+            return trim(implode("\n\n", $pages));
+        }
+
+        return trim((string) ($result['ParsedText'] ?? ''));
+    }
+
+    private function estimateConfidence(array $result, string $parsedText): float
+    {
+        $parsedResults = (array) ($result['ParsedResults'] ?? []);
+        if (empty($parsedResults)) {
+            return mb_strlen($parsedText) >= 30 ? 70.0 : 55.0;
+        }
+
+        $successfulPages = 0;
+        foreach ($parsedResults as $parsedResult) {
+            if ((int) ($parsedResult['FileParseExitCode'] ?? 0) === 1 && trim((string) ($parsedResult['ParsedText'] ?? '')) !== '') {
+                $successfulPages++;
+            }
+        }
+
+        if ($successfulPages === 0) {
+            return 35.0;
+        }
+
+        $ratio = $successfulPages / max(1, count($parsedResults));
+        $lengthBonus = mb_strlen($parsedText) >= 100 ? 12.0 : (mb_strlen($parsedText) >= 30 ? 6.0 : 0.0);
+
+        return round(min(100.0, max(35.0, ($ratio * 82.0) + $lengthBonus)), 2);
     }
 
     /**
@@ -227,6 +409,7 @@ class OcrService
         $amountTTC = $this->extractAmount($ocrText, 'TTC|Total|Net a payer|Net à payer|Somme');
         $tvaRate = $this->extractTVARate($ocrText);
         $partners = $this->extractPartnerNames($ocrText);
+        $parties = $this->extractDocumentParties($ocrText);
 
         return [
             'invoice_number' => $invoiceNumber ?: null,
@@ -240,7 +423,9 @@ class OcrService
             'amount_ttc' => $amountTTC,
             'amount_ttc_fcfa' => $this->convertAmountToFcfa($amountTTC, $currency),
             'tva_rate' => $tvaRate,
-            'partner_name' => $partners[0] ?? null,
+            'partner_name' => $parties['supplier'] ?? $partners[0] ?? $parties['client'] ?? null,
+            'supplier_name' => $parties['supplier'] ?? null,
+            'client_name' => $parties['client'] ?? null,
         ];
     }
 
@@ -250,6 +435,9 @@ class OcrService
     public function extractRichDocumentData(string $ocrText): array
     {
         $base = $this->extractDocumentInfo($ocrText);
+        $partnerCandidates = $this->extractPartnerNames($ocrText);
+        $supplier = $base['supplier_name'] ?? null;
+        $client = $base['client_name'] ?? null;
 
         return [
             'document_title' => $this->extractDocumentTitle($ocrText),
@@ -257,23 +445,52 @@ class OcrService
                 'invoice_number' => $base['invoice_number'] ?? null,
                 'invoice_date' => $base['date'] ?? null,
                 'partner_name' => $base['partner_name'] ?? null,
+                'supplier_name' => $base['supplier_name'] ?? null,
+                'client_name' => $base['client_name'] ?? null,
                 'currency' => $base['currency'] ?? 'FCFA',
                 'amount_ht' => $base['amount_ht_fcfa'] ?? $base['amount_ht'] ?? null,
                 'amount_tva' => $base['amount_tva_fcfa'] ?? $base['amount_tva'] ?? null,
                 'amount_ttc' => $base['amount_ttc_fcfa'] ?? $base['amount_ttc'] ?? null,
                 'tva_rate' => $base['tva_rate'] ?? null,
             ],
+            'parties' => [
+                'supplier' => $supplier,
+                'client' => $client,
+                'partner_candidates' => $partnerCandidates,
+            ],
             'contacts' => [
                 'emails' => $this->extractEmails($ocrText),
                 'phones' => $this->extractPhones($ocrText),
+                'websites' => $this->extractWebsites($ocrText),
+            ],
+            'addresses' => [
+                'supplier_address' => $this->extractAddressForParty($ocrText, ['fournisseur', 'supplier', 'vendeur', 'vendor']),
+                'client_address' => $this->extractAddressForParty($ocrText, ['client', 'customer', 'destinataire']),
+                'address_candidates' => $this->extractAddressCandidates($ocrText),
             ],
             'identifiers' => [
                 'tax_ids' => $this->extractTaxIdentifiers($ocrText),
+                'business_ids' => $this->extractBusinessIdentifiers($ocrText),
                 'references' => $this->extractReferenceCandidates($ocrText),
             ],
+            'payment' => [
+                'terms' => $this->extractPaymentTerms($ocrText),
+                'due_dates' => $this->extractDueDateCandidates($ocrText),
+                'payment_methods' => $this->extractPaymentMethodCandidates($ocrText),
+            ],
+            'banking' => [
+                'iban' => $this->extractIbanCandidates($ocrText),
+                'bic_swift' => $this->extractBicCandidates($ocrText),
+                'account_numbers' => $this->extractBankAccountCandidates($ocrText),
+            ],
+            'line_items' => $this->extractLineItems($ocrText),
             'dates' => $this->extractDateCandidates($ocrText),
             'amount_candidates' => $this->extractAmountCandidates($ocrText),
             'key_values' => $this->extractKeyValueLines($ocrText),
+            'meta' => [
+                'line_count' => $this->countTextLines($ocrText),
+                'character_count' => mb_strlen($ocrText),
+            ],
         ];
     }
 
@@ -392,7 +609,7 @@ class OcrService
     {
         $upper = mb_strtoupper($text);
 
-        if (str_contains($upper, 'FCFA') || str_contains($upper, 'XOF')) {
+        if (preg_match('/\b(?:F\s*CFA|FCFA|XOF|XAF|CFA)\b/iu', $upper)) {
             return 'FCFA';
         }
         if (str_contains($upper, 'EUR') || str_contains($text, '€')) {
@@ -580,29 +797,274 @@ class OcrService
             if ($candidate === '') {
                 continue;
             }
-            if (preg_match_all('/([0-9][0-9\s.,]{0,20})/u', $candidate, $amountMatches)) {
-                foreach ($amountMatches[1] ?? [] as $rawAmount) {
-                    $amount = $this->normalizeSimpleAmount((string) $rawAmount);
-                    if ($amount === null) {
-                        continue;
-                    }
-                    $label = null;
-                    if (preg_match('/\b(ht|tva|ttc|total|net a payer|net à payer|sous-total)\b/iu', $candidate, $labelMatch)) {
-                        $label = mb_strtolower(trim((string) $labelMatch[1]));
-                    }
-                    $rows[] = [
-                        'label' => $label,
-                        'value' => $amount,
-                        'raw' => trim((string) $rawAmount),
-                    ];
-                    if (count($rows) >= 50) {
-                        break 2;
-                    }
+            foreach ($this->extractNumericAmountsFromLine($candidate) as $amountData) {
+                $label = null;
+                if (preg_match('/\b(ht|tva|ttc|total|net a payer|net à payer|sous-total)\b/iu', $candidate, $labelMatch)) {
+                    $label = mb_strtolower(trim((string) $labelMatch[1]));
+                }
+                $rows[] = [
+                    'label' => $label,
+                    'value' => $amountData['value'],
+                    'raw' => $amountData['raw'],
+                ];
+                if (count($rows) >= 50) {
+                    break 2;
                 }
             }
         }
 
         return $rows;
+    }
+
+    /**
+     * Extrait des sites web présents dans le document.
+     */
+    private function extractWebsites(string $text): array
+    {
+        preg_match_all('/\b(?:https?:\/\/)?(?:www\.)?[a-z0-9\-]+\.[a-z]{2,}(?:\/[^\s]*)?/iu', $text, $matches);
+        $sites = [];
+        foreach ($matches[0] ?? [] as $rawSite) {
+            $site = trim((string) $rawSite);
+            if ($site === '') {
+                continue;
+            }
+            $sites[] = rtrim($site, '.,;)');
+        }
+
+        return array_values(array_unique($sites));
+    }
+
+    /**
+     * Extrait les identifiants business (RCCM, registre, etc.).
+     */
+    private function extractBusinessIdentifiers(string $text): array
+    {
+        $patterns = [
+            '/\b(?:RCCM|RC|R\.C\.|Registre(?:\s+de\s+commerce)?)\s*[:#-]?\s*([A-Z0-9\-\/.]{4,})/iu',
+            '/\b(?:IDU|IFU|NCCM|CCM)\s*[:#-]?\s*([A-Z0-9\-\/.]{4,})/iu',
+        ];
+        $ids = [];
+        foreach ($patterns as $pattern) {
+            if (!preg_match_all($pattern, $text, $matches)) {
+                continue;
+            }
+            foreach ($matches[1] ?? [] as $value) {
+                $ids[] = trim((string) $value);
+            }
+        }
+
+        return array_values(array_unique(array_filter($ids)));
+    }
+
+    /**
+     * Détecte les conditions de paiement (30 jours, comptant, etc.).
+     */
+    private function extractPaymentTerms(string $text): array
+    {
+        $terms = [];
+        $patterns = [
+            '/\b(?:conditions?\s+de\s+paiement|payment\s+terms?)\s*[:\-]?\s*([^\n\r]{3,120})/iu',
+            '/\b(?:paiement\s+(?:à|a)\s+\d+\s*jours?|net\s*\d+\s*jours?)\b/iu',
+            '/\b(?:paiement\s+comptant|cash|virement|ch[èe]que|mobile\s*money)\b/iu',
+        ];
+        foreach ($patterns as $pattern) {
+            if (!preg_match_all($pattern, $text, $matches)) {
+                continue;
+            }
+            $source = $matches[1] ?? $matches[0] ?? [];
+            foreach ($source as $term) {
+                $candidate = trim((string) $term);
+                if ($candidate !== '') {
+                    $terms[] = $candidate;
+                }
+            }
+        }
+
+        return array_values(array_unique($terms));
+    }
+
+    /**
+     * Extrait les dates d'échéance possibles.
+     */
+    private function extractDueDateCandidates(string $text): array
+    {
+        $dates = [];
+        $patterns = [
+            '/\b(?:[ée]ch[ée]ance|date\s+d[\' ]?échéance|due\s+date)\s*[:\-]?\s*(\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4})/iu',
+            '/\b(?:due\s+on|payable\s+on)\s*[:\-]?\s*(\d{4}[\/.\-]\d{1,2}[\/.\-]\d{1,2})/iu',
+        ];
+        foreach ($patterns as $pattern) {
+            if (!preg_match_all($pattern, $text, $matches)) {
+                continue;
+            }
+            foreach ($matches[1] ?? [] as $value) {
+                $dates[] = trim((string) $value);
+            }
+        }
+
+        return array_values(array_unique(array_filter($dates)));
+    }
+
+    /**
+     * Extrait les moyens de paiement probables.
+     */
+    private function extractPaymentMethodCandidates(string $text): array
+    {
+        $methods = [];
+        $keywords = [
+            'virement', 'carte', 'esp[eè]ces', 'ch[èe]que', 'mobile money',
+            'wave', 'orange money', 'mtn money', 'moov money', 'cash',
+        ];
+        foreach ($keywords as $keyword) {
+            if (preg_match('/\b' . $keyword . '\b/iu', $text)) {
+                $methods[] = mb_strtolower($keyword);
+            }
+        }
+
+        return array_values(array_unique($methods));
+    }
+
+    /**
+     * Extrait les IBAN potentiels.
+     */
+    private function extractIbanCandidates(string $text): array
+    {
+        preg_match_all('/\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/u', strtoupper($text), $matches);
+        return array_values(array_unique(array_map('trim', $matches[0] ?? [])));
+    }
+
+    /**
+     * Extrait les codes BIC/SWIFT potentiels.
+     */
+    private function extractBicCandidates(string $text): array
+    {
+        preg_match_all('/\b[A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\b/u', strtoupper($text), $matches);
+        return array_values(array_unique(array_map('trim', $matches[0] ?? [])));
+    }
+
+    /**
+     * Extrait les numéros de compte bancaire locaux probables.
+     */
+    private function extractBankAccountCandidates(string $text): array
+    {
+        $accounts = [];
+        $patterns = [
+            '/\b(?:compte|account|rib)\s*[:#-]?\s*([A-Z0-9\- ]{6,40})/iu',
+            '/\b\d{8,24}\b/u',
+        ];
+        foreach ($patterns as $pattern) {
+            if (!preg_match_all($pattern, $text, $matches)) {
+                continue;
+            }
+            $source = $matches[1] ?? $matches[0] ?? [];
+            foreach ($source as $raw) {
+                $candidate = trim((string) $raw);
+                $digits = preg_replace('/\D/u', '', $candidate) ?? '';
+                if (strlen($digits) < 8) {
+                    continue;
+                }
+                $accounts[] = $candidate;
+            }
+        }
+
+        return array_values(array_unique($accounts));
+    }
+
+    /**
+     * Extrait l'adresse liée à une partie (client/fournisseur) si trouvée.
+     */
+    private function extractAddressForParty(string $text, array $labels): ?string
+    {
+        $escapedLabels = array_map(
+            fn (string $label) => preg_quote($label, '/'),
+            $labels
+        );
+        $pattern = '/\b(?:' . implode('|', $escapedLabels) . ')\b[^\n\r]*\R([^\n\r]{6,140})/iu';
+        if (!preg_match($pattern, $text, $matches)) {
+            return null;
+        }
+        $candidate = trim((string) ($matches[1] ?? ''));
+
+        return $this->looksLikeAddress($candidate) ? $candidate : null;
+    }
+
+    /**
+     * Extrait des adresses candidates globales.
+     */
+    private function extractAddressCandidates(string $text): array
+    {
+        $candidates = [];
+        $lines = preg_split('/\R/u', $text) ?: [];
+        foreach ($lines as $line) {
+            $candidate = trim((string) $line);
+            if (! $this->looksLikeAddress($candidate)) {
+                continue;
+            }
+            $candidates[] = $candidate;
+            if (count($candidates) >= 12) {
+                break;
+            }
+        }
+
+        return array_values(array_unique($candidates));
+    }
+
+    /**
+     * Heuristique simple pour reconnaître une ligne d'adresse.
+     */
+    private function looksLikeAddress(string $line): bool
+    {
+        if ($line === '' || mb_strlen($line) < 8 || mb_strlen($line) > 160) {
+            return false;
+        }
+
+        if (preg_match('/\b(?:rue|avenue|av\.?|boulevard|bd|quartier|zone|bp|bo[iî]te\s+postale|lot|immeuble|city|ville)\b/iu', $line)) {
+            return true;
+        }
+
+        return (bool) preg_match('/\d{2,}.*[A-Za-zÀ-ÿ]{3,}/u', $line);
+    }
+
+    /**
+     * Extrait les lignes de détail facture (quantité, prix, total).
+     */
+    private function extractLineItems(string $text): array
+    {
+        $items = [];
+        $lines = preg_split('/\R/u', $text) ?: [];
+        foreach ($lines as $line) {
+            $candidate = trim((string) $line);
+            if ($candidate === '' || mb_strlen($candidate) < 10) {
+                continue;
+            }
+
+            if (!preg_match('/\b(?:qt[ée]|quantit[eé]|pu|prix|montant|total)\b/iu', $candidate)) {
+                continue;
+            }
+
+            $amounts = $this->extractNumericAmountsFromLine($candidate);
+            $items[] = [
+                'raw_line' => $candidate,
+                'amounts' => $amounts,
+            ];
+
+            if (count($items) >= 25) {
+                break;
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * Compte les lignes non vides du texte OCR.
+     */
+    private function countTextLines(string $text): int
+    {
+        $lines = preg_split('/\R/u', $text) ?: [];
+        $nonEmpty = array_filter($lines, fn ($line) => trim((string) $line) !== '');
+
+        return count($nonEmpty);
     }
 
     /**
@@ -778,15 +1240,19 @@ class OcrService
     private function extractInvoiceNumber($text): ?string
     {
         $patterns = [
-            '/Facture\s*#?[\s:]*(\w+[-]?\w+)/i',
-            '/N°?\s*Facture[\s:]*(\w+[-]?\w+)/i',
-            '/Facture\s*N°[\s:]*(\w+[-]?\w+)/i',
-            '/Invoice\s*#?[\s:]*(\w+[-]?\w+)/i',
+            '/\b(?:facture|invoice)\s*(?:n[°ºo.]?|num(?:[ée]ro)?)\s*[:#-]?\s*([A-Z0-9][A-Z0-9\-\/_.]{2,})/iu',
+            '/\b(?:n[°ºo.]?|num(?:[ée]ro)?)\s*[:#-]?\s*([A-Z0-9]{2,}[A-Z0-9\-\/_.]*)/iu',
+            '/\b(?:ref(?:erence)?|r[ée]f)\s*(?:n[°ºo.]?)?\s*[:#-]?\s*([A-Z0-9][A-Z0-9\-\/_.]{2,})/iu',
         ];
 
         foreach ($patterns as $pattern) {
             if (preg_match($pattern, $text, $matches)) {
-                return trim($matches[1]);
+                $candidate = trim((string) $matches[1]);
+                if (! preg_match('/\d/u', $candidate)) {
+                    continue;
+                }
+
+                return $candidate;
             }
         }
         return null;
@@ -852,18 +1318,90 @@ class OcrService
      */
     private function extractAmount($text, $labels): ?float
     {
-        $pattern = '/(?:' . $labels . ')[\s:]*(\d+[.,]\d{2})/i';
-        
-        if (preg_match_all($pattern, $text, $matches)) {
-            // Retourner le plus grand montant trouvé (généralement le total)
-            $amounts = [];
-            foreach ($matches[1] as $amount) {
-                $amounts[] = (float)str_replace(',', '.', $amount);
+        $labelPattern = '(?:' . $labels . ')';
+        $amounts = [];
+        $lines = preg_split('/\R/u', $text) ?: [];
+
+        foreach ($lines as $index => $line) {
+            $candidate = trim((string) $line);
+            if ($candidate === '' || ! preg_match('/' . $labelPattern . '/iu', $candidate)) {
+                continue;
             }
-            return !empty($amounts) ? max($amounts) : null;
+
+            $amounts = array_merge($amounts, $this->extractAmountsNearLine($lines, (int) $index));
         }
-        
-        return null;
+
+        return ! empty($amounts) ? max($amounts) : null;
+    }
+
+    /**
+     * Cherche les montants sur la ligne courante puis sur les lignes suivantes
+     * pour gérer les sorties OCR où le libellé et la valeur sont séparés.
+     */
+    private function extractAmountsNearLine(array $lines, int $index): array
+    {
+        $amounts = [];
+        $maxLookahead = 2;
+        $maxNonEmptyLines = 3;
+        $visited = 0;
+
+        for ($offset = 0; $offset <= $maxLookahead; $offset++) {
+            $currentIndex = $index + $offset;
+            if (! isset($lines[$currentIndex])) {
+                break;
+            }
+
+            $candidate = trim((string) $lines[$currentIndex]);
+            if ($candidate === '') {
+                continue;
+            }
+
+            $visited++;
+            if ($this->looksLikeSectionHeader($candidate) && $offset > 0) {
+                break;
+            }
+
+            foreach ($this->extractNumericAmountsFromLine($candidate) as $amountData) {
+                $amounts[] = $amountData['value'];
+            }
+
+            if (! empty($amounts) || $visited >= $maxNonEmptyLines) {
+                break;
+            }
+        }
+
+        return $amounts;
+    }
+
+    private function looksLikeSectionHeader(string $line): bool
+    {
+        if (preg_match('/^[A-ZÀÂÄÇÉÈÊËÎÏÔÖÙÛÜ0-9\s\-:()%\/]{4,}$/u', $line)) {
+            return true;
+        }
+
+        return (bool) preg_match('/\b(?:facture|description|quantit[eé]|prix|montant|total|sous-total|tva|taxe|client|fournisseur|date|r[ée]f)\b/iu', $line);
+    }
+
+    private function extractNumericAmountsFromLine(string $line): array
+    {
+        $amounts = [];
+        if (! preg_match_all('/\b(?:\d{1,3}(?:[ \x{00A0}.]\d{3})+(?:[.,]\d{2})?|\d+(?:[.,]\d{2})?)\b/u', $line, $matches)) {
+            return $amounts;
+        }
+
+        foreach ((array) ($matches[0] ?? []) as $rawAmount) {
+            $normalized = $this->normalizeSimpleAmount((string) $rawAmount);
+            if ($normalized === null) {
+                continue;
+            }
+
+            $amounts[] = [
+                'raw' => trim((string) $rawAmount),
+                'value' => $normalized,
+            ];
+        }
+
+        return $amounts;
     }
 
     /**
@@ -872,8 +1410,8 @@ class OcrService
     private function extractTVARate($text): ?float
     {
         $patterns = [
-            '/(?:Taux[\s])?TVA[\s:]*(\d+(?:[.,]\d{1,2})?)\s*%/i',
-            '/TVA[\s:]*(\d+(?:[.,]\d{1,2})?)\s*%/i',
+            '/(?:taux\s*)?TVA(?:\s*\(|[\s:])\s*(\d+(?:[.,]\d{1,2})?)\s*%/iu',
+            '/\(\s*(\d+(?:[.,]\d{1,2})?)\s*%\s*\)\s*[:\-]?\s*[0-9]/iu',
             '/(?:Tax|TAX)[\s:]*(\d+(?:[.,]\d{1,2})?)\s*%/i',
         ];
 
@@ -892,6 +1430,13 @@ class OcrService
     private function extractPartnerNames($text): array
     {
         $partners = [];
+        $parties = $this->extractDocumentParties($text);
+        foreach ($parties as $party) {
+            if ($party !== null) {
+                $partners[] = $party;
+            }
+        }
+
         $patterns = [
             '/(?:Fournisseur|Supplier|Vendeur|Vendor)[\s:]*([^\n]+)/i',
             '/(?:Client|Customer)[\s:]*([^\n]+)/i',
@@ -911,6 +1456,36 @@ class OcrService
         }
 
         return array_unique($partners);
+    }
+
+    /**
+     * Extrait les parties nommées pour éviter de confondre client et fournisseur.
+     */
+    private function extractDocumentParties(string $text): array
+    {
+        return [
+            'supplier' => $this->extractLabeledParty($text, ['fournisseur', 'supplier', 'vendeur', 'vendor']),
+            'client' => $this->extractLabeledParty($text, ['client', 'customer', 'destinataire']),
+        ];
+    }
+
+    private function extractLabeledParty(string $text, array $labels): ?string
+    {
+        $escapedLabels = array_map(
+            fn (string $label) => preg_quote($label, '/'),
+            $labels
+        );
+        $pattern = '/\b(?:' . implode('|', $escapedLabels) . ')\b\s*[:\-]\s*([^\n\r]{3,120})/iu';
+
+        if (! preg_match($pattern, $text, $matches)) {
+            return null;
+        }
+
+        $candidate = trim((string) ($matches[1] ?? ''));
+        $candidate = preg_replace('/\s{2,}/u', ' ', $candidate) ?? $candidate;
+        $candidate = trim((string) preg_replace('/[;,.:\-]+$/u', '', $candidate));
+
+        return $candidate !== '' ? $candidate : null;
     }
 
     /**

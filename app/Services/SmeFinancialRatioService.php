@@ -297,7 +297,10 @@ class SmeFinancialRatioService
         $ledger = [];
         foreach ($entries as $entry) {
             foreach (['debit_account', 'credit_account'] as $side) {
-                $account = $entry->{$side};
+                $account = $this->extractAccountCode((string) $entry->{$side});
+                if ($account === null) {
+                    continue;
+                }
                 if (! isset($ledger[$account])) {
                     $ledger[$account] = ['debit' => 0.0, 'credit' => 0.0];
                 }
@@ -309,41 +312,93 @@ class SmeFinancialRatioService
             }
         }
 
-        $assets = 0.0;
-        $liabilities = 0.0;
-        $income = 0.0;
-        $expenses = 0.0;
-        $receivablesNet = 0.0;
-        $cashLedger = 0.0;
-
-        foreach ($ledger as $account => $amounts) {
-            $prefix = $this->accountPrefix($account);
-            $debitNet = $amounts['debit'] - $amounts['credit'];
-            $creditNet = $amounts['credit'] - $amounts['debit'];
-
-            // Actif : immobilisations / stocks (2–3), trésorerie (5), créances clients (4 débitrice).
-            if (in_array($prefix, ['2', '3', '5'], true) && $debitNet > 0) {
-                $assets += $debitNet;
-            } elseif ($prefix === '4' && $debitNet > 0) {
-                // Même montant que creances_net : les clients font partie de l’actif circulant.
-                $assets += $debitNet;
-            } elseif (in_array($prefix, ['1', '4'], true) && $creditNet > 0) {
-                $liabilities += $creditNet;
-            }
-
-            if ($prefix === '4' && $debitNet > 0) {
-                $receivablesNet += $debitNet;
-            }
-            if ($prefix === '5' && $debitNet > 0) {
-                $cashLedger += $debitNet;
-            }
-
-            if ($prefix === '6' && $debitNet > 0) {
-                $expenses += $debitNet;
-            } elseif ($prefix === '7' && $creditNet > 0) {
-                $income += $creditNet;
-            }
+        $rowsByCode = [];
+        foreach ($ledger as $code => $amounts) {
+            $debit = (float) ($amounts['debit'] ?? 0.0);
+            $credit = (float) ($amounts['credit'] ?? 0.0);
+            $rowsByCode[$code] = [
+                'debit' => $debit,
+                'credit' => $credit,
+                'debit_net' => max($debit - $credit, 0.0),
+                'credit_net' => max($credit - $debit, 0.0),
+            ];
         }
+
+        $sumByPrefixes = function (array $prefixes, string $column = 'credit_net') use ($rowsByCode): float {
+            $total = 0.0;
+            foreach ($rowsByCode as $code => $row) {
+                foreach ($prefixes as $prefix) {
+                    $prefix = (string) $prefix;
+                    if ($prefix !== '' && str_starts_with((string) $code, $prefix)) {
+                        $total += (float) ($row[$column] ?? 0.0);
+                        break;
+                    }
+                }
+            }
+            return $total;
+        };
+
+        $income = $sumByPrefixes(['7'], 'credit_net');
+        $expenses = $sumByPrefixes(['6'], 'debit_net');
+        $netResult = $income - $expenses;
+
+        // Capitaux propres (référentiel SYSCOHADA aligné sur les masses du bilan).
+        $capital = $sumByPrefixes(['101'], 'credit_net');
+        $primesReserves = $sumByPrefixes(['104', '105', '106', '107'], 'credit_net');
+        $subventionsInvestissement = $sumByPrefixes(['131'], 'credit_net');
+        $provisionsAssimilees = $sumByPrefixes(['141', '142', '143', '144', '145', '146', '147', '148'], 'credit_net');
+        $equity = $capital + $primesReserves + $subventionsInvestissement + $provisionsAssimilees + $netResult;
+
+        // Dettes et passifs exigibles (hors capitaux propres).
+        $dettesFinancieres = $sumByPrefixes(['161', '162', '163'], 'credit_net');
+        $dettesCreditBail = $sumByPrefixes(['164'], 'credit_net');
+        $dettesFinDiverses = $sumByPrefixes(['109', '165', '166'], 'credit_net');
+        $provisionsFinancieres = $sumByPrefixes(['19'], 'credit_net');
+        $fournisseursExploit = $sumByPrefixes(['401', '403', '408'], 'credit_net');
+        $dettesFiscales = $sumByPrefixes(['441', '442', '443', '444', '445', '447'], 'credit_net');
+        $dettesSociales = $sumByPrefixes(['428', '431'], 'credit_net');
+        $autresDettes = $sumByPrefixes(['421', '451', '455', '467'], 'credit_net');
+        $risquesProvisionnes = $sumByPrefixes(['19', '49'], 'credit_net');
+        $tresoreriePassif = $sumByPrefixes(['512', '514', '515', '521', '531', '541', '542', '566', '581'], 'credit_net');
+
+        $liabilities = $dettesFinancieres
+            + $dettesCreditBail
+            + $dettesFinDiverses
+            + $provisionsFinancieres
+            + $fournisseursExploit
+            + $dettesFiscales
+            + $dettesSociales
+            + $autresDettes
+            + $risquesProvisionnes
+            + $tresoreriePassif;
+
+        // Actif aligné bilan : immobilisations + circulant + trésorerie.
+        $chargesImmob = max($sumByPrefixes(['201'], 'debit_net') - $sumByPrefixes(['291'], 'credit_net'), 0.0);
+        $primesRemboursement = max($sumByPrefixes(['206'], 'debit_net'), 0.0);
+        $actifIncorporel = max(
+            $sumByPrefixes(['203', '205', '207', '208'], 'debit_net') - $sumByPrefixes(['2811', '291'], 'credit_net'),
+            0.0
+        );
+        $actifCorporel = max(
+            $sumByPrefixes(['211', '212', '213', '221', '215', '241', '244', '231'], 'debit_net') - $sumByPrefixes(['2812', '2813', '2814', '2815', '2818', '292'], 'credit_net'),
+            0.0
+        );
+        $actifFinancier = max($sumByPrefixes(['261', '271', '275'], 'debit_net'), 0.0);
+
+        $immobilisationsBrutes = $chargesImmob + $primesRemboursement + $actifIncorporel + $actifCorporel + $actifFinancier;
+
+        $stocksActif = max(
+            $sumByPrefixes(['311', '321', '322', '331', '335', '341', '351', '355'], 'debit_net') - $sumByPrefixes(['391', '392'], 'credit_net'),
+            0.0
+        );
+        $receivablesNet = max(
+            $sumByPrefixes(['401', '403', '411', '413', '418', '421', '425', '428', '431', '438', '441', '442', '443', '444', '445', '447', '451', '455', '467'], 'debit_net'),
+            0.0
+        );
+        $tresorerieActif = max($sumByPrefixes(['512', '514', '515', '521', '531', '541', '542', '566', '581'], 'debit_net'), 0.0);
+
+        $assets = $immobilisationsBrutes + $stocksActif + $receivablesNet + $tresorerieActif;
+        $cashLedger = $tresorerieActif - $tresoreriePassif;
 
         return [
             'assets' => max($assets, 0),
@@ -351,8 +406,22 @@ class SmeFinancialRatioService
             'income' => max($income, 0),
             'expenses' => max($expenses, 0),
             'receivables_net' => max($receivablesNet, 0),
-            'cash_ledger' => max($cashLedger, 0),
+            'cash_ledger' => $cashLedger,
         ];
+    }
+
+    private function extractAccountCode(string $account): ?string
+    {
+        $account = trim($account);
+        if ($account === '') {
+            return null;
+        }
+
+        if (preg_match('/^(\d{2,6})/', $account, $m)) {
+            return $m[1];
+        }
+
+        return null;
     }
 
     private function treasuryNetBalance(int $userId, ?Carbon $dateFrom, ?Carbon $dateTo): float

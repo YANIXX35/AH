@@ -122,6 +122,7 @@
         $fin = $metrics['breakdown']['financial'] ?? [];
         $finScores = $fin['scores'] ?? [];
         $finClass = $fin['classement'] ?? [];
+        $finBase = $fin['base'] ?? [];
     @endphp
 
     <div class="card mb-4 border-primary border-2">
@@ -382,17 +383,23 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Chiffre d’affaires N-1 (FCFA) <span class="text-danger">*</span></label>
-                    <input type="number" name="revenue_n1" class="form-control @error('revenue_n1') is-invalid @enderror" min="0" step="1000" value="{{ old('revenue_n1') }}" required>
+                    <input type="number" name="revenue_n1" class="form-control @error('revenue_n1') is-invalid @enderror" min="0" step="1000" value="{{ old('revenue_n1', isset($finBase['chiffre_affaires_ht']) ? (int) round((float) $finBase['chiffre_affaires_ht']) : null) }}" required>
                     @error('revenue_n1')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    @if(isset($finBase['chiffre_affaires_ht']))
+                        <div class="form-text">Prérempli depuis les calculs comptables SYSCOHADA (base modèle Excel).</div>
+                    @endif
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Capitaux propres N-1 (FCFA) <span class="text-danger">*</span></label>
-                    <input type="number" name="equity_n1" class="form-control @error('equity_n1') is-invalid @enderror" step="1000" value="{{ old('equity_n1') }}" required>
+                    <input type="number" name="equity_n1" class="form-control @error('equity_n1') is-invalid @enderror" step="1000" value="{{ old('equity_n1', isset($finBase['capitaux_propres_estimes']) ? (int) round((float) $finBase['capitaux_propres_estimes']) : null) }}" required>
                     @error('equity_n1')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    @if(isset($finBase['capitaux_propres_estimes']))
+                        <div class="form-text">Prérempli depuis les calculs comptables SYSCOHADA (base modèle Excel).</div>
+                    @endif
                 </div>
 
                 <div class="col-12 mt-2">

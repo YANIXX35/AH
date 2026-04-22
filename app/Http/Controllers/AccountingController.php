@@ -10,6 +10,7 @@ use App\Models\PlanComptableImport;
 use App\Models\TreasuryTransaction;
 use App\Services\OcrService;
 use App\Services\OcrPipelineService;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -32,8 +33,10 @@ class AccountingController extends Controller
         $account = trim($request->query('account', ''));
         $dateFrom = $request->query('date_from', '');
         $dateTo = $request->query('date_to', '');
+        $prefillDocument = $this->resolvePrefillDocument($request);
 
-        $entriesQuery = AccountingEntry::whereIn('user_id', $this->workspaceDataUserIds())
+        $entriesQuery = AccountingEntry::with('document:id,original_name,stored_path')
+            ->whereIn('user_id', $this->workspaceDataUserIds())
             ->when($search, function ($query, $search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('description', 'like', "%{$search}%")
@@ -59,7 +62,9 @@ class AccountingController extends Controller
             ->when($dateTo, function ($query, $dateTo) {
                 $query->whereDate('date', '<=', $dateTo);
             })
-            ->orderByDesc('date');
+            ->orderByDesc('created_at')
+            ->orderByDesc('date')
+            ->orderByDesc('id');
 
         $entries = $entriesQuery->get();
 
@@ -77,6 +82,8 @@ class AccountingController extends Controller
                 'account' => $account,
                 'dateFrom' => $dateFrom,
                 'dateTo' => $dateTo,
+                'prefillDocument' => $prefillDocument,
+                'prefillData' => $prefillDocument ? $this->buildEntryPrefillData($prefillDocument) : null,
             ],
             $summary
         ));
@@ -85,6 +92,7 @@ class AccountingController extends Controller
     public function storeEntry(Request $request)
     {
         $validated = $request->validate([
+            'document_id' => ['nullable', 'integer'],
             'date' => ['required', 'date'],
             'document_type' => ['required', 'string', 'max:255'],
             'document_reference' => ['nullable', 'string', 'max:255'],
@@ -99,60 +107,56 @@ class AccountingController extends Controller
         $data['credit_account'] = $accounts['credit'];
         $ocrData = [];
         $statusMessage = 'Écriture enregistrée';
+        $linkedDocument = $this->resolveLinkedDocumentFromRequest($request);
+        if ($linkedDocument) {
+            $data['document_id'] = $linkedDocument->id;
+        }
 
         if ($request->hasFile('attachment')) {
             $data['attachment_path'] = $request->file('attachment')->store('accounting-attachments', 'public');
-            
-            // Exécuter l'OCR sur le fichier uploadé
-            $ocrService = new OcrService();
-            $ocrResult = $ocrService->extractText($data['attachment_path']);
-            
-            if ($ocrResult['success']) {
-                $ocrData['ocr_text'] = $ocrResult['text'];
-                
-                // Préparer les données de formulaire pour vérification complète
-                $formDataForOcr = [
-                    'document_reference' => $validated['document_reference'] ?? '',
-                    'date' => $validated['date'],
-                    'amount' => $validated['amount'],
-                    'amount_ht' => $validated['amount'],
-                    'amount_tva' => $request->input('amount_tva', 0),
-                    'ttc_amount' => $request->input('ttc_amount', $validated['amount']),
-                    'tva_rate' => $request->input('tva_rate', 0),
-                    'partner_name' => $request->input('partner_name', ''),
-                ];
-                
-                // Vérifier les informations complètes
-                $verifyResult = $ocrService->verifyCompleteDocument($ocrResult['text'], $formDataForOcr);
-                
-                $ocrData['ocr_status'] = $verifyResult['overall_status'];
-                $ocrData['ocr_verified_at'] = now();
-                
-                // Construire le message de statut de vérification
-                $verificationDetails = [];
-                foreach ($verifyResult['details'] as $field => $status) {
-                    $verificationDetails[] = $status;
-                }
-                
-                if ($verifyResult['overall_status'] === 'verified' && count($verificationDetails) > 0) {
-                    $statusMessage .= ' et vérification OCR ✅ (' . count($verificationDetails) . '/' . $verifyResult['total_fields'] . ' champs)';
-                } elseif ($verifyResult['overall_status'] === 'mismatched') {
-                    $statusMessage .= ' (⚠️ Certains champs OCR ne correspondent pas)';
-                }
-                
-            } else {
-                $ocrData['ocr_status'] = 'failed';
-                $ocrData['ocr_text'] = $this->formatOcrFailureDetails($ocrResult);
-                $statusMessage .= ' (Erreur OCR: ' . $ocrResult['message'] . ')';
-            }
+            $entryOcrAnalysis = $this->analyzeEntryAttachment(
+                $data['attachment_path'],
+                $this->buildEntryVerificationPayload($request, $validated)
+            );
+            $ocrData = $entryOcrAnalysis['ocr_data'];
+            $statusMessage .= $entryOcrAnalysis['status_suffix'];
+        } elseif ($linkedDocument) {
+            $linkedDocumentData = (array) $linkedDocument->extracted_data;
+            $data['attachment_path'] = $linkedDocument->stored_path;
+            $ocrData = [
+                'ocr_status' => $linkedDocument->status === 'validated'
+                    ? 'manual_verified'
+                    : ($linkedDocument->status === 'ocr_failed' ? 'failed' : 'pending'),
+                'ocr_detected_amount' => $this->toFloatOrNull(
+                    $linkedDocumentData['amount_ttc']
+                    ?? $linkedDocumentData['amount_ht']
+                    ?? null
+                ),
+                'ocr_verified_at' => $linkedDocument->status === 'validated' ? now() : null,
+                'ocr_text' => $linkedDocumentData['ocr_text']
+                    ?? $linkedDocumentData['ocr_error']
+                    ?? null,
+            ];
         } else {
             $ocrData['ocr_status'] = 'pending';
         }
 
-        AccountingEntry::create(array_merge($data, $ocrData, [
+        $entryPayload = array_merge($data, $ocrData, [
             'user_id' => $this->workspaceUserId(),
             'actor_user_id' => Auth::id(),
-        ]));
+        ]);
+
+        $entry = !empty($entryPayload['document_id'])
+            ? AccountingEntry::updateOrCreate(
+                ['document_id' => $entryPayload['document_id']],
+                $entryPayload
+            )
+            : AccountingEntry::create($entryPayload);
+
+        if ($linkedDocument) {
+            $this->syncDocumentAfterManualEntry($linkedDocument, $entry, $request, $validated, $entryPayload['attachment_path'] ?? null);
+            $statusMessage .= ' et document OCR lié au brouillon d’écriture';
+        }
 
         return redirect()->route('accounting')->with('status', $statusMessage . '.');
     }
@@ -207,6 +211,8 @@ class AccountingController extends Controller
         $removeAttachment = (bool) $request->boolean('remove_attachment');
         $attachmentReplaced = false;
         $attachmentRemoved = false;
+        $ocrNeedsRecheck = false;
+        $ocrRechecked = false;
 
         if ($removeAttachment && $entry->attachment_path && ! $request->hasFile('attachment')) {
             Storage::disk('public')->delete($entry->attachment_path);
@@ -236,6 +242,7 @@ class AccountingController extends Controller
 
         foreach ($ocrSensitiveChanges as $field) {
             if (array_key_exists($field, $validated) && (string) $validated[$field] !== (string) $entry->{$field}) {
+                $ocrNeedsRecheck = true;
                 $validated['ocr_status'] = 'pending';
                 $validated['ocr_detected_amount'] = null;
                 $validated['ocr_verified_at'] = null;
@@ -246,11 +253,9 @@ class AccountingController extends Controller
 
         // Si le justificatif est remplacé, on relance immédiatement l'OCR pour prendre en compte le nouveau fichier.
         if ($attachmentReplaced && !empty($validated['attachment_path'])) {
-            $ocrService = new OcrService();
-            $ocrResult = $ocrService->extractText($validated['attachment_path']);
-
-            if ($ocrResult['success']) {
-                $formDataForOcr = [
+            $entryOcrAnalysis = $this->analyzeEntryAttachment(
+                $validated['attachment_path'],
+                [
                     'document_reference' => $validated['document_reference'] ?? '',
                     'date' => $validated['date'],
                     'amount' => (float) $validated['amount'],
@@ -259,16 +264,28 @@ class AccountingController extends Controller
                     'ttc_amount' => (float) $validated['amount'],
                     'tva_rate' => 0,
                     'partner_name' => '',
-                ];
-
-                $verifyResult = $ocrService->verifyCompleteDocument($ocrResult['text'], $formDataForOcr);
-                $validated['ocr_status'] = $verifyResult['overall_status'] ?? 'verified';
-                $validated['ocr_verified_at'] = now();
-                $validated['ocr_text'] = $ocrResult['text'];
-            } else {
-                $validated['ocr_status'] = 'failed';
-                $validated['ocr_verified_at'] = null;
-                $validated['ocr_text'] = $this->formatOcrFailureDetails($ocrResult);
+                ]
+            );
+            $validated = array_merge($validated, $entryOcrAnalysis['ocr_data']);
+            $ocrRechecked = true;
+        } elseif ($ocrNeedsRecheck && ! $attachmentRemoved) {
+            $storedPathForRecheck = $validated['attachment_path'] ?? $entry->attachment_path;
+            if (!empty($storedPathForRecheck)) {
+                $entryOcrAnalysis = $this->analyzeEntryAttachment(
+                    (string) $storedPathForRecheck,
+                    [
+                        'document_reference' => $validated['document_reference'] ?? '',
+                        'date' => $validated['date'],
+                        'amount' => (float) $validated['amount'],
+                        'amount_ht' => (float) $validated['amount'],
+                        'amount_tva' => 0,
+                        'ttc_amount' => (float) $validated['amount'],
+                        'tva_rate' => 0,
+                        'partner_name' => '',
+                    ]
+                );
+                $validated = array_merge($validated, $entryOcrAnalysis['ocr_data']);
+                $ocrRechecked = true;
             }
         }
 
@@ -284,7 +301,9 @@ class AccountingController extends Controller
             $status .= ' Justificatif supprimé.';
         }
 
-        if ($ocrReset) {
+        if ($ocrRechecked) {
+            $status .= ' Contrôle OCR rejoué automatiquement.';
+        } elseif ($ocrReset) {
             $status .= ' Le contrôle OCR a été réinitialisé suite aux modifications.';
         }
 
@@ -337,8 +356,6 @@ class AccountingController extends Controller
             return redirect()->route('accounting')->with('status', 'Aucune écriture sélectionnée.');
         }
 
-        $ocrService = new OcrService();
-        $ocrPipeline = new OcrPipelineService();
         $success = 0;
         $failed = 0;
         $skipped = 0;
@@ -349,37 +366,35 @@ class AccountingController extends Controller
                 continue;
             }
 
-            $ocrResult = $ocrService->extractText($entry->attachment_path);
-            if (!$ocrResult['success']) {
-                $entry->update([
-                    'ocr_status' => 'failed',
-                    'ocr_detected_amount' => null,
-                    'ocr_verified_at' => null,
-                    'ocr_text' => $this->formatOcrFailureDetails($ocrResult),
+            if (in_array((string) $entry->ocr_status, ['verified', 'manual_verified'], true)) {
+                $skipped++;
+                continue;
+            }
+
+            $entryOcrAnalysis = $this->analyzeEntryAttachment(
+                $entry->attachment_path,
+                [
+                    'document_reference' => $entry->document_reference ?? '',
+                    'date' => $entry->date?->toDateString(),
+                    'amount' => (float) $entry->amount,
+                    'amount_ht' => (float) $entry->amount,
+                    'amount_tva' => 0,
+                    'ttc_amount' => (float) $entry->amount,
+                    'tva_rate' => 0,
+                    'partner_name' => '',
+                ]
+            );
+            if (($entryOcrAnalysis['ocr_data']['ocr_status'] ?? null) === 'failed') {
+                $entry->update(array_merge($entryOcrAnalysis['ocr_data'], [
                     'actor_user_id' => Auth::id(),
-                ]);
+                ]));
                 $failed++;
                 continue;
             }
 
-            $formDataForOcr = [
-                'document_reference' => $entry->document_reference ?? '',
-                'date' => $entry->date?->toDateString(),
-                'amount' => (float) $entry->amount,
-                'amount_ht' => (float) $entry->amount,
-                'amount_tva' => 0,
-                'ttc_amount' => (float) $entry->amount,
-                'tva_rate' => 0,
-                'partner_name' => '',
-            ];
-
-            $verifyResult = $ocrService->verifyCompleteDocument($ocrResult['text'], $formDataForOcr);
-            $entry->update([
-                'ocr_status' => $verifyResult['overall_status'] ?? 'verified',
-                'ocr_verified_at' => now(),
-                'ocr_text' => $ocrResult['text'],
+            $entry->update(array_merge($entryOcrAnalysis['ocr_data'], [
                 'actor_user_id' => Auth::id(),
-            ]);
+            ]));
             $success++;
         }
 
@@ -397,7 +412,9 @@ class AccountingController extends Controller
     {
         $this->authorizeEntry($entry);
 
-        return view('accounting.show-entry', compact('entry'));
+        $autoCorrectionProposal = $this->buildAutoCorrectionProposal($entry);
+
+        return view('accounting.show-entry', compact('entry', 'autoCorrectionProposal'));
     }
 
     public function retryEntryOcr(AccountingEntry $entry)
@@ -411,10 +428,69 @@ class AccountingController extends Controller
                 ->with('ocr_retry_error', true);
         }
 
-        $ocrService = new OcrService();
-        $ocrResult = $ocrService->extractText($entry->attachment_path);
+        if (in_array((string) $entry->ocr_status, ['verified', 'manual_verified'], true)) {
+            return redirect()
+                ->back()
+                ->with('status', 'OCR déjà vérifié pour cette écriture. Aucune relance nécessaire.');
+        }
 
-        if (!$ocrResult['success']) {
+        $entryOcrAnalysis = $this->analyzeEntryAttachment(
+            $entry->attachment_path,
+            [
+                'document_reference' => $entry->document_reference ?? '',
+                'date' => $entry->date?->toDateString(),
+                'amount' => (float) $entry->amount,
+                'amount_ht' => (float) $entry->amount,
+                'amount_tva' => 0,
+                'ttc_amount' => (float) $entry->amount,
+                'tva_rate' => 0,
+                'partner_name' => '',
+            ]
+        );
+
+        if (($entryOcrAnalysis['ocr_data']['ocr_status'] ?? null) === 'failed') {
+            $entry->update([
+                ...$entryOcrAnalysis['ocr_data'],
+                'actor_user_id' => Auth::id(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('status', 'OCR relancé, mais a échoué. Consultez le détail pour agir.')
+                ->with('ocr_retry_error', true);
+        }
+
+        $entry->update([
+            ...$entryOcrAnalysis['ocr_data'],
+            'actor_user_id' => Auth::id(),
+        ]);
+
+        return redirect()
+            ->back()
+            ->with('status', 'OCR relancé avec succès.');
+    }
+
+    public function autoCorrectEntryFromOcr(AccountingEntry $entry)
+    {
+        $this->authorizeEntry($entry);
+
+        request()->validate([
+            'confirm_auto_correction' => ['required', 'accepted'],
+        ]);
+
+        $storedPath = $entry->document?->stored_path ?: $entry->attachment_path;
+        if (!$storedPath) {
+            return redirect()
+                ->back()
+                ->with('status', 'Correction automatique impossible: aucun justificatif OCR lié à cette écriture.')
+                ->with('ocr_retry_error', true);
+        }
+
+        $ocrPipeline = new OcrPipelineService();
+        $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
+        $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
+
+        if (! ($ocrResult['success'] ?? false)) {
             $entry->update([
                 'ocr_status' => 'failed',
                 'ocr_detected_amount' => null,
@@ -425,11 +501,13 @@ class AccountingController extends Controller
 
             return redirect()
                 ->back()
-                ->with('status', 'OCR relancé, mais a échoué. Consultez le détail pour agir.')
+                ->with('status', 'Correction automatique impossible: l’OCR du document a échoué.')
                 ->with('ocr_retry_error', true);
         }
 
-        $formDataForOcr = [
+        $ocrText = (string) ($ocrResult['text'] ?? '');
+        $ocrService = new OcrService();
+        $initialVerification = $ocrService->verifyCompleteDocument($ocrText, [
             'document_reference' => $entry->document_reference ?? '',
             'date' => $entry->date?->toDateString(),
             'amount' => (float) $entry->amount,
@@ -438,19 +516,72 @@ class AccountingController extends Controller
             'ttc_amount' => (float) $entry->amount,
             'tva_rate' => 0,
             'partner_name' => '',
-        ];
-
-        $verifyResult = $ocrService->verifyCompleteDocument($ocrResult['text'], $formDataForOcr);
-        $entry->update([
-            'ocr_status' => $verifyResult['overall_status'] ?? 'verified',
-            'ocr_verified_at' => now(),
-            'ocr_text' => $ocrResult['text'],
-            'actor_user_id' => Auth::id(),
         ]);
 
+        $extracted = (array) ($initialVerification['extracted'] ?? []);
+        $richExtracted = (array) ($pipelineResult['rich_data'] ?? []);
+        if (empty($richExtracted)) {
+            $richExtracted = $ocrService->extractRichDocumentData($ocrText);
+        }
+
+        $documentType = $this->detectDocumentTypeFromOcrText($ocrText, $entry->document_type ?: 'Justificatif');
+        $normalized = $this->buildValidationExtractedData($ocrText, $extracted, $richExtracted, $documentType);
+        $correctedPayload = $this->buildAutoCorrectedEntryPayload($entry, $normalized, $documentType);
+        $verificationPayload = $this->buildAutoCorrectionVerificationPayload($correctedPayload, $normalized);
+        $verifyResult = $ocrService->verifyCompleteDocument($ocrText, $verificationPayload);
+        $ocrAnalysis = $this->buildEntryOcrDataFromVerification($verifyResult, $ocrText);
+
+        $entry->update(array_merge($correctedPayload, $ocrAnalysis['ocr_data'], [
+            'actor_user_id' => Auth::id(),
+        ]));
+
         return redirect()
-            ->back()
-            ->with('status', 'OCR relancé avec succès.');
+            ->route('accounting.entries.show', $entry)
+            ->with('status', 'Écriture corrigée automatiquement depuis l’OCR' . $ocrAnalysis['status_suffix'] . '.');
+    }
+
+    private function buildAutoCorrectionProposal(AccountingEntry $entry): ?array
+    {
+        if (! in_array($entry->ocr_status, ['mismatch', 'mismatched'], true)) {
+            return null;
+        }
+
+        $ocrText = trim($entry->getOcrRawText());
+        if ($ocrText === '') {
+            return null;
+        }
+
+        $ocrService = new OcrService();
+        $initialVerification = $ocrService->verifyCompleteDocument($ocrText, [
+            'document_reference' => $entry->document_reference ?? '',
+            'date' => $entry->date?->toDateString(),
+            'amount' => (float) $entry->amount,
+            'amount_ht' => (float) $entry->amount,
+            'amount_tva' => 0,
+            'ttc_amount' => (float) $entry->amount,
+            'tva_rate' => 0,
+            'partner_name' => '',
+        ]);
+
+        $extracted = (array) ($initialVerification['extracted'] ?? []);
+        $richExtracted = $ocrService->extractRichDocumentData($ocrText);
+        $documentType = $this->detectDocumentTypeFromOcrText($ocrText, $entry->document_type ?: 'Justificatif');
+        $normalized = $this->buildValidationExtractedData($ocrText, $extracted, $richExtracted, $documentType);
+        $correctedPayload = $this->buildAutoCorrectedEntryPayload($entry, $normalized, $documentType);
+        $verificationPayload = $this->buildAutoCorrectionVerificationPayload($correctedPayload, $normalized);
+
+        $changes = $this->buildAutoCorrectionChanges($entry, $correctedPayload);
+
+        if (empty($changes)) {
+            return null;
+        }
+
+        return [
+            'document_type' => $documentType,
+            'normalized' => $normalized,
+            'verification_payload' => $verificationPayload,
+            'changes' => $changes,
+        ];
     }
 
     public function storeManualOcrValidation(Request $request, AccountingEntry $entry)
@@ -504,7 +635,7 @@ class AccountingController extends Controller
         $extension = strtolower($file->getClientOriginalExtension());
 
         if ($extension === 'pdf') {
-            $ocrService = new OcrService();
+            $ocrPipeline = new OcrPipelineService();
             $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
             $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
             if (! $ocrResult['success']) {
@@ -885,10 +1016,360 @@ class AccountingController extends Controller
     private function getSubtypeByPrefix(?string $prefix): ?string
     {
         return match ($prefix) {
+            '2' => 'investissement',
             '6' => 'charge',
             '7' => 'produit',
             default => null,
         };
+    }
+
+    private function resolvePrefillDocument(Request $request): ?AccountingDocument
+    {
+        $documentId = (int) $request->query('prefill_document', 0);
+        if ($documentId <= 0) {
+            return null;
+        }
+
+        $document = AccountingDocument::findOrFail($documentId);
+        if (! $this->workspaceOwnsDataUserId((int) $document->user_id)) {
+            abort(403);
+        }
+
+        return $document;
+    }
+
+    private function resolveLinkedDocumentFromRequest(Request $request): ?AccountingDocument
+    {
+        $documentId = (int) $request->input('document_id', 0);
+        if ($documentId <= 0) {
+            return null;
+        }
+
+        $document = AccountingDocument::findOrFail($documentId);
+        if (! $this->workspaceOwnsDataUserId((int) $document->user_id)) {
+            abort(403);
+        }
+
+        return $document;
+    }
+
+    private function buildEntryPrefillData(AccountingDocument $document): array
+    {
+        $data = (array) $document->extracted_data;
+        $richPrimary = (array) (($data['ocr_detected_fields']['primary'] ?? []));
+        $amountHt = (float) ($data['amount_ht'] ?? 0);
+        $amountTva = (float) ($data['tva'] ?? 0);
+        $amountTtc = (float) ($data['amount_ttc'] ?? ($amountHt + $amountTva));
+
+        if ($amountHt <= 0 && is_numeric($richPrimary['amount_ht'] ?? null)) {
+            $amountHt = (float) $richPrimary['amount_ht'];
+        }
+        if ($amountTva <= 0 && is_numeric($richPrimary['amount_tva'] ?? null)) {
+            $amountTva = (float) $richPrimary['amount_tva'];
+        }
+        if ($amountTtc <= 0 && is_numeric($richPrimary['amount_ttc'] ?? null)) {
+            $amountTtc = (float) $richPrimary['amount_ttc'];
+        }
+
+        $documentReference = trim((string) ($data['invoice_number'] ?? ($richPrimary['invoice_number'] ?? '')));
+        $partner = trim((string) ($data['partner'] ?? ($richPrimary['partner_name'] ?? '')));
+        $invoiceDate = $data['invoice_date'] ?? ($richPrimary['invoice_date'] ?? null);
+        $description = trim(implode(' - ', array_values(array_filter([
+            $partner !== '' ? $partner : 'Document OCR',
+            $documentReference !== '' ? $documentReference : null,
+        ]))));
+
+        return [
+            'document_id' => $document->id,
+            'document_type' => $document->document_type ?: 'Justificatif',
+            'partner_name' => $partner,
+            'date' => $invoiceDate ?? now()->toDateString(),
+            'document_reference' => $documentReference,
+            'description' => $description !== '' ? $description : 'Document OCR à vérifier',
+            'amount' => $amountHt > 0 ? $amountHt : max(0, $amountTtc - $amountTva),
+            'amount_tva' => $amountTva,
+            'ttc_amount' => $amountTtc,
+            'tva_rate' => $this->computePrefillTvaRate($amountHt, $amountTva),
+        ];
+    }
+
+    private function computePrefillTvaRate(float $amountHt, float $amountTva): float
+    {
+        if ($amountHt <= 0 || $amountTva <= 0) {
+            return 18.0;
+        }
+
+        return round(($amountTva / $amountHt) * 100, 2);
+    }
+
+    private function buildEntryVerificationPayload(Request $request, array $validated): array
+    {
+        $amountHt = (float) ($validated['amount'] ?? 0);
+        $amountTva = (float) $request->input('amount_tva', 0);
+
+        return [
+            'document_reference' => $validated['document_reference'] ?? '',
+            'date' => $validated['date'],
+            'amount' => $amountHt,
+            'amount_ht' => $amountHt,
+            'amount_tva' => $amountTva,
+            'ttc_amount' => (float) $request->input('ttc_amount', $amountHt + $amountTva),
+            'tva_rate' => (float) $request->input('tva_rate', 0),
+            'partner_name' => (string) $request->input('partner_name', ''),
+        ];
+    }
+
+    private function analyzeEntryAttachment(string $storedPath, array $formData): array
+    {
+        $ocrPipeline = new OcrPipelineService();
+        $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
+        $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
+
+        if (! ($ocrResult['success'] ?? false)) {
+            return [
+                'ocr_data' => [
+                    'ocr_status' => 'failed',
+                    'ocr_detected_amount' => null,
+                    'ocr_verified_at' => null,
+                    'ocr_text' => $this->formatOcrFailureDetails($ocrResult),
+                ],
+                'status_suffix' => ' (Erreur OCR: ' . ($ocrResult['message'] ?? 'erreur inconnue') . ')',
+            ];
+        }
+
+        $ocrService = new OcrService();
+        $verifyResult = $ocrService->verifyCompleteDocument((string) ($ocrResult['text'] ?? ''), $formData);
+        return $this->buildEntryOcrDataFromVerification($verifyResult, (string) ($ocrResult['text'] ?? ''));
+    }
+
+    private function buildEntryOcrDataFromVerification(array $verifyResult, string $ocrText): array
+    {
+        $verificationDetails = array_values((array) ($verifyResult['details'] ?? []));
+        $extracted = (array) ($verifyResult['extracted'] ?? []);
+        $detectedAmount = $this->toFloatOrNull(
+            $extracted['amount_ttc_fcfa']
+            ?? $extracted['amount_ttc']
+            ?? $extracted['amount_ht_fcfa']
+            ?? $extracted['amount_ht']
+            ?? null
+        );
+
+        $statusSuffix = '';
+        if (($verifyResult['overall_status'] ?? null) === 'verified' && count($verificationDetails) > 0) {
+            $statusSuffix = ' et vérification OCR ✅ (' . count($verificationDetails) . '/' . ($verifyResult['total_fields'] ?? count($verificationDetails)) . ' champs)';
+        } elseif (($verifyResult['overall_status'] ?? null) === 'mismatched') {
+            $statusSuffix = ' (⚠️ Certains champs OCR ne correspondent pas)';
+        }
+
+        return [
+            'ocr_data' => [
+                'ocr_status' => $verifyResult['overall_status'] ?? 'verified',
+                'ocr_detected_amount' => $detectedAmount,
+                'ocr_verified_at' => now(),
+                'ocr_text' => $this->buildOcrVerificationNarrative($verifyResult, $ocrText),
+            ],
+            'status_suffix' => $statusSuffix,
+        ];
+    }
+
+    private function buildAutoCorrectedEntryPayload(AccountingEntry $entry, array $normalized, string $documentType): array
+    {
+        $accounts = $this->resolveAccountsForDocumentType($documentType);
+        $partner = trim((string) ($normalized['partner'] ?? ''));
+        $reference = trim((string) ($normalized['invoice_number'] ?? ''));
+        $amountHt = $this->toFloatOrNull($normalized['amount_ht'] ?? null) ?? 0.0;
+        $amountTva = $this->toFloatOrNull($normalized['tva'] ?? null) ?? 0.0;
+        $amountTtc = $this->toFloatOrNull($normalized['amount_ttc'] ?? null) ?? 0.0;
+        $targetAmount = $amountTtc > 0
+            ? $amountTtc
+            : ($amountHt > 0 ? max($amountHt, $amountHt + $amountTva) : (float) $entry->amount);
+
+        return [
+            'date' => $normalized['invoice_date'] ?? $entry->date?->toDateString() ?? now()->toDateString(),
+            'document_type' => $documentType,
+            'document_reference' => $reference !== '' ? $reference : $entry->document_reference,
+            'description' => $this->buildAutoCorrectedEntryDescription($entry, $partner, $reference),
+            'debit_account' => $accounts['debit'],
+            'credit_account' => $accounts['credit'],
+            'amount' => $targetAmount,
+        ];
+    }
+
+    private function buildAutoCorrectionVerificationPayload(array $correctedPayload, array $normalized): array
+    {
+        $amountHt = $this->toFloatOrNull($normalized['amount_ht'] ?? null) ?? 0.0;
+        $amountTva = $this->toFloatOrNull($normalized['tva'] ?? null) ?? 0.0;
+        $amountTtc = $this->toFloatOrNull($normalized['amount_ttc'] ?? null) ?? 0.0;
+        $partner = trim((string) ($normalized['partner'] ?? ''));
+
+        if ($amountHt <= 0 && $amountTtc > 0 && $amountTva >= 0 && $amountTtc >= $amountTva) {
+            $amountHt = max(0.0, $amountTtc - $amountTva);
+        }
+        if ($amountTtc <= 0) {
+            $amountTtc = (float) ($correctedPayload['amount'] ?? 0);
+        }
+
+        return [
+            'document_reference' => (string) ($correctedPayload['document_reference'] ?? ''),
+            'date' => (string) ($correctedPayload['date'] ?? now()->toDateString()),
+            'amount' => $amountHt > 0 ? $amountHt : $amountTtc,
+            'amount_ht' => $amountHt > 0 ? $amountHt : max(0.0, $amountTtc - $amountTva),
+            'amount_tva' => $amountTva,
+            'ttc_amount' => $amountTtc,
+            'tva_rate' => $amountHt > 0 && $amountTva > 0 ? round(($amountTva / $amountHt) * 100, 2) : 0.0,
+            'partner_name' => $partner,
+        ];
+    }
+
+    private function buildAutoCorrectedEntryDescription(AccountingEntry $entry, string $partner, string $reference): string
+    {
+        $parts = array_values(array_filter([$partner !== '' ? $partner : null, $reference !== '' ? $reference : null]));
+        if (! empty($parts)) {
+            return '[OCR] ' . implode(' - ', $parts);
+        }
+
+        return (string) $entry->description;
+    }
+
+    private function buildAutoCorrectionChanges(AccountingEntry $entry, array $correctedPayload): array
+    {
+        $labels = [
+            'date' => 'Date',
+            'document_type' => 'Type',
+            'document_reference' => 'Référence',
+            'description' => 'Description',
+            'debit_account' => 'Compte débit',
+            'credit_account' => 'Compte crédit',
+            'amount' => 'Montant',
+        ];
+
+        $changes = [];
+        foreach ($labels as $field => $label) {
+            if (! array_key_exists($field, $correctedPayload)) {
+                continue;
+            }
+
+            $before = $field === 'date'
+                ? optional($entry->date)->toDateString()
+                : $entry->{$field};
+            $after = $correctedPayload[$field];
+
+            if ((string) $before === (string) $after) {
+                continue;
+            }
+
+            $changes[] = [
+                'field' => $field,
+                'label' => $label,
+                'before' => $this->formatAutoCorrectionValue($field, $before),
+                'after' => $this->formatAutoCorrectionValue($field, $after),
+            ];
+        }
+
+        return $changes;
+    }
+
+    private function formatAutoCorrectionValue(string $field, mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return 'Non renseigné';
+        }
+
+        if ($field === 'amount' && is_numeric($value)) {
+            return number_format((float) $value, 2, ',', ' ') . ' FCFA';
+        }
+
+        return (string) $value;
+    }
+
+    private function buildOcrVerificationNarrative(array $verifyResult, string $ocrText): string
+    {
+        $summaryLines = $this->buildOcrVerificationSummaryLines($verifyResult);
+        $cleanText = trim($ocrText);
+
+        if (empty($summaryLines)) {
+            return $cleanText;
+        }
+
+        $parts = [
+            '=== RÉSUMÉ OCR ===',
+            implode("\n", $summaryLines),
+        ];
+
+        if ($cleanText !== '') {
+            $parts[] = '=== TEXTE OCR ===';
+            $parts[] = $cleanText;
+        }
+
+        return implode("\n\n", $parts);
+    }
+
+    private function buildOcrVerificationSummaryLines(array $verifyResult): array
+    {
+        $details = (array) ($verifyResult['details'] ?? []);
+        $lines = [];
+
+        $fieldLabels = [
+            'amount_ht' => 'HT',
+            'amount_tva' => 'TVA',
+            'amount_ttc' => 'TTC',
+            'tva_rate' => 'TVA %',
+            'invoice_number' => 'Référence',
+            'date' => 'Date',
+            'partner_name' => 'Partenaire',
+        ];
+
+        foreach ($fieldLabels as $key => $label) {
+            $detail = trim((string) ($details[$key] ?? ''));
+            if ($detail === '') {
+                continue;
+            }
+
+            if (str_starts_with($detail, '✅')) {
+                $lines[] = '✅ ' . $label . ' OK';
+                continue;
+            }
+
+            if (str_starts_with($detail, '⚠️')) {
+                $lines[] = '⚠️ ' . $label . ' différent';
+            }
+        }
+
+        return $lines;
+    }
+
+    private function syncDocumentAfterManualEntry(
+        AccountingDocument $document,
+        AccountingEntry $entry,
+        Request $request,
+        array $validated,
+        ?string $attachmentPath = null
+    ): void {
+        $existingData = (array) $document->extracted_data;
+        $amountHt = (float) ($validated['amount'] ?? 0);
+        $amountTva = (float) $request->input('amount_tva', 0);
+        $amountTtc = (float) $request->input('ttc_amount', $amountHt + $amountTva);
+        $partner = trim((string) $request->input('partner_name', $existingData['partner'] ?? ''));
+
+        $document->update([
+            'document_type' => $validated['document_type'],
+            'status' => 'validated',
+            'stored_path' => $attachmentPath ?: $document->stored_path,
+            'actor_user_id' => Auth::id(),
+            'confidence' => 100.0,
+            'extracted_data' => array_merge($existingData, [
+                'partner' => $partner !== '' ? $partner : null,
+                'invoice_date' => $validated['date'],
+                'invoice_number' => $validated['document_reference'] ?? null,
+                'amount_ht' => $amountHt,
+                'amount_ttc' => $amountTtc,
+                'tva' => $amountTva,
+                'currency' => $existingData['currency'] ?? 'FCFA',
+                'debit_account' => $entry->debit_account,
+                'credit_account' => $entry->credit_account,
+                'linked_entry_id' => $entry->id,
+            ]),
+        ]);
     }
 
     /**
@@ -907,13 +1388,17 @@ class AccountingController extends Controller
         if (str_contains($lower, 'format')) {
             $reason = 'Format de fichier non supporté';
         } elseif (str_contains($lower, 'timeout') || str_contains($lower, 'timed out')) {
-            $reason = 'Délai dépassé (timeout API)';
+            $reason = 'Délai dépassé (timeout OCR)';
         } elseif (str_contains($lower, 'aucun texte')) {
             $reason = 'Texte non détecté';
         } elseif (str_contains($lower, 'api')) {
             $reason = 'Réponse API OCR invalide';
         } elseif (str_contains($lower, 'fichier non trouvé')) {
             $reason = 'Fichier justificatif introuvable';
+        } elseif (str_contains($lower, 'runner paddleocr')) {
+            $reason = 'Runner local PaddleOCR introuvable';
+        } elseif (str_contains($lower, 'paddleocr')) {
+            $reason = 'Erreur du moteur OCR local PaddleOCR';
         }
 
         $action = "Relancer l'OCR ou utiliser la validation manuelle guidée.";
@@ -923,6 +1408,16 @@ class AccountingController extends Controller
             $action = "Vérifier la clé API OCR (droits, quota, activation).";
         } elseif ($errorCode === 'UNSUPPORTED_MIME') {
             $action = "Utiliser uniquement un fichier JPG, JPEG, PNG ou PDF lisible.";
+        } elseif ($errorCode === 'LOCAL_OCR_DISABLED') {
+            $action = "Activer PADDLE_OCR_ENABLED dans l'environnement Laravel.";
+        } elseif ($errorCode === 'LOCAL_OCR_RUNNER_NOT_FOUND') {
+            $action = "Vérifier le chemin PADDLE_OCR_RUNNER_PATH et la présence du script Python local.";
+        } elseif ($errorCode === 'PADDLE_OCR_IMPORT_ERROR') {
+            $action = "Installer PaddleOCR et PaddlePaddle dans l'environnement Python configuré.";
+        } elseif ($errorCode === 'PADDLE_OCR_RUNTIME_ERROR') {
+            $action = "Tester le runner local en CPU, puis vérifier la compatibilité GPU si nécessaire.";
+        } elseif ($errorCode === 'LOCAL_OCR_TIMEOUT') {
+            $action = "Augmenter PADDLE_OCR_TIMEOUT ou réduire la taille / le nombre de pages du document.";
         }
 
         return "=== ERREUR OCR ===\n"
@@ -975,6 +1470,10 @@ class AccountingController extends Controller
             $reportType = 'bilan';
         } elseif ($request->routeIs('accounting.report.resultat')) {
             $reportType = 'resultat';
+        } elseif ($request->routeIs('accounting.report.tafire')) {
+            $reportType = 'tafire';
+        } elseif ($request->routeIs('accounting.report.annexe')) {
+            $reportType = 'annexe';
         }
 
         $bilanReference = null;
@@ -1023,6 +1522,56 @@ class AccountingController extends Controller
             ->loadView('accounting.report-bilan-pdf', $payload)
             ->setPaper('a4', 'portrait')
             ->download('bilan-' . ($payload['bilanReference'] ?? 'rapport') . '.pdf');
+    }
+
+    public function viewBilanPdf(Request $request)
+    {
+        $payload = $this->buildReportPayload($request, 'bilan');
+
+        return Pdf::setOptions(['isRemoteEnabled' => true])
+            ->loadView('accounting.report-bilan-pdf', $payload)
+            ->setPaper('a4', 'portrait')
+            ->stream('bilan-' . ($payload['bilanReference'] ?? 'rapport') . '.pdf');
+    }
+
+    public function showBilanPdfViewer(Request $request): View
+    {
+        $payload = $this->buildReportPayload($request, 'bilan');
+        $pdfBinary = Pdf::setOptions(['isRemoteEnabled' => true])
+            ->loadView('accounting.report-bilan-pdf', $payload)
+            ->setPaper('a4', 'portrait')
+            ->output();
+
+        $queryParams = array_filter([
+            'date_from' => $request->query('date_from'),
+            'date_to' => $request->query('date_to'),
+        ]);
+
+        return view('accounting.document-viewer', [
+            'documentName' => 'Bilan - ' . ($payload['exerciseYear'] ?? now()->format('Y')),
+            'documentTypeLabel' => 'Rapport bilan (PDF généré)',
+            'previewType' => 'pdf',
+            'previewUrl' => route('accounting.report.bilan.view', $queryParams),
+            'backUrl' => route('accounting.report.bilan', $queryParams),
+            'mimeType' => 'application/pdf',
+            'fileExtension' => 'PDF',
+            'fileSizeLabel' => $this->formatFileSizeLabel(strlen($pdfBinary)),
+            'textPreview' => null,
+            'pdfDataBase64' => base64_encode($pdfBinary),
+        ]);
+    }
+
+    private function formatFileSizeLabel(int $bytes): string
+    {
+        if ($bytes >= 1024 * 1024) {
+            return number_format($bytes / (1024 * 1024), 2, ',', ' ') . ' MB';
+        }
+
+        if ($bytes >= 1024) {
+            return number_format($bytes / 1024, 1, ',', ' ') . ' KB';
+        }
+
+        return $bytes . ' octets';
     }
 
     private function buildReportPayload(Request $request, string $reportType = 'full'): array
@@ -1262,11 +1811,26 @@ class AccountingController extends Controller
 
     public function documents()
     {
-        $documents = AccountingDocument::whereIn('user_id', $this->workspaceDataUserIds())
+        $documents = AccountingDocument::with(['entries' => function ($query) {
+                $query->orderByDesc('id');
+            }])
+            ->whereIn('user_id', $this->workspaceDataUserIds())
             ->orderByDesc('created_at')
             ->get();
 
         return view('accounting.documents', compact('documents'));
+    }
+
+    public function documentsComparison()
+    {
+        $documents = AccountingDocument::with(['entries' => function ($query) {
+                $query->orderByDesc('id');
+            }])
+            ->whereIn('user_id', $this->workspaceDataUserIds())
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('accounting.documents-comparison', compact('documents'));
     }
 
     public function uploadDocuments(Request $request)
@@ -1274,14 +1838,50 @@ class AccountingController extends Controller
         $request->validate([
             'documents' => ['required', 'array', 'min:1'],
             'documents.*' => ['file', 'mimes:pdf,jpg,jpeg,png,xlsx,xls,csv', 'max:20480'],
+        ], [
+            'documents.required' => 'Veuillez sélectionner au moins un document.',
+            'documents.array' => 'Le lot de documents envoyé est invalide.',
+            'documents.min' => 'Veuillez sélectionner au moins un document.',
+            'documents.*.file' => 'Chaque élément doit être un fichier valide.',
+            'documents.*.mimes' => 'Format non supporté. Utilisez PDF, JPG, JPEG, PNG, XLSX, XLS ou CSV.',
+            'documents.*.max' => 'Fichier trop volumineux. Taille maximale: 20 Mo par document.',
+            'documents.*.uploaded' => 'Échec de l’upload. Vérifiez la taille du fichier et la configuration serveur (upload_max_filesize / post_max_size).',
         ]);
 
+        $uploadedFiles = array_values(array_filter(
+            (array) $request->file('documents', []),
+            fn ($file) => $file instanceof UploadedFile
+        ));
+
+        if (empty($uploadedFiles)) {
+            return redirect()
+                ->back()
+                ->withErrors([
+                    'documents' => 'Aucun fichier valide reçu. Vérifiez la taille autorisée et réessayez.',
+                ])
+                ->withInput();
+        }
+
+        foreach ($uploadedFiles as $uploadedFile) {
+            if (! $uploadedFile->isValid()) {
+                return redirect()
+                    ->back()
+                    ->withErrors([
+                        'documents' => $this->describeUploadErrorCode($uploadedFile->getError()),
+                    ])
+                    ->withInput();
+            }
+        }
+
         $ocrService = new OcrService();
+        $ocrPipeline = new OcrPipelineService();
         $createdCount = 0;
         $duplicateCount = 0;
         $failedCount = 0;
+        $autoValidatedCount = 0;
+        $pendingReviewCount = 0;
 
-        foreach ($request->file('documents') as $file) {
+        foreach ($uploadedFiles as $file) {
             $hash = sha1_file($file->getRealPath());
             $existing = AccountingDocument::whereIn('user_id', $this->workspaceDataUserIds())
                 ->where('document_hash', $hash)
@@ -1293,7 +1893,8 @@ class AccountingController extends Controller
             }
 
             $storedPath = $file->store('accounting-documents', 'public');
-            $ocrResult = $ocrService->extractText($storedPath);
+            $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
+            $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
             $documentType = $this->guessDocumentTypeFromFilename($file->getClientOriginalName());
             $status = 'ocr_failed';
             $confidence = 0;
@@ -1310,8 +1911,7 @@ class AccountingController extends Controller
                 'ocr_error' => null,
             ];
 
-            if ($ocrResult['success']) {
-                $status = 'pending_validation';
+            if ($ocrResult['success'] ?? false) {
                 $confidence = (float) ($pipelineResult['global_confidence'] ?? $ocrResult['confidence'] ?? 0);
 
                 $formDataForOcr = [
@@ -1333,7 +1933,7 @@ class AccountingController extends Controller
                 }
                 $documentType = $this->detectDocumentTypeFromOcrText($ocrResult['text'], $documentType);
                 $accounts = $this->resolveAccountsForDocumentType($documentType);
-                $normalizedExtracted = $this->buildValidationExtractedData($ocrResult['text'], $extracted, $richExtracted);
+                $normalizedExtracted = $this->buildValidationExtractedData($ocrResult['text'], $extracted, $richExtracted, $documentType);
 
                 $extractedData = [
                     'partner' => $normalizedExtracted['partner'],
@@ -1352,12 +1952,26 @@ class AccountingController extends Controller
                     'ocr_review_required' => (bool) ($pipelineResult['review_required'] ?? false),
                     'ocr_error' => null,
                 ];
+
+                $canAutoValidate = ! (bool) ($pipelineResult['review_required'] ?? false)
+                    && $confidence >= 55
+                    && (float) ($normalizedExtracted['amount_ttc'] ?? 0) > 0;
+
+                if ($canAutoValidate) {
+                    $status = 'validated';
+                    $extractedData['ocr_auto_validated'] = true;
+                } else {
+                    $status = 'pending_validation';
+                    $extractedData['ocr_auto_validated'] = false;
+                    $extractedData['ocr_auto_validation_reason'] = 'Validation manuelle requise (confiance faible ou montant incomplet).';
+                    $pendingReviewCount++;
+                }
             } else {
                 $failedCount++;
                 $extractedData['ocr_error'] = $this->formatOcrFailureDetails($ocrResult);
             }
 
-            AccountingDocument::create([
+            $document = AccountingDocument::create([
                 'user_id' => $this->workspaceUserId(),
                 'actor_user_id' => Auth::id(),
                 'original_name' => $file->getClientOriginalName(),
@@ -1369,6 +1983,22 @@ class AccountingController extends Controller
                 'confidence' => $confidence,
             ]);
 
+            if ($status === 'validated') {
+                if ($this->createEntryFromAutoValidatedDocument($document)) {
+                    $autoValidatedCount++;
+                } else {
+                    $documentData = (array) $document->extracted_data;
+                    $documentData['ocr_auto_validated'] = false;
+                    $documentData['ocr_auto_validation_reason'] = 'Validation manuelle requise (données OCR insuffisantes).';
+                    $document->update([
+                        'status' => 'pending_validation',
+                        'extracted_data' => $documentData,
+                        'actor_user_id' => Auth::id(),
+                    ]);
+                    $pendingReviewCount++;
+                }
+            }
+
             $createdCount++;
         }
 
@@ -1379,8 +2009,29 @@ class AccountingController extends Controller
         if ($failedCount > 0) {
             $messageParts[] = "{$failedCount} en échec OCR (relance possible)";
         }
+        if ($autoValidatedCount > 0) {
+            $messageParts[] = "{$autoValidatedCount} validé(s) automatiquement";
+        }
+        if ($pendingReviewCount > 0) {
+            $messageParts[] = "{$pendingReviewCount} en revue manuelle";
+        }
 
         return redirect()->route('accounting.documents')->with('status', implode(' · ', $messageParts) . '.');
+    }
+
+    /**
+     * Retourne un message d’erreur lisible selon le code natif d’upload PHP.
+     */
+    private function describeUploadErrorCode(int $errorCode): string
+    {
+        return match ($errorCode) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => "Le fichier dépasse la taille autorisée. Réduisez la taille ou augmentez 'upload_max_filesize' et 'post_max_size'.",
+            UPLOAD_ERR_PARTIAL => 'Le fichier a été partiellement uploadé. Réessayez sur une connexion stable.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Le serveur ne dispose pas de dossier temporaire pour l’upload.',
+            UPLOAD_ERR_CANT_WRITE => 'Le serveur ne peut pas écrire le fichier sur le disque.',
+            UPLOAD_ERR_EXTENSION => 'Une extension PHP a bloqué l’upload.',
+            default => 'Échec de l’upload du fichier. Vérifiez la taille, le format et réessayez.',
+        };
     }
 
     public function retryDocumentOcr(AccountingDocument $document)
@@ -1427,7 +2078,7 @@ class AccountingController extends Controller
         $documentType = $this->detectDocumentTypeFromOcrText($ocrResult['text'], $document->document_type);
         $accounts = $this->resolveAccountsForDocumentType($documentType);
         $data = (array) $document->extracted_data;
-        $normalizedExtracted = $this->buildValidationExtractedData($ocrResult['text'], $extracted, $richExtracted);
+        $normalizedExtracted = $this->buildValidationExtractedData($ocrResult['text'], $extracted, $richExtracted, $documentType);
 
         $data['partner'] = $normalizedExtracted['partner'] ?? ($data['partner'] ?? null);
         $data['invoice_number'] = $normalizedExtracted['invoice_number'] ?? ($data['invoice_number'] ?? null);
@@ -1445,15 +2096,111 @@ class AccountingController extends Controller
         $data['ocr_review_required'] = (bool) ($pipelineResult['review_required'] ?? false);
         $data['ocr_error'] = null;
 
+        $confidence = (float) ($pipelineResult['global_confidence'] ?? $ocrResult['confidence'] ?? 0);
+        $canAutoValidate = ! (bool) ($pipelineResult['review_required'] ?? false)
+            && $confidence >= 55
+            && (float) ($normalizedExtracted['amount_ttc'] ?? 0) > 0;
+
+        $data['ocr_auto_validated'] = $canAutoValidate;
+        if (! $canAutoValidate) {
+            $data['ocr_auto_validation_reason'] = 'Validation manuelle requise (confiance faible ou montant incomplet).';
+        } else {
+            $data['ocr_auto_validation_reason'] = null;
+        }
+
         $document->update([
             'document_type' => $documentType,
-            'status' => 'pending_validation',
-            'confidence' => (float) ($pipelineResult['global_confidence'] ?? $ocrResult['confidence'] ?? 0),
+            'status' => $canAutoValidate ? 'validated' : 'pending_validation',
+            'confidence' => $confidence,
             'extracted_data' => $data,
             'actor_user_id' => Auth::id(),
         ]);
 
-        return back()->with('status', "OCR relancé avec succès pour {$document->original_name}.");
+        if ($canAutoValidate && $this->createEntryFromAutoValidatedDocument($document)) {
+            return back()->with('status', "OCR relancé avec succès et validé automatiquement pour {$document->original_name}.");
+        }
+
+        return back()->with('status', "OCR relancé avec succès pour {$document->original_name}. Validation manuelle requise.");
+    }
+
+    public function destroyDocument(AccountingDocument $document): RedirectResponse
+    {
+        if (! $this->workspaceOwnsDataUserId((int) $document->user_id)) {
+            abort(403);
+        }
+
+        $deletedEntries = 0;
+        foreach ($document->entries as $entry) {
+            if ($entry->attachment_path && $entry->attachment_path !== $document->stored_path) {
+                Storage::disk('public')->delete($entry->attachment_path);
+            }
+            $entry->delete();
+            $deletedEntries++;
+        }
+
+        TreasuryTransaction::query()
+            ->where('user_id', $this->workspaceUserId())
+            ->where('payment_module', 'accounting_document')
+            ->where('bank_reference', 'DOC-BANK-' . $document->id)
+            ->delete();
+
+        if ($document->stored_path) {
+            Storage::disk('public')->delete($document->stored_path);
+        }
+
+        $documentName = $document->original_name;
+        $document->delete();
+
+        $status = "Document supprimé: {$documentName}.";
+        if ($deletedEntries > 0) {
+            $status .= " {$deletedEntries} écriture(s) liée(s) supprimée(s).";
+        }
+
+        return redirect()->route('accounting.documents')->with('status', $status);
+    }
+
+    private function createEntryFromAutoValidatedDocument(AccountingDocument $document): bool
+    {
+        $data = (array) $document->extracted_data;
+        $type = (string) ($document->document_type ?: 'Justificatif');
+        $amount = (float) ($data['amount_ttc'] ?? 0);
+
+        if ($amount <= 0) {
+            return false;
+        }
+
+        $accounts = $this->resolveAccountsForDocumentType($type);
+        $debitAccount = (string) ($data['debit_account'] ?? $accounts['debit']);
+        $creditAccount = (string) ($data['credit_account'] ?? $accounts['credit']);
+
+        $entry = AccountingEntry::updateOrCreate(
+            ['document_id' => $document->id],
+            [
+                'user_id' => $this->workspaceUserId(),
+                'actor_user_id' => Auth::id(),
+                'date' => (string) ($data['invoice_date'] ?? now()->toDateString()),
+                'document_type' => $type,
+                'document_reference' => $data['invoice_number'] ?? null,
+                'description' => '[OCR] ' . ((string) ($data['partner'] ?? 'Document')) . ' - ' . ((string) ($data['invoice_number'] ?? 'Sans référence')),
+                'debit_account' => $debitAccount,
+                'credit_account' => $creditAccount,
+                'amount' => $amount,
+                'attachment_path' => $document->stored_path,
+                'ocr_status' => 'verified',
+                'ocr_detected_amount' => $amount,
+                'ocr_verified_at' => now(),
+                'ocr_text' => $data['ocr_text'] ?? null,
+            ]
+        );
+
+        $data['linked_entry_id'] = $entry->id;
+        $document->update([
+            'status' => 'validated',
+            'actor_user_id' => Auth::id(),
+            'extracted_data' => $data,
+        ]);
+
+        return true;
     }
 
     private function guessDocumentTypeFromFilename(string $filename): string
@@ -1477,20 +2224,25 @@ class AccountingController extends Controller
     {
         $lowerText = mb_strtolower($text);
 
-        if (str_contains($lowerText, 'facture') && preg_match('/client|vente|invoice/i', $text)) {
-            return 'Vente';
-        }
         if (preg_match('/fournisseur|achat|purchase/i', $text)) {
             return 'Achat';
         }
         if (preg_match('/reçu|recu|receipt/i', $text)) {
             return 'Reçu';
         }
+        if (str_contains($lowerText, 'facture') && preg_match('/client|vente|invoice/i', $text)) {
+            return 'Vente';
+        }
 
         return $fallback;
     }
 
-    private function buildValidationExtractedData(string $ocrText, array $extracted, array $richExtracted = []): array
+    private function buildValidationExtractedData(
+        string $ocrText,
+        array $extracted,
+        array $richExtracted = [],
+        ?string $documentType = null
+    ): array
     {
         $invoiceDate = $this->normalizeOcrDate((string) ($extracted['date'] ?? ($richExtracted['primary']['invoice_date'] ?? '')));
         if ($invoiceDate === null) {
@@ -1515,11 +2267,13 @@ class AccountingController extends Controller
             ) ?? '');
         }
 
-        $partner = trim((string) ($extracted['partner_name'] ?? ($richExtracted['primary']['partner_name'] ?? '')));
+        $preferredPartner = $this->resolvePreferredPartner($documentType, $richExtracted);
+        $partner = trim((string) ($preferredPartner ?? $extracted['partner_name'] ?? ($richExtracted['primary']['partner_name'] ?? '')));
         if ($partner === '') {
             $partner = (string) ($this->extractByPatterns(
                 $ocrText,
                 [
+                    '/\b(?:fournisseur|supplier|vendeur|vendor)\s*[:\-]\s*([^\n\r]{3,100})/iu',
                     '/\b(?:client|customer|fournisseur|supplier|destinataire|societe|soci[ée]t[ée]|entreprise|company)\s*[:\-]\s*([^\n\r]{3,100})/iu',
                 ]
             ) ?? '');
@@ -1530,10 +2284,10 @@ class AccountingController extends Controller
         $amountTtc = $this->toFloatOrNull($extracted['amount_ttc_fcfa'] ?? $extracted['amount_ttc'] ?? ($richExtracted['primary']['amount_ttc'] ?? null));
 
         if ($amountHt === null) {
-            $amountHt = $this->extractAmountFromText($ocrText, ['montant ht', 'total ht', 'sous-total', 'ht']);
+            $amountHt = $this->extractAmountFromText($ocrText, ['montant ht', 'total ht', 'sous-total ht', 'sous total ht', 'sous-total', 'ht']);
         }
         if ($amountTva === null) {
-            $amountTva = $this->extractAmountFromText($ocrText, ['tva', 'taxe']);
+            $amountTva = $this->extractAmountFromText($ocrText, ['tva', 'taxe', 'montant tva']);
         }
         if ($amountTtc === null) {
             $amountTtc = $this->extractAmountFromText($ocrText, ['montant ttc', 'total ttc', 'net a payer', 'net à payer', 'total']);
@@ -1574,6 +2328,18 @@ class AccountingController extends Controller
         return null;
     }
 
+    private function resolvePreferredPartner(?string $documentType, array $richExtracted): ?string
+    {
+        $parties = (array) ($richExtracted['parties'] ?? []);
+
+        return match ($documentType) {
+            'Achat' => $parties['supplier'] ?? ($richExtracted['primary']['supplier_name'] ?? null),
+            'Vente', 'Reçu' => $parties['client'] ?? ($richExtracted['primary']['client_name'] ?? null),
+            default => $parties['supplier']
+                ?? ($parties['client'] ?? ($richExtracted['primary']['partner_name'] ?? null)),
+        };
+    }
+
     private function extractAmountFromText(string $text, array $keywords): ?float
     {
         $escapedKeywords = array_map(
@@ -1582,23 +2348,80 @@ class AccountingController extends Controller
         );
 
         $labelRegex = implode('|', $escapedKeywords);
-        $patterns = [
-            '/(?:' . $labelRegex . ')\s*[:\-]?\s*([0-9][0-9\s.,]{0,20})/iu',
-            '/([0-9][0-9\s.,]{0,20})\s*(?:' . $labelRegex . ')/iu',
-        ];
+        $lines = preg_split('/\R/u', $text) ?: [];
+        $amounts = [];
 
-        foreach ($patterns as $pattern) {
-            if (preg_match_all($pattern, $text, $matches)) {
-                foreach ((array) ($matches[1] ?? []) as $rawAmount) {
-                    $parsed = $this->parseNumericAmount((string) $rawAmount);
-                    if ($parsed !== null) {
-                        return $parsed;
-                    }
-                }
+        foreach ($lines as $index => $line) {
+            $candidate = trim((string) $line);
+            if ($candidate === '' || ! preg_match('/(?:' . $labelRegex . ')/iu', $candidate)) {
+                continue;
+            }
+
+            $amounts = array_merge($amounts, $this->extractAmountsNearOcrLine($lines, (int) $index));
+        }
+
+        return ! empty($amounts) ? max($amounts) : null;
+    }
+
+    private function extractAmountsNearOcrLine(array $lines, int $index): array
+    {
+        $amounts = [];
+        $maxLookahead = 2;
+        $maxNonEmptyLines = 3;
+        $visited = 0;
+
+        for ($offset = 0; $offset <= $maxLookahead; $offset++) {
+            $currentIndex = $index + $offset;
+            if (! isset($lines[$currentIndex])) {
+                break;
+            }
+
+            $candidate = trim((string) $lines[$currentIndex]);
+            if ($candidate === '') {
+                continue;
+            }
+
+            $visited++;
+            if ($this->looksLikeOcrSectionHeader($candidate) && $offset > 0) {
+                break;
+            }
+
+            foreach ($this->extractNumericAmountsFromOcrLine($candidate) as $parsed) {
+                $amounts[] = $parsed;
+            }
+
+            if (! empty($amounts) || $visited >= $maxNonEmptyLines) {
+                break;
             }
         }
 
-        return null;
+        return $amounts;
+    }
+
+    private function looksLikeOcrSectionHeader(string $line): bool
+    {
+        if (preg_match('/^[A-ZÀÂÄÇÉÈÊËÎÏÔÖÙÛÜ0-9\s\-:()%\/]{4,}$/u', $line)) {
+            return true;
+        }
+
+        return (bool) preg_match('/\b(?:facture|description|quantit[eé]|prix|montant|total|sous-total|tva|taxe|client|fournisseur|date|r[ée]f)\b/iu', $line);
+    }
+
+    private function extractNumericAmountsFromOcrLine(string $line): array
+    {
+        $amounts = [];
+        if (! preg_match_all('/\b(?:\d{1,3}(?:[ \x{00A0}.]\d{3})+(?:[.,]\d{2})?|\d+(?:[.,]\d{2})?)\b/u', $line, $matches)) {
+            return $amounts;
+        }
+
+        foreach ((array) ($matches[0] ?? []) as $rawAmount) {
+            $parsed = $this->parseNumericAmount((string) $rawAmount);
+            if ($parsed !== null) {
+                $amounts[] = $parsed;
+            }
+        }
+
+        return $amounts;
     }
 
     private function parseNumericAmount(string $rawAmount): ?float

@@ -1,0 +1,7 @@
+# Dépendances Python minimales pour le runner local PaddleOCR.
+# Installer d'abord paddlepaddle OU paddlepaddle-gpu selon votre machine,
+# puis installer ce fichier.
+
+paddleocr>=2.7.0
+pymupdf>=1.24.0
+Pillow>=10.0.0

@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Modifier Écriture | Sitiame Capitale')
 @section('page_title', 'Modifier l’écriture comptable')
@@ -72,12 +72,16 @@
                             <label class="form-label">Fichier justificatif</label>
                             <input type="file" id="attachmentInput" name="attachment" class="form-control @error('attachment') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx,.zip">
                             <div class="form-text">Formats : PDF, images, Excel, Word, ZIP. Taille max 20 Mo.</div>
+                            @if($entry->attachment_path)
+                                <div class="mt-2 small">
+                                    <span class="text-muted">Fichier actuel :</span>
+                                    <strong>{{ $entry->getSourceDocumentName() }}</strong>
+                                    <a href="{{ route('accounting.entries.document.viewer', $entry) }}" class="ms-2">Visualiser</a>
+                                </div>
+                            @endif
                             @error('attachment')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         @if($entry->attachment_path)
-                            <div class="mb-3">
-                                <a href="{{ asset('storage/' . $entry->attachment_path) }}" target="_blank">Fichier actuel</a>
-                            </div>
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" name="remove_attachment" value="1" id="remove_attachment" {{ old('remove_attachment') ? 'checked' : '' }}>
                                 <label class="form-check-label" for="remove_attachment">

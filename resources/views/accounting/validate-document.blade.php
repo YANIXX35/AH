@@ -23,6 +23,14 @@
                     <p><strong>Nom :</strong> {{ $document->original_name }}</p>
                     <p><strong>Type détecté :</strong> {{ $document->document_type }}</p>
                     <p><strong>Confiance :</strong> {{ number_format($document->confidence, 2, ',', ' ') }}%</p>
+                    <div class="d-flex gap-2 flex-wrap mb-3">
+                        <a href="{{ route('accounting.documents.viewer', $document) }}" class="btn btn-icon btn-outline-primary" title="Ouvrir le document">
+                            <i data-feather="file-text" class="icon-sm"></i>
+                        </a>
+                        <a href="{{ route('accounting', ['prefill_document' => $document->id]) }}#moteur-ecritures" class="btn btn-sm btn-outline-info">
+                            Pré-remplir dans le moteur comptable
+                        </a>
+                    </div>
                     @if($document->status === 'ocr_failed' && !empty($document->extracted_data['ocr_error']))
                         <div class="alert alert-danger">
                             <div class="fw-semibold mb-2">OCR en échec</div>
@@ -56,9 +64,6 @@
                             </div>
                         </div>
                     @endif
-                    <a href="{{ asset('storage/' . $document->stored_path) }}" target="_blank" class="btn btn-icon btn-outline-primary" title="Ouvrir le document">
-                        <i data-feather="file-text" class="icon-sm"></i>
-                    </a>
                 </div>
             </div>
         </div>
@@ -68,9 +73,10 @@
                 <div class="card-body">
                     @php($ocrFieldConfidence = $document->extracted_data['ocr_field_confidence'] ?? [])
                     @php($ocrLowConfidenceLookup = array_flip($document->extracted_data['ocr_low_confidence_fields'] ?? []))
+                    @php($ocrPrimary = $document->extracted_data['ocr_detected_fields']['primary'] ?? [])
                     @if(!empty($document->extracted_data['ocr_review_required']))
                         <div class="alert alert-warning py-2">
-                            OCR avancé : relecture manuelle recommandée avant validation finale.
+                            OCR local PaddleOCR : relecture manuelle recommandée avant validation finale.
                         </div>
                     @endif
                     <form action="{{ route('accounting.documents.validate.store', $document) }}" method="POST">
@@ -86,7 +92,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Partenaire</label>
-                            <input type="text" name="partner" value="{{ old('partner', $document->extracted_data['partner'] ?? '') }}" class="form-control @error('partner') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['partner_name']) ? 'border-warning' : '' }}">
+                            <input type="text" name="partner" value="{{ old('partner', $document->extracted_data['partner'] ?? ($ocrPrimary['partner_name'] ?? '')) }}" class="form-control @error('partner') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['partner_name']) ? 'border-warning' : '' }}">
                             @if(isset($ocrFieldConfidence['partner_name']))
                                 <div class="form-text">Confiance OCR: {{ number_format((float) $ocrFieldConfidence['partner_name'], 1, ',', ' ') }}%</div>
                             @endif
@@ -94,7 +100,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Date facture</label>
-                            <input type="date" name="invoice_date" value="{{ old('invoice_date', $document->extracted_data['invoice_date'] ?? now()->toDateString()) }}" class="form-control @error('invoice_date') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['invoice_date']) ? 'border-warning' : '' }}">
+                            <input type="date" name="invoice_date" value="{{ old('invoice_date', $document->extracted_data['invoice_date'] ?? ($ocrPrimary['invoice_date'] ?? now()->toDateString())) }}" class="form-control @error('invoice_date') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['invoice_date']) ? 'border-warning' : '' }}">
                             @if(isset($ocrFieldConfidence['invoice_date']))
                                 <div class="form-text">Confiance OCR: {{ number_format((float) $ocrFieldConfidence['invoice_date'], 1, ',', ' ') }}%</div>
                             @endif
@@ -102,7 +108,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">N° facture</label>
-                            <input type="text" name="invoice_number" value="{{ old('invoice_number', $document->extracted_data['invoice_number'] ?? '') }}" class="form-control @error('invoice_number') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['invoice_number']) ? 'border-warning' : '' }}">
+                            <input type="text" name="invoice_number" value="{{ old('invoice_number', $document->extracted_data['invoice_number'] ?? ($ocrPrimary['invoice_number'] ?? '')) }}" class="form-control @error('invoice_number') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['invoice_number']) ? 'border-warning' : '' }}">
                             @if(isset($ocrFieldConfidence['invoice_number']))
                                 <div class="form-text">Confiance OCR: {{ number_format((float) $ocrFieldConfidence['invoice_number'], 1, ',', ' ') }}%</div>
                             @endif
@@ -110,7 +116,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Montant HT</label>
-                            <input type="number" step="0.01" name="amount_ht" value="{{ old('amount_ht', $document->extracted_data['amount_ht'] ?? '') }}" class="form-control @error('amount_ht') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['amount_ht']) ? 'border-warning' : '' }}">
+                            <input type="number" step="0.01" name="amount_ht" value="{{ old('amount_ht', $document->extracted_data['amount_ht'] ?? ($ocrPrimary['amount_ht'] ?? '')) }}" class="form-control @error('amount_ht') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['amount_ht']) ? 'border-warning' : '' }}">
                             @if(isset($ocrFieldConfidence['amount_ht']))
                                 <div class="form-text">Confiance OCR: {{ number_format((float) $ocrFieldConfidence['amount_ht'], 1, ',', ' ') }}%</div>
                             @endif
@@ -118,7 +124,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Montant TTC</label>
-                            <input type="number" step="0.01" name="amount_ttc" value="{{ old('amount_ttc', $document->extracted_data['amount_ttc'] ?? '') }}" class="form-control @error('amount_ttc') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['amount_ttc']) ? 'border-warning' : '' }}">
+                            <input type="number" step="0.01" name="amount_ttc" value="{{ old('amount_ttc', $document->extracted_data['amount_ttc'] ?? ($ocrPrimary['amount_ttc'] ?? '')) }}" class="form-control @error('amount_ttc') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['amount_ttc']) ? 'border-warning' : '' }}">
                             @if(isset($ocrFieldConfidence['amount_ttc']))
                                 <div class="form-text">Confiance OCR: {{ number_format((float) $ocrFieldConfidence['amount_ttc'], 1, ',', ' ') }}%</div>
                             @endif
@@ -126,7 +132,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Montant TVA</label>
-                            <input type="number" step="0.01" name="tva" value="{{ old('tva', $document->extracted_data['tva'] ?? '') }}" class="form-control @error('tva') is-invalid @enderror">
+                            <input type="number" step="0.01" name="tva" value="{{ old('tva', $document->extracted_data['tva'] ?? ($ocrPrimary['amount_tva'] ?? '')) }}" class="form-control @error('tva') is-invalid @enderror">
                             @error('tva')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="mb-3">

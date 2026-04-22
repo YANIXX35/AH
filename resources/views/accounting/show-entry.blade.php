@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Détails Écriture | Sitiame Capitale')
 @section('page_title', 'Détails de l’écriture comptable')
@@ -21,6 +21,9 @@
                 <div class="card-body">
                     @php
                         $badge = $entry->getOcrBadge();
+                        $documentName = $entry->getSourceDocumentName();
+                        $documentUrl = $documentName ? route('accounting.entries.document.viewer', $entry) : null;
+                        $ocrSummaryLines = $entry->getOcrSummaryLines();
                         $badgeColor = [
                             'success' => 'bg-light-success text-success',
                             'warning' => 'bg-light-warning text-warning',
@@ -53,8 +56,8 @@
 
                         <dt class="col-sm-4">Justificatif</dt>
                         <dd class="col-sm-8">
-                            @if($entry->attachment_path)
-                                <a href="{{ asset('storage/' . $entry->attachment_path) }}" target="_blank">Télécharger le fichier</a>
+                            @if($documentUrl)
+                                <a href="{{ $documentUrl }}" target="_blank">{{ $documentName ?: 'Visualiser le document' }}</a>
                             @else
                                 Aucun fichier
                             @endif
@@ -63,12 +66,19 @@
                         <dt class="col-sm-4">Statut OCR</dt>
                         <dd class="col-sm-8">
                             <span class="badge {{ $badgeColor[$badge['color']] ?? 'bg-light-secondary text-secondary' }}">{{ $badge['text'] }}</span>
+                            @if(!empty($ocrSummaryLines))
+                                <ul class="small text-muted mt-2 mb-0">
+                                    @foreach($ocrSummaryLines as $summaryLine)
+                                        <li>{{ $summaryLine }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
                         </dd>
 
                         @if($entry->ocr_status === 'failed')
                             <dt class="col-sm-4">Détail erreur OCR</dt>
                             <dd class="col-sm-8">
-                                <pre class="bg-light border rounded p-3 small mb-0" style="white-space: pre-wrap;">{{ $entry->ocr_text ?: 'Aucun détail disponible.' }}</pre>
+                                <pre class="bg-light border rounded p-3 small mb-0" style="white-space: pre-wrap;">{{ $entry->getOcrRawText() ?: 'Aucun détail disponible.' }}</pre>
                             </dd>
                         @endif
                     </dl>
@@ -78,7 +88,7 @@
                         <a href="{{ route('accounting.entries.edit', $entry) }}" class="btn btn-primary ms-2">Modifier</a>
                     </div>
 
-                    @if($entry->attachment_path)
+                    @if($documentUrl && $entry->ocr_status === 'failed')
                         <div class="mt-3">
                             <form action="{{ route('accounting.entries.ocr.retry', $entry) }}" method="POST" class="d-inline">
                                 @csrf
@@ -86,6 +96,55 @@
                                     <i data-feather="refresh-cw" class="me-1"></i>Relancer OCR
                                 </button>
                             </form>
+                        </div>
+                    @endif
+
+                    @if(!empty($autoCorrectionProposal))
+                        <div class="card mt-4 border-success">
+                            <div class="card-header bg-light">
+                                <strong>Aperçu de correction automatique OCR</strong>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-3">
+                                    L’application a détecté des valeurs plus cohérentes dans le document. Vérifiez les changements proposés avant confirmation.
+                                </p>
+
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-3">
+                                        <thead>
+                                            <tr>
+                                                <th>Champ</th>
+                                                <th>Valeur actuelle</th>
+                                                <th>Valeur proposée</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($autoCorrectionProposal['changes'] as $change)
+                                                <tr>
+                                                    <td><strong>{{ $change['label'] }}</strong></td>
+                                                    <td>{{ $change['before'] }}</td>
+                                                    <td class="text-success">{{ $change['after'] }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="small text-muted mb-3">
+                                    Valeurs OCR détectées :
+                                    HT {{ number_format((float) ($autoCorrectionProposal['normalized']['amount_ht'] ?? 0), 2, ',', ' ') }} FCFA,
+                                    TVA {{ number_format((float) ($autoCorrectionProposal['normalized']['tva'] ?? 0), 2, ',', ' ') }} FCFA,
+                                    TTC {{ number_format((float) ($autoCorrectionProposal['normalized']['amount_ttc'] ?? 0), 2, ',', ' ') }} FCFA.
+                                </div>
+
+                                <form action="{{ route('accounting.entries.ocr.auto-correct', $entry) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <input type="hidden" name="confirm_auto_correction" value="1">
+                                    <button type="submit" class="btn btn-success">
+                                        <i data-feather="zap" class="me-1"></i>Confirmer la correction automatique
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     @endif
 

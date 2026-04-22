@@ -211,26 +211,6 @@
             padding-bottom: 0.1rem;
         }
 
-        .accounting-hero-body {
-            flex-wrap: wrap !important;
-        }
-
-        .accounting-hero-text {
-            flex: 1 1 560px;
-            min-width: 300px;
-        }
-
-        .hero-accounting-title {
-            font-size: 1.05rem;
-            line-height: 1.35;
-            margin-bottom: 0.45rem;
-        }
-
-        .hero-accounting-subtitle {
-            max-width: 860px;
-            margin-bottom: 0.35rem;
-        }
-
         .table-actions .btn {
             width: 34px;
             height: 34px;
@@ -261,9 +241,69 @@
             color: #6f42c1;
         }
 
+        .table-actions .btn[title="OCR automatique"] {
+            color: #6f42c1;
+        }
+
+        .table-actions .btn.btn-ocr-action {
+            width: auto;
+            min-width: 72px;
+            padding: 0 0.55rem;
+            gap: 0.3rem;
+            color: #6f42c1;
+            font-size: 0.76rem;
+            font-weight: 600;
+        }
+
+        .table-actions .btn.btn-ocr-action svg {
+            width: 13px;
+            height: 13px;
+        }
+
         .table-actions .btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .collapsible-section {
+            width: 100%;
+        }
+
+        .collapsible-section summary {
+            list-style: none;
+            cursor: pointer;
+        }
+
+        .collapsible-section summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .collapsible-section-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-weight: 600;
+        }
+
+        .collapsible-chevron {
+            transition: transform 0.2s ease;
+        }
+
+        details[open] .collapsible-chevron {
+            transform: rotate(90deg);
+        }
+
+        .ocr-facture-table td {
+            padding: 0.4rem 0.55rem;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #eef1f4;
+            vertical-align: top;
+        }
+
+        .ocr-facture-table td:first-child {
+            width: 220px;
+            color: #6c757d;
+            font-weight: 600;
         }
 
         .header-actions form,
@@ -535,38 +575,31 @@
                 width: 36px;
                 height: 36px;
             }
+
+            .table-actions .btn.btn-ocr-action {
+                width: auto;
+                min-width: 70px;
+                height: 36px;
+                padding: 0 0.5rem;
+            }
         }
     </style>
-
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-primary border-opacity-25">
-                <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 accounting-hero-body">
-                    <div class="accounting-hero-text">
-                        <h5 class="card-title hero-accounting-title"><i data-feather="zap" class="me-2" style="width: 24px; height: 24px; display: inline;"></i>Moteur comptable</h5>
-                        <p class="text-muted hero-accounting-subtitle mb-1">C’est ici que se crée la valeur métier : génération d’écritures, journaux, grand livre, balance, rapprochement bancaire, clôture mensuelle et plan comptable <strong>OHADA</strong> paramétrable.</p>
-                        <p class="text-muted small mb-0">Enchaînement recommandé : documents → écritures → rapports → rapprochement → clôture du mois.</p>
-                    </div>
-                    <div class="header-actions d-flex flex-wrap gap-2">
-                        <a href="{{ route('accounting.documents') }}" class="btn btn-outline-secondary"><i data-feather="folder" class="me-1"></i>Documents</a>
-                        <a href="{{ route('accounting.plan') }}" class="btn btn-outline-secondary"><i data-feather="layers" class="me-1"></i>Plan OHADA</a>
-                        <a href="{{ route('accounting.bank-reconciliation') }}" class="btn btn-outline-secondary"><i data-feather="shuffle" class="me-1"></i>Rapprochement</a>
-                        <a href="{{ route('accounting.monthly-closing') }}" class="btn btn-outline-secondary"><i data-feather="calendar" class="me-1"></i>Clôture</a>
-                        <a href="{{ route('accounting.report.journal') }}" class="btn btn-outline-primary"><i data-feather="file-text" class="me-1"></i>Rapports</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div class="row g-3 mb-4">
         <div class="col-12">
             <div class="card border border-primary border-opacity-25">
                 <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2 justify-content-end mb-3">
+                        <a href="{{ route('accounting.documents') }}" class="btn btn-outline-secondary btn-sm"><i data-feather="folder" class="me-1"></i>Documents</a>
+                        <a href="{{ route('accounting.plan') }}" class="btn btn-outline-secondary btn-sm"><i data-feather="layers" class="me-1"></i>Plan OHADA</a>
+                        <a href="{{ route('accounting.bank-reconciliation') }}" class="btn btn-outline-secondary btn-sm"><i data-feather="shuffle" class="me-1"></i>Rapprochement</a>
+                        <a href="{{ route('accounting.monthly-closing') }}" class="btn btn-outline-secondary btn-sm"><i data-feather="calendar" class="me-1"></i>Clôture</a>
+                        <a href="{{ route('accounting.report.journal') }}" class="btn btn-outline-primary btn-sm"><i data-feather="file-text" class="me-1"></i>Rapports</a>
+                    </div>
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                         <div>
                             <h6 class="mb-1"><i data-feather="upload" class="me-1"></i>Import rapide: uniquement le document</h6>
-                            <p class="text-muted mb-0 small">Dépose le justificatif (PDF/Image/Excel/CSV), puis le système extrait les données OCR pour créer les écritures et les mouvements bancaires après validation.</p>
+                            <p class="text-muted mb-0 small">Dépose le justificatif (PDF/Image/Excel/CSV), puis le système extrait les données OCR pour créer les écritures et les mouvements bancaires après validation. Les PDF et images sont analysés localement avec PaddleOCR, avec fallback CPU si le GPU n’est pas disponible.</p>
                         </div>
                         <form action="{{ route('accounting.documents.upload') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row align-items-stretch gap-2">
                             @csrf
@@ -729,40 +762,65 @@
         </div>
     </div>
 
-    <div class="row g-4 mb-4">
-        <div class="col-xl-12">
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i data-feather="check-circle" class="me-2" style="width: 16px; height: 16px; display: inline;"></i>
-                <strong>✅ OCR (Reconnaissance de texte) activé :</strong> Téléchargez votre facture/document PDF ou image et le système vérifiera automatiquement que le montant correspond. 
-                Formats acceptés: JPG, PNG, PDF | 🚀 Gratuit et sans installation
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-    </div>
-
     <div class="row g-4 mb-4" id="moteur-ecritures">
         <div class="col-xl-12">
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title mb-4"><i data-feather="plus-circle" class="me-2" style="width: 20px; height: 20px;"></i>Génération d’écritures — saisie d’une nouvelle écriture</h5>
+                    @if($prefillDocument && $prefillData)
+                        <div class="alert alert-info d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+                            <div>
+                                <strong>Pré-remplissage OCR actif</strong><br>
+                                <span class="small">
+                                    Document source : <strong>{{ $prefillDocument->original_name }}</strong>
+                                    | Type : {{ $prefillDocument->document_type }}
+                                    | Confiance : {{ number_format((float) $prefillDocument->confidence, 2, ',', ' ') }}%
+                                </span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{{ route('accounting.documents.viewer', $prefillDocument) }}" class="btn btn-sm btn-outline-primary">Voir le document</a>
+                                <a href="{{ route('accounting') }}#moteur-ecritures" class="btn btn-sm btn-outline-secondary">Retirer le pré-remplissage</a>
+                            </div>
+                        </div>
+                    @endif
                     
                     <form action="{{ route('accounting.entries.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
+                        @if($prefillData)
+                            <input type="hidden" name="document_id" value="{{ old('document_id', $prefillData['document_id']) }}">
+                        @endif
+                        @php
+                            $prefillExtracted = (array) ($prefillDocument?->extracted_data ?? []);
+                            $prefillRich = (array) ($prefillExtracted['ocr_detected_fields'] ?? []);
+                            $prefillPrimary = (array) ($prefillRich['primary'] ?? []);
+                            $prefillContacts = (array) ($prefillRich['contacts'] ?? []);
+                            $prefillAddresses = (array) ($prefillRich['addresses'] ?? []);
+                            $prefillIdentifiers = (array) ($prefillRich['identifiers'] ?? []);
+                            $prefillPayment = (array) ($prefillRich['payment'] ?? []);
+                            $prefillBanking = (array) ($prefillRich['banking'] ?? []);
+                        @endphp
                         
                         <!-- SECTION 1: INFORMATIONS DOCUMENT -->
                         <div class="card mb-4 border-start border-primary border-3">
                             <div class="card-body">
-                                <h6 class="card-title text-primary mb-3"><i data-feather="file" class="me-2" style="width: 18px; height: 18px;"></i>1. Informations du document</h6>
-                                
+                                <details class="collapsible-section js-accounting-section" data-section="document" open>
+                                    <summary class="card-title text-primary mb-0">
+                                        <span class="collapsible-section-toggle">
+                                            <i class="collapsible-chevron">▸</i>
+                                            <i data-feather="file" class="me-1" style="width: 18px; height: 18px;"></i>
+                                            1. Informations du document
+                                        </span>
+                                    </summary>
+                                <div class="pt-3">
                                 <div class="row g-3">
                                     <div class="col-md-2">
                                         <label class="form-label fw-500">Type</label>
                                         <select id="documentType" name="document_type" class="form-select @error('document_type') is-invalid @enderror" required>
                                             <option value="">--</option>
-                                            <option value="Vente" {{ old('document_type') === 'Vente' ? 'selected' : '' }}>Facture vente</option>
-                                            <option value="Achat" {{ old('document_type') === 'Achat' ? 'selected' : '' }}>Facture achat</option>
-                                            <option value="Reçu" {{ old('document_type') === 'Reçu' ? 'selected' : '' }}>Reçu</option>
-                                            <option value="Justificatif" {{ old('document_type') === 'Justificatif' ? 'selected' : '' }}>Justificatif</option>
+                                            <option value="Vente" {{ old('document_type', $prefillData['document_type'] ?? '') === 'Vente' ? 'selected' : '' }}>Facture vente</option>
+                                            <option value="Achat" {{ old('document_type', $prefillData['document_type'] ?? '') === 'Achat' ? 'selected' : '' }}>Facture achat</option>
+                                            <option value="Reçu" {{ old('document_type', $prefillData['document_type'] ?? '') === 'Reçu' ? 'selected' : '' }}>Reçu</option>
+                                            <option value="Justificatif" {{ old('document_type', $prefillData['document_type'] ?? '') === 'Justificatif' ? 'selected' : '' }}>Justificatif</option>
                                         </select>
                                         @error('document_type')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                     </div>
@@ -783,12 +841,12 @@
                                     
                                     <div class="col-md-3">
                                         <label class="form-label fw-500">Partenaire</label>
-                                        <input type="text" name="partner_name" value="{{ old('partner_name') }}" class="form-control" placeholder="Nom fournisseur/client">
+                                        <input type="text" name="partner_name" value="{{ old('partner_name', $prefillData['partner_name'] ?? '') }}" class="form-control" placeholder="Nom fournisseur/client">
                                     </div>
                                     
                                     <div class="col-md-2">
                                         <label class="form-label fw-500">Date facture</label>
-                                        <input type="date" name="date" value="{{ old('date', now()->toDateString()) }}" class="form-control @error('date') is-invalid @enderror" required>
+                                        <input type="date" name="date" value="{{ old('date', $prefillData['date'] ?? now()->toDateString()) }}" class="form-control @error('date') is-invalid @enderror" required>
                                         @error('date')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                     </div>
                                 </div>
@@ -796,29 +854,38 @@
                                 <div class="row g-3 mt-2">
                                     <div class="col-md-3">
                                         <label class="form-label fw-500">N° facture</label>
-                                        <input type="text" name="document_reference" value="{{ old('document_reference') }}" class="form-control @error('document_reference') is-invalid @enderror" placeholder="FAC-2026-001" required>
+                                        <input type="text" name="document_reference" value="{{ old('document_reference', $prefillData['document_reference'] ?? '') }}" class="form-control @error('document_reference') is-invalid @enderror" placeholder="FAC-2026-001" required>
                                         @error('document_reference')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                     </div>
                                     
                                     <div class="col-md-9">
                                         <label class="form-label fw-500">Description</label>
-                                        <textarea name="description" class="form-control @error('description') is-invalid @enderror" rows="1" placeholder="Détails de la transaction" required>{{ old('description') }}</textarea>
+                                        <textarea name="description" class="form-control @error('description') is-invalid @enderror" rows="1" placeholder="Détails de la transaction" required>{{ old('description', $prefillData['description'] ?? '') }}</textarea>
                                         @error('description')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                     </div>
                                 </div>
+                                </div>
+                                </details>
                             </div>
                         </div>
                         
                         <!-- SECTION 2: MONTANTS ET TVA -->
                         <div class="card mb-4 border-start border-warning border-3">
                             <div class="card-body">
-                                <h6 class="card-title text-warning mb-3"><i data-feather="dollar-sign" class="me-2" style="width: 18px; height: 18px;"></i>2. Montants et TVA</h6>
-                                
+                                <details class="collapsible-section js-accounting-section" data-section="amounts" open>
+                                    <summary class="card-title text-warning mb-0">
+                                        <span class="collapsible-section-toggle">
+                                            <i class="collapsible-chevron">▸</i>
+                                            <i data-feather="dollar-sign" class="me-1" style="width: 18px; height: 18px;"></i>
+                                            2. Montants et TVA
+                                        </span>
+                                    </summary>
+                                <div class="pt-3">
                                 <div class="row g-3">
                                     <div class="col-md-3">
                                         <label class="form-label fw-500">Montant HT</label>
                                         <div class="input-group">
-                                            <input type="number" step="0.01" min="0" name="amount" id="htAmount" value="{{ old('amount') }}" class="form-control @error('amount') is-invalid @enderror" placeholder="0.00" required>
+                                            <input type="number" step="0.01" min="0" name="amount" id="htAmount" value="{{ old('amount', $prefillData['amount'] ?? '') }}" class="form-control @error('amount') is-invalid @enderror" placeholder="0.00" required>
                                             <span class="input-group-text">FCFA</span>
                                         </div>
                                         @error('amount')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
@@ -827,7 +894,7 @@
                                     <div class="col-md-3">
                                         <label class="form-label fw-500">Montant TVA</label>
                                         <div class="input-group">
-                                            <input type="number" step="0.01" min="0" id="tvaAmount" name="amount_tva" value="{{ old('amount_tva', '0.00') }}" class="form-control" placeholder="0.00" readonly>
+                                            <input type="number" step="0.01" min="0" id="tvaAmount" name="amount_tva" value="{{ old('amount_tva', $prefillData['amount_tva'] ?? '0.00') }}" class="form-control" placeholder="0.00" readonly>
                                             <span class="input-group-text">FCFA</span>
                                         </div>
                                     </div>
@@ -835,7 +902,7 @@
                                     <div class="col-md-3">
                                         <label class="form-label fw-500">Montant TTC</label>
                                         <div class="input-group">
-                                            <input type="number" step="0.01" min="0" id="ttcAmount" name="ttc_amount" value="{{ old('ttc_amount', '0.00') }}" class="form-control" placeholder="0.00" readonly>
+                                            <input type="number" step="0.01" min="0" id="ttcAmount" name="ttc_amount" value="{{ old('ttc_amount', $prefillData['ttc_amount'] ?? '0.00') }}" class="form-control" placeholder="0.00" readonly>
                                             <span class="input-group-text">FCFA</span>
                                         </div>
                                     </div>
@@ -844,7 +911,7 @@
                                 <div class="row g-3 mt-3">
                                     <div class="col-md-3">
                                         <label class="form-label fw-500">Taux TVA %</label>
-                                        <input type="number" step="0.01" min="0" max="100" id="tvaRate" name="tva_rate" value="{{ old('tva_rate', '18') }}" class="form-control" placeholder="18">
+                                        <input type="number" step="0.01" min="0" max="100" id="tvaRate" name="tva_rate" value="{{ old('tva_rate', $prefillData['tva_rate'] ?? '18') }}" class="form-control" placeholder="18">
                                     </div>
                                     
                                     <div class="col-md-9">
@@ -860,14 +927,23 @@
                                         </div>
                                     </div>
                                 </div>
+                                </div>
+                                </details>
                             </div>
                         </div>
                         
                         <!-- SECTION 3: MOUVEMENTS COMPTABLES -->
                         <div class="card mb-4 border-start border-success border-3">
                             <div class="card-body">
-                                <h6 class="card-title text-success mb-3"><i data-feather="arrow-right-left" class="me-2" style="width: 18px; height: 18px;"></i>3. Mouvements comptables</h6>
-                                
+                                <details class="collapsible-section js-accounting-section" data-section="accounts" open>
+                                    <summary class="card-title text-success mb-0">
+                                        <span class="collapsible-section-toggle">
+                                            <i class="collapsible-chevron">▸</i>
+                                            <i data-feather="arrow-right-left" class="me-1" style="width: 18px; height: 18px;"></i>
+                                            3. Mouvements comptables
+                                        </span>
+                                    </summary>
+                                <div class="pt-3">
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label class="form-label fw-500"><i data-feather="arrow-down-circle" class="me-2 text-danger" style="width: 16px; height: 16px;"></i>Compte DÉBIT</label>
@@ -881,14 +957,23 @@
                                         <small class="form-text text-muted d-block mt-1">Compte déterminé automatiquement selon le type de document.</small>
                                     </div>
                                 </div>
+                                </div>
+                                </details>
                             </div>
                         </div>
                         
                         <!-- SECTION 4: CONTRÔLES DE COHÉRENCE -->
                         <div class="card mb-4 border-start border-info border-3">
                             <div class="card-body">
-                                <h6 class="card-title text-info mb-3"><i data-feather="check-circle" class="me-2" style="width: 18px; height: 18px;"></i>4. Contrôles de cohérence</h6>
-                                
+                                <details class="collapsible-section js-accounting-section" data-section="ocr" open>
+                                    <summary class="card-title text-info mb-0">
+                                        <span class="collapsible-section-toggle">
+                                            <i class="collapsible-chevron">▸</i>
+                                            <i data-feather="check-circle" class="me-1" style="width: 18px; height: 18px;"></i>
+                                            4. Contrôles de cohérence
+                                        </span>
+                                    </summary>
+                                <div class="pt-3">
                                 <!-- Sous-section: Vérification cohérence montants -->
                                 <div class="row g-3 mb-3">
                                     <div class="col-12">
@@ -902,14 +987,107 @@
                                 <!-- Sous-section: Statut OCR -->
                                 <div class="row g-3">
                                     <div class="col-12">
-                                        <label class="form-label fw-500"><i data-feather="camera" class="me-2" style="width: 16px; height: 16px;"></i>Vérification du document (OCR)</label>
+                                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                            <label class="form-label fw-500 mb-0"><i data-feather="camera" class="me-2" style="width: 16px; height: 16px;"></i>Vérification du document (OCR)</label>
+                                            <a href="{{ route('accounting.documents') }}" class="btn btn-sm btn-outline-info">
+                                                <i data-feather="camera" class="me-1" style="width: 14px; height: 14px;"></i>OCR
+                                            </a>
+                                        </div>
                                         <div id="ocr-status" class="alert alert-light border">
                                             <i data-feather="info" class="me-2" style="width: 16px; height: 16px; display: inline;"></i>
-                                            <span id="ocr-message">Aucun fichier uploadé</span>
+                                            <span id="ocr-message">
+                                                @if($prefillDocument)
+                                                    Document OCR sélectionné : <strong>{{ $prefillDocument->original_name }}</strong>. Vous pouvez créer l’écriture sans recharger le fichier.
+                                                @else
+                                                    Aucun fichier uploadé
+                                                @endif
+                                            </span>
                                         </div>
                                         <small class="form-text text-muted d-block">L'OCR vérifiera automatiquement que le montant du document correspond au montant saisi.</small>
                                     </div>
                                 </div>
+                                @if($prefillDocument)
+                                    <div class="row g-3 mt-1">
+                                        <div class="col-12">
+                                            <details class="collapsible-section" open>
+                                                <summary class="text-info fw-semibold">
+                                                    <span class="collapsible-section-toggle">
+                                                        <i class="collapsible-chevron">▸</i>
+                                                        Informations facture détectées (OCR)
+                                                    </span>
+                                                </summary>
+                                                <div class="table-responsive mt-2">
+                                                    <table class="table table-sm ocr-facture-table mb-0">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Document source</td>
+                                                                <td>{{ $prefillDocument->original_name }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Référence facture</td>
+                                                                <td>{{ $prefillExtracted['invoice_number'] ?? $prefillPrimary['invoice_number'] ?? 'Non détectée' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Date facture</td>
+                                                                <td>{{ $prefillExtracted['invoice_date'] ?? $prefillPrimary['invoice_date'] ?? 'Non détectée' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Partenaire principal</td>
+                                                                <td>{{ $prefillExtracted['partner'] ?? $prefillPrimary['partner_name'] ?? 'Non détecté' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Fournisseur / Client</td>
+                                                                <td>
+                                                                    Fournisseur: {{ $prefillPrimary['supplier_name'] ?? 'N/A' }}<br>
+                                                                    Client: {{ $prefillPrimary['client_name'] ?? 'N/A' }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Montants</td>
+                                                                <td>
+                                                                    HT: {{ isset($prefillExtracted['amount_ht']) ? number_format((float) $prefillExtracted['amount_ht'], 2, ',', ' ') : 'N/A' }}<br>
+                                                                    TVA: {{ isset($prefillExtracted['tva']) ? number_format((float) $prefillExtracted['tva'], 2, ',', ' ') : 'N/A' }}<br>
+                                                                    TTC: {{ isset($prefillExtracted['amount_ttc']) ? number_format((float) $prefillExtracted['amount_ttc'], 2, ',', ' ') : 'N/A' }} {{ $prefillExtracted['currency'] ?? $prefillPrimary['currency'] ?? 'FCFA' }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Contacts</td>
+                                                                <td>
+                                                                    Emails: {{ !empty($prefillContacts['emails']) ? implode(', ', (array) $prefillContacts['emails']) : 'N/A' }}<br>
+                                                                    Téléphones: {{ !empty($prefillContacts['phones']) ? implode(', ', (array) $prefillContacts['phones']) : 'N/A' }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Identifiants</td>
+                                                                <td>
+                                                                    Fiscaux: {{ !empty($prefillIdentifiers['tax_ids']) ? implode(', ', (array) $prefillIdentifiers['tax_ids']) : 'N/A' }}<br>
+                                                                    Business: {{ !empty($prefillIdentifiers['business_ids']) ? implode(', ', (array) $prefillIdentifiers['business_ids']) : 'N/A' }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Adresse</td>
+                                                                <td>
+                                                                    Fournisseur: {{ $prefillAddresses['supplier_address'] ?? 'N/A' }}<br>
+                                                                    Client: {{ $prefillAddresses['client_address'] ?? 'N/A' }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Paiement / Banque</td>
+                                                                <td>
+                                                                    Conditions: {{ !empty($prefillPayment['terms']) ? implode(' | ', (array) $prefillPayment['terms']) : 'N/A' }}<br>
+                                                                    Échéances: {{ !empty($prefillPayment['due_dates']) ? implode(', ', (array) $prefillPayment['due_dates']) : 'N/A' }}<br>
+                                                                    IBAN: {{ !empty($prefillBanking['iban']) ? implode(', ', (array) $prefillBanking['iban']) : 'N/A' }}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </details>
+                                        </div>
+                                    </div>
+                                @endif
+                                </div>
+                                </details>
                             </div>
                         </div>
                         
@@ -1007,6 +1185,52 @@
         document.getElementById('htAmount').addEventListener('input', calculateAmounts);
         document.getElementById('tvaRate').addEventListener('input', calculateAmounts);
         document.getElementById('documentType').addEventListener('change', updateAccountsByDocumentType);
+
+        // Mode ultra ergonomique: une seule section du formulaire ouverte à la fois.
+        (function setupAccountingAccordion() {
+            const sections = Array.from(document.querySelectorAll('#moteur-ecritures details.js-accounting-section'));
+            if (!sections.length) {
+                return;
+            }
+
+            const openOnly = function (target) {
+                sections.forEach(function (section) {
+                    if (section !== target) {
+                        section.removeAttribute('open');
+                    }
+                });
+                target.setAttribute('open', 'open');
+            };
+
+            sections.forEach(function (section) {
+                section.addEventListener('toggle', function () {
+                    if (section.open) {
+                        openOnly(section);
+                    }
+                });
+            });
+
+            const invalidField = document.querySelector('#moteur-ecritures .is-invalid');
+            if (invalidField) {
+                const invalidSection = invalidField.closest('details.js-accounting-section');
+                if (invalidSection) {
+                    openOnly(invalidSection);
+                    return;
+                }
+            }
+
+            @if($prefillDocument)
+                const ocrSection = sections.find(function (section) {
+                    return section.dataset.section === 'ocr';
+                });
+                if (ocrSection) {
+                    openOnly(ocrSection);
+                    return;
+                }
+            @endif
+
+            openOnly(sections[0]);
+        })();
 
         // Initial calculation
         calculateAmounts();
@@ -1158,7 +1382,24 @@
                                                     </td>
                                                     <td data-label="Date">{{ $entry->date->format('d/m/Y') }}</td>
                                                     <td data-label="Document">
+                                                        @php
+                                                            $documentName = $entry->getSourceDocumentName();
+                                                            $viewerUrl = $documentName ? route('accounting.entries.document.viewer', $entry) : null;
+                                                        @endphp
                                                         <span class="badge bg-light-primary text-primary">{{ substr($entry->document_type, 0, 3) }}</span>
+                                                        @if($documentName)
+                                                            <div class="small mt-1">
+                                                                @if($viewerUrl)
+                                                                    <a href="{{ $viewerUrl }}" class="text-decoration-none">
+                                                                        {{ strlen($documentName) > 32 ? substr($documentName, 0, 32) . '...' : $documentName }}
+                                                                    </a>
+                                                                @else
+                                                                    {{ strlen($documentName) > 32 ? substr($documentName, 0, 32) . '...' : $documentName }}
+                                                                @endif
+                                                            </div>
+                                                        @else
+                                                            <div class="small text-muted mt-1">Aucun fichier lié</div>
+                                                        @endif
                                                     </td>
                                                     <td data-label="Description">{{ substr($entry->description, 0, 40) }}{{ strlen($entry->description) > 40 ? '...' : '' }}</td>
                                                     <td data-label="Débit"><code>{{ $entry->debit_account }}</code></td>
@@ -1167,6 +1408,7 @@
                                                     <td data-label="OCR">
                                                         @php
                                                             $badge = $entry->getOcrBadge();
+                                                            $ocrTableDetail = $entry->getOcrTableDetail();
                                                             $badgeColor = [
                                                                 'success' => 'bg-light-success text-success',
                                                                 'warning' => 'bg-light-warning text-warning',
@@ -1175,6 +1417,20 @@
                                                             ];
                                                         @endphp
                                                         <span class="badge {{ $badgeColor[$badge['color']] }}">{{ $badge['text'] }}</span>
+                                                        @if($ocrTableDetail)
+                                                            <div class="small mt-1 text-muted">
+                                                                {{ strlen($ocrTableDetail) > 60 ? substr($ocrTableDetail, 0, 60) . '...' : $ocrTableDetail }}
+                                                            </div>
+                                                        @endif
+                                                        @if($viewerUrl)
+                                                            <div class="small mt-1">
+                                                                <a href="{{ $viewerUrl }}" class="text-decoration-none">
+                                                                    Voir le document OCR
+                                                                </a>
+                                                            </div>
+                                                        @else
+                                                            <div class="small text-muted mt-1">Aucun document OCR</div>
+                                                        @endif
                                                     </td>
                                                     <td data-label="Actions">
                                                         <div class="table-actions">
@@ -1191,16 +1447,26 @@
                                                                     </svg>
                                                                 </a>
                                                             @endif
-                                                            @if($entry->attachment_path)
+                                                            @if($entry->attachment_path && !in_array($entry->ocr_status, ['verified', 'manual_verified'], true))
                                                                 <form action="{{ route('accounting.entries.ocr.retry', $entry) }}" method="POST" class="d-inline">
                                                                     @csrf
-                                                                    <button type="submit" class="btn btn-sm btn-white" title="Relancer OCR" aria-label="Relancer OCR">
+                                                                    <button type="submit" class="btn btn-sm btn-white btn-ocr-action" title="OCR automatique" aria-label="OCR automatique">
                                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                                                             <path d="M11.534 7h3.932a.5.5 0 0 0 .392-.812l-2.028-2.5a.5.5 0 0 0-.778.624L14.434 6h-2.9A5.5 5.5 0 0 0 1.07 7.2a.5.5 0 1 0 .98.196A4.5 4.5 0 0 1 11.534 7"/>
                                                                             <path d="M4.466 9H.534a.5.5 0 0 0-.392.812l2.028 2.5a.5.5 0 1 0 .778-.624L1.566 10h2.9a4.5 4.5 0 0 1 4.484 4.1.5.5 0 0 0 .995-.102A5.5 5.5 0 0 0 4.466 9"/>
                                                                         </svg>
+                                                                        <span>OCR</span>
                                                                     </button>
                                                                 </form>
+                                                            @elseif($entry->attachment_path && in_array($entry->ocr_status, ['verified', 'manual_verified'], true))
+                                                                <span class="badge bg-light-success text-success" title="OCR déjà validé">Déjà vérifié</span>
+                                                            @endif
+                                                            @if(in_array($entry->ocr_status, ['mismatch', 'mismatched'], true) && $viewerUrl)
+                                                                <a href="{{ route('accounting.entries.show', $entry) }}" class="btn btn-sm btn-white text-success" title="Aperçu correction OCR" aria-label="Aperçu correction OCR">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                                                        <path d="M8 0a.5.5 0 0 1 .5.5v2.036a5.5 5.5 0 0 1 4.964 4.964H15.5a.5.5 0 0 1 0 1h-2.036a5.5 5.5 0 0 1-4.964 4.964V15.5a.5.5 0 0 1-1 0v-2.036A5.5 5.5 0 0 1 2.536 8.5H.5a.5.5 0 0 1 0-1h2.036A5.5 5.5 0 0 1 7.5 2.536V.5A.5.5 0 0 1 8 0m0 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8m1.354 2.146a.5.5 0 0 1 0 .708L8.207 8l1.147 1.146a.5.5 0 0 1-.708.708L7.146 8.354a.5.5 0 0 1 0-.708l1.5-1.5a.5.5 0 0 1 .708 0"/>
+                                                                    </svg>
+                                                                </a>
                                                             @endif
                                                             <a href="{{ route('accounting.entries.edit', $entry) }}" class="btn btn-sm btn-white" title="Modifier" aria-label="Modifier">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">

@@ -17,6 +17,7 @@ use App\Http\Controllers\AccountantClientController;
 use App\Http\Controllers\AccountantDashboardController;
 use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\AccountingDocumentController;
+use App\Http\Controllers\AccountingDocumentViewerController;
 use App\Http\Controllers\InvestorController;
 use App\Http\Controllers\MenuActivityLogController;
 use App\Http\Controllers\FedaPaySandboxController;
@@ -533,16 +534,24 @@ Route::middleware('auth')->group(function () {
         Route::post('/accounting/demo', fn () => back()->with('status', 'Mode démo disponible prochainement.'))->name('accounting.demo');
         Route::post('/accounting/entries', [AccountingController::class, 'storeEntry'])->name('accounting.entries.store');
         Route::get('/accounting/entries/{entry}', [AccountingController::class, 'showEntry'])->name('accounting.entries.show');
+        Route::get('/accounting/entries/{entry}/document', [AccountingDocumentViewerController::class, 'showEntryDocument'])->name('accounting.entries.document.viewer');
+        Route::get('/accounting/entries/{entry}/document/source', [AccountingDocumentViewerController::class, 'streamEntryDocument'])->name('accounting.entries.document.stream');
         Route::get('/accounting/entries/{entry}/edit', [AccountingController::class, 'editEntry'])->name('accounting.entries.edit');
         Route::put('/accounting/entries/{entry}', [AccountingController::class, 'updateEntry'])->name('accounting.entries.update');
         Route::post('/accounting/entries/{entry}/ocr/retry', [AccountingController::class, 'retryEntryOcr'])->name('accounting.entries.ocr.retry');
+        Route::post('/accounting/entries/{entry}/ocr/auto-correct', [AccountingController::class, 'autoCorrectEntryFromOcr'])->name('accounting.entries.ocr.auto-correct');
         Route::post('/accounting/entries/{entry}/ocr/manual', [AccountingController::class, 'storeManualOcrValidation'])->name('accounting.entries.ocr.manual');
         Route::post('/accounting/entries/bulk-delete', [AccountingController::class, 'bulkDeleteEntries'])->name('accounting.entries.bulk.delete');
         Route::post('/accounting/entries/bulk-ocr-retry', [AccountingController::class, 'bulkRetryEntryOcr'])->name('accounting.entries.bulk.ocr.retry');
         Route::delete('/accounting/entries/{entry}', [AccountingController::class, 'destroyEntry'])->name('accounting.entries.destroy');
         Route::get('/accounting/documents', [AccountingController::class, 'documents'])->name('accounting.documents');
+        Route::get('/accounting/documents/comparison', [AccountingController::class, 'documentsComparison'])->name('accounting.documents.comparison');
+        
         Route::post('/accounting/documents', [AccountingController::class, 'uploadDocuments'])->name('accounting.documents.upload');
+        Route::get('/accounting/documents/{document}/viewer', [AccountingDocumentViewerController::class, 'showDocument'])->name('accounting.documents.viewer');
+        Route::get('/accounting/documents/{document}/source', [AccountingDocumentViewerController::class, 'streamDocument'])->name('accounting.documents.stream');
         Route::post('/accounting/documents/{document}/ocr/retry', [AccountingController::class, 'retryDocumentOcr'])->name('accounting.documents.ocr.retry');
+        Route::delete('/accounting/documents/{document}', [AccountingController::class, 'destroyDocument'])->name('accounting.documents.destroy');
         Route::get('/accounting/documents/{document}/validate', [AccountingDocumentController::class, 'showValidation'])->name('accounting.documents.validate');
         Route::post('/accounting/documents/{document}/validate', [AccountingDocumentController::class, 'storeValidation'])->name('accounting.documents.validate.store');
         Route::get('/accounting/plan-comptable', [AccountingController::class, 'planComptable'])->name('accounting.plan');
@@ -559,6 +568,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/accounting/report/balance', [AccountingController::class, 'report'])->name('accounting.report.balance');
         Route::get('/accounting/report/bilan', [AccountingController::class, 'report'])->name('accounting.report.bilan');
         Route::get('/accounting/report/resultat', [AccountingController::class, 'report'])->name('accounting.report.resultat');
+        Route::get('/accounting/report/tafire', [AccountingController::class, 'report'])->name('accounting.report.tafire');
+        Route::get('/accounting/report/annexe', [AccountingController::class, 'report'])->name('accounting.report.annexe');
+        Route::get('/accounting/report/bilan/viewer', [AccountingController::class, 'showBilanPdfViewer'])->name('accounting.report.bilan.viewer');
+        Route::get('/accounting/report/bilan/view', [AccountingController::class, 'viewBilanPdf'])->name('accounting.report.bilan.view');
         Route::get('/accounting/report/bilan/download', [AccountingController::class, 'downloadBilan'])->name('accounting.report.bilan.download');
     });
 

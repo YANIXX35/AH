@@ -10,8 +10,9 @@ return [
             'category' => 'balance',
         ],
         '2' => [
-            'label' => 'Immobilisations',
+            'label' => 'Immobilisations / Investissements',
             'category' => 'balance',
+            'subtype' => 'investissement',
         ],
         '3' => [
             'label' => 'Stocks',

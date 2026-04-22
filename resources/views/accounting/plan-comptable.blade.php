@@ -198,7 +198,11 @@
                                             <input type="hidden" name="plan[{{ $class }}][category]" value="{{ $class === '6' || $class === '7' ? 'resultat' : 'balance' }}">
                                         </td>
                                         <td class="text-center">
-                                            @if(in_array($class, ['6', '7'], true))
+                                            @if($class === '2')
+                                                <input type="text" class="form-control form-control-sm text-center"
+                                                    value="Investissement"
+                                                    readonly>
+                                            @elseif(in_array($class, ['6', '7'], true))
                                                 <select name="plan[{{ $class }}][subtype]" class="form-select form-select-sm">
                                                     <option value="charge" {{ $class === '6' ? 'selected' : '' }}>Charge</option>
                                                     <option value="produit" {{ $class === '7' ? 'selected' : '' }}>Produit</option>

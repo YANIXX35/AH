@@ -15,6 +15,75 @@
         .sidebar-brand span { font-weight: 600; }
         .navbar-bg { background-color: #f8f9fa; }
         .footer { background-color: #fff; }
+        .global-toast-container {
+            z-index: 1080;
+            pointer-events: none;
+        }
+        .global-toast-container .toast {
+            pointer-events: auto;
+        }
+        .toast-notification {
+            min-width: 320px;
+            max-width: 420px;
+            border: 1px solid #e9ecef;
+            border-left-width: 4px;
+            border-radius: .55rem;
+            overflow: hidden;
+            background: #fff;
+            backdrop-filter: blur(2px);
+            transform: translateY(-8px);
+            opacity: 0;
+            transition: transform .22s ease, opacity .22s ease;
+        }
+        .toast-notification.show,
+        .toast-notification.showing {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast-notification .toast-header {
+            border-bottom: 1px solid #f1f3f5;
+        }
+        .toast-notification .toast-body {
+            color: #495057;
+            font-size: .92rem;
+        }
+        .toast-close-btn {
+            border-radius: 999px;
+            padding: .35rem;
+            transition: background-color .15s ease, box-shadow .15s ease;
+        }
+        .toast-close-btn:hover {
+            background-color: #f1f3f5;
+            box-shadow: 0 0 0 1px #dee2e6 inset;
+        }
+        .toast-close-btn span {
+            display: inline-block;
+            font-size: 1rem;
+            line-height: 1;
+            color: #495057;
+            margin-top: -1px;
+        }
+        .toast-notification-success { border-left-color: #198754; }
+        .toast-notification-warning { border-left-color: #f59f00; }
+        .toast-notification-info { border-left-color: #0dcaf0; }
+        .toast-notification-error { border-left-color: #dc3545; }
+        .toast-progress {
+            height: 3px;
+            width: 100%;
+            background: rgba(0, 0, 0, .04);
+        }
+        .toast-progress-bar {
+            height: 100%;
+            width: 100%;
+            transform-origin: left center;
+            transition-property: width;
+            transition-timing-function: linear;
+            transition-duration: var(--toast-delay, 4500ms);
+        }
+        .toast-notification-success .toast-progress-bar { background: #198754; }
+        .toast-notification-warning .toast-progress-bar { background: #f59f00; }
+        .toast-notification-info .toast-progress-bar { background: #0dcaf0; }
+        .toast-notification-error .toast-progress-bar { background: #dc3545; }
 
         /* ===== ADMINKIT EXACT SIDEBAR DESIGN ===== */
 
@@ -446,18 +515,100 @@
                             </div>
                         @endif
                     @endauth
-                    @if(session('status'))
-                        {{-- ocr_reset : écran compta principal ; ocr_retry_error : détail écriture / layout aligné --}}
-                        <div class="alert {{ (session('ocr_retry_error') || session('ocr_reset')) ? 'alert-warning' : 'alert-success' }} alert-dismissible fade show m-3" role="alert">
-                            {{ session('status') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
-                        </div>
-                    @endif
+                    @php
+                        $popupMessage = null;
+                        $popupTitle = null;
+                        $popupType = 'success';
 
-                    @if($errors->any())
-                        <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
-                            {{ $errors->first() }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+                        if (session('error')) {
+                            $popupMessage = (string) session('error');
+                            $popupTitle = 'Erreur';
+                            $popupType = 'error';
+                        } elseif (session('warning')) {
+                            $popupMessage = (string) session('warning');
+                            $popupTitle = 'Attention';
+                            $popupType = 'warning';
+                        } elseif (session('info')) {
+                            $popupMessage = (string) session('info');
+                            $popupTitle = 'Information';
+                            $popupType = 'info';
+                        } elseif (session('success')) {
+                            $popupMessage = (string) session('success');
+                            $popupTitle = 'Succès';
+                            $popupType = 'success';
+                        } elseif (session('status')) {
+                            $popupMessage = (string) session('status');
+                            if (session('ocr_retry_error') || session('ocr_reset')) {
+                                $popupTitle = 'Information OCR';
+                                $popupType = 'warning';
+                            } else {
+                                $popupTitle = 'Succès';
+                                $popupType = 'success';
+                            }
+                        } elseif ($errors->any()) {
+                            $popupMessage = (string) $errors->first();
+                            $popupTitle = 'Erreur';
+                            $popupType = 'error';
+                        }
+
+                        $popupAccentClass = match ($popupType) {
+                            'error' => 'border-danger',
+                            'warning' => 'border-warning',
+                            'info' => 'border-info',
+                            default => 'border-success',
+                        };
+                        $popupIconClass = match ($popupType) {
+                            'error' => 'text-danger',
+                            'warning' => 'text-warning',
+                            'info' => 'text-info',
+                            default => 'text-success',
+                        };
+                        $popupFeatherIcon = match ($popupType) {
+                            'error' => 'x-circle',
+                            'warning' => 'alert-triangle',
+                            'info' => 'info',
+                            default => 'check-circle',
+                        };
+                        $popupFallbackAlertClass = match ($popupType) {
+                            'error' => 'danger',
+                            'warning' => 'warning',
+                            'info' => 'info',
+                            default => 'success',
+                        };
+                        $popupAutoHideDelay = in_array($popupType, ['error', 'warning'], true) ? 7000 : 4500;
+                    @endphp
+
+                    @if($popupMessage)
+                        <div class="toast-container position-fixed top-0 end-0 p-3 global-toast-container">
+                            <div id="globalFeedbackToast"
+                                 class="toast toast-notification toast-notification-{{ $popupType }} border-2 {{ $popupAccentClass }} shadow-sm"
+                                 role="alert"
+                                 aria-live="assertive"
+                                 aria-atomic="true"
+                                 data-bs-autohide="false"
+                                 data-toast-delay="{{ $popupAutoHideDelay }}"
+                                 style="--toast-delay: {{ $popupAutoHideDelay }}ms;">
+                                <div class="toast-header bg-white">
+                                    <i data-feather="{{ $popupFeatherIcon }}" class="me-2 {{ $popupIconClass }}" style="width: 16px; height: 16px;"></i>
+                                    <strong class="me-auto">{{ $popupTitle }}</strong>
+                                    <small class="text-muted">maintenant</small>
+                                    <button type="button" class="btn btn-sm btn-light ms-2 mb-1 toast-close-btn" data-bs-dismiss="toast" aria-label="Fermer la notification">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="toast-body bg-white">
+                                    {{ $popupMessage }}
+                                </div>
+                                <div class="toast-progress">
+                                    <div class="toast-progress-bar"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="globalFeedbackFallback"
+                             class="alert alert-{{ $popupFallbackAlertClass }} m-3 d-none"
+                             role="alert">
+                            {{ $popupMessage }}
                         </div>
                     @endif
 
@@ -504,6 +655,81 @@
                     }
                 });
             });
+
+            const feedbackToast = document.getElementById('globalFeedbackToast');
+            if (feedbackToast) {
+                if (window.bootstrap && window.bootstrap.Toast) {
+                    const toast = new window.bootstrap.Toast(feedbackToast);
+                    const progressBar = feedbackToast.querySelector('.toast-progress-bar');
+                    const progressContainer = feedbackToast.querySelector('.toast-progress');
+                    const configuredDelay = parseInt(feedbackToast.getAttribute('data-toast-delay') || '4500', 10);
+                    let remainingDelay = Number.isFinite(configuredDelay) ? configuredDelay : 4500;
+                    let timerId = null;
+                    let startedAt = 0;
+
+                    const readProgressPercent = function () {
+                        if (!progressBar || !progressContainer) return 0;
+                        const containerWidth = progressContainer.getBoundingClientRect().width;
+                        if (!containerWidth) return 0;
+                        const barWidth = progressBar.getBoundingClientRect().width;
+                        return Math.max(0, Math.min(100, (barWidth / containerWidth) * 100));
+                    };
+
+                    const setProgress = function (percent, durationMs) {
+                        if (!progressBar) return;
+                        progressBar.style.transitionDuration = '0ms';
+                        progressBar.style.width = percent + '%';
+                        void progressBar.offsetWidth;
+                        progressBar.style.transitionDuration = durationMs + 'ms';
+                        progressBar.style.width = '0%';
+                    };
+
+                    const stopAutoHide = function () {
+                        if (!timerId) return;
+                        clearTimeout(timerId);
+                        timerId = null;
+                        const elapsed = Date.now() - startedAt;
+                        remainingDelay = Math.max(0, remainingDelay - elapsed);
+                        const currentPercent = readProgressPercent();
+                        if (progressBar) {
+                            progressBar.style.transitionDuration = '0ms';
+                            progressBar.style.width = currentPercent + '%';
+                        }
+                    };
+
+                    const startAutoHide = function () {
+                        if (remainingDelay <= 0) {
+                            toast.hide();
+                            return;
+                        }
+                        startedAt = Date.now();
+                        const currentPercent = readProgressPercent() || 100;
+                        setProgress(currentPercent, remainingDelay);
+                        timerId = window.setTimeout(function () {
+                            toast.hide();
+                        }, remainingDelay);
+                    };
+
+                    feedbackToast.addEventListener('mouseenter', stopAutoHide);
+                    feedbackToast.addEventListener('mouseleave', startAutoHide);
+                    feedbackToast.addEventListener('focusin', stopAutoHide);
+                    feedbackToast.addEventListener('focusout', startAutoHide);
+                    feedbackToast.addEventListener('hidden.bs.toast', function () {
+                        if (timerId) {
+                            clearTimeout(timerId);
+                            timerId = null;
+                        }
+                    });
+
+                    toast.show();
+                    window.setTimeout(startAutoHide, 60);
+                } else {
+                    const fallback = document.getElementById('globalFeedbackFallback');
+                    if (fallback) {
+                        fallback.classList.remove('d-none');
+                    }
+                }
+            }
         });
     </script>
     @stack('scripts')
