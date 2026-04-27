@@ -1,0 +1,38 @@
+@startuml seq_accounting_upload_plan_comptable
+title Séquence — Import plan comptable (POST /accounting/plan-comptable/upload)
+
+actor Utilisateur as U
+participant "AccountingController" as AC
+participant "OcrPipelineService" as PIPE
+database "plan_comptable_accounts" as PCA
+participant "Storage (public)" as FS
+
+U -> AC : POST /accounting/plan-comptable/upload (plan_comptable file)
+AC -> AC : validate(file, mimes xls/xlsx/csv/pdf, max=20MB)
+AC -> FS : store('plan-comptable-imports')
+
+alt extension=pdf
+  AC -> PIPE : processStoredDocument(stored_path)
+  PIPE --> AC : ocr_result(success?, text)
+  alt OCR failed
+    AC -> FS : delete(stored_path)
+    AC --> U : back()\n(erreur: PDF illisible ou OCR en échec)
+  else OCR OK
+    AC -> AC : parsePlanComptableFromText(text)
+  end
+else tableur/csv
+  AC -> AC : parsePlanComptable(fullPath)
+end
+
+AC -> FS : delete(stored_path)
+alt aucun compte valide
+  AC -> AC : logPlanComptableImport(status=failed)
+  AC --> U : back()\n(erreur: aucun compte valide)
+else comptes trouvés
+  AC -> PCA : savePlanAccounts(plan)
+  AC -> AC : logPlanComptableImport(status=success|partial)
+  AC --> U : Redirect /accounting/plan-comptable\n(status: import effectué)
+end
+
+@enduml
+

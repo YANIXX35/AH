@@ -1,0 +1,92 @@
+@startuml seq_global_plateforme
+title Séquence globale — parcours utilisateur et flux transverses
+
+actor Utilisateur as U
+participant "UI (Blade)" as UI
+participant "Routes + Middlewares\n+ Rate limiting" as HTTP
+
+box "Fonctionnels (Controllers / Services)" #EEF7FF
+  participant "AuthController" as AUTHC
+  participant "DashboardController" as DASH
+  participant "AccountingController" as ACC
+  participant "OcrPipelineService" as OCRP
+  participant "OcrService" as OCR
+  participant "TreasuryController" as TRE
+  participant "StripeTreasuryService" as STR
+  participant "FedaPaySandboxService" as FDP
+  participant "InvestorController" as INV
+  participant "SupportController" as SUP
+  participant "InAppNotificationController" as NOTIF
+  participant "AdminPaymentController" as ADMINP
+end box
+
+database "DB (Eloquent)" as DB
+participant "Stripe" as Stripe
+participant "Storage public" as FS
+participant "Mail" as MAIL
+
+== Connexion ==
+U -> UI : Saisir identifiants + reCAPTCHA
+UI -> HTTP : POST /login (throttle:auth-sensitive)
+HTTP -> AUTHC : login()
+AUTHC -> DB : vérifier utilisateur + suspension + champs FIRD
+alt accès OK
+  AUTHC --> UI : redirect /dashboard
+else bloqué
+  AUTHC --> UI : erreurs (reCAPTCHA / identifiants / suspendu / FIRD)
+end
+
+== Comptabilité : import + OCR ==
+U -> UI : Importer documents comptables
+UI -> HTTP : POST /accounting/documents (throttle:ocr-intensive)
+HTTP -> ACC : uploadDocuments()
+ACC -> FS : store documents
+ACC -> OCRP : processStoredDocument()
+OCRP --> ACC : ocr_result + confidence + review_required
+ACC -> OCR : verify/extract (selon besoin)
+ACC -> DB : créer AccountingDocument (+ éventuellement AccountingEntry)
+ACC --> UI : statut (auto-validé / revue manuelle / échec OCR)
+
+== Trésorerie : transaction + paiement ==
+U -> UI : Créer transaction (encaissement/décaissement)
+UI -> HTTP : POST /treasury (throttle:finance-write)
+HTTP -> TRE : store()
+TRE -> DB : créer TreasuryTransaction + audit
+alt paiement Stripe (module=stripe, status=effectue)
+  TRE -> STR : createCheckoutSession() ou createPayout()
+  STR -> Stripe : API (checkout/payout)
+  TRE --> UI : redirect Stripe (si checkout)
+  UI -> HTTP : retour /treasury/{tx}/stripe/success
+  HTTP -> TRE : stripeSuccess()
+  TRE -> STR : retrieveCheckoutSession()
+  TRE -> DB : mise à jour statut + audit
+else Mobile Money (module=fedapay_mobile)
+  TRE --> UI : redirect /treasury/{tx}/fedapay/checkout
+  UI -> HTTP : POST /treasury/{tx}/fedapay/checkout
+  HTTP -> TRE : fedapayCheckoutStart()
+  TRE -> FDP : createTransaction()
+  TRE -> DB : update statut + audit
+  TRE --> UI : redirect checkout_url (ou fallback page)
+end
+
+== Support + notifications ==
+U -> UI : Créer un ticket support
+UI -> HTTP : POST /support/tickets
+HTTP -> SUP : store()
+SUP -> DB : SupportTicket + SupportMessage + AppNotification
+SUP --> UI : redirect /support/tickets
+U -> UI : Consulter notification
+UI -> HTTP : GET /notifications/{id}/go
+HTTP -> NOTIF : go()
+NOTIF -> DB : markRead()
+NOTIF --> UI : redirect action_url
+
+== Administration : activation Premium ==
+U -> UI : (Admin) activer Premium depuis paiement
+UI -> HTTP : POST /admin/payments/{payment}/activate-premium
+HTTP -> ADMINP : activatePremium()
+ADMINP -> DB : update user premium + SubscriptionHistory
+ADMINP --> UI : status OK
+
+@enduml
+

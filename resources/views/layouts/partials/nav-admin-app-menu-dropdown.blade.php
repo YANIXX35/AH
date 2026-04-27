@@ -35,5 +35,6 @@
         <a class="dropdown-item py-2" href="{{ route('profile.company.fird') }}"><span class="me-2">💼</span> Fiche entreprise (FIRD)</a>
         <a class="dropdown-item py-2" href="{{ route('subscriptions.history') }}"><span class="me-2">🕐</span> Historique abonnements</a>
         <a class="dropdown-item py-2" href="{{ route('activity-log.index') }}"><span class="me-2">📜</span> Journal d’activité</a>
+        <a class="dropdown-item py-2" href="{{ route('admin.ops.index') }}"><span class="me-2">🧭</span> Ops Center IT Manager</a>
     </div>
 </li>

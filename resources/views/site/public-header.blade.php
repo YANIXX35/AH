@@ -21,7 +21,7 @@
 
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
         <a href="{{ $home }}" class="flex min-w-0 shrink items-center gap-2">
-            <img src="https://sitiame-capital.com/assets/images/logo.png" alt="Logo Sitiame" class="h-10 w-auto sm:h-12 lg:h-14" />
+            <img src="{{ asset('images/sitiam.png') }}" alt="Logo Sitiame" class="h-10 w-auto sm:h-12 lg:h-14" />
         </a>
 
         {{-- Navigation desktop (lg+) : menus déroulants --}}

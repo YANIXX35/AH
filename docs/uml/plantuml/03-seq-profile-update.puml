@@ -1,0 +1,33 @@
+@startuml seq_profile_update
+title Séquence — Mise à jour du profil (POST /profile)
+
+actor Utilisateur as U
+participant "Route closure (routes/web.php)" as ROUTE
+participant "Validation Request" as VAL
+participant "Storage::disk(public)" as FS
+database "users" as UDB
+
+U -> ROUTE : POST /profile (name, email, ... , avatar?, company_logo?, password?)
+ROUTE -> VAL : validate(...) + règles (locale: fr/en, currency: XOF/EUR/USD)
+
+alt company_logo upload
+  ROUTE -> FS : delete ancien logo (si existant)
+  ROUTE -> FS : store('company-logos')
+end
+
+alt avatar upload
+  ROUTE -> FS : delete ancien avatar (si existant)
+  ROUTE -> FS : store('avatars')
+end
+
+alt password fourni
+  ROUTE -> UDB : Hash::make(password)
+else password vide
+  note over ROUTE : password retiré du payload
+end
+
+ROUTE -> UDB : user->update(validated)
+ROUTE --> U : back()\n(status: Profil mis à jour.)
+
+@enduml
+

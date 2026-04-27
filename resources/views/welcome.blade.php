@@ -148,7 +148,7 @@
                         <h3 class="mt-4 text-3xl font-semibold tracking-tight text-slate-900">Un investissement maîtrisé</h3>
                         <p class="mt-3 max-w-xl text-slate-600 leading-relaxed">Accompagnement professionnel en conseil stratégique, levée de fonds et investissement. Découvrez nos formules détaillées.</p>
                         <div class="mt-8 flex flex-wrap items-end gap-2 border-l-4 border-brand-500 pl-5">
-                            <span class="text-5xl font-semibold tracking-tight text-brand-800">17 580</span>
+                            <span class="text-5xl font-semibold tracking-tight text-brand-800">15 000</span>
                             <span class="pb-1 text-lg font-medium text-slate-600">FCFA</span>
                         </div>
                         <div class="mt-8 flex flex-wrap gap-4">
@@ -192,7 +192,7 @@
     <footer class="border-t border-white/10 bg-slate-950 py-12 text-slate-300">
         <div class="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-3 lg:px-8">
             <div>
-                <img src="https://sitiame-capital.com/assets/images/logo.png" alt="Logo Sitiame" class="h-12 w-auto opacity-95 sm:h-14">
+                <img src="{{ asset('images/sitiam.png') }}" alt="Logo Sitiame" class="h-12 w-auto opacity-95 sm:h-14">
                 <p class="mt-4 text-sm leading-relaxed text-slate-400">Partenaire de confiance pour le conseil aux PME et l'investissement en capital.</p>
             </div>
             <div>

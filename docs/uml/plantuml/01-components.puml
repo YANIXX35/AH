@@ -1,0 +1,103 @@
+@startuml architecture_components
+title Architecture — composants (vue logique)
+
+actor "Utilisateur" as U
+component "Navigateur / UI Blade" as UI
+
+package "Entrée HTTP Laravel" {
+  component "routes/web.php" as R
+  component "Middlewares web" as MW
+  component "Rate limiting" as RL
+}
+
+package "Contrôleurs HTTP" {
+  component "DashboardController" as DC
+  component "AccountingController (+ viewers)" as AC
+  component "TreasuryController" as TC
+  component "InvestorController" as IC
+  component "Admin* Controllers" as ADC
+  component "Accountant* Controllers" as ACC
+}
+
+package "Services applicatifs" {
+  component "DashboardMetricsService" as DMS
+  component "OcrService" as OCR
+  component "ClientWorkspace" as CWS
+  component "TreasuryBalanceService" as TBS
+  component "StripeTreasuryService" as STS
+  component "InvestorReadinessService" as IRS
+  component "InvestmentDossierChecklistService" as IDS
+  interface "FinancialRatioServiceContract" as FRC
+  component "SmeFinancialRatioService" as SFR
+}
+
+package "Données (Eloquent)" {
+  database "Base de données" as DB
+  component "Migrations" as MIG
+  entity "User" as MUser
+  entity "AccountingEntry" as MAE
+  entity "AccountingDocument" as MAD
+  entity "TreasuryTransaction" as MTT
+  entity "PaymentTransaction" as MPT
+  entity "SubscriptionHistory" as MSH
+  entity "EnterpriseLicense" as MEL
+  entity "InvestorProfile" as MIP
+}
+
+package "Intégrations externes" {
+  cloud "Stripe" as Stripe
+  cloud "FedaPay" as FedaPay
+  cloud "Stockage fichiers" as Storage
+}
+
+U --> UI
+UI --> R
+R --> MW
+R --> RL
+MW --> DC
+MW --> AC
+MW --> TC
+MW --> IC
+MW --> ADC
+MW --> ACC
+RL ..> DC : protège
+RL ..> AC : protège
+RL ..> TC : protège
+RL ..> IC : protège
+
+DC --> DMS
+AC --> OCR
+AC --> CWS
+TC --> TBS
+TC --> STS
+TC --> CWS
+IC --> IRS
+IC --> IDS
+IRS --> FRC
+FRC <|.. SFR
+ACC --> CWS
+
+CWS --> MUser
+OCR --> MAE
+OCR --> MAD
+STS --> MTT
+TBS --> MTT
+IRS --> MIP
+
+MIG --> DB
+MUser --> DB
+MAE --> DB
+MAD --> DB
+MTT --> DB
+MPT --> DB
+MSH --> DB
+MEL --> DB
+MIP --> DB
+
+STS --> Stripe
+TC ..> FedaPay : sandbox
+AC ..> Storage : pièces jointes
+TC ..> Storage : reçus / preuves
+
+@enduml
+

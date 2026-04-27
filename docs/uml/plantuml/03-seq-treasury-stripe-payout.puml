@@ -1,0 +1,25 @@
+@startuml seq_treasury_stripe_payout
+title Séquence — Trésorerie : décaissement Stripe (payout)
+
+actor Utilisateur as U
+participant "TreasuryController" as TC
+participant "StripeTreasuryService" as STS
+participant "Stripe (Payouts)" as Stripe
+database "treasury_transactions" as TT
+participant "TreasuryAudit" as AUDIT
+
+U -> TC : POST /treasury (payment_module=stripe, type=decaissement, status=effectue,\nstripe_payment_channel=bank_debit, scheme=ach|sepa)
+TC -> STS : enabled() ?
+alt Stripe désactivé
+  TC --> U : Redirect /treasury/tracking\n(erreur: Stripe non activé)
+else Stripe OK
+  TC -> TT : update(status=planifie, stripe_status=payout_pending)
+  TC -> STS : createPayout(transaction)
+  STS --> TC : payout(id, status, currency)
+  TC -> TT : update(stripe_payout_id, stripe_status, payment_provider=Stripe)
+  TC -> AUDIT : log(treasury.transaction.stripe.payout)
+  TC --> U : Redirect /treasury/tracking\n(status: décaissement lancé)
+end
+
+@enduml
+

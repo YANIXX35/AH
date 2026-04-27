@@ -1,0 +1,18 @@
+@startuml seq_accounting_manual_ocr_validation
+title Séquence — Validation manuelle OCR (POST /accounting/entries/{entry}/ocr/manual)
+
+actor Utilisateur as U
+participant "AccountingController" as AC
+participant "Authorization" as AUTHZ
+participant "Validation Request" as VAL
+database "accounting_entries" as AE
+
+U -> AC : POST /accounting/entries/{entry}/ocr/manual
+AC -> AUTHZ : authorizeEntry(entry)
+AC -> VAL : validate(confirm_*, manual_comment)
+
+AC -> AE : update(ocr_status=manual_verified,\nocr_verified_at=now,\nocr_text prepend log,\nactor_user_id)
+AC --> U : Redirect /accounting/entries/{entry}\n(status: validation manuelle enregistrée)
+
+@enduml
+

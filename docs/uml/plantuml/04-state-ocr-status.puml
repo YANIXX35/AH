@@ -1,0 +1,23 @@
+@startuml ocr_status_state
+title États — Statut OCR (AccountingEntry.ocr_status)
+
+[*] --> pending
+
+pending --> verified : OCR cohérent
+pending --> mismatch : incohérences détectées
+pending --> failed : erreur OCR
+
+mismatch --> manual_verified : validation manuelle
+mismatch --> verified : correction + OCR cohérent
+failed --> pending : retry OCR
+
+manual_verified --> verified : (optionnel) contrôle final
+
+note right of pending
+  Normalisation (App\\Support\\OcrStatus::normalize):
+  - inconnus => pending
+  - legacy "mismatched" => mismatch
+end note
+
+@enduml
+

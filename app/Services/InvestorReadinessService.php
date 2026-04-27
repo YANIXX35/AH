@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Contracts\FinancialRatioServiceContract;
 use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
 use App\Models\TreasuryTransaction;
+use App\Support\OcrStatus;
 use Carbon\Carbon;
 
 /**
@@ -13,7 +15,7 @@ use Carbon\Carbon;
 class InvestorReadinessService
 {
     public function __construct(
-        private readonly SmeFinancialRatioService $smeFinancialRatioService
+        private readonly FinancialRatioServiceContract $smeFinancialRatioService
     ) {}
 
     /**
@@ -40,10 +42,10 @@ class InvestorReadinessService
 
         $entriesTotal = AccountingEntry::where('user_id', $userId)->count();
         $ocrVerified = AccountingEntry::where('user_id', $userId)
-            ->whereIn('ocr_status', ['verified', 'manual_verified'])
+            ->whereIn('ocr_status', [OcrStatus::VERIFIED, OcrStatus::MANUAL_VERIFIED])
             ->count();
         $ocrStress = AccountingEntry::where('user_id', $userId)
-            ->whereIn('ocr_status', ['failed', 'mismatch', 'mismatched'])
+            ->whereIn('ocr_status', [OcrStatus::FAILED, OcrStatus::MISMATCH, OcrStatus::LEGACY_MISMATCHED])
             ->count();
 
         $docsTotal = AccountingDocument::where('user_id', $userId)->count();

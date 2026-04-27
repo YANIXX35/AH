@@ -141,6 +141,19 @@ return [
             'replace_placeholders' => true,
         ],
 
+        /*
+        |--------------------------------------------------------------------------
+        | Journal des flux financiers critiques (OCR / compta / trésorerie)
+        |--------------------------------------------------------------------------
+        */
+        'financial_audit' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/financial-audit.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => (int) env('LOG_FINANCIAL_AUDIT_DAYS', 180),
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

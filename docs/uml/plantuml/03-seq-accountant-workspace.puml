@@ -1,0 +1,20 @@
+@startuml seq_accountant_workspace_selection
+title Séquence — Sélection "dossier client" (cabinet comptable)
+
+actor "Comptable (User)" as A
+participant AccountantClientController as ACC
+participant ClientWorkspace as CW
+database Session as S
+
+A -> ACC : POST /accountant/workspace/{client}
+ACC -> CW : canUseWorkspace(auth)?
+CW -> S : set(SESSION_KEY = client_user_id)
+ACC --> A : Redirection\n(workspace actif)
+
+note over CW
+  effectiveUserId()/dataScopeUserIds() lisent la session
+  et imposent : cible = client (ni admin, ni comptable).
+end note
+
+@enduml
+

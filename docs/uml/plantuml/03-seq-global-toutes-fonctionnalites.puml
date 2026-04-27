@@ -1,0 +1,209 @@
+@startuml seq_global_toutes_fonctionnalites
+title Séquence globale — toutes les fonctionnalités (vue bout-en-bout)
+
+actor Utilisateur as U
+participant "UI (Blade)" as UI
+participant "HTTP (routes + middlewares\n+ throttles)" as HTTP
+
+box "Controllers (façades fonctionnelles)" #EEF7FF
+  participant "AuthController" as AUTHC
+  participant "DashboardController" as DASH
+  participant "AccountingController" as ACC
+  participant "TreasuryController" as TRE
+  participant "InvestorController" as INV
+  participant "SupportController" as SUP
+  participant "InAppNotificationController" as NOTIF
+  participant "AdminPaymentController" as ADMINP
+  participant "DocumentationController" as DOCC
+end box
+
+box "Services / intégrations" #F7FFF0
+  participant "OcrPipelineService" as OCRP
+  participant "OcrService" as OCR
+  participant "StripeTreasuryService" as STR
+  participant "FedaPaySandboxService" as FDP
+  participant "InvestorReadinessService" as IRS
+  participant "InvestmentDossierChecklistService" as IDS
+end box
+
+database "DB (Eloquent)" as DB
+participant "Storage public" as FS
+participant "Stripe" as Stripe
+participant "Mail" as MAIL
+
+== 1) Authentification ==
+U -> UI : Ouvrir /login
+UI -> HTTP : POST /login (throttle:auth-sensitive)
+HTTP -> AUTHC : login()
+AUTHC -> DB : vérifier user + suspension + champs FIRD
+alt accès OK
+  AUTHC --> UI : redirect /dashboard
+else bloqué
+  AUTHC --> UI : erreurs (reCAPTCHA / identifiants / suspendu / FIRD)
+end
+
+opt Mot de passe oublié (OTP)
+  U -> UI : Ouvrir /forgot-password
+  UI -> HTTP : POST /forgot-password
+  HTTP -> AUTHC : sendResetOtp()
+  AUTHC -> DB : lire users + password_reset_otps
+  AUTHC -> MAIL : envoyer OTP (PasswordResetOtpMail)
+  AUTHC --> UI : redirect /reset-password?email=...
+  UI -> HTTP : POST /reset-password (otp + nouveau mdp)
+  HTTP -> AUTHC : resetPasswordWithOtp()
+  AUTHC -> DB : vérifier OTP + update password
+  AUTHC -> MAIL : envoyer confirmation (best effort)
+  AUTHC --> UI : redirect /login
+end
+
+== 2) Tableau de bord ==
+U -> UI : Ouvrir /dashboard
+UI -> HTTP : GET /dashboard
+HTTP -> DASH : index()
+DASH -> DB : lire métriques + données
+DASH --> UI : rendu dashboard
+
+== 3) Profil / Paramètres ==
+U -> UI : Modifier profil (nom/email/locale/devise/logo/avatar)
+UI -> HTTP : POST /profile
+HTTP -> DB : update user + fichiers (Storage public)
+HTTP --> UI : status "Profil mis à jour"
+
+opt Simulation abonnement (free/trial/premium)
+  U -> UI : Simuler abonnement
+  UI -> HTTP : POST /profile/subscription/simulate
+  HTTP -> DB : update user premium_* + insert SubscriptionHistory
+  HTTP --> UI : status simulation
+end
+
+opt Équipe entreprise (ajout collègue)
+  U -> UI : Ajouter un collègue
+  UI -> HTTP : POST /profile/equipe
+  HTTP -> DB : lock EnterpriseLicense + create User (même licence)
+  HTTP --> UI : status "Compte créé"
+end
+
+== 4) Comptabilité Premium (OCR / écritures / plan comptable) ==
+U -> UI : Importer des documents comptables
+UI -> HTTP : POST /accounting/documents (throttle:ocr-intensive)
+HTTP -> ACC : uploadDocuments()
+ACC -> FS : store documents
+ACC -> OCRP : processStoredDocument()
+OCRP --> ACC : ocr_result + confidence + review_required
+ACC -> OCR : verify / extract (selon besoin)
+ACC -> DB : create AccountingDocument (+ éventuellement AccountingEntry)
+ACC --> UI : statut import (auto-validé / revue manuelle / échec OCR)
+
+opt Validation manuelle OCR d'une écriture
+  U -> UI : Confirmer check-list + commentaire
+  UI -> HTTP : POST /accounting/entries/{id}/ocr/manual
+  HTTP -> ACC : storeManualOcrValidation()
+  ACC -> DB : update AccountingEntry (ocr_status=manual_verified)
+  ACC --> UI : status validation
+end
+
+opt Import plan comptable (xls/xlsx/csv/pdf)
+  U -> UI : Importer plan comptable
+  UI -> HTTP : POST /accounting/plan-comptable/upload
+  HTTP -> ACC : uploadPlanComptable()
+  ACC -> FS : store import
+  alt PDF
+    ACC -> OCRP : processStoredDocument()
+    ACC -> DB : save plan accounts
+  else tableur/csv
+    ACC -> DB : save plan accounts
+  end
+  ACC --> UI : status import
+end
+
+== 5) Trésorerie (transactions + paiements) ==
+U -> UI : Créer transaction trésorerie
+UI -> HTTP : POST /treasury (throttle:finance-write)
+HTTP -> TRE : store()
+TRE -> DB : create TreasuryTransaction + audit
+
+alt Module Stripe (checkout / payout)
+  alt Encaissement (checkout)
+    TRE -> STR : createCheckoutSession()
+    STR -> Stripe : API Checkout
+    TRE --> UI : redirect Stripe
+    UI -> HTTP : GET /treasury/{tx}/stripe/success?session_id=...
+    HTTP -> TRE : stripeSuccess()
+    TRE -> STR : retrieveCheckoutSession()
+    TRE -> DB : update tx (paid_at/status) + audit
+  else Décaissement (payout)
+    TRE -> STR : createPayout()
+    STR -> Stripe : API Payout
+    TRE -> DB : update tx + audit
+    TRE --> UI : status payout lancé
+  end
+else Module Mobile Money (FedaPay sandbox)
+  TRE --> UI : redirect /treasury/{tx}/fedapay/checkout
+  UI -> HTTP : POST /treasury/{tx}/fedapay/checkout
+  HTTP -> TRE : fedapayCheckoutStart()
+  TRE -> FDP : createTransaction()
+  TRE -> DB : update tx + audit
+  TRE --> UI : redirect checkout_url (ou fallback page)
+end
+
+opt Webhook Stripe (asynchrone)
+  Stripe -> HTTP : POST /payments/stripe/webhook (throttle:stripe-webhook)
+  HTTP -> TRE : stripeWebhook()
+  TRE -> STR : constructWebhookEvent()
+  TRE -> DB : update TreasuryTransaction selon event
+end
+
+== 6) Parcours investisseur ==
+U -> UI : Ouvrir /investor/readiness
+UI -> HTTP : GET /investor/readiness
+HTTP -> INV : index()
+INV -> IRS : build()
+INV -> IDS : build() + summarize()
+INV -> DB : updateOrCreate InvestorProfile
+INV --> UI : readiness + checklist + demandes
+
+opt Dépôt d'une demande d'investissement
+  U -> UI : Soumettre demande + pièces identité
+  UI -> HTTP : POST /investor/investment-request
+  HTTP -> INV : storeRequest()
+  INV -> FS : store fichiers
+  INV -> DB : create InvestmentRequest(status=pending)
+  INV --> UI : status dépôt
+end
+
+opt Mise à jour workflow demande (in_review/accepted/declined)
+  U -> UI : Changer statut + note
+  UI -> HTTP : POST /investor/investment-request/{id}/workflow
+  HTTP -> INV : updateRequestWorkflow()
+  INV -> DB : update InvestmentRequest (reviewed_by/at/note)
+  INV --> UI : status workflow
+end
+
+== 7) Support & notifications ==
+U -> UI : Créer un ticket support
+UI -> HTTP : POST /support/tickets
+HTTP -> SUP : store()
+SUP -> DB : SupportTicket + SupportMessage + AppNotification
+SUP --> UI : redirect tickets
+
+U -> UI : Ouvrir une notification
+UI -> HTTP : GET /notifications/{id}/go
+HTTP -> NOTIF : go()
+NOTIF -> DB : markRead()
+NOTIF --> UI : redirect action_url
+
+== 8) Administration (paiements / Premium) ==
+U -> UI : (Admin) activer Premium depuis un paiement
+UI -> HTTP : POST /admin/payments/{payment}/activate-premium
+HTTP -> ADMINP : activatePremium()
+ADMINP -> DB : update user premium_* + insert SubscriptionHistory
+ADMINP --> UI : status activation
+
+== 9) Documentation (export) ==
+U -> UI : Télécharger synthèse
+UI -> HTTP : GET /documentation/synthese
+HTTP -> DOCC : downloadSynthese()
+DOCC --> UI : fichier (download)
+
+@enduml
+

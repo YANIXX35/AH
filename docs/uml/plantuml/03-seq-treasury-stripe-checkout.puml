@@ -1,0 +1,33 @@
+@startuml seq_treasury_stripe_checkout
+title Séquence — Trésorerie : encaissement Stripe (checkout) + retour succès
+
+actor Utilisateur as U
+participant "TreasuryController" as TC
+participant "StripeTreasuryService" as STS
+participant "Stripe (Checkout)" as Stripe
+database "treasury_transactions" as TT
+participant "TreasuryAudit" as AUDIT
+
+U -> TC : POST /treasury (payment_module=stripe, type=encaissement, status=effectue, ...)
+TC -> STS : enabled() ?
+alt Stripe désactivé
+  TC --> U : Redirect /treasury/tracking\n(erreur: Stripe non activé)
+else Stripe OK
+  TC -> TT : update(status=planifie, stripe_status=checkout_pending)
+  TC -> STS : createCheckoutSession(transaction, user,\nsuccess_url, cancel_url)
+  STS --> TC : session(id, url, payment_status)
+  TC -> TT : update(stripe_checkout_session_id, stripe_status, payment_provider=Stripe)
+  TC -> AUDIT : log(treasury.transaction.stripe.checkout)
+  TC --> U : Redirect Stripe (session.url)
+end
+
+== Retour Stripe ==
+U -> TC : GET /treasury/{transaction}/stripe/success?session_id=cs_...
+TC -> STS : retrieveCheckoutSession(session_id)
+STS --> TC : payment_status + payment_intent_id + charge_id
+TC -> TT : update(stripe_status, stripe_paid_at, status=effectue|planifie)
+TC -> AUDIT : log(treasury.transaction.stripe.success)
+TC --> U : Redirect /treasury/tracking\n(status: paiement confirmé ou en attente)
+
+@enduml
+

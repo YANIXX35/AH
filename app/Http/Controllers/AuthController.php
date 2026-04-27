@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -42,10 +43,15 @@ class AuthController extends Controller
                 ], 'login');
         }
 
+        $remember = (bool) $request->boolean('remember');
+        if ($remember && method_exists(Auth::guard(), 'setRememberDuration')) {
+            Auth::guard()->setRememberDuration((int) config('auth.remember_minutes', 43200));
+        }
+
         if (! Auth::attempt([
             'email' => $credentials['email'],
             'password' => $credentials['password'],
-        ], (bool) $request->boolean('remember'))) {
+        ], $remember)) {
             return back()
                 ->withInput($request->only('email'))
                 ->withErrors([
@@ -58,6 +64,8 @@ class AuthController extends Controller
         /** @var User $user */
         $user = $request->user();
         if ($user->account_suspended) {
+            // Révoque les cookies "remember me" existants pour éviter toute reconnexion persistante.
+            $user->forceFill(['remember_token' => Str::random(60)])->save();
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -233,6 +241,8 @@ class AuthController extends Controller
 
         $user->update([
             'password' => Hash::make($data['password']),
+            // Invalide toutes les sessions persistantes existantes après changement de mot de passe.
+            'remember_token' => Str::random(60),
         ]);
 
         DB::table('password_reset_otps')->where('email', $data['email'])->delete();

@@ -1,0 +1,26 @@
+@startuml seq_admin_activate_premium
+title Séquence — Admin : activer Premium depuis un paiement (POST /admin/payments/{payment}/activate-premium)
+
+actor "Admin plateforme" as A
+participant "AdminPaymentController" as APC
+database "payment_transactions" as PT
+database "users" as UDB
+database "subscription_histories" as SH
+
+A -> APC : POST /admin/payments/{payment}/activate-premium
+APC -> PT : Charger PaymentTransaction + user
+
+alt user absent
+  APC --> A : back()\n(erreur: aucun utilisateur)
+else user présent
+  alt user admin ou comptable
+    APC --> A : back()\n(erreur: action réservée aux comptes entreprise)
+  else compte entreprise
+    APC -> UDB : update(is_premium=true, premium_status=active, premium_ends_at=+30j,\naccount_suspended=false, auto_suspended_for_payment=false)
+    APC -> SH : create(source=admin_payments, note, meta paiement)
+    APC --> A : back(status: Premium activé 30 jours)
+  end
+end
+
+@enduml
+

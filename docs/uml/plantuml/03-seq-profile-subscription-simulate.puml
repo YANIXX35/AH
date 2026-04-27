@@ -1,0 +1,33 @@
+@startuml seq_profile_subscription_simulate
+title Séquence — Simulation d'abonnement (POST /profile/subscription/simulate)
+
+actor Utilisateur as U
+participant "Route closure (routes/web.php)" as ROUTE
+participant "Validation Request" as VAL
+database "users" as UDB
+database "subscription_histories" as SH
+
+U -> ROUTE : POST /profile/subscription/simulate (plan_type, duration_days?)
+ROUTE -> UDB : Charger user
+
+alt user is_platform_admin
+  ROUTE --> U : back()\n(erreur: admins non concernés)
+else compte entreprise
+  ROUTE -> VAL : validate(plan_type in free/trial/premium, duration_days)
+  alt plan_type=free
+    ROUTE -> UDB : update(is_premium=false, premium_status=free, ends_at=null)
+    ROUTE -> SH : create(source=simulation_profile, to_status=free)
+    ROUTE --> U : back(status: compte gratuit)
+  else plan_type=trial
+    ROUTE -> UDB : update(is_premium=true, premium_status=trialing, ends_at=now+N)
+    ROUTE -> SH : create(source=simulation_profile, to_status=trialing, ends_at=now+N)
+    ROUTE --> U : back(status: essai actif)
+  else plan_type=premium
+    ROUTE -> UDB : update(is_premium=true, premium_status=active, ends_at=now+N)
+    ROUTE -> SH : create(source=simulation_profile, to_status=active, ends_at=now+N)
+    ROUTE --> U : back(status: premium actif)
+  end
+end
+
+@enduml
+

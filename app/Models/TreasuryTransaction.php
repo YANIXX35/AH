@@ -12,6 +12,7 @@ class TreasuryTransaction extends Model
 
     protected $fillable = [
         'user_id',
+        'payment_transaction_id',
         'actor_user_id',
         'type',
         'transaction_type',
@@ -61,6 +62,11 @@ class TreasuryTransaction extends Model
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_user_id');
+    }
+
+    public function paymentTransaction(): BelongsTo
+    {
+        return $this->belongsTo(PaymentTransaction::class, 'payment_transaction_id');
     }
 
     /**

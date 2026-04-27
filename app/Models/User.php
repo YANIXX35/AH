@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Notifications\Notifiable;
 
@@ -73,6 +74,13 @@ use Illuminate\Notifications\Notifiable;
     'company_bank_accounts',
     'is_platform_admin',
     'is_accountant',
+    'role_key',
+    'module_permissions',
+    'kyc_status',
+    'kyc_submitted_at',
+    'kyc_validated_at',
+    'kyc_validated_by_user_id',
+    'kyc_rejection_reason',
     'account_suspended',
     'suspended_at',
     'suspended_reason',
@@ -113,6 +121,9 @@ class User extends Authenticatable
             'company_bank_accounts' => 'array',
             'is_platform_admin' => 'boolean',
             'is_accountant' => 'boolean',
+            'module_permissions' => 'array',
+            'kyc_submitted_at' => 'datetime',
+            'kyc_validated_at' => 'datetime',
             'account_suspended' => 'boolean',
             'suspended_at' => 'datetime',
             'auto_suspended_for_payment' => 'boolean',
@@ -216,6 +227,41 @@ class User extends Authenticatable
     public function enterpriseLicense(): BelongsTo
     {
         return $this->belongsTo(EnterpriseLicense::class, 'enterprise_license_id');
+    }
+
+    public function billingSubscriptions(): HasMany
+    {
+        return $this->hasMany(BillingSubscription::class);
+    }
+
+    public function billingInvoices(): HasMany
+    {
+        return $this->hasMany(BillingInvoice::class);
+    }
+
+    public function kycDocuments(): HasMany
+    {
+        return $this->hasMany(KycDocument::class);
+    }
+
+    public function canAccessModule(string $module): bool
+    {
+        if ($this->isPlatformAdmin()) {
+            return true;
+        }
+
+        $permissions = (array) ($this->module_permissions ?? []);
+        if (array_key_exists($module, $permissions)) {
+            return (bool) $permissions[$module];
+        }
+
+        return match ((string) ($this->role_key ?? '')) {
+            'manager' => in_array($module, ['dashboard', 'payments', 'investor', 'support'], true),
+            'accountant' => in_array($module, ['dashboard', 'accounting', 'treasury', 'support'], true),
+            'analyst' => in_array($module, ['dashboard', 'investor', 'support'], true),
+            'viewer' => in_array($module, ['dashboard'], true),
+            default => true,
+        };
     }
 
     /**

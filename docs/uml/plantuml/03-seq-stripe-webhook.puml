@@ -1,0 +1,27 @@
+@startuml seq_stripe_webhook_treasury
+title Séquence — Webhook Stripe → Trésorerie
+
+participant Stripe as Stripe
+participant TreasuryController as TC
+participant StripeTreasuryService as STS
+participant TreasuryTransaction as TT
+
+Stripe -> TC : POST /payments/stripe/webhook\n(event + signature)
+TC -> STS : constructWebhookEvent(payload, Stripe-Signature)
+
+alt Signature invalide / secret absent
+  STS --> TC : Exception
+  TC --> Stripe : 400 Invalid webhook
+else Event valide
+  STS --> TC : Event(type, data.object)
+  TC -> TT : Résoudre la transaction\n(metadata id / cs_ / pi_ / po_)
+  alt Transaction trouvée
+    TC -> TT : update(payment_module, provider,\nstripe_status, status, paid_at…)
+  else Transaction introuvable
+    note over TC : Webhook accepté mais\naucune transaction à mettre à jour
+  end
+  TC --> Stripe : 200 ok
+end
+
+@enduml
+

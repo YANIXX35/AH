@@ -5,12 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\PaymentTransaction;
 use App\Models\SubscriptionHistory;
 use App\Models\User;
+use App\Services\AdminAuditTrailService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AdminPaymentController extends Controller
 {
+    public function __construct(
+        private readonly AdminAuditTrailService $auditTrail
+    ) {}
+
     public function index(Request $request): View
     {
         $query = PaymentTransaction::query()
@@ -102,6 +107,7 @@ class AdminPaymentController extends Controller
 
     public function activatePremium(PaymentTransaction $paymentTransaction): RedirectResponse
     {
+        $actor = request()->user();
         $user = $paymentTransaction->user;
         if ($user === null) {
             return back()->withErrors(['payment' => 'Aucun utilisateur rattaché à ce paiement.']);
@@ -115,6 +121,7 @@ class AdminPaymentController extends Controller
             ? $user->premium_ends_at->copy()
             : now();
         $newEndsAt = $referenceStart->copy()->addDays(30);
+        $before = $user->only(['is_premium', 'premium_status', 'premium_trial_ends_at', 'premium_ends_at', 'account_suspended', 'suspended_at', 'suspended_reason']);
 
         $user->update([
             'is_premium' => true,
@@ -144,11 +151,23 @@ class AdminPaymentController extends Controller
             ],
         ]);
 
+        $this->auditTrail->log(
+            'premium.activate',
+            User::class,
+            $user->id,
+            $actor?->id,
+            $before,
+            $user->fresh()?->only(['is_premium', 'premium_status', 'premium_trial_ends_at', 'premium_ends_at', 'account_suspended', 'suspended_at', 'suspended_reason']),
+            ['payment_transaction_id' => $paymentTransaction->id],
+            request()
+        );
+
         return back()->with('status', 'Premium activé pour 30 jours sur le compte '.$user->email.'.');
     }
 
     public function setFree(PaymentTransaction $paymentTransaction): RedirectResponse
     {
+        $actor = request()->user();
         $user = $paymentTransaction->user;
         if ($user === null) {
             return back()->withErrors(['payment' => 'Aucun utilisateur rattaché à ce paiement.']);
@@ -158,6 +177,7 @@ class AdminPaymentController extends Controller
         }
 
         $previousStatus = (string) ($user->premium_status ?? 'free');
+        $before = $user->only(['is_premium', 'premium_status', 'premium_trial_ends_at', 'premium_ends_at']);
 
         $user->update([
             'is_premium' => false,
@@ -182,6 +202,17 @@ class AdminPaymentController extends Controller
                 'status' => $paymentTransaction->status,
             ],
         ]);
+
+        $this->auditTrail->log(
+            'premium.set_free',
+            User::class,
+            $user->id,
+            $actor?->id,
+            $before,
+            $user->fresh()?->only(['is_premium', 'premium_status', 'premium_trial_ends_at', 'premium_ends_at']),
+            ['payment_transaction_id' => $paymentTransaction->id],
+            request()
+        );
 
         return back()->with('status', 'Le compte '.$user->email.' est repassé en mode Gratuit.');
     }

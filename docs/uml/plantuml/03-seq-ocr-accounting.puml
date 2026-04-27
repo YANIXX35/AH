@@ -1,0 +1,19 @@
+@startuml seq_ocr_vers_comptabilite
+title Séquence — OCR vers Comptabilité
+
+actor Utilisateur as U
+participant AccountingController as AC
+participant OcrService as O
+participant AccountingDocument as AD
+participant AccountingEntry as AE
+
+U -> AC : Upload document (POST)
+AC -> O : Extraction OCR + détection champs
+O --> AC : Données extraites + statut OCR
+AC -> AD : Persist document (stored_path, hash)
+AC -> AE : Creer / mise a jour ecriture (amount, comptes...)
+AE --> AC : ocr_status normalise\n(pending/verified/mismatch/failed/...)
+AC --> U : Résultat + actions\n(corriger / valider)
+
+@enduml
+

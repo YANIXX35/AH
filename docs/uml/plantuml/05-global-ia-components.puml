@@ -1,0 +1,122 @@
+@startuml global_ia_components
+title UML Composants globaux avec IA
+
+actor "Utilisateur / Comptable / Admin" as Actors
+component "UI Blade + AdminKit" as UI
+
+package "Entrée HTTP Laravel" {
+  component "routes/web.php" as Routes
+  component "Middlewares + Policies" as MW
+  component "Rate limiting" as RL
+}
+
+package "Dashboards" {
+  component "Dashboard utilisateur" as DUser
+  component "Dashboard comptable" as DAcc
+  component "Dashboard admin" as DAdmin
+  component "Ops Center" as DOps
+}
+
+package "Domaines métier" {
+  component "Comptabilité" as ACC
+  component "Trésorerie" as TRE
+  component "Investor" as INV
+  component "Paiements" as PAY
+  component "Support" as SUP
+}
+
+package "Services applicatifs" {
+  component "DashboardMetricsService" as S1
+  component "OcrService / OcrPipeline" as S2
+  component "TreasuryBalanceService" as S3
+  component "StripeTreasuryService / FedaPaySandboxService" as S4
+  component "InvestorReadinessService / Checklist" as S5
+  component "ClientWorkspace" as S6
+}
+
+package "Couche IA" {
+  component "HuggingFaceOpsAssistantService" as AIHub
+  component "Chatbot global role-aware" as AIChat
+  component "IA live utilisateur" as AIUser
+  component "IA live comptable" as AIAcc
+  component "IA live admin" as AIAdmin
+  component "IA live Ops Center" as AIOps
+  component "AiBusinessAdvisorController" as AIAdv
+  component "AdminApprovalRequest (IA autonome)" as AIAppr
+  component "AiActionTask" as AITask
+}
+
+package "Données" {
+  component "Models Eloquent" as Models
+  database "Base relationnelle" as DB
+  component "Audit / Logs" as Audit
+}
+
+package "Externe" {
+  component "Stripe" as Stripe
+  component "FedaPay" as FedaPay
+}
+
+Actors --> UI
+UI --> Routes
+Routes --> MW
+Routes --> RL
+MW --> DUser
+MW --> DAcc
+MW --> DAdmin
+MW --> DOps
+
+DUser --> ACC
+DUser --> TRE
+DAcc --> ACC
+DAcc --> TRE
+DAcc --> INV
+DAdmin --> ACC
+DAdmin --> TRE
+DAdmin --> INV
+DAdmin --> PAY
+DAdmin --> SUP
+DOps --> SUP
+DOps --> PAY
+
+DUser --> S1
+DAcc --> S1
+DAdmin --> S1
+ACC --> S2
+TRE --> S3
+TRE --> S4
+INV --> S5
+ACC --> S6
+TRE --> S6
+INV --> S6
+
+UI --> AIChat
+AIChat --> AIHub
+DUser --> AIUser
+AIUser --> AIHub
+DAcc --> AIAcc
+AIAcc --> AIHub
+DAdmin --> AIAdmin
+AIAdmin --> AIHub
+DOps --> AIOps
+AIOps --> AIHub
+AIChat --> AIAdv
+AIAdv --> ACC
+AIAdv --> TRE
+AIOps --> AIAppr
+AIOps --> AITask
+
+ACC --> Models
+TRE --> Models
+INV --> Models
+PAY --> Models
+SUP --> Models
+Models --> DB
+AIAppr --> Audit
+AITask --> Audit
+Audit --> DB
+
+S4 --> Stripe
+S4 --> FedaPay
+
+@enduml

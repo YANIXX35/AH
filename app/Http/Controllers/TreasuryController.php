@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\UsesClientWorkspace;
 use App\Models\TreasuryAuditLog;
 use App\Models\TreasuryPeriodLock;
 use App\Models\TreasuryTransaction;
 use App\Services\FedaPaySandboxService;
 use App\Services\StripeTreasuryService;
+use App\Services\Treasury\TreasuryBalanceService;
 use App\Services\TreasuryAudit;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,7 +18,6 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Http\Controllers\Concerns\UsesClientWorkspace;
 
 class TreasuryController extends Controller
 {
@@ -256,121 +258,16 @@ class TreasuryController extends Controller
     /**
      * Affiche le solde de trésorerie
      */
-    public function balance(Request $request)
+    public function balance(Request $request, TreasuryBalanceService $treasuryBalanceService)
     {
         $userIds = $this->workspaceDataUserIds();
+        $viewData = $treasuryBalanceService->build(
+            $userIds,
+            $request->query('date_from'),
+            $request->query('date_to')
+        );
 
-        // Période filtrable (par défaut: mois courant).
-        $dateFrom = $request->query('date_from');
-        $dateTo = $request->query('date_to');
-
-        $monthStart = $dateFrom
-            ? Carbon::parse($dateFrom)->startOfDay()
-            : now()->startOfMonth();
-        $monthEnd = $dateTo
-            ? Carbon::parse($dateTo)->endOfDay()
-            : now()->endOfMonth();
-
-        if ($monthStart->greaterThan($monthEnd)) {
-            [$monthStart, $monthEnd] = [$monthEnd->copy()->startOfDay(), $monthStart->copy()->endOfDay()];
-        }
-
-        // Soldes globaux (transactions effectuées uniquement)
-        $encaissementsEffectues = TreasuryTransaction::whereIn('user_id', $userIds)
-            ->encaissements()
-            ->effectuees()
-            ->sum('amount');
-
-        $decaissementsEffectues = TreasuryTransaction::whereIn('user_id', $userIds)
-            ->decaissements()
-            ->effectuees()
-            ->sum('amount');
-
-        $soldeActuel = $encaissementsEffectues - $decaissementsEffectues;
-
-        // Solde d'ouverture avant le début du mois.
-        $soldeOuverture = TreasuryTransaction::whereIn('user_id', $userIds)
-            ->effectuees()
-            ->whereDate('transaction_date', '<', $monthStart)
-            ->sum(DB::raw("CASE WHEN type = 'encaissement' THEN amount ELSE -amount END"));
-
-        // Transactions du mois (effectuées), triées chronologiquement.
-        $monthTransactions = TreasuryTransaction::whereIn('user_id', $userIds)
-            ->effectuees()
-            ->byDateRange($monthStart, $monthEnd)
-            ->orderBy('transaction_date')
-            ->orderBy('id')
-            ->get();
-
-        // Données mensuelles complètes pour les indicateurs de performance.
-        $monthAllTransactions = TreasuryTransaction::whereIn('user_id', $userIds)
-            ->byDateRange($monthStart, $monthEnd)
-            ->get(['type', 'status', 'amount']);
-
-        $monthEncaissementsEffectues = (float) $monthAllTransactions
-            ->where('type', 'encaissement')
-            ->where('status', 'effectue')
-            ->sum('amount');
-        $monthDecaissementsEffectues = (float) $monthAllTransactions
-            ->where('type', 'decaissement')
-            ->where('status', 'effectue')
-            ->sum('amount');
-
-        $monthEncaissementsPlanifies = (float) $monthAllTransactions
-            ->where('type', 'encaissement')
-            ->where('status', 'planifie')
-            ->sum('amount');
-        $monthDecaissementsPlanifies = (float) $monthAllTransactions
-            ->where('type', 'decaissement')
-            ->where('status', 'planifie')
-            ->sum('amount');
-
-        $totalOperationsMois = $monthAllTransactions->count();
-        $operationsEffectuees = $monthAllTransactions->where('status', 'effectue')->count();
-        $tauxExecution = $totalOperationsMois > 0
-            ? round(($operationsEffectuees / $totalOperationsMois) * 100, 1)
-            : 0.0;
-
-        // Couverture des sorties par les entrées du mois (base effectuée).
-        $tauxCouvertureDecaissements = $monthDecaissementsEffectues > 0
-            ? round(($monthEncaissementsEffectues / $monthDecaissementsEffectues) * 100, 1)
-            : null;
-
-        // Besoin net consommateur de trésorerie.
-        $consommationNetteMois = max(0, $monthDecaissementsEffectues - $monthEncaissementsEffectues);
-
-        // Autonomie de trésorerie en jours sur la base de la consommation nette du mois.
-        $joursDansMois = max(1, (int) $monthStart->daysInMonth);
-        $autonomieJours = $consommationNetteMois > 0
-            ? round($soldeActuel / ($consommationNetteMois / $joursDansMois), 1)
-            : null;
-
-        // Projection de fin de mois selon les flux planifiés restants.
-        $projectionFinMois = $soldeActuel + $monthEncaissementsPlanifies - $monthDecaissementsPlanifies;
-
-        // Solde journalier en évolution à partir du solde d'ouverture.
-        $dailyBalances = $this->calculateDailyBalances($userIds, $monthStart, $monthEnd, $soldeOuverture);
-
-        return view('treasury.balance', [
-            'soldeActuel' => $soldeActuel,
-            'encaissementsEffectues' => $encaissementsEffectues,
-            'decaissementsEffectues' => $decaissementsEffectues,
-            'soldeOuverture' => $soldeOuverture,
-            'monthTransactions' => $monthTransactions,
-            'dailyBalances' => $dailyBalances,
-            'monthStart' => $monthStart,
-            'monthEnd' => $monthEnd,
-            'dateFrom' => $monthStart->toDateString(),
-            'dateTo' => $monthEnd->toDateString(),
-            'perfIndicators' => [
-                'tauxExecution' => $tauxExecution,
-                'tauxCouvertureDecaissements' => $tauxCouvertureDecaissements,
-                'autonomieJours' => $autonomieJours,
-                'projectionFinMois' => $projectionFinMois,
-                'encaissementsPlanifies' => $monthEncaissementsPlanifies,
-                'decaissementsPlanifies' => $monthDecaissementsPlanifies,
-            ],
-        ]);
+        return view('treasury.balance', $viewData);
     }
 
     /**
@@ -689,6 +586,7 @@ class TreasuryController extends Controller
     public function edit(TreasuryTransaction $transaction)
     {
         $this->authorize('own', $transaction);
+
         return view('treasury.edit', ['transaction' => $transaction]);
     }
 
@@ -1066,36 +964,6 @@ class TreasuryController extends Controller
     }
 
     /**
-     * Calcul des soldes journaliers
-     */
-    private function calculateDailyBalances(array $userIds, $start, $end, $initialBalance = 0)
-    {
-        $balance = (float) $initialBalance;
-        $dailyBalances = [];
-
-        for ($date = $start->copy(); $date <= $end; $date->addDay()) {
-            $dayTransactions = TreasuryTransaction::whereIn('user_id', $userIds)
-                ->effectuees()
-                ->whereDate('transaction_date', $date)
-                ->orderBy('transaction_date')
-                ->orderBy('id')
-                ->get();
-
-            foreach ($dayTransactions as $transaction) {
-                if ($transaction->type === 'encaissement') {
-                    $balance += (float) $transaction->amount;
-                } else {
-                    $balance -= (float) $transaction->amount;
-                }
-            }
-
-            $dailyBalances[$date->format('Y-m-d')] = $balance;
-        }
-
-        return $dailyBalances;
-    }
-
-    /**
      * Calcul des projections hebdomadaires.
      *
      * @param  bool  $forecastOnly  Si vrai, n'intègre que les transactions planifiées (prévision fiable).
@@ -1127,7 +995,7 @@ class TreasuryController extends Controller
             $balance += $weekTotal;
 
             $projections[] = [
-                'week' => $current->format('d/m') . ' - ' . $weekEnd->format('d/m'),
+                'week' => $current->format('d/m').' - '.$weekEnd->format('d/m'),
                 'balance' => $balance,
                 'inflow' => (float) $weekTransactions->where('type', 'encaissement')->sum('amount'),
                 'outflow' => (float) $weekTransactions->where('type', 'decaissement')->sum('amount'),
@@ -1184,7 +1052,7 @@ class TreasuryController extends Controller
             $totalPlanned += abs($plannedNet);
 
             $rows[] = [
-                'week' => $weekStart->format('d/m') . ' - ' . $weekEnd->format('d/m'),
+                'week' => $weekStart->format('d/m').' - '.$weekEnd->format('d/m'),
                 'planned' => $plannedNet,
                 'actual' => $actualNet,
                 'gap' => $gap,
@@ -1213,24 +1081,24 @@ class TreasuryController extends Controller
     {
         $startDate = now()->subDays(30);
         $endDate = now();
-        
+
         $transactions = TreasuryTransaction::whereIn('user_id', $userIds)
             ->effectuees()
             ->byDateRange($startDate, $endDate)
             ->orderBy('transaction_date')
             ->get()
-            ->groupBy(function($item) {
+            ->groupBy(function ($item) {
                 return $item->transaction_date->format('Y-m-d');
             });
 
         $labels = [];
         $encaissementsData = [];
         $decaissementsData = [];
-        
+
         for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
             $dateKey = $date->format('Y-m-d');
             $dayTransactions = $transactions->get($dateKey, collect());
-            
+
             $labels[] = $date->format('d M');
             $encaissementsData[] = $dayTransactions->where('type', 'encaissement')->sum('amount');
             $decaissementsData[] = $dayTransactions->where('type', 'decaissement')->sum('amount');
@@ -1250,7 +1118,7 @@ class TreasuryController extends Controller
     {
         $monthStart = now()->startOfMonth();
         $monthEnd = now()->endOfMonth();
-        
+
         $categories = TreasuryTransaction::whereIn('user_id', $userIds)
             ->effectuees()
             ->byDateRange($monthStart, $monthEnd)
@@ -1274,37 +1142,37 @@ class TreasuryController extends Controller
         $thisMonth = now()->startOfMonth();
         $lastMonth = now()->subMonth()->startOfMonth();
         $lastMonthEnd = now()->subMonth()->endOfMonth();
-        
+
         $thisMonthEncaissements = TreasuryTransaction::whereIn('user_id', $userIds)
             ->encaissements()
             ->effectuees()
             ->where('transaction_date', '>=', $thisMonth)
             ->sum('amount');
-            
+
         $lastMonthEncaissements = TreasuryTransaction::whereIn('user_id', $userIds)
             ->encaissements()
             ->effectuees()
             ->byDateRange($lastMonth, $lastMonthEnd)
             ->sum('amount');
-            
+
         $thisMonthDecaissements = TreasuryTransaction::whereIn('user_id', $userIds)
             ->decaissements()
             ->effectuees()
             ->where('transaction_date', '>=', $thisMonth)
             ->sum('amount');
-            
+
         $lastMonthDecaissements = TreasuryTransaction::whereIn('user_id', $userIds)
             ->decaissements()
             ->effectuees()
             ->byDateRange($lastMonth, $lastMonthEnd)
             ->sum('amount');
 
-        $encaissementTrend = $lastMonthEncaissements > 0 
-            ? (($thisMonthEncaissements - $lastMonthEncaissements) / $lastMonthEncaissements) * 100 
+        $encaissementTrend = $lastMonthEncaissements > 0
+            ? (($thisMonthEncaissements - $lastMonthEncaissements) / $lastMonthEncaissements) * 100
             : 0;
-            
-        $decaissementTrend = $lastMonthDecaissements > 0 
-            ? (($thisMonthDecaissements - $lastMonthDecaissements) / $lastMonthDecaissements) * 100 
+
+        $decaissementTrend = $lastMonthDecaissements > 0
+            ? (($thisMonthDecaissements - $lastMonthDecaissements) / $lastMonthDecaissements) * 100
             : 0;
 
         return [
@@ -1331,27 +1199,27 @@ class TreasuryController extends Controller
     public function exportCsv(Request $request)
     {
         $userIds = $this->workspaceDataUserIds();
-        
+
         $transactions = TreasuryTransaction::whereIn('user_id', $userIds)
             ->orderByDesc('transaction_date')
             ->get();
 
-        $filename = "tresorerie_" . date('Y-m-d') . ".csv";
-        
+        $filename = 'tresorerie_'.date('Y-m-d').'.csv';
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$filename\"",
         ];
 
-        $callback = function() use ($transactions) {
+        $callback = function () use ($transactions) {
             $file = fopen('php://output', 'w');
-            
+
             // En-tête CSV
             fputcsv($file, [
-                'Date', 'Type', 'Catégorie', 'Description', 'Montant', 'Référence', 
-                'Compte bancaire', 'Statut', 'Notes'
+                'Date', 'Type', 'Catégorie', 'Description', 'Montant', 'Référence',
+                'Compte bancaire', 'Statut', 'Notes',
             ], ';');
-            
+
             // Données
             foreach ($transactions as $tx) {
                 fputcsv($file, [
@@ -1363,10 +1231,10 @@ class TreasuryController extends Controller
                     $tx->reference ?? '',
                     $tx->bank_account ?? '',
                     ucfirst($tx->status),
-                    $tx->notes ?? ''
+                    $tx->notes ?? '',
                 ], ';');
             }
-            
+
             fclose($file);
         };
 
@@ -1381,19 +1249,19 @@ class TreasuryController extends Controller
         $userIds = $this->workspaceDataUserIds();
         $monthStart = now()->startOfMonth();
         $monthEnd = now()->endOfMonth();
-        
+
         // Données pour le rapport
         $transactions = TreasuryTransaction::whereIn('user_id', $userIds)
             ->byDateRange($monthStart, $monthEnd)
             ->orderBy('transaction_date')
             ->get();
-            
+
         $totalEncaissements = $transactions->where('type', 'encaissement')->sum('amount');
         $totalDecaissements = $transactions->where('type', 'decaissement')->sum('amount');
         $solde = $totalEncaissements - $totalDecaissements;
-        
+
         // Utiliser DomPDF pour générer le PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('treasury.reports.monthly', [
+        $pdf = Pdf::loadView('treasury.reports.monthly', [
             'transactions' => $transactions,
             'totalEncaissements' => $totalEncaissements,
             'totalDecaissements' => $totalDecaissements,
@@ -1401,8 +1269,8 @@ class TreasuryController extends Controller
             'monthStart' => $monthStart,
             'monthEnd' => $monthEnd,
         ]);
-        
-        return $pdf->download("rapport_tresorerie_" . date('Y-m') . ".pdf");
+
+        return $pdf->download('rapport_tresorerie_'.date('Y-m').'.pdf');
     }
 
     /**
@@ -1412,7 +1280,7 @@ class TreasuryController extends Controller
     {
         $userIds = $this->workspaceDataUserIds();
         $period = $request->get('period', 'month');
-        
+
         $data = [
             'chartData' => $this->getChartData($userIds),
             'categoryData' => $this->getCategoryData($userIds),
@@ -1424,9 +1292,9 @@ class TreasuryController extends Controller
                     ->decaissements()->effectuees()->sum('amount'),
                 'solde' => TreasuryTransaction::whereIn('user_id', $userIds)
                     ->effectuees()->sum(DB::raw("CASE WHEN type = 'encaissement' THEN amount ELSE -amount END")),
-            ]
+            ],
         ];
-        
+
         return response()->json($data);
     }
 
@@ -1510,8 +1378,7 @@ class TreasuryController extends Controller
         Request $request,
         TreasuryTransaction $transaction,
         StripeTreasuryService $stripe
-    ): ?RedirectResponse
-    {
+    ): ?RedirectResponse {
         if ($transaction->payment_module === 'fedapay_mobile') {
             return $this->maybeStartFedaPayCheckout($request, $transaction);
         }
@@ -1522,8 +1389,7 @@ class TreasuryController extends Controller
     private function maybeStartFedaPayCheckout(
         Request $request,
         TreasuryTransaction $transaction
-    ): ?RedirectResponse
-    {
+    ): ?RedirectResponse {
         if ($transaction->payment_module !== 'fedapay_mobile' || $transaction->status !== 'effectue') {
             return null;
         }

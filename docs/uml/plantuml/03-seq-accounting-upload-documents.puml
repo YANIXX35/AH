@@ -1,0 +1,41 @@
+@startuml seq_accounting_upload_documents
+title Séquence — Import de documents comptables (POST /accounting/documents)
+
+actor Utilisateur as U
+participant "AccountingController" as AC
+participant "OcrPipelineService" as PIPE
+participant "OcrService" as OCR
+database "accounting_documents" as AD
+database "accounting_entries" as AE
+participant "Storage (public)" as FS
+
+U -> AC : POST /accounting/documents (documents[])
+AC -> AC : validate(mimes pdf/jpg/png/xlsx/xls/csv, max=20MB)
+
+loop pour chaque fichier
+  AC -> AD : Rechercher doublon par document_hash (sha1)
+  alt doublon
+    note over AC : doublon ignoré
+  else nouveau
+    AC -> FS : store('accounting-documents')
+    AC -> PIPE : processStoredDocument(stored_path)
+    PIPE --> AC : ocr_result + rich_data + confidence + review_required
+    alt OCR success
+      AC -> OCR : verifyCompleteDocument(text, payload)
+      OCR --> AC : extracted (champs)
+      AC -> AD : create(status=validated|pending_validation, extracted_data, confidence, actor_user_id)
+      alt auto-validé
+        AC -> AE : createEntryFromAutoValidatedDocument(document)
+      else revue manuelle
+        note over AC : document en attente de validation
+      end
+    else OCR failed
+      AC -> AD : create(status=ocr_failed, extracted_data.ocr_error)
+    end
+  end
+end
+
+AC --> U : Redirect /accounting/documents\n(status: synthèse import)
+
+@enduml
+

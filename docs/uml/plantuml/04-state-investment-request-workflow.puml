@@ -1,0 +1,24 @@
+@startuml state_investment_request_workflow
+title États — Workflow d'une demande d'investissement (InvestmentRequest.status)
+
+[*] --> pending
+
+pending --> in_review : updateRequestWorkflow(next_status=in_review)
+pending --> declined : updateRequestWorkflow(next_status=declined)
+
+in_review --> accepted : updateRequestWorkflow(next_status=accepted)\n(note obligatoire)
+in_review --> declined : updateRequestWorkflow(next_status=declined)\n(note obligatoire)
+
+accepted --> [*]
+declined --> [*]
+
+note right of pending
+  Transitions autorisées (InvestorController::ALLOWED_TRANSITIONS):
+  pending -> in_review|declined
+  in_review -> accepted|declined
+  accepted -> (aucune)
+  declined -> (aucune)
+end note
+
+@enduml
+

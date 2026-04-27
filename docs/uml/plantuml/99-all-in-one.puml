@@ -1,0 +1,1114 @@
+@startuml all_themes_techniques
+' Fichier "tout-en-un" : plusieurs diagrammes PlantUML dans un seul fichier.
+' La plupart des viewers/exports PlantUML savent générer un rendu par bloc startuml/enduml.
+title Thèmes techniques (repères)
+
+note as N
+  Thèmes techniques couverts (issus du code) :
+  - Laravel : routes, middlewares, controllers, validation Request, sessions/auth
+  - Blade : UI
+  - Eloquent + migrations : persistance
+  - Rate limiting : throttle:auth-sensitive / ocr-intensive / finance-write / stripe-webhook...
+  - Storage (public) : pièces jointes, documents
+  - OCR local : PaddleOCR (Python) via Symfony Process + PhpSpreadsheet (XLS/CSV)
+  - Paiements : Stripe (checkout/payout/webhook) + FedaPay sandbox (Mobile Money + fallback page)
+  - Mail : OTP reset + confirmation
+  - Gouvernance : verrous de période + audit
+end note
+
+@enduml
+
+@startuml seq_global_plateforme__all
+title Séquence globale — parcours utilisateur et flux transverses
+
+actor Utilisateur as U
+participant "UI (Blade)" as UI
+participant "Routes + Middlewares\n+ Rate limiting" as HTTP
+
+box "Fonctionnels (Controllers / Services)" #EEF7FF
+  participant "AuthController" as AUTHC
+  participant "DashboardController" as DASH
+  participant "AccountingController" as ACC
+  participant "OcrPipelineService" as OCRP
+  participant "OcrService" as OCR
+  participant "TreasuryController" as TRE
+  participant "StripeTreasuryService" as STR
+  participant "FedaPaySandboxService" as FDP
+  participant "SupportController" as SUP
+  participant "InAppNotificationController" as NOTIF
+  participant "AdminPaymentController" as ADMINP
+end box
+
+database "DB (Eloquent)" as DB
+participant "Stripe" as Stripe
+participant "Storage public" as FS
+
+== Connexion ==
+U -> UI : Saisir identifiants + reCAPTCHA
+UI -> HTTP : POST /login (throttle:auth-sensitive)
+HTTP -> AUTHC : login()
+AUTHC -> DB : vérifier utilisateur + suspension + champs FIRD
+alt accès OK
+  AUTHC --> UI : redirect /dashboard
+else bloqué
+  AUTHC --> UI : erreurs (reCAPTCHA / identifiants / suspendu / FIRD)
+end
+
+== Comptabilité : import + OCR ==
+U -> UI : Importer documents comptables
+UI -> HTTP : POST /accounting/documents (throttle:ocr-intensive)
+HTTP -> ACC : uploadDocuments()
+ACC -> FS : store documents
+ACC -> OCRP : processStoredDocument()
+OCRP --> ACC : ocr_result + confidence + review_required
+ACC -> OCR : verify/extract (selon besoin)
+ACC -> DB : créer AccountingDocument (+ éventuellement AccountingEntry)
+ACC --> UI : statut (auto-validé / revue manuelle / échec OCR)
+
+== Trésorerie : transaction + paiement ==
+U -> UI : Créer transaction (encaissement/décaissement)
+UI -> HTTP : POST /treasury (throttle:finance-write)
+HTTP -> TRE : store()
+TRE -> DB : créer TreasuryTransaction + audit
+alt paiement Stripe (module=stripe, status=effectue)
+  TRE -> STR : createCheckoutSession() ou createPayout()
+  STR -> Stripe : API (checkout/payout)
+  TRE --> UI : redirect Stripe (si checkout)
+  UI -> HTTP : retour /treasury/{tx}/stripe/success
+  HTTP -> TRE : stripeSuccess()
+  TRE -> STR : retrieveCheckoutSession()
+  TRE -> DB : mise à jour statut + audit
+else Mobile Money (module=fedapay_mobile)
+  TRE --> UI : redirect /treasury/{tx}/fedapay/checkout
+  UI -> HTTP : POST /treasury/{tx}/fedapay/checkout
+  HTTP -> TRE : fedapayCheckoutStart()
+  TRE -> FDP : createTransaction()
+  TRE -> DB : update statut + audit
+  TRE --> UI : redirect checkout_url (ou fallback page)
+end
+
+== Support + notifications ==
+U -> UI : Créer un ticket support
+UI -> HTTP : POST /support/tickets
+HTTP -> SUP : store()
+SUP -> DB : SupportTicket + SupportMessage + AppNotification
+SUP --> UI : redirect /support/tickets
+U -> UI : Consulter notification
+UI -> HTTP : GET /notifications/{id}/go
+HTTP -> NOTIF : go()
+NOTIF -> DB : markRead()
+NOTIF --> UI : redirect action_url
+
+== Administration : activation Premium ==
+U -> UI : (Admin) activer Premium depuis paiement
+UI -> HTTP : POST /admin/payments/{payment}/activate-premium
+HTTP -> ADMINP : activatePremium()
+ADMINP -> DB : update user premium + SubscriptionHistory
+ADMINP --> UI : status OK
+
+@enduml
+
+@startuml seq_global_toutes_fonctionnalites__all
+title Séquence globale — toutes les fonctionnalités (vue bout-en-bout)
+
+actor Utilisateur as U
+participant "UI (Blade)" as UI
+participant "HTTP (routes + middlewares\n+ throttles)" as HTTP
+
+box "Controllers (façades fonctionnelles)" #EEF7FF
+  participant "AuthController" as AUTHC
+  participant "DashboardController" as DASH
+  participant "AccountingController" as ACC
+  participant "TreasuryController" as TRE
+  participant "InvestorController" as INV
+  participant "SupportController" as SUP
+  participant "InAppNotificationController" as NOTIF
+  participant "AdminPaymentController" as ADMINP
+  participant "DocumentationController" as DOCC
+end box
+
+box "Services / intégrations" #F7FFF0
+  participant "OcrPipelineService" as OCRP
+  participant "OcrService" as OCR
+  participant "StripeTreasuryService" as STR
+  participant "FedaPaySandboxService" as FDP
+  participant "InvestorReadinessService" as IRS
+  participant "InvestmentDossierChecklistService" as IDS
+end box
+
+database "DB (Eloquent)" as DB
+participant "Storage public" as FS
+participant "Stripe" as Stripe
+participant "Mail" as MAIL
+
+== 1) Authentification ==
+U -> UI : Ouvrir /login
+UI -> HTTP : POST /login (throttle:auth-sensitive)
+HTTP -> AUTHC : login()
+AUTHC -> DB : vérifier user + suspension + champs FIRD
+alt accès OK
+  AUTHC --> UI : redirect /dashboard
+else bloqué
+  AUTHC --> UI : erreurs (reCAPTCHA / identifiants / suspendu / FIRD)
+end
+
+opt Mot de passe oublié (OTP)
+  U -> UI : Ouvrir /forgot-password
+  UI -> HTTP : POST /forgot-password
+  HTTP -> AUTHC : sendResetOtp()
+  AUTHC -> DB : lire users + password_reset_otps
+  AUTHC -> MAIL : envoyer OTP (PasswordResetOtpMail)
+  AUTHC --> UI : redirect /reset-password?email=...
+  UI -> HTTP : POST /reset-password (otp + nouveau mdp)
+  HTTP -> AUTHC : resetPasswordWithOtp()
+  AUTHC -> DB : vérifier OTP + update password
+  AUTHC -> MAIL : envoyer confirmation (best effort)
+  AUTHC --> UI : redirect /login
+end
+
+== 2) Tableau de bord ==
+U -> UI : Ouvrir /dashboard
+UI -> HTTP : GET /dashboard
+HTTP -> DASH : index()
+DASH -> DB : lire métriques + données
+DASH --> UI : rendu dashboard
+
+== 3) Profil / Paramètres ==
+U -> UI : Modifier profil (nom/email/locale/devise/logo/avatar)
+UI -> HTTP : POST /profile
+HTTP -> DB : update user + fichiers (Storage public)
+HTTP --> UI : status "Profil mis à jour"
+
+opt Simulation abonnement
+  UI -> HTTP : POST /profile/subscription/simulate
+  HTTP -> DB : update user premium_* + insert SubscriptionHistory
+  HTTP --> UI : status simulation
+end
+
+opt Équipe entreprise (ajout collègue)
+  UI -> HTTP : POST /profile/equipe
+  HTTP -> DB : lock EnterpriseLicense + create User (même licence)
+  HTTP --> UI : status "Compte créé"
+end
+
+== 4) Comptabilité Premium (OCR / écritures / plan comptable) ==
+UI -> HTTP : POST /accounting/documents (throttle:ocr-intensive)
+HTTP -> ACC : uploadDocuments()
+ACC -> FS : store documents
+ACC -> OCRP : processStoredDocument()
+OCRP --> ACC : ocr_result + confidence + review_required
+ACC -> OCR : verify / extract (selon besoin)
+ACC -> DB : create AccountingDocument (+ éventuellement AccountingEntry)
+ACC --> UI : statut import
+
+opt Validation manuelle OCR d'une écriture
+  UI -> HTTP : POST /accounting/entries/{id}/ocr/manual
+  HTTP -> ACC : storeManualOcrValidation()
+  ACC -> DB : update AccountingEntry (manual_verified)
+end
+
+opt Import plan comptable
+  UI -> HTTP : POST /accounting/plan-comptable/upload
+  HTTP -> ACC : uploadPlanComptable()
+  ACC -> DB : save plan accounts
+end
+
+== 5) Trésorerie (transactions + paiements) ==
+UI -> HTTP : POST /treasury (throttle:finance-write)
+HTTP -> TRE : store()
+TRE -> DB : create TreasuryTransaction + audit
+alt Stripe
+  TRE -> STR : createCheckoutSession() ou createPayout()
+  STR -> Stripe : API
+else FedaPay
+  TRE -> FDP : createTransaction()
+  TRE -> DB : update tx + audit
+end
+
+opt Webhook Stripe (asynchrone)
+  Stripe -> HTTP : POST /payments/stripe/webhook
+  HTTP -> TRE : stripeWebhook()
+  TRE -> DB : update TreasuryTransaction
+end
+
+== 6) Parcours investisseur ==
+UI -> HTTP : GET /investor/readiness
+HTTP -> INV : index()
+INV -> IRS : build()
+INV -> IDS : build() + summarize()
+INV -> DB : updateOrCreate InvestorProfile
+
+opt Dépôt demande
+  UI -> HTTP : POST /investor/investment-request
+  INV -> FS : store pièces identité
+  INV -> DB : create InvestmentRequest(pending)
+end
+
+opt Workflow demande
+  UI -> HTTP : POST /investor/investment-request/{id}/workflow
+  INV -> DB : update InvestmentRequest
+end
+
+== 7) Support & notifications ==
+UI -> HTTP : POST /support/tickets
+HTTP -> SUP : store()
+SUP -> DB : ticket + message + notification
+
+UI -> HTTP : GET /notifications/{id}/go
+HTTP -> NOTIF : go()
+NOTIF -> DB : markRead()
+
+== 8) Administration ==
+UI -> HTTP : POST /admin/payments/{payment}/activate-premium
+HTTP -> ADMINP : activatePremium()
+ADMINP -> DB : update user premium + SubscriptionHistory
+
+== 9) Documentation ==
+UI -> HTTP : GET /documentation/synthese
+HTTP -> DOCC : downloadSynthese()
+
+@enduml
+
+@startuml architecture_components__all
+title Architecture — composants (vue logique)
+
+actor "Utilisateur" as U
+component "Navigateur / UI Blade" as UI
+
+package "Entrée HTTP Laravel" {
+  component "routes/web.php" as R
+  component "Middlewares web" as MW
+  component "Rate limiting" as RL
+}
+
+package "Contrôleurs HTTP" {
+  component "DashboardController" as DC
+  component "AccountingController (+ viewers)" as AC
+  component "TreasuryController" as TC
+  component "InvestorController" as IC
+  component "Admin* Controllers" as ADC
+  component "Accountant* Controllers" as ACC
+}
+
+package "Services applicatifs" {
+  component "DashboardMetricsService" as DMS
+  component "OcrService" as OCR
+  component "ClientWorkspace" as CWS
+  component "TreasuryBalanceService" as TBS
+  component "StripeTreasuryService" as STS
+  component "InvestorReadinessService" as IRS
+  component "InvestmentDossierChecklistService" as IDS
+  interface "FinancialRatioServiceContract" as FRC
+  component "SmeFinancialRatioService" as SFR
+}
+
+package "Données (Eloquent)" {
+  database "Base de données" as DB
+  component "Migrations" as MIG
+  entity "User" as MUser
+  entity "AccountingEntry" as MAE
+  entity "AccountingDocument" as MAD
+  entity "TreasuryTransaction" as MTT
+  entity "PaymentTransaction" as MPT
+  entity "SubscriptionHistory" as MSH
+  entity "EnterpriseLicense" as MEL
+  entity "InvestorProfile" as MIP
+}
+
+package "Intégrations externes" {
+  cloud "Stripe" as Stripe
+  cloud "FedaPay" as FedaPay
+  cloud "Stockage fichiers" as Storage
+}
+
+U --> UI
+UI --> R
+R --> MW
+R --> RL
+MW --> DC
+MW --> AC
+MW --> TC
+MW --> IC
+MW --> ADC
+MW --> ACC
+RL ..> DC : protège
+RL ..> AC : protège
+RL ..> TC : protège
+RL ..> IC : protège
+
+DC --> DMS
+AC --> OCR
+AC --> CWS
+TC --> TBS
+TC --> STS
+TC --> CWS
+IC --> IRS
+IC --> IDS
+IRS --> FRC
+FRC <|.. SFR
+ACC --> CWS
+
+CWS --> MUser
+OCR --> MAE
+OCR --> MAD
+STS --> MTT
+TBS --> MTT
+IRS --> MIP
+
+MIG --> DB
+MUser --> DB
+MAE --> DB
+MAD --> DB
+MTT --> DB
+MPT --> DB
+MSH --> DB
+MEL --> DB
+MIP --> DB
+
+STS --> Stripe
+TC ..> FedaPay : sandbox
+AC ..> Storage : pièces jointes
+TC ..> Storage : reçus / preuves
+
+@enduml
+
+@startuml core_domain_classes__all
+title Entités clés — diagramme de classes
+
+skinparam classAttributeIconSize 0
+
+class User {
+  +id: int
+  +enterprise_license_id: int?
+  +is_platform_admin: bool
+  +is_accountant: bool
+  +is_premium: bool
+  +premium_status: string?
+  +premium_trial_ends_at: datetime?
+  +premium_ends_at: datetime?
+  +locale: string
+  +currency: string
+  --
+  +isPlatformAdmin(): bool
+  +isAccountant(): bool
+  +hasActivePremiumPeriod(): bool
+}
+
+class EnterpriseLicense {
+  +id: int
+  +primary_workspace_user_id: int?
+}
+
+class ClientWorkspace <<static>> {
+  +SESSION_KEY: string
+  --
+  +effectiveUserId(): int
+  +dataScopeUserIds(auth: User?): int[*]
+  +setWorkspaceUserId(clientUserId: int): void
+  +clearWorkspace(): void
+}
+
+class AccountingEntry {
+  +id: int
+  +user_id: int
+  +actor_user_id: int?
+  +document_id: int?
+  +amount: decimal
+  +ocr_status: string
+  +ocr_detected_amount: decimal?
+  +ocr_text: text?
+  --
+  +getOcrBadge(): map
+}
+
+class AccountingDocument {
+  +id: int
+  +user_id: int
+  +stored_path: string?
+  +original_name: string?
+}
+
+class OcrStatus <<static>> {
+  +VERIFIED: string
+  +MANUAL_VERIFIED: string
+  +MISMATCH: string
+  +FAILED: string
+  +PENDING: string
+  --
+  +normalize(status: string?): string
+}
+
+class TreasuryTransaction {
+  +id: int
+  +user_id: int
+  +payment_transaction_id: int?
+  +actor_user_id: int?
+  +type: string
+  +status: string
+  +amount: decimal
+  +stripe_checkout_session_id: string?
+  +stripe_payment_intent_id: string?
+  +stripe_payout_id: string?
+}
+
+class PaymentTransaction {
+  +id: int
+  +user_id: int
+  +provider: string
+  +provider_reference: string?
+  +status: string
+  +amount: decimal
+  +currency: string
+}
+
+class SubscriptionHistory {
+  +id: int
+  +user_id: int
+  +from_status: string
+  +to_status: string
+  +is_premium: bool
+  +starts_at: datetime
+  +ends_at: datetime?
+  +source: string
+}
+
+User "0..1" --> "1" EnterpriseLicense : belongsTo
+ClientWorkspace ..> User : scope licence / session
+
+User "1" --> "0..*" AccountingEntry : écritures
+AccountingEntry "0..1" --> "1" AccountingDocument : document
+AccountingEntry ..> OcrStatus : normalise ocr_status
+
+User "1" --> "0..*" TreasuryTransaction : trésorerie
+User "1" --> "0..*" PaymentTransaction : paiements
+PaymentTransaction "1" --> "0..*" TreasuryTransaction : rapprochement
+
+User "1" --> "0..*" SubscriptionHistory : historique premium
+
+@enduml
+
+@startuml state_ocr_status__all
+title États — Statut OCR (AccountingEntry.ocr_status)
+
+[*] --> pending
+
+pending --> verified : OCR cohérent
+pending --> mismatch : incohérences détectées
+pending --> failed : erreur OCR
+
+mismatch --> manual_verified : validation manuelle
+mismatch --> verified : correction + OCR cohérent
+failed --> pending : retry OCR
+
+manual_verified --> verified : (optionnel) contrôle final
+
+note right of pending
+  Normalisation (App\\Support\\OcrStatus::normalize):
+  - inconnus => pending
+  - legacy "mismatched" => mismatch
+end note
+
+@enduml
+
+@startuml state_premium_cycle__all
+title États — Cycle Premium (lecture applicative)
+
+[*] --> free
+free --> trialing : activation essai
+trialing --> active : conversion premium
+trialing --> free : essai expiré / retour gratuit
+active --> free : fin de période / annulation
+
+note right of active
+  User::hasActivePremiumPeriod():
+  - is_premium = true
+  - premium_ends_at future (ou null)
+end note
+
+@enduml
+
+@startuml state_investment_request_workflow__all
+title États — Workflow d'une demande d'investissement (InvestmentRequest.status)
+
+[*] --> pending
+
+pending --> in_review : updateRequestWorkflow(next_status=in_review)
+pending --> declined : updateRequestWorkflow(next_status=declined)
+
+in_review --> accepted : updateRequestWorkflow(next_status=accepted)\n(note obligatoire)
+in_review --> declined : updateRequestWorkflow(next_status=declined)\n(note obligatoire)
+
+accepted --> [*]
+declined --> [*]
+
+note right of pending
+  Transitions autorisées (InvestorController::ALLOWED_TRANSITIONS):
+  pending -> in_review|declined
+  in_review -> accepted|declined
+  accepted -> (aucune)
+  declined -> (aucune)
+end note
+
+@enduml
+
+@startuml state_treasury_period_lock__all
+title États — Gouvernance trésorerie (TreasuryPeriodLock)
+
+[*] --> unlocked
+
+unlocked --> locked : lockTreasuryPeriod(period_month)\nlocked_at, locked_by
+locked --> unlocked : unlockTreasuryPeriod(period_month)\n(sauf si validé)
+
+locked --> validated : validateTreasuryForecast(period_month)\nvalidated_at, validated_by
+validated --> validated : (verrou maintenu)
+
+note right of locked
+  Règle : un verrou validé (validated_at != null)
+  ne peut pas être déverrouillé via l'UI.
+end note
+
+@enduml
+
+@startuml seq_ocr_vers_comptabilite__all
+title Séquence — OCR vers Comptabilité
+
+actor Utilisateur as U
+participant AccountingController as AC
+participant OcrService as O
+participant AccountingDocument as AD
+participant AccountingEntry as AE
+
+U -> AC : Upload document (POST)
+AC -> O : Extraction OCR + détection champs
+O --> AC : Données extraites + statut OCR
+AC -> AD : Persister document (stored_path, hash)
+AC -> AE : Créer / mise à jour écriture (amount, comptes...)
+AE --> AC : ocr_status normalisé\n(pending/verified/mismatch/failed/...)
+AC --> U : Résultat + actions\n(corriger / valider)
+
+@enduml
+
+@startuml seq_stripe_webhook_treasury__all
+title Séquence — Webhook Stripe → Trésorerie
+
+participant Stripe as Stripe
+participant TreasuryController as TC
+participant StripeTreasuryService as STS
+participant TreasuryTransaction as TT
+
+Stripe -> TC : POST /payments/stripe/webhook\n(event + signature)
+TC -> STS : constructWebhookEvent(payload, Stripe-Signature)
+
+alt Signature invalide / secret absent
+  STS --> TC : Exception
+  TC --> Stripe : 400 Invalid webhook
+else Event valide
+  STS --> TC : Event(type, data.object)
+  TC -> TT : Résoudre la transaction\n(metadata id / cs_ / pi_ / po_)
+  alt Transaction trouvée
+    TC -> TT : update(payment_module, provider,\nstripe_status, status, paid_at…)
+  else Transaction introuvable
+    note over TC : Webhook accepté mais\naucune transaction à mettre à jour
+  end
+  TC --> Stripe : 200 ok
+end
+
+@enduml
+
+@startuml seq_accountant_workspace_selection__all
+title Séquence — Sélection "dossier client" (cabinet comptable)
+
+actor "Comptable (User)" as A
+participant AccountantClientController as ACC
+participant ClientWorkspace as CW
+database Session as S
+
+A -> ACC : POST /accountant/workspace/{client}
+ACC -> CW : canUseWorkspace(auth)?
+CW -> S : set(SESSION_KEY = client_user_id)
+ACC --> A : Redirection\n(workspace actif)
+
+note over CW
+  effectiveUserId()/dataScopeUserIds() lisent la session
+  et imposent : cible = client (ni admin, ni comptable).
+end note
+
+@enduml
+
+@startuml seq_auth_login__all
+title Séquence — Connexion (login) + contrôles (reCAPTCHA / suspension / FIRD)
+
+actor Visiteur as V
+participant "AuthController" as AC
+participant "reCAPTCHA" as RC
+participant "Auth (session)" as AUTH
+database "users" as UDB
+
+V -> AC : POST /login (email, password, remember, g-recaptcha-response)
+AC -> RC : verifyRecaptcha(token, ip)
+
+alt reCAPTCHA invalide
+  AC --> V : Erreur (login.email)\nValidation reCAPTCHA échouée
+else reCAPTCHA OK
+  AC -> AUTH : Auth::attempt(email, password, remember)
+  alt identifiants invalides
+    AC --> V : Erreur (login.email)\nIdentifiants invalides
+  else authentifié
+    AC -> AUTH : session()->regenerate()
+    AC -> UDB : Charger User (request->user)
+    alt compte suspendu
+      AC -> AUTH : logout + invalidate session
+      AC --> V : Erreur (login.email)\nCompte suspendu
+    else compte actif
+      AC -> UDB : Vérifier champs FIRD
+      alt FIRD incomplet (hors admin/comptable)
+        AC --> V : Redirect /profile/entreprise/fird\n(status: compléter FIRD)
+      else OK
+        AC --> V : Redirect intended /dashboard
+      end
+    end
+  end
+end
+
+@enduml
+
+@startuml seq_auth_password_reset_otp__all
+title Séquence — Réinitialisation mot de passe (OTP)
+
+actor Utilisateur as U
+participant "AuthController" as AC
+database "password_reset_otps" as OTP
+participant "Mail (PasswordResetOtpMail)" as MAIL1
+participant "Mail (PasswordResetConfirmedMail)" as MAIL2
+database "users" as UDB
+
+U -> AC : POST /forgot-password (email)
+AC -> UDB : Rechercher User par email
+
+alt email inconnu
+  AC --> U : Redirect /reset-password?email=...\n(status: "Si l'adresse existe...")
+else email connu
+  AC -> OTP : Vérifier cooldown (dernier OTP < 60s ?)
+  alt cooldown actif
+    AC --> U : Redirect /reset-password?email=...\n(erreur: patienter)
+  else OK
+    AC -> OTP : delete(email) + insert(otp_hash, expires_at=+10min, attempts=0)
+    AC -> MAIL1 : envoyer OTP
+    alt échec mail
+      AC -> OTP : delete(email)
+      AC --> U : Erreur (email)\nImpossible d'envoyer OTP
+    else mail envoyé
+      AC --> U : Redirect /reset-password?email=...\n(status: OTP envoyé)
+    end
+  end
+end
+
+== Validation OTP ==
+
+U -> AC : POST /reset-password (email, otp, password, password_confirmation)
+AC -> OTP : Lire record + vérifier expires_at
+
+alt record absent/expiré
+  AC --> U : Erreur (otp)\nOTP invalide ou expiré
+else record présent
+  AC -> OTP : Vérifier attempts (< 5)
+  alt trop de tentatives
+    AC --> U : Erreur (otp)\nTrop de tentatives
+  else tentatives OK
+    AC -> OTP : Comparer hash OTP
+    alt OTP incorrect
+      AC -> OTP : attempts++
+      AC --> U : Erreur (otp)\nOTP incorrect
+    else OTP valide
+      AC -> UDB : Charger User + update(password hash)
+      AC -> OTP : delete(email)
+      AC -> MAIL2 : envoyer confirmation (best effort)
+      AC --> U : Redirect /login\n(status: mot de passe réinitialisé)
+    end
+  end
+end
+
+@enduml
+
+@startuml seq_profile_update__all
+title Séquence — Mise à jour du profil (POST /profile)
+
+actor Utilisateur as U
+participant "Route closure (routes/web.php)" as ROUTE
+participant "Validation Request" as VAL
+participant "Storage::disk(public)" as FS
+database "users" as UDB
+
+U -> ROUTE : POST /profile (...)
+ROUTE -> VAL : validate(...) + règles (locale: fr/en, currency: XOF/EUR/USD)
+
+alt company_logo upload
+  ROUTE -> FS : delete ancien logo
+  ROUTE -> FS : store('company-logos')
+end
+
+alt avatar upload
+  ROUTE -> FS : delete ancien avatar
+  ROUTE -> FS : store('avatars')
+end
+
+alt password fourni
+  ROUTE -> UDB : Hash::make(password)
+else password vide
+  note over ROUTE : password retiré du payload
+end
+
+ROUTE -> UDB : user->update(validated)
+ROUTE --> U : back(status: Profil mis à jour)
+
+@enduml
+
+@startuml seq_profile_subscription_simulate__all
+title Séquence — Simulation d'abonnement (POST /profile/subscription/simulate)
+
+actor Utilisateur as U
+participant "Route closure (routes/web.php)" as ROUTE
+participant "Validation Request" as VAL
+database "users" as UDB
+database "subscription_histories" as SH
+
+U -> ROUTE : POST /profile/subscription/simulate
+ROUTE -> UDB : Charger user
+
+alt user is_platform_admin
+  ROUTE --> U : back(erreur: admins non concernés)
+else compte entreprise
+  ROUTE -> VAL : validate(plan_type, duration_days)
+  alt plan_type=free
+    ROUTE -> UDB : update(...) + SH::create(to_status=free)
+  else plan_type=trial
+    ROUTE -> UDB : update(...) + SH::create(to_status=trialing)
+  else plan_type=premium
+    ROUTE -> UDB : update(...) + SH::create(to_status=active)
+  end
+  ROUTE --> U : back(status: simulation appliquée)
+end
+
+@enduml
+
+@startuml seq_profile_team_add_member__all
+title Séquence — Équipe entreprise : ajout d'un collègue (POST /profile/equipe)
+
+actor "Inviteur (compte entreprise Premium)" as I
+participant "EnterpriseTeamController" as ETC
+participant "Validation Request" as VAL
+database "enterprise_licenses" as LIC
+database "users" as UDB
+
+I -> ETC : POST /profile/equipe (name, email, password...)
+ETC -> ETC : authorizeEnterpriseInviter(inviter)
+ETC -> VAL : validate(name, email unique, password confirmed)
+
+ETC -> LIC : lockForUpdate(license)
+alt licence non usable
+  ETC --> I : Erreur (email)\nLicence invalide
+else siège disponible ?
+  alt aucun siège
+    ETC --> I : Erreur (email)\nMax seats atteint
+  else OK
+    ETC -> UDB : User::create(...)\nenterprise_license_id=license.id
+    ETC -> LIC : syncPrimaryWorkspaceUser()
+    ETC --> I : Redirect /profile/equipe\n(status: compte créé)
+  end
+end
+
+@enduml
+
+@startuml seq_accounting_upload_documents__all
+title Séquence — Import de documents comptables (POST /accounting/documents)
+
+actor Utilisateur as U
+participant "AccountingController" as AC
+participant "OcrPipelineService" as PIPE
+participant "OcrService" as OCR
+database "accounting_documents" as AD
+database "accounting_entries" as AE
+participant "Storage (public)" as FS
+
+U -> AC : POST /accounting/documents (documents[])
+AC -> AC : validate(mimes, max)
+
+loop chaque fichier
+  AC -> AD : check doublon (sha1)
+  alt doublon
+    note over AC : ignoré
+  else
+    AC -> FS : store()
+    AC -> PIPE : processStoredDocument()
+    PIPE --> AC : ocr_result + confidence + review_required
+    alt OCR success
+      AC -> OCR : verifyCompleteDocument()
+      AC -> AD : create(status=validated|pending_validation)
+      alt auto-validé
+        AC -> AE : createEntryFromAutoValidatedDocument()
+      end
+    else OCR failed
+      AC -> AD : create(status=ocr_failed)
+    end
+  end
+end
+
+AC --> U : Redirect /accounting/documents
+
+@enduml
+
+@startuml seq_accounting_manual_ocr_validation__all
+title Séquence — Validation manuelle OCR (POST /accounting/entries/{entry}/ocr/manual)
+
+actor Utilisateur as U
+participant "AccountingController" as AC
+participant "Authorization" as AUTHZ
+participant "Validation Request" as VAL
+database "accounting_entries" as AE
+
+U -> AC : POST /accounting/entries/{entry}/ocr/manual
+AC -> AUTHZ : authorizeEntry(entry)
+AC -> VAL : validate(confirm_*, manual_comment)
+AC -> AE : update(ocr_status=manual_verified, ocr_verified_at, actor_user_id)
+AC --> U : Redirect /accounting/entries/{entry}
+
+@enduml
+
+@startuml seq_accounting_upload_plan_comptable__all
+title Séquence — Import plan comptable (POST /accounting/plan-comptable/upload)
+
+actor Utilisateur as U
+participant "AccountingController" as AC
+participant "OcrPipelineService" as PIPE
+database "plan_comptable_accounts" as PCA
+participant "Storage (public)" as FS
+
+U -> AC : POST /accounting/plan-comptable/upload (file)
+AC -> FS : store('plan-comptable-imports')
+alt extension=pdf
+  AC -> PIPE : processStoredDocument()
+  PIPE --> AC : ocr_result
+  alt OCR failed
+    AC --> U : back(erreur)
+  else OCR OK
+    AC -> AC : parsePlanComptableFromText()
+  end
+else
+  AC -> AC : parsePlanComptable()
+end
+AC -> FS : delete(stored_path)
+AC -> PCA : savePlanAccounts(plan) ou erreur
+AC --> U : Redirect /accounting/plan-comptable
+
+@enduml
+
+@startuml seq_treasury_transaction_store__all
+title Séquence — Trésorerie : création transaction + démarrage paiement (POST /treasury)
+
+actor Utilisateur as U
+participant "TreasuryController" as TC
+participant "StripeTreasuryService" as STS
+participant "ClientWorkspace" as CWS
+database "treasury_transactions" as TT
+participant "TreasuryPeriodLock" as LOCK
+participant "TreasuryAudit" as AUDIT
+
+U -> TC : POST /treasury (...)
+TC -> CWS : workspaceUserId()
+TC -> LOCK : assertTreasuryPeriodUnlocked()
+TC -> TT : create(...)
+TC -> AUDIT : log(create)
+TC -> TC : maybeStartProviderCheckout()
+TC --> U : Redirect checkout ou /treasury/tracking
+
+@enduml
+
+@startuml seq_treasury_period_lock_validate__all
+title Séquence — Trésorerie : verrouillage + validation prévision (POST /treasury/forecast/period/*)
+
+actor Utilisateur as U
+participant "TreasuryController" as TC
+participant "ClientWorkspace" as CWS
+database "treasury_period_locks" as LCK
+participant "TreasuryAudit" as AUDIT
+
+U -> TC : POST /treasury/forecast/period/lock
+TC -> CWS : workspaceUserId()
+TC -> LCK : updateOrCreate(...)
+TC -> AUDIT : log(lock)
+TC --> U : Redirect /treasury/forecast
+
+U -> TC : POST /treasury/forecast/period/validate
+TC -> LCK : find + update(validated_at)
+TC -> AUDIT : log(validate)
+TC --> U : Redirect /treasury/forecast
+
+@enduml
+
+@startuml seq_treasury_stripe_checkout__all
+title Séquence — Trésorerie : encaissement Stripe (checkout) + retour succès
+
+actor Utilisateur as U
+participant "TreasuryController" as TC
+participant "StripeTreasuryService" as STS
+database "treasury_transactions" as TT
+participant "TreasuryAudit" as AUDIT
+
+U -> TC : POST /treasury (stripe, encaissement, effectue)
+TC -> STS : createCheckoutSession()
+TC -> TT : update(stripe_checkout_session_id, stripe_status)
+TC -> AUDIT : log(checkout)
+TC --> U : Redirect Stripe (session.url)
+
+U -> TC : GET /treasury/{tx}/stripe/success?session_id=...
+TC -> STS : retrieveCheckoutSession()
+TC -> TT : update(status, stripe_paid_at, stripe_status)
+TC -> AUDIT : log(success)
+TC --> U : Redirect /treasury/tracking
+
+@enduml
+
+@startuml seq_treasury_stripe_payout__all
+title Séquence — Trésorerie : décaissement Stripe (payout)
+
+actor Utilisateur as U
+participant "TreasuryController" as TC
+participant "StripeTreasuryService" as STS
+database "treasury_transactions" as TT
+participant "TreasuryAudit" as AUDIT
+
+U -> TC : POST /treasury (stripe, decaissement, effectue)
+TC -> STS : createPayout()
+TC -> TT : update(stripe_payout_id, stripe_status)
+TC -> AUDIT : log(payout)
+TC --> U : Redirect /treasury/tracking
+
+@enduml
+
+@startuml seq_treasury_fedapay_checkout__all
+title Séquence — Trésorerie : encaissement Mobile Money via FedaPay (sandbox)
+
+actor Utilisateur as U
+participant "TreasuryController" as TC
+participant "FedaPaySandboxService" as FDP
+database "treasury_transactions" as TT
+participant "TreasuryAudit" as AUDIT
+
+U -> TC : GET /treasury/{tx}/fedapay/checkout
+TC --> U : View form
+
+U -> TC : POST /treasury/{tx}/fedapay/checkout
+TC -> FDP : createTransaction(...)
+TC -> TT : update(status=planifie, bank_reference)
+TC -> AUDIT : log(fedapay.checkout)
+TC --> U : Redirect checkout_url (ou fallback)
+
+@enduml
+
+@startuml seq_investor_submit_request__all
+title Séquence — Investisseur : dépôt d'une demande d'investissement
+
+actor Utilisateur as U
+participant "InvestorController" as IC
+participant "InvestorReadinessService" as IRS
+participant "InvestmentDossierChecklistService" as IDS
+participant "Storage (public)" as FS
+database "investment_requests" as IR
+
+U -> IC : POST /investor/investment-request
+IC -> IRS : build()
+IC -> IDS : build()
+alt checklist critique > 0
+  IC --> U : back(erreur: dépôt bloqué)
+else OK
+  IC -> FS : store pièces identité
+  IC -> IR : create(status=pending)
+  IC --> U : Redirect /investor/readiness
+end
+
+@enduml
+
+@startuml seq_investor_update_workflow__all
+title Séquence — Investisseur : mise à jour workflow demande
+
+actor Utilisateur as U
+participant "InvestorController" as IC
+database "investment_requests" as IR
+
+U -> IC : POST /investor/investment-request/{id}/workflow
+IC -> IR : vérifier ownership + transition autorisée
+IC -> IR : update(status, reviewed_by, reviewed_at, review_note)
+IC --> U : back(status: ok)
+
+@enduml
+
+@startuml seq_support_create_ticket__all
+title Séquence — Support : création ticket + notification
+
+actor Utilisateur as U
+participant "SupportController" as SC
+participant "DB transaction" as TX
+database "support_tickets" as ST
+database "support_messages" as SM
+database "app_notifications" as N
+
+U -> SC : POST /support/tickets
+SC -> TX : begin
+TX -> ST : create
+TX -> SM : create
+TX -> N : create
+SC -> TX : commit
+SC --> U : Redirect /support/tickets
+
+@enduml
+
+@startuml seq_support_add_message__all
+title Séquence — Support : ajouter message au ticket
+
+actor Utilisateur as U
+participant "SupportController" as SC
+database "support_tickets" as ST
+database "support_messages" as SM
+
+U -> SC : POST /support/tickets/{ticket}/messages
+SC -> SC : authorizeTicket
+SC -> SM : create
+SC -> ST : touch
+SC --> U : back(status: message ajouté)
+
+@enduml
+
+@startuml seq_notifications_read__all
+title Séquence — Notifications : go/read/read-all
+
+actor Utilisateur as U
+participant "InAppNotificationController" as NC
+database "app_notifications" as N
+
+U -> NC : GET /notifications/{n}/go
+NC -> N : markRead
+NC --> U : Redirect action_url
+
+U -> NC : POST /notifications/read-all
+NC -> N : update read_at
+NC --> U : back()
+
+@enduml
+
+@startuml seq_admin_activate_premium__all
+title Séquence — Admin : activer Premium depuis un paiement
+
+actor "Admin plateforme" as A
+participant "AdminPaymentController" as APC
+database "payment_transactions" as PT
+database "users" as UDB
+database "subscription_histories" as SH
+
+A -> APC : POST /admin/payments/{payment}/activate-premium
+APC -> PT : Charger paiement + user
+APC -> UDB : update premium + fin
+APC -> SH : create historique
+APC --> A : back(status: premium activé)
+
+@enduml
+

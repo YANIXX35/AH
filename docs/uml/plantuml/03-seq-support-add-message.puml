@@ -1,0 +1,23 @@
+@startuml seq_support_add_message
+title Séquence — Support : ajouter un message à un ticket (POST /support/tickets/{ticket}/messages)
+
+actor Utilisateur as U
+participant "SupportController" as SC
+participant "Auth" as AUTH
+database "support_tickets" as ST
+database "support_messages" as SM
+
+U -> SC : POST /support/tickets/{ticket}/messages (message)
+SC -> AUTH : Auth::id()
+SC -> SC : authorizeTicket(ticket.user_id == Auth::id)
+
+alt ticket fermé
+  SC --> U : back()\n(erreur: fil clos)
+else ouvert
+  SC -> SM : create(ticket_id, user_id, body, is_staff_reply=false)
+  SC -> ST : touch(updated_at)
+  SC --> U : back(status: message ajouté)
+end
+
+@enduml
+

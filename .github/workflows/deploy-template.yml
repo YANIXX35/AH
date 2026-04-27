@@ -1,0 +1,22 @@
+name: deploy-template
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment cible (staging|production)"
+        required: true
+        default: "staging"
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validation baseline
+        run: |
+          echo "Template de déploiement validé pour ${{ github.event.inputs.environment }}"
+          echo "À connecter à votre runner/infra cible (SSH, container, cloud deploy)."
+

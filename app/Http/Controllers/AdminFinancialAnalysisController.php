@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\FinancialRatioServiceContract;
+use App\Services\Scoring360Service;
 use App\Models\User;
-use App\Services\SmeFinancialRatioService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,7 +15,8 @@ use Illuminate\View\View;
 class AdminFinancialAnalysisController extends Controller
 {
     public function __construct(
-        private SmeFinancialRatioService $ratioService
+        private FinancialRatioServiceContract $ratioService,
+        private Scoring360Service $scoring360
     ) {}
 
     public function index(Request $request): View
@@ -44,11 +46,17 @@ class AdminFinancialAnalysisController extends Controller
 
         $analysis = null;
         $selectedUser = null;
+        $scoring360 = null;
 
         if ($selectedId !== null) {
             $selectedUser = User::query()->find($selectedId);
             if ($selectedUser !== null) {
                 $analysis = $this->ratioService->analyze($selectedId, $dateFrom, $dateTo);
+                try {
+                    $scoring360 = $this->scoring360->scoreUser($selectedId, $dateFrom, $dateTo);
+                } catch (\Throwable) {
+                    $scoring360 = null;
+                }
             }
         }
 
@@ -59,6 +67,7 @@ class AdminFinancialAnalysisController extends Controller
             'dateFrom' => $request->input('date_from'),
             'dateTo' => $request->input('date_to'),
             'analysis' => $analysis,
+            'scoring360' => $scoring360,
         ]);
     }
 

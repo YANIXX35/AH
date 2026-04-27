@@ -1,0 +1,41 @@
+@startuml seq_treasury_fedapay_checkout
+title Séquence — Trésorerie : encaissement Mobile Money via FedaPay (sandbox)
+
+actor Utilisateur as U
+participant "TreasuryController" as TC
+participant "FedaPaySandboxService" as FDP
+database "treasury_transactions" as TT
+participant "TreasuryAudit" as AUDIT
+
+U -> TC : GET /treasury/{tx}/fedapay/checkout (form)
+alt tx.payment_module != fedapay_mobile
+  TC --> U : Redirect /treasury/tracking\n(erreur: mauvais module)
+else OK
+  TC --> U : View treasury.fedapay-checkout (payer + country)
+end
+
+U -> TC : POST /treasury/{tx}/fedapay/checkout (fedapay_country)
+alt tx.type = decaissement
+  TC --> U : Redirect /treasury/tracking\n(erreur: décaissement suivi manuellement)
+else encaissement
+  TC -> FDP : createTransaction(user, {amount, currency, country, correspondent, msisdn})
+  alt API OK
+    FDP --> TC : {success=true, provider_reference, checkout_url}
+    TC -> TT : update(status=planifie, payment_provider=FedaPay,\nbank_reference=provider_reference)
+    TC -> AUDIT : log(treasury.transaction.fedapay.checkout)
+    TC --> U : Redirect checkout_url
+  else API KO
+    FDP --> TC : {success=false, message, response_payload}
+    alt fallback page activé + URL configurée
+      TC -> TT : update(status=planifie, notes += "FedaPay error ...")
+      TC -> AUDIT : log(treasury.transaction.fedapay.checkout.fallback_page)
+      TC --> U : Redirect hosted payment page
+    else pas de fallback
+      TC -> TT : update(status=planifie, notes += "FedaPay error ...")
+      TC --> U : back()\n(erreur: création API impossible)
+    end
+  end
+end
+
+@enduml
+

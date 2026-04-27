@@ -14,9 +14,9 @@ class OcrService
     public function extractText($filePath)
     {
         try {
-            $fullPath = storage_path('app/public/' . $filePath);
-            
-            if (!file_exists($fullPath)) {
+            $fullPath = storage_path('app/public/'.$filePath);
+
+            if (! file_exists($fullPath)) {
                 return [
                     'success' => false,
                     'message' => 'Fichier non trouvé',
@@ -29,7 +29,7 @@ class OcrService
 
             // Déterminer le type MIME
             $mimeType = mime_content_type($fullPath);
-            
+
             // Traitement natif des fichiers Excel/CSV (sans appel API OCR).
             $excelMimes = [
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
@@ -63,7 +63,7 @@ class OcrService
 
             // Accepter les images et PDFs via API OCR.
             $supportedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-            if (!in_array($mimeType, $supportedMimes, true)) {
+            if (! in_array($mimeType, $supportedMimes, true)) {
                 return [
                     'success' => false,
                     'message' => 'Format non supporté. Utilisez: JPG, PNG, PDF, XLS, XLSX ou CSV',
@@ -91,7 +91,7 @@ class OcrService
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Erreur OCR: ' . $e->getMessage(),
+                'message' => 'Erreur OCR: '.$e->getMessage(),
                 'text' => '',
                 'error_code' => 'OCR_EXCEPTION',
                 'error_location' => 'HTTP request to OCR API',
@@ -181,7 +181,7 @@ class OcrService
         } catch (\Throwable $exception) {
             return [
                 'success' => false,
-                'message' => 'Impossible d’exécuter le runner PaddleOCR: ' . $exception->getMessage(),
+                'message' => 'Impossible d’exécuter le runner PaddleOCR: '.$exception->getMessage(),
                 'text' => '',
                 'error_code' => 'LOCAL_OCR_PROCESS_ERROR',
                 'error_location' => $runnerPath,
@@ -228,6 +228,7 @@ class OcrService
             $decoded['text'] = (string) ($decoded['text'] ?? '');
             $decoded['error_code'] = (string) ($decoded['error_code'] ?? 'LOCAL_OCR_FAILED');
             $decoded['error_location'] = (string) ($decoded['error_location'] ?? $fullPath);
+
             return $decoded;
         }
 
@@ -284,7 +285,7 @@ class OcrService
             }
         }
 
-        if (!empty($pages)) {
+        if (! empty($pages)) {
             return trim(implode("\n\n", $pages));
         }
 
@@ -333,7 +334,7 @@ class OcrService
                 );
                 $values = array_values(array_filter($values, fn ($value) => $value !== ''));
 
-                if (!empty($values)) {
+                if (! empty($values)) {
                     $lines[] = implode(' | ', $values);
                 }
             }
@@ -360,13 +361,13 @@ class OcrService
                 foreach ($matches[1] as $amount) {
                     // Normaliser les montants (remplacer , par .)
                     $amount = str_replace(',', '.', $amount);
-                    
+
                     // Vérifier si proche du montant du formulaire (tolérance ±5%)
                     if ($this->amountsMatch($amount, $formAmount)) {
                         return [
                             'verified' => true,
-                            'detected_amount' => (float)$amount,
-                            'message' => 'Montant vérifié ✓'
+                            'detected_amount' => (float) $amount,
+                            'message' => 'Montant vérifié ✓',
                         ];
                     }
                 }
@@ -376,7 +377,7 @@ class OcrService
         return [
             'verified' => false,
             'detected_amount' => null,
-            'message' => 'Montant non trouvé ou ne correspond pas'
+            'message' => 'Montant non trouvé ou ne correspond pas',
         ];
     }
 
@@ -385,13 +386,15 @@ class OcrService
      */
     private function amountsMatch($detected, $form)
     {
-        $form = (float)$form;
-        $detected = (float)$detected;
-        
-        if ($form == 0) return false;
-        
+        $form = (float) $form;
+        $detected = (float) $detected;
+
+        if ($form == 0) {
+            return false;
+        }
+
         $tolerance = $form * 0.05; // 5%
-        
+
         return abs($detected - $form) <= $tolerance;
     }
 
@@ -506,7 +509,7 @@ class OcrService
             'details' => [],
             'alerts' => [],
             'extracted' => $extractedInfo,
-            'overall_status' => 'verified'
+            'overall_status' => 'verified',
         ];
 
         if (($extractedInfo['currency'] ?? 'FCFA') !== 'FCFA') {
@@ -520,82 +523,82 @@ class OcrService
         // Vérifier le montant HT
         $verification['total_fields']++;
         if (isset($extractedInfo['amount_ht']) && isset($formData['amount_ht'])) {
-            $extracted = (float)($extractedInfo['amount_ht_fcfa'] ?? $extractedInfo['amount_ht']);
-            $form = (float)$formData['amount_ht'];
+            $extracted = (float) ($extractedInfo['amount_ht_fcfa'] ?? $extractedInfo['amount_ht']);
+            $form = (float) $formData['amount_ht'];
             if ($this->amountsMatch($extracted, $form)) {
-                $verification['details']['amount_ht'] = '✅ Montant HT: ' . number_format($form, 2, ',', ' ') . ' FCFA';
+                $verification['details']['amount_ht'] = '✅ Montant HT: '.number_format($form, 2, ',', ' ').' FCFA';
                 $verification['verified_fields']++;
             } else {
-                $verification['details']['amount_ht'] = '⚠️ HT ne correspond pas: OCR=' . $extracted . ' vs Formulaire=' . $form;
-                $verification['overall_status'] = 'mismatched';
+                $verification['details']['amount_ht'] = '⚠️ HT ne correspond pas: OCR='.$extracted.' vs Formulaire='.$form;
+                $verification['overall_status'] = 'mismatch';
             }
         }
 
         // Vérifier le montant TVA
         $verification['total_fields']++;
         if (isset($extractedInfo['amount_tva']) && isset($formData['amount_tva'])) {
-            $extracted = (float)($extractedInfo['amount_tva_fcfa'] ?? $extractedInfo['amount_tva']);
-            $form = (float)$formData['amount_tva'];
+            $extracted = (float) ($extractedInfo['amount_tva_fcfa'] ?? $extractedInfo['amount_tva']);
+            $form = (float) $formData['amount_tva'];
             if ($this->amountsMatch($extracted, $form)) {
-                $verification['details']['amount_tva'] = '✅ Montant TVA: ' . number_format($form, 2, ',', ' ') . ' FCFA';
+                $verification['details']['amount_tva'] = '✅ Montant TVA: '.number_format($form, 2, ',', ' ').' FCFA';
                 $verification['verified_fields']++;
             } else {
-                $verification['details']['amount_tva'] = '⚠️ TVA ne correspond pas: OCR=' . $extracted . ' vs Formulaire=' . $form;
-                $verification['overall_status'] = 'mismatched';
+                $verification['details']['amount_tva'] = '⚠️ TVA ne correspond pas: OCR='.$extracted.' vs Formulaire='.$form;
+                $verification['overall_status'] = 'mismatch';
             }
         }
 
         // Vérifier le montant TTC
         $verification['total_fields']++;
         $extracted = isset($extractedInfo['amount_ttc'])
-            ? (float)($extractedInfo['amount_ttc_fcfa'] ?? $extractedInfo['amount_ttc'])
+            ? (float) ($extractedInfo['amount_ttc_fcfa'] ?? $extractedInfo['amount_ttc'])
             : null;
-        $formHT = (float)($formData['amount_ht'] ?? $formData['amount'] ?? 0);
-        $formTVA = (float)($formData['amount_tva'] ?? 0);
+        $formHT = (float) ($formData['amount_ht'] ?? $formData['amount'] ?? 0);
+        $formTVA = (float) ($formData['amount_tva'] ?? 0);
         $formTTC = $formHT + $formTVA;
 
         if ($extracted && $this->amountsMatch($extracted, $formTTC)) {
-            $verification['details']['amount_ttc'] = '✅ Montant TTC: ' . number_format($formTTC, 2, ',', ' ') . ' FCFA';
+            $verification['details']['amount_ttc'] = '✅ Montant TTC: '.number_format($formTTC, 2, ',', ' ').' FCFA';
             $verification['verified_fields']++;
         } elseif ($extracted) {
-            $verification['details']['amount_ttc'] = '⚠️ TTC ne correspond pas: OCR=' . $extracted . ' vs Calculé=' . $formTTC;
-            $verification['overall_status'] = 'mismatched';
+            $verification['details']['amount_ttc'] = '⚠️ TTC ne correspond pas: OCR='.$extracted.' vs Calculé='.$formTTC;
+            $verification['overall_status'] = 'mismatch';
         }
 
         // Vérifier le taux TVA
         $verification['total_fields']++;
         if (isset($extractedInfo['tva_rate']) && isset($formData['tva_rate'])) {
-            $extracted = (float)$extractedInfo['tva_rate'];
-            $form = (float)$formData['tva_rate'];
+            $extracted = (float) $extractedInfo['tva_rate'];
+            $form = (float) $formData['tva_rate'];
             if (abs($extracted - $form) < 0.5) {
-                $verification['details']['tva_rate'] = '✅ Taux TVA: ' . $form . '%';
+                $verification['details']['tva_rate'] = '✅ Taux TVA: '.$form.'%';
                 $verification['verified_fields']++;
             } else {
-                $verification['details']['tva_rate'] = '⚠️ Taux ne correspond pas: OCR=' . $extracted . '% vs Formulaire=' . $form . '%';
-                $verification['overall_status'] = 'mismatched';
+                $verification['details']['tva_rate'] = '⚠️ Taux ne correspond pas: OCR='.$extracted.'% vs Formulaire='.$form.'%';
+                $verification['overall_status'] = 'mismatch';
             }
         }
 
         // Vérifier le N° facture
         if (isset($extractedInfo['invoice_number'])) {
-            if (!isset($formData['document_reference']) || strpos($extractedInfo['invoice_number'], $formData['document_reference']) !== false) {
-                $verification['details']['invoice_number'] = '✅ N° facture: ' . $extractedInfo['invoice_number'];
+            if (! isset($formData['document_reference']) || strpos($extractedInfo['invoice_number'], $formData['document_reference']) !== false) {
+                $verification['details']['invoice_number'] = '✅ N° facture: '.$extractedInfo['invoice_number'];
             } else {
-                $verification['alerts']['invoice_number'] = '⚠️ N°: OCR=' . $extractedInfo['invoice_number'] . ' / Formulaire=' . ($formData['document_reference'] ?? 'N/A');
+                $verification['alerts']['invoice_number'] = '⚠️ N°: OCR='.$extractedInfo['invoice_number'].' / Formulaire='.($formData['document_reference'] ?? 'N/A');
             }
         }
 
         // Vérifier la date
         if (isset($extractedInfo['date'])) {
-            $verification['details']['date'] = '✅ Date: ' . $extractedInfo['date'];
+            $verification['details']['date'] = '✅ Date: '.$extractedInfo['date'];
         }
 
         // Vérifier le partenaire
         if (isset($extractedInfo['partner_name'])) {
-            if (!isset($formData['partner_name']) || stripos($extractedInfo['partner_name'], $formData['partner_name']) !== false) {
-                $verification['details']['partner_name'] = '✅ Partenaire: ' . substr($extractedInfo['partner_name'], 0, 50);
+            if (! isset($formData['partner_name']) || stripos($extractedInfo['partner_name'], $formData['partner_name']) !== false) {
+                $verification['details']['partner_name'] = '✅ Partenaire: '.substr($extractedInfo['partner_name'], 0, 50);
             } else {
-                $verification['alerts']['partner_name'] = '⚠️ Partenaire OCR: ' . substr($extractedInfo['partner_name'], 0, 40);
+                $verification['alerts']['partner_name'] = '⚠️ Partenaire OCR: '.substr($extractedInfo['partner_name'], 0, 40);
             }
         }
 
@@ -701,6 +704,7 @@ class OcrService
     private function extractEmails(string $text): array
     {
         preg_match_all('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/iu', $text, $matches);
+
         return array_values(array_unique(array_map('trim', $matches[0] ?? [])));
     }
 
@@ -845,7 +849,7 @@ class OcrService
         ];
         $ids = [];
         foreach ($patterns as $pattern) {
-            if (!preg_match_all($pattern, $text, $matches)) {
+            if (! preg_match_all($pattern, $text, $matches)) {
                 continue;
             }
             foreach ($matches[1] ?? [] as $value) {
@@ -868,7 +872,7 @@ class OcrService
             '/\b(?:paiement\s+comptant|cash|virement|ch[èe]que|mobile\s*money)\b/iu',
         ];
         foreach ($patterns as $pattern) {
-            if (!preg_match_all($pattern, $text, $matches)) {
+            if (! preg_match_all($pattern, $text, $matches)) {
                 continue;
             }
             $source = $matches[1] ?? $matches[0] ?? [];
@@ -894,7 +898,7 @@ class OcrService
             '/\b(?:due\s+on|payable\s+on)\s*[:\-]?\s*(\d{4}[\/.\-]\d{1,2}[\/.\-]\d{1,2})/iu',
         ];
         foreach ($patterns as $pattern) {
-            if (!preg_match_all($pattern, $text, $matches)) {
+            if (! preg_match_all($pattern, $text, $matches)) {
                 continue;
             }
             foreach ($matches[1] ?? [] as $value) {
@@ -916,7 +920,7 @@ class OcrService
             'wave', 'orange money', 'mtn money', 'moov money', 'cash',
         ];
         foreach ($keywords as $keyword) {
-            if (preg_match('/\b' . $keyword . '\b/iu', $text)) {
+            if (preg_match('/\b'.$keyword.'\b/iu', $text)) {
                 $methods[] = mb_strtolower($keyword);
             }
         }
@@ -930,6 +934,7 @@ class OcrService
     private function extractIbanCandidates(string $text): array
     {
         preg_match_all('/\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/u', strtoupper($text), $matches);
+
         return array_values(array_unique(array_map('trim', $matches[0] ?? [])));
     }
 
@@ -939,6 +944,7 @@ class OcrService
     private function extractBicCandidates(string $text): array
     {
         preg_match_all('/\b[A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\b/u', strtoupper($text), $matches);
+
         return array_values(array_unique(array_map('trim', $matches[0] ?? [])));
     }
 
@@ -953,7 +959,7 @@ class OcrService
             '/\b\d{8,24}\b/u',
         ];
         foreach ($patterns as $pattern) {
-            if (!preg_match_all($pattern, $text, $matches)) {
+            if (! preg_match_all($pattern, $text, $matches)) {
                 continue;
             }
             $source = $matches[1] ?? $matches[0] ?? [];
@@ -979,8 +985,8 @@ class OcrService
             fn (string $label) => preg_quote($label, '/'),
             $labels
         );
-        $pattern = '/\b(?:' . implode('|', $escapedLabels) . ')\b[^\n\r]*\R([^\n\r]{6,140})/iu';
-        if (!preg_match($pattern, $text, $matches)) {
+        $pattern = '/\b(?:'.implode('|', $escapedLabels).')\b[^\n\r]*\R([^\n\r]{6,140})/iu';
+        if (! preg_match($pattern, $text, $matches)) {
             return null;
         }
         $candidate = trim((string) ($matches[1] ?? ''));
@@ -1038,7 +1044,7 @@ class OcrService
                 continue;
             }
 
-            if (!preg_match('/\b(?:qt[ée]|quantit[eé]|pu|prix|montant|total)\b/iu', $candidate)) {
+            if (! preg_match('/\b(?:qt[ée]|quantit[eé]|pu|prix|montant|total)\b/iu', $candidate)) {
                 continue;
             }
 
@@ -1097,7 +1103,7 @@ class OcrService
         }
 
         $value = str_replace(' ', '', $value);
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             return null;
         }
 
@@ -1113,47 +1119,47 @@ class OcrService
             'verified' => false,
             'matches' => [],
             'mismatches' => [],
-            'extracted_data' => []
+            'extracted_data' => [],
         ];
 
         // 1. Vérification du N° de facture
-        if (!empty($formData['document_reference'])) {
+        if (! empty($formData['document_reference'])) {
             $invoiceNum = $this->extractInvoiceNumber($ocrText);
             $results['extracted_data']['invoice_number'] = $invoiceNum;
-            
+
             if ($invoiceNum && $this->stringMatch($invoiceNum, $formData['document_reference'])) {
                 $results['matches'][] = 'N° facture';
             } elseif ($invoiceNum) {
                 $results['mismatches'][] = [
                     'field' => 'N° facture',
                     'expected' => $formData['document_reference'],
-                    'detected' => $invoiceNum
+                    'detected' => $invoiceNum,
                 ];
             }
         }
 
         // 2. Vérification de la date
-        if (!empty($formData['date'])) {
+        if (! empty($formData['date'])) {
             $dates = $this->extractDates($ocrText);
             $results['extracted_data']['dates_found'] = $dates;
-            
+
             $dateMatch = $this->findMatchingDate($dates, $formData['date']);
             if ($dateMatch) {
                 $results['matches'][] = 'Date facture';
-            } elseif (!empty($dates)) {
+            } elseif (! empty($dates)) {
                 $results['mismatches'][] = [
                     'field' => 'Date facture',
                     'expected' => $formData['date'],
-                    'detected' => implode(', ', $dates)
+                    'detected' => implode(', ', $dates),
                 ];
             }
         }
 
         // 3. Vérification du montant HT
-        if (!empty($formData['amount'])) {
+        if (! empty($formData['amount'])) {
             $amountHT = $this->extractAmount($ocrText, 'HT|Montant|Total');
             $results['extracted_data']['amount_ht'] = $amountHT;
-            
+
             if ($amountHT && $this->amountsMatch($amountHT, $formData['amount'])) {
                 $results['matches'][] = 'Montant HT';
                 $results['verified'] = true; // Au minimum HT match = document vérifié
@@ -1161,72 +1167,72 @@ class OcrService
                 $results['mismatches'][] = [
                     'field' => 'Montant HT',
                     'expected' => $formData['amount'],
-                    'detected' => $amountHT
+                    'detected' => $amountHT,
                 ];
             }
         }
 
         // 4. Vérification du montant TVA (si fourni)
-        if (!empty($formData['tva_amount'])) {
+        if (! empty($formData['tva_amount'])) {
             $amountTVA = $this->extractAmount($ocrText, 'TVA|Tva|Tax');
             $results['extracted_data']['amount_tva'] = $amountTVA;
-            
+
             if ($amountTVA && $this->amountsMatch($amountTVA, $formData['tva_amount'])) {
                 $results['matches'][] = 'Montant TVA';
             } elseif ($amountTVA) {
                 $results['mismatches'][] = [
                     'field' => 'Montant TVA',
                     'expected' => $formData['tva_amount'],
-                    'detected' => $amountTVA
+                    'detected' => $amountTVA,
                 ];
             }
         }
 
         // 5. Vérification du montant TTC (si fourni)
-        if (!empty($formData['ttc_amount'])) {
+        if (! empty($formData['ttc_amount'])) {
             $amountTTC = $this->extractAmount($ocrText, 'TTC|Total|Somme');
             $results['extracted_data']['amount_ttc'] = $amountTTC;
-            
+
             if ($amountTTC && $this->amountsMatch($amountTTC, $formData['ttc_amount'])) {
                 $results['matches'][] = 'Montant TTC';
             } elseif ($amountTTC) {
                 $results['mismatches'][] = [
                     'field' => 'Montant TTC',
                     'expected' => $formData['ttc_amount'],
-                    'detected' => $amountTTC
+                    'detected' => $amountTTC,
                 ];
             }
         }
 
         // 6. Vérification du taux TVA (si fourni)
-        if (!empty($formData['tva_rate'])) {
+        if (! empty($formData['tva_rate'])) {
             $tvaRate = $this->extractTVARate($ocrText);
             $results['extracted_data']['tva_rate'] = $tvaRate;
-            
+
             if ($tvaRate && abs($tvaRate - $formData['tva_rate']) < 2) { // Tolérance 2%
                 $results['matches'][] = 'Taux TVA';
             } elseif ($tvaRate) {
                 $results['mismatches'][] = [
                     'field' => 'Taux TVA',
-                    'expected' => $formData['tva_rate'] . '%',
-                    'detected' => $tvaRate . '%'
+                    'expected' => $formData['tva_rate'].'%',
+                    'detected' => $tvaRate.'%',
                 ];
             }
         }
 
         // 7. Vérification du partenaire (si fourni)
-        if (!empty($formData['partner_name'])) {
+        if (! empty($formData['partner_name'])) {
             $partners = $this->extractPartnerNames($ocrText);
             $results['extracted_data']['partners'] = $partners;
-            
+
             $partnerMatch = $this->findMatchingPartner($partners, $formData['partner_name']);
             if ($partnerMatch) {
                 $results['matches'][] = 'Partenaire';
-            } elseif (!empty($partners)) {
+            } elseif (! empty($partners)) {
                 $results['mismatches'][] = [
                     'field' => 'Partenaire',
                     'expected' => $formData['partner_name'],
-                    'detected' => implode(', ', $partners)
+                    'detected' => implode(', ', $partners),
                 ];
             }
         }
@@ -1255,6 +1261,7 @@ class OcrService
                 return $candidate;
             }
         }
+
         return null;
     }
 
@@ -1287,11 +1294,12 @@ class OcrService
             // Normaliser les formats
             $normalized = $this->normalizeDate($date);
             $formNormalized = $this->normalizeDate($formDate);
-            
+
             if ($normalized === $formNormalized) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -1302,14 +1310,14 @@ class OcrService
     {
         // Essayer plusieurs formats
         $formats = ['Y-m-d', 'd/m/Y', 'd.m.Y', 'd-m-Y', 'm/d/Y'];
-        
+
         foreach ($formats as $format) {
             $parsed = \DateTime::createFromFormat($format, $date);
             if ($parsed !== false) {
                 return $parsed->format('Y-m-d');
             }
         }
-        
+
         return $date;
     }
 
@@ -1318,13 +1326,13 @@ class OcrService
      */
     private function extractAmount($text, $labels): ?float
     {
-        $labelPattern = '(?:' . $labels . ')';
+        $labelPattern = '(?:'.$labels.')';
         $amounts = [];
         $lines = preg_split('/\R/u', $text) ?: [];
 
         foreach ($lines as $index => $line) {
             $candidate = trim((string) $line);
-            if ($candidate === '' || ! preg_match('/' . $labelPattern . '/iu', $candidate)) {
+            if ($candidate === '' || ! preg_match('/'.$labelPattern.'/iu', $candidate)) {
                 continue;
             }
 
@@ -1417,10 +1425,10 @@ class OcrService
 
         foreach ($patterns as $pattern) {
             if (preg_match($pattern, $text, $matches)) {
-                return (float)str_replace(',', '.', $matches[1]);
+                return (float) str_replace(',', '.', $matches[1]);
             }
         }
-        
+
         return null;
     }
 
@@ -1475,7 +1483,7 @@ class OcrService
             fn (string $label) => preg_quote($label, '/'),
             $labels
         );
-        $pattern = '/\b(?:' . implode('|', $escapedLabels) . ')\b\s*[:\-]\s*([^\n\r]{3,120})/iu';
+        $pattern = '/\b(?:'.implode('|', $escapedLabels).')\b\s*[:\-]\s*([^\n\r]{3,120})/iu';
 
         if (! preg_match($pattern, $text, $matches)) {
             return null;
@@ -1498,6 +1506,7 @@ class OcrService
                 return true;
             }
         }
+
         return false;
     }
 
@@ -1508,20 +1517,21 @@ class OcrService
     {
         $str1 = strtolower(trim($str1));
         $str2 = strtolower(trim($str2));
-        
-        if ($str1 === $str2) return true;
-        
+
+        if ($str1 === $str2) {
+            return true;
+        }
+
         // Comparaison rapide si l'une contient l'autre
         if (strpos($str1, $str2) !== false || strpos($str2, $str1) !== false) {
             return true;
         }
-        
+
         // Calcul de similarité Levenshtein
         $distance = levenshtein($str1, $str2);
         $maxLength = max(strlen($str1), strlen($str2));
         $matchPercentage = 1 - ($distance / $maxLength);
-        
+
         return $matchPercentage >= $similarity;
     }
 }
-

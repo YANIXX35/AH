@@ -24,9 +24,9 @@ class EnsurePremiumAccountingAccess
         }
 
         return redirect()
-            ->route('profile')
+            ->route('payments.sandbox')
             ->withErrors([
-                'subscription' => 'Votre abonnement est en mode Gratuit. Activez Premium pour accéder à la Comptabilité.',
+                'subscription' => 'Comptabilité indisponible : activez Enterprise Premium (15 000 FCFA) via le paiement pour débloquer ce module.',
             ]);
     }
 }

@@ -1,0 +1,115 @@
+@startuml core_domain_classes
+title Entités clés — diagramme de classes
+
+skinparam classAttributeIconSize 0
+
+class User {
+  +id: int
+  +enterprise_license_id: int?
+  +is_platform_admin: bool
+  +is_accountant: bool
+  +is_premium: bool
+  +premium_status: string?
+  +premium_trial_ends_at: datetime?
+  +premium_ends_at: datetime?
+  +locale: string
+  +currency: string
+  --
+  +isPlatformAdmin(): bool
+  +isAccountant(): bool
+  +hasActivePremiumPeriod(): bool
+}
+
+class EnterpriseLicense {
+  +id: int
+  +primary_workspace_user_id: int?
+}
+
+class ClientWorkspace <<static>> {
+  +SESSION_KEY: string
+  --
+  +effectiveUserId(): int
+  +dataScopeUserIds(auth: User?): int[*]
+  +setWorkspaceUserId(clientUserId: int): void
+  +clearWorkspace(): void
+}
+
+class AccountingEntry {
+  +id: int
+  +user_id: int
+  +actor_user_id: int?
+  +document_id: int?
+  +amount: decimal
+  +ocr_status: string
+  +ocr_detected_amount: decimal?
+  +ocr_text: text?
+  --
+  +getOcrBadge(): map
+}
+
+class AccountingDocument {
+  +id: int
+  +user_id: int
+  +stored_path: string?
+  +original_name: string?
+}
+
+class OcrStatus <<static>> {
+  +VERIFIED: string
+  +MANUAL_VERIFIED: string
+  +MISMATCH: string
+  +FAILED: string
+  +PENDING: string
+  --
+  +normalize(status: string?): string
+}
+
+class TreasuryTransaction {
+  +id: int
+  +user_id: int
+  +payment_transaction_id: int?
+  +actor_user_id: int?
+  +type: string
+  +status: string
+  +amount: decimal
+  +stripe_checkout_session_id: string?
+  +stripe_payment_intent_id: string?
+  +stripe_payout_id: string?
+}
+
+class PaymentTransaction {
+  +id: int
+  +user_id: int
+  +provider: string
+  +provider_reference: string?
+  +status: string
+  +amount: decimal
+  +currency: string
+}
+
+class SubscriptionHistory {
+  +id: int
+  +user_id: int
+  +from_status: string
+  +to_status: string
+  +is_premium: bool
+  +starts_at: datetime
+  +ends_at: datetime?
+  +source: string
+}
+
+User "0..1" --> "1" EnterpriseLicense : belongsTo
+ClientWorkspace ..> User : scope licence / session
+
+User "1" --> "0..*" AccountingEntry : écritures
+AccountingEntry "0..1" --> "1" AccountingDocument : document
+AccountingEntry ..> OcrStatus : normalise ocr_status
+
+User "1" --> "0..*" TreasuryTransaction : trésorerie
+User "1" --> "0..*" PaymentTransaction : paiements
+PaymentTransaction "1" --> "0..*" TreasuryTransaction : rapprochement
+
+User "1" --> "0..*" SubscriptionHistory : historique premium
+
+@enduml
+

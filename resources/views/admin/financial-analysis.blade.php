@@ -59,6 +59,82 @@
         — {{ $analysis['entries_count'] }} écriture(s) sur la période sélectionnée.
     </div>
 
+    @if(!empty($scoring360))
+        @php
+            $c = $scoring360['composite'] ?? [];
+            $bb = $scoring360['blocks']['bank'] ?? [];
+            $bi = $scoring360['blocks']['investor'] ?? [];
+            $bn = $scoring360['blocks']['internal'] ?? [];
+            $cDec = $c['decision']['label'] ?? '—';
+        @endphp
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <div>
+                        <h2 class="h5 mb-1">Scoring & décision — SITIAME 360</h2>
+                        <p class="text-muted small mb-0">Calcul basé sur les paramètres admin (alignés Excel) et les écritures disponibles.</p>
+                    </div>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.scoring-parameters.index') }}">Paramètres scoring</a>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-lg-3">
+                        <div class="p-3 rounded bg-light border h-100">
+                            <p class="text-muted small text-uppercase mb-1">Score composite</p>
+                            <div class="d-flex align-items-baseline gap-2 mb-1">
+                                <span class="display-6 fw-bold text-primary">{{ number_format((float) ($c['total'] ?? 0), 1, ',', ' ') }}</span>
+                                <span class="text-muted">/ 100</span>
+                            </div>
+                            <span class="badge bg-primary">{{ $cDec }}</span>
+                            <p class="text-muted small mt-2 mb-0">{{ $c['decision']['lecture'] ?? '' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="p-3 rounded bg-white border h-100">
+                            <p class="text-muted small text-uppercase mb-1">Banque</p>
+                            <div class="d-flex align-items-baseline gap-2 mb-1">
+                                <span class="h2 fw-bold mb-0">{{ number_format((float) ($bb['total'] ?? 0), 1, ',', ' ') }}</span>
+                                <span class="text-muted">/ 100</span>
+                            </div>
+                            <span class="badge bg-secondary">{{ $bb['decision']['label'] ?? '—' }}</span>
+                            <p class="text-muted small mt-2 mb-0">{{ $bb['decision']['lecture'] ?? '' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="p-3 rounded bg-white border h-100">
+                            <p class="text-muted small text-uppercase mb-1">Investisseur</p>
+                            <div class="d-flex align-items-baseline gap-2 mb-1">
+                                <span class="h2 fw-bold mb-0">{{ number_format((float) ($bi['total'] ?? 0), 1, ',', ' ') }}</span>
+                                <span class="text-muted">/ 100</span>
+                            </div>
+                            <span class="badge bg-secondary">{{ $bi['decision']['label'] ?? '—' }}</span>
+                            <p class="text-muted small mt-2 mb-0">{{ $bi['decision']['lecture'] ?? '' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="p-3 rounded bg-white border h-100">
+                            <p class="text-muted small text-uppercase mb-1">Interne</p>
+                            <div class="d-flex align-items-baseline gap-2 mb-1">
+                                <span class="h2 fw-bold mb-0">{{ number_format((float) ($bn['total'] ?? 0), 1, ',', ' ') }}</span>
+                                <span class="text-muted">/ 100</span>
+                            </div>
+                            <span class="badge bg-secondary">{{ $bn['decision']['label'] ?? '—' }}</span>
+                            <p class="text-muted small mt-2 mb-0">{{ $bn['decision']['lecture'] ?? '' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                @if(!empty($c['contributions'] ?? []))
+                    <p class="text-muted small mt-3 mb-0">
+                        Contributions : Banque {{ number_format((float) ($c['contributions']['bank'] ?? 0), 2, ',', ' ') }},
+                        Investisseur {{ number_format((float) ($c['contributions']['investor'] ?? 0), 2, ',', ' ') }},
+                        Interne {{ number_format((float) ($c['contributions']['internal'] ?? 0), 2, ',', ' ') }}.
+                    </p>
+                @endif
+            </div>
+        </div>
+    @endif
+
     @if(!empty($analysis['qualite_donnees'] ?? []))
         @foreach($analysis['qualite_donnees'] as $alert)
             <div class="alert alert-{{ ($alert['niveau'] ?? 'warning') === 'info' ? 'info' : (($alert['niveau'] ?? '') === 'danger' ? 'danger' : 'warning') }} border-0 shadow-sm mb-3">

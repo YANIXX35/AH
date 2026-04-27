@@ -60,7 +60,7 @@ class FedaPaySandboxController extends Controller
         $currencyRaw = $transaction['currency']['iso'] ?? $transaction['currency'] ?? '';
 
         return [
-            'amount' => (float) ($transaction['amount'] ?? 100),
+            'amount' => (float) ($transaction['amount'] ?? 15000),
             'currency' => strtoupper((string) $currencyRaw) ?: 'XOF',
             'country' => strtoupper((string) ($customer['country'] ?? $metadata['country'] ?? 'CIV')),
             'correspondent' => (string) ($transaction['payment_method'] ?? $metadata['operator'] ?? 'wave'),
@@ -109,12 +109,51 @@ class FedaPaySandboxController extends Controller
 
     public function index(Request $request, FedaPaySandboxService $service): View
     {
-        $eventResult = $service->fetchRecentEvents(20);
+        $user = $request->user();
+        $eventResult = ['success' => true, 'events' => [], 'message' => null];
+
+        $fixedAmount = 15000;
+
+        $localTransactions = PaymentTransaction::query()
+            ->where('provider', 'fedapay_sandbox')
+            ->where('user_id', (int) $user->id)
+            ->latest('id')
+            ->limit(20)
+            ->get();
+
+        $localEvents = $localTransactions->map(function (PaymentTransaction $tx): array {
+            return [
+                'id' => (string) $tx->id,
+                'name' => 'local.payment_transaction',
+                'transaction_reference' => (string) ($tx->provider_reference ?? ''),
+                'transaction_status' => (string) ($tx->status ?? ''),
+                'amount' => number_format((float) $tx->amount, 0, ',', ' '),
+                'failure_reason' => (string) ($tx->failure_reason ?? ''),
+                'date' => optional($tx->created_at)?->format('Y-m-d H:i:s') ?? '',
+            ];
+        })->values()->all();
+
+        // Sécurité: un utilisateur standard ne voit jamais les événements d'une autre entreprise.
+        // Les admins peuvent consulter le flux fournisseur brut pour supervision.
+        if ($user && $user->isPlatformAdmin()) {
+            $remoteResult = $service->fetchRecentEvents(20);
+            $eventResult = [
+                'success' => (bool) $remoteResult['success'],
+                'events' => $remoteResult['success'] ? ($remoteResult['events'] ?? []) : $localEvents,
+                'message' => $remoteResult['success'] ? null : ($remoteResult['message'] ?? null),
+            ];
+        } else {
+            $eventResult = [
+                'success' => true,
+                'events' => $localEvents,
+                'message' => null,
+            ];
+        }
 
         return view('payments.sandbox', [
             'isFedaPaySandboxEnabled' => (bool) config('services.fedapay.sandbox.enabled', false),
             'isHostedPaymentMode' => filter_var(trim((string) config('services.fedapay.sandbox.payment_page_url', '')), FILTER_VALIDATE_URL) !== false,
-            'paymentAmount' => 100,
+            'paymentAmount' => $fixedAmount,
             'paymentRedirectUrl' => trim((string) config('services.fedapay.sandbox.payment_page_url', '')),
             'mobileMethods' => config('services.fedapay.sandbox.mobile_methods', []),
             'fedapayEvents' => $eventResult['events'],
@@ -127,7 +166,7 @@ class FedaPaySandboxController extends Controller
         $user = $request->user();
         $config = $this->gatewayConfig();
         $countries = array_keys($config);
-        $fixedAmount = 100;
+        $fixedAmount = 15000;
 
         $data = $request->validate([
             'amount' => ['required', 'integer', Rule::in([$fixedAmount])],

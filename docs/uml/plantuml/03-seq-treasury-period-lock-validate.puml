@@ -1,0 +1,46 @@
+@startuml seq_treasury_period_lock_validate
+title Séquence — Trésorerie : verrouillage + validation prévision (POST /treasury/forecast/period/*)
+
+actor Utilisateur as U
+participant "TreasuryController" as TC
+participant "ClientWorkspace" as CWS
+database "treasury_period_locks" as LCK
+participant "TreasuryAudit" as AUDIT
+
+== Lock ==
+U -> TC : POST /treasury/forecast/period/lock (period_month, notes?)
+TC -> CWS : workspaceUserId()
+TC -> LCK : updateOrCreate(user_id, period_month,\nlocked_at=now, locked_by=Auth::id)
+TC -> AUDIT : log(treasury.period.lock)
+TC --> U : Redirect /treasury/forecast\n(status: période verrouillée)
+
+== Validate ==
+U -> TC : POST /treasury/forecast/period/validate (period_month)
+TC -> CWS : workspaceUserId()
+TC -> LCK : find(user_id, period_month)
+alt verrou absent
+  TC --> U : back()\n(erreur: verrouillez d'abord)
+else verrou présent
+  TC -> LCK : update(validated_at=now, validated_by=Auth::id)
+  TC -> AUDIT : log(treasury.forecast.validate)
+  TC --> U : Redirect /treasury/forecast\n(status: prévision validée)
+end
+
+== Unlock ==
+U -> TC : POST /treasury/forecast/period/unlock (period_month)
+TC -> CWS : workspaceUserId()
+TC -> LCK : find(user_id, period_month)
+alt verrou absent
+  TC --> U : back()\n(erreur: aucun verrou)
+else validé ?
+  alt validated_at non null
+    TC --> U : back()\n(erreur: impossible, prévision validée)
+  else ok
+    TC -> LCK : delete()
+    TC -> AUDIT : log(treasury.period.unlock)
+    TC --> U : Redirect /treasury/forecast\n(status: période déverrouillée)
+  end
+end
+
+@enduml
+

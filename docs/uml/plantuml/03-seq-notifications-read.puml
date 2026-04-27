@@ -1,0 +1,28 @@
+@startuml seq_notifications_read
+title Séquence — Notifications : go/read/read-all
+
+actor Utilisateur as U
+participant "InAppNotificationController" as NC
+participant "Auth" as AUTH
+database "app_notifications" as N
+
+== go ==
+U -> NC : GET /notifications/{notification}/go
+NC -> AUTH : Auth::id()
+NC -> NC : authorizeNotification(notification.user_id == Auth::id)
+NC -> N : markRead()
+NC --> U : Redirect notification.action_url\n(ou /notifications)
+
+== read ==
+U -> NC : POST /notifications/{notification}/read (redirect?)
+NC -> NC : authorizeNotification(...)
+NC -> N : markRead()
+NC --> U : Redirect redirect? (optionnel) sinon back()
+
+== read-all ==
+U -> NC : POST /notifications/read-all
+NC -> N : update read_at=now where user_id=Auth::id and read_at is null
+NC --> U : back(status: toutes lues)
+
+@enduml
+

@@ -3,6 +3,27 @@
 @section('title', 'Cabinet comptable | Sitiame Capitale')
 @section('page_title', 'Cabinet comptable')
 
+@push('styles')
+<style>
+    .accountant-ai-live-card {
+        border: 1px solid rgba(59, 125, 221, .2);
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    }
+    .accountant-ai-live-text {
+        font-size: .92rem;
+        line-height: 1.45;
+        white-space: pre-wrap;
+    }
+    .accountant-ai-inco-item + .accountant-ai-inco-item {
+        border-top: 1px solid rgba(0, 0, 0, .06);
+    }
+    .accountant-ai-refresh-status {
+        font-size: .78rem;
+        color: #6c757d;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="mb-4">
     <h1 class="h3 mb-1"><strong>Tableau de bord</strong> cabinet</h1>
@@ -43,6 +64,48 @@
                 <div class="text-muted small text-uppercase">Écritures OCR « stress »</div>
                 <div class="display-6 fw-bold text-danger">{{ number_format($ocrStressEntries) }}</div>
                 <p class="small text-muted mb-0">À rapprocher ou saisir manuellement.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-xl-7 d-flex">
+        <div class="card accountant-ai-live-card shadow-sm w-100">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-0">IA en temps reel - recommandations cabinet</h5>
+                    <small class="text-muted">Analyse comptabilite et tresorerie des dossiers clients</small>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-primary">LIVE</span>
+                    <div id="accountantAiRefreshStatus" class="accountant-ai-refresh-status mt-1">Auto-refresh: 30s</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="accountantAiLiveText" class="accountant-ai-live-text">{{ $aiLiveInsight ?? "L'IA prepare une recommandation..." }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-xl-5 d-flex">
+        <div class="card shadow-sm w-100">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="card-title mb-0">Incoherences detectees</h5>
+                <small class="text-muted">Portefeuille comptable</small>
+            </div>
+            <div class="card-body py-1" id="accountantAiIncoBody">
+                @forelse(($aiInconsistencies ?? []) as $item)
+                    <div class="accountant-ai-inco-item py-3 d-flex justify-content-between gap-2">
+                        <div>
+                            <div class="fw-medium">{{ $item['title'] ?? 'Incoherence' }}</div>
+                            <div class="small text-muted">{{ $item['detail'] ?? '' }}</div>
+                            <div class="small mt-1"><strong>Proposition :</strong> {{ $item['proposal'] ?? '' }}</div>
+                        </div>
+                        <span class="badge bg-{{ $item['severity'] ?? 'secondary' }} align-self-start">{{ strtoupper((string) ($item['severity'] ?? 'n/a')) }}</span>
+                    </div>
+                @empty
+                    <p class="text-muted my-3">Aucune incoherence detectee.</p>
+                @endforelse
             </div>
         </div>
     </div>
@@ -196,6 +259,113 @@
     .accountant-compta-hub__tile-hint { font-size: 0.72rem; color: #6c757d; margin-top: 0.2rem; }
     .accountant-compta-hub__tile:hover .accountant-compta-hub__tile-hint { color: #495057; }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const aiEndpoint = @json(route('accountant.dashboard.ai.live'));
+    const liveText = document.getElementById('accountantAiLiveText');
+    const incoBody = document.getElementById('accountantAiIncoBody');
+    const refreshStatus = document.getElementById('accountantAiRefreshStatus');
+    let countdown = 30;
+    let isRefreshing = false;
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function severityClass(severity) {
+        if (severity === 'danger') return 'danger';
+        if (severity === 'warning') return 'warning';
+        if (severity === 'success') return 'success';
+        return 'secondary';
+    }
+
+    function renderStatus(custom) {
+        if (!refreshStatus) return;
+        refreshStatus.textContent = custom || ('Auto-refresh: ' + countdown + 's');
+    }
+
+    function animateText(text) {
+        if (!liveText) return;
+        const content = String(text || '');
+        let i = 0;
+        liveText.textContent = '';
+        const timer = window.setInterval(function () {
+            i += 6;
+            liveText.textContent = content.slice(0, i);
+            if (i >= content.length) {
+                window.clearInterval(timer);
+            }
+        }, 14);
+    }
+
+    function renderInconsistencies(items) {
+        if (!incoBody) return;
+        if (!Array.isArray(items) || items.length === 0) {
+            incoBody.innerHTML = '<p class="text-muted my-3">Aucune incoherence detectee.</p>';
+            return;
+        }
+
+        incoBody.innerHTML = items.map(function (item) {
+            const severity = String(item.severity || 'secondary');
+            return '' +
+                '<div class="accountant-ai-inco-item py-3 d-flex justify-content-between gap-2">' +
+                    '<div>' +
+                        '<div class="fw-medium">' + escapeHtml(item.title || 'Incoherence') + '</div>' +
+                        '<div class="small text-muted">' + escapeHtml(item.detail || '') + '</div>' +
+                        '<div class="small mt-1"><strong>Proposition :</strong> ' + escapeHtml(item.proposal || '') + '</div>' +
+                    '</div>' +
+                    '<span class="badge bg-' + severityClass(severity) + ' align-self-start">' + escapeHtml(severity.toUpperCase()) + '</span>' +
+                '</div>';
+        }).join('');
+    }
+
+    function refreshPanel() {
+        if (!aiEndpoint || isRefreshing) return;
+        isRefreshing = true;
+        renderStatus('Mise a jour IA...');
+
+        fetch(aiEndpoint, { cache: 'no-store', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+            .then(function (response) { return response.json(); })
+            .then(function (json) {
+                if (!json || !json.ok) {
+                    throw new Error('AI unavailable');
+                }
+                animateText(json.live_insight || '');
+                renderInconsistencies(json.inconsistencies || []);
+                countdown = 30;
+                renderStatus();
+            })
+            .catch(function () {
+                if (liveText) {
+                    liveText.textContent = "L'IA live est momentanement indisponible.";
+                }
+                renderStatus('Auto-refresh: echec');
+            })
+            .finally(function () {
+                isRefreshing = false;
+            });
+    }
+
+    refreshPanel();
+    window.setInterval(function () {
+        if (countdown <= 1) {
+            refreshPanel();
+            countdown = 30;
+            return;
+        }
+        countdown -= 1;
+        renderStatus();
+    }, 1000);
+});
+</script>
 @endpush
 
 <div class="row g-3 mb-4">

@@ -2,6 +2,14 @@
     <div class="sidebar-content js-simplebar">
         @php
             $sidebarUser = auth()->user();
+            $sidebarBrandName = config('app.name', 'Sitiame Capitale');
+            if (
+                $sidebarUser
+                && ! ($sidebarUser->is_platform_admin ?? false)
+                && ! ($sidebarUser->is_accountant ?? false)
+            ) {
+                $sidebarBrandName = (string) ($sidebarUser->company_name ?: $sidebarBrandName);
+            }
             if ($sidebarUser && $sidebarUser->is_platform_admin) {
                 $sidebarPremiumLabel = 'Administrateur';
                 $sidebarPremiumBadge = 'bg-primary';
@@ -26,8 +34,9 @@
             $sidebarAccountantOnly = $sidebarUser && ($sidebarUser->is_accountant ?? false) && ! ($sidebarUser->is_platform_admin ?? false);
             $sidebarWorkspaceOpen = $sidebarAccountantOnly && \App\Support\ClientWorkspace::isViewingClient();
         @endphp
-        <a class="sidebar-brand" href="{{ $sidebarAccountantOnly ? route('accountant.dashboard') : route('dashboard') }}">
-            <span class="align-middle">Sitiame Capitale</span>
+        <a class="sidebar-brand d-flex align-items-center gap-2" href="{{ $sidebarAccountantOnly ? route('accountant.dashboard') : route('dashboard') }}">
+            <img src="{{ asset('images/sitiam.png') }}" alt="Logo Sitiame Capital" style="height: 28px; width: auto;">
+            <span class="align-middle">{{ $sidebarBrandName }}</span>
         </a>
         <div class="px-3 pb-2">
             <span class="badge {{ $sidebarPremiumBadge }}">{{ $sidebarPremiumIcon }} {{ $sidebarPremiumLabel }}</span>
@@ -78,7 +87,22 @@
                                 <a class="sidebar-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}">Gestion paiements</a>
                             </li>
                             <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.billing.*') ? 'active' : '' }}" href="{{ route('admin.billing.index') }}">Facturation pro</a>
+                            </li>
+                            <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.logs.*') ? 'active' : '' }}" href="{{ route('admin.logs.index') }}">Journalisation plateforme</a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.executive.*') ? 'active' : '' }}" href="{{ route('admin.executive.index') }}">Dashboard CEO/CFO</a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.compliance.kyc.*') ? 'active' : '' }}" href="{{ route('admin.compliance.kyc.index') }}">Conformité KYC/KYB</a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.rbac.*') ? 'active' : '' }}" href="{{ route('admin.rbac.index') }}">RBAC rôles & permissions</a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.ops.*') ? 'active' : '' }}" href="{{ route('admin.ops.index') }}">Ops Center IT Manager</a>
                             </li>
 
                             <li class="sidebar-item">
@@ -88,7 +112,13 @@
                                 <a class="sidebar-link {{ request()->routeIs('admin.financial-ranking') ? 'active' : '' }}" href="{{ route('admin.financial-ranking') }}">Classement solvabilité</a>
                             </li>
                             <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.scoring-parameters.*') ? 'active' : '' }}" href="{{ route('admin.scoring-parameters.index') }}">Paramètres scoring 360</a>
+                            </li>
+                            <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.investment-requests.*') ? 'active' : '' }}" href="{{ route('admin.investment-requests.index') }}">Demandes d’investissement</a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.support.tickets.*') ? 'active' : '' }}" href="{{ route('admin.support.tickets.index') }}">File support clients</a>
                             </li>
                         </ul>
                     </div>
@@ -116,7 +146,11 @@
             </li>
             @if($sidebarAccountingLocked)
                 <li class="sidebar-item opacity-50">
-                    <a class="sidebar-link" href="{{ route('profile') }}" title="Passez en Premium pour activer la comptabilité.">
+                    <a class="sidebar-link"
+                       href="{{ route('payments.sandbox') }}"
+                       title="Passez en Premium pour activer la comptabilité."
+                       data-premium-locked-message="Vous etes actuellement en mode Gratuit. Pour acceder au module Comptabilite, passez en Enterprise Premium en effectuant le paiement de 15 000 FCFA."
+                       data-premium-locked="1">
                         <span class="icon-wrapper">🔒</span> <span class="align-middle">Comptabilité</span>
                         <span class="badge bg-secondary rounded-pill ms-auto">Premium</span>
                     </a>
@@ -275,7 +309,12 @@
             </li>
             <li class="sidebar-item {{ request()->routeIs('payments.sandbox*') ? 'active' : '' }}">
                 <a class="sidebar-link" href="{{ route('payments.sandbox') }}">
-                    <i class="align-middle" data-feather="credit-card"></i> <span class="align-middle">Paiement sandbox</span>
+                    <i class="align-middle" data-feather="credit-card"></i> <span class="align-middle">Paiement</span>
+                </a>
+            </li>
+            <li class="sidebar-item {{ request()->routeIs('billing.*') ? 'active' : '' }}">
+                <a class="sidebar-link" href="{{ route('billing.invoices') }}">
+                    <i class="align-middle" data-feather="file-text"></i> <span class="align-middle">Factures & abonnement</span>
                 </a>
             </li>
             <li class="sidebar-item {{ request()->routeIs('activity-log.*') ? 'active' : '' }}">
@@ -327,3 +366,68 @@
         </ul>
     </div>
 </nav>
+
+@push('scripts')
+<script>
+    (function () {
+        const links = document.querySelectorAll('a[data-premium-locked="1"]');
+        if (!links.length) return;
+
+        const showPremiumToast = function (message, paymentUrl) {
+            const existing = document.getElementById('premium-lock-card');
+            if (existing) {
+                return;
+            }
+
+            const container = document.createElement('div');
+            container.id = 'premium-lock-card';
+            container.style.position = 'fixed';
+            container.style.top = '18px';
+            container.style.right = '18px';
+            container.style.zIndex = '1090';
+            container.style.maxWidth = '380px';
+            container.style.width = 'calc(100vw - 24px)';
+            container.innerHTML = ''
+                + '<div style="background:#fff;border:1px solid #e9ecef;border-left:4px solid #f59f00;border-radius:12px;box-shadow:0 12px 28px rgba(0,0,0,.14);overflow:hidden;">'
+                + '  <div style="padding:12px 14px;display:flex;align-items:flex-start;gap:10px;">'
+                + '    <div style="font-size:18px;line-height:1;">⚠️</div>'
+                + '    <div style="flex:1;">'
+                + '      <div style="font-weight:700;color:#212529;font-size:.95rem;margin-bottom:4px;">Acces Comptabilite bloque</div>'
+                + '      <div style="color:#495057;font-size:.88rem;line-height:1.4;">' + message + '</div>'
+                + '      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">'
+                + '        <button type="button" data-action="go-premium" style="border:0;background:#f59f00;color:#fff;font-weight:600;font-size:.82rem;border-radius:8px;padding:7px 10px;cursor:pointer;">Passer en Premium</button>'
+                + '      </div>'
+                + '    </div>'
+                + '    <button type="button" aria-label="Fermer" style="border:0;background:transparent;color:#6c757d;font-size:18px;line-height:1;cursor:pointer;padding:0 2px;">&times;</button>'
+                + '  </div>'
+                + '  <div style="height:3px;background:linear-gradient(90deg,#f59f00,#ffd43b);"></div>'
+                + '</div>';
+            document.body.appendChild(container);
+
+            const closeBtn = container.querySelector('button[aria-label="Fermer"]');
+            const goPremiumBtn = container.querySelector('button[data-action="go-premium"]');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function () {
+                    if (container.parentNode) container.parentNode.removeChild(container);
+                });
+            }
+            if (goPremiumBtn && paymentUrl) {
+                goPremiumBtn.addEventListener('click', function () {
+                    window.location.href = paymentUrl;
+                });
+            }
+        };
+
+        links.forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                event.preventDefault();
+                const message = link.getAttribute('data-premium-locked-message') || '';
+                const href = link.getAttribute('href') || '';
+                if (message) {
+                    showPremiumToast(message, href);
+                }
+            });
+        });
+    })();
+</script>
+@endpush

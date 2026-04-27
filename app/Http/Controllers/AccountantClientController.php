@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\FinancialRatioServiceContract;
 use App\Models\User;
-use App\Services\SmeFinancialRatioService;
 use App\Support\ClientWorkspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,7 +43,7 @@ class AccountantClientController extends Controller
     /**
      * Fiche dossier : synthèse et accès aux outils (compta, trésorerie, FIRD…).
      */
-    public function show(User $user, SmeFinancialRatioService $ratioService): View
+    public function show(User $user, FinancialRatioServiceContract $ratioService): View
     {
         $this->authorizeClient($user);
 

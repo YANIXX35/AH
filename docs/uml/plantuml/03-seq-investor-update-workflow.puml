@@ -1,0 +1,33 @@
+@startuml seq_investor_update_workflow
+title Séquence — Investisseur : mise à jour du workflow d'une demande (POST /investor/investment-request/{id}/workflow)
+
+actor Utilisateur as U
+participant "InvestorController" as IC
+participant "ClientWorkspace" as CWS
+participant "Auth" as AUTH
+database "investment_requests" as IR
+
+U -> IC : POST /investor/investment-request/{id}/workflow (next_status, review_note?)
+IC -> CWS : workspaceUserId()
+IC -> IR : vérifier ownership (investmentRequest.user_id == workspaceUserId)
+
+alt non autorisé
+  IC --> U : 403
+else autorisé
+  IC -> IC : validate(next_status in in_review/accepted/declined)
+  IC -> IC : vérifier transition autorisée (ALLOWED_TRANSITIONS)
+  alt transition invalide
+    IC --> U : back()\n(erreur: transition invalide)
+  else transition OK
+    alt décision finale (accepted/declined) sans note
+      IC --> U : back()\n(erreur: note obligatoire)
+    else OK
+      IC -> AUTH : Auth::id() (reviewed_by)
+      IC -> IR : update(status, reviewed_by, reviewed_at, review_note)
+      IC --> U : back(status: workflow mis à jour)
+    end
+  end
+end
+
+@enduml
+

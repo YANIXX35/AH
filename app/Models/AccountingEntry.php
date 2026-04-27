@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\AccountingDocument;
+use App\Support\OcrStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -33,6 +33,11 @@ class AccountingEntry extends Model
         'amount' => 'decimal:2',
     ];
 
+    public function setOcrStatusAttribute(?string $value): void
+    {
+        $this->attributes['ocr_status'] = OcrStatus::normalize($value);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -56,16 +61,16 @@ class AccountingEntry extends Model
      */
     public function getOcrBadge(): array
     {
+        $status = OcrStatus::normalize((string) $this->ocr_status);
         $badges = [
             'verified' => ['color' => 'success', 'icon' => 'check-circle', 'text' => 'Vérifié ✓'],
             'manual_verified' => ['color' => 'success', 'icon' => 'check', 'text' => 'Vérifié manuellement'],
             'mismatch' => ['color' => 'warning', 'icon' => 'alert-circle', 'text' => 'Incohérences détectées'],
-            'mismatched' => ['color' => 'warning', 'icon' => 'alert-circle', 'text' => '⚠️ Montant ne correspond pas'],
             'failed' => ['color' => 'danger', 'icon' => 'x-circle', 'text' => '❌ Erreur OCR'],
             'pending' => ['color' => 'secondary', 'icon' => 'clock', 'text' => 'OCR en attente'],
         ];
 
-        return $badges[$this->ocr_status] ?? $badges['pending'];
+        return $badges[$status] ?? $badges['pending'];
     }
 
     public function getSourceDocumentName(): ?string
@@ -84,11 +89,11 @@ class AccountingEntry extends Model
     public function getSourceDocumentUrl(): ?string
     {
         if ($this->document?->stored_path) {
-            return asset('storage/' . $this->document->stored_path);
+            return asset('storage/'.$this->document->stored_path);
         }
 
         if ($this->attachment_path) {
-            return asset('storage/' . $this->attachment_path);
+            return asset('storage/'.$this->attachment_path);
         }
 
         return null;
@@ -125,7 +130,7 @@ class AccountingEntry extends Model
         }
 
         if (
-            in_array($this->ocr_status, ['mismatched', 'mismatch'], true)
+            OcrStatus::normalize((string) $this->ocr_status) === OcrStatus::MISMATCH
             && $this->ocr_detected_amount !== null
             && is_numeric($this->amount)
         ) {
@@ -161,6 +166,6 @@ class AccountingEntry extends Model
             return 'Aucun texte OCR';
         }
 
-        return substr($rawText, 0, $length) . (strlen($rawText) > $length ? '...' : '');
+        return substr($rawText, 0, $length).(strlen($rawText) > $length ? '...' : '');
     }
 }

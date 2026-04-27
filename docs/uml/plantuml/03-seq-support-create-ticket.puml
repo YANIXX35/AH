@@ -1,0 +1,22 @@
+@startuml seq_support_create_ticket
+title Séquence — Support : création d'un ticket + notification (POST /support/tickets)
+
+actor Utilisateur as U
+participant "SupportController" as SC
+participant "Auth" as AUTH
+participant "DB transaction" as TX
+database "support_tickets" as ST
+database "support_messages" as SM
+database "app_notifications" as N
+
+U -> SC : POST /support/tickets (subject, message)
+SC -> AUTH : Auth::id()
+SC -> TX : begin
+TX -> ST : create(user_id, subject, status=open)
+TX -> SM : create(ticket_id, user_id, body, is_staff_reply=false)
+TX -> N : create(title, body, type=success, action_url=/support/tickets/{id})
+SC -> TX : commit
+SC --> U : Redirect /support/tickets\n(status: demande envoyée)
+
+@enduml
+

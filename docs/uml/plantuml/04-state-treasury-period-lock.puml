@@ -1,0 +1,18 @@
+@startuml state_treasury_period_lock
+title États — Gouvernance trésorerie (TreasuryPeriodLock)
+
+[*] --> unlocked
+
+unlocked --> locked : lockTreasuryPeriod(period_month)\nlocked_at, locked_by
+locked --> unlocked : unlockTreasuryPeriod(period_month)\n(sauf si validé)
+
+locked --> validated : validateTreasuryForecast(period_month)\nvalidated_at, validated_by
+validated --> validated : (verrou maintenu)
+
+note right of locked
+  Règle : un verrou validé (validated_at != null)
+  ne peut pas être déverrouillé via l'UI.
+end note
+
+@enduml
+

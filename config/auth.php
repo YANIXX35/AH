@@ -114,4 +114,14 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Remember Me Duration (minutes)
+    |--------------------------------------------------------------------------
+    |
+    | Durée de persistance "Se souvenir de moi". 30 jours par défaut.
+    |
+    */
+    'remember_minutes' => (int) env('AUTH_REMEMBER_MINUTES', 43200),
+
 ];

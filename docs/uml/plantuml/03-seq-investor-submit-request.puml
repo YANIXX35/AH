@@ -1,0 +1,28 @@
+@startuml seq_investor_submit_request
+title Séquence — Investisseur : dépôt d'une demande d'investissement (POST /investor/investment-request)
+
+actor Utilisateur as U
+participant "InvestorController" as IC
+participant "ClientWorkspace" as CWS
+participant "InvestorReadinessService" as IRS
+participant "InvestmentDossierChecklistService" as IDS
+database "investment_requests" as IR
+participant "Storage (public)" as FS
+
+U -> IC : POST /investor/investment-request (form + fichiers identité)
+IC -> CWS : workspaceUserId()
+IC -> IRS : build(userId) => metrics
+IC -> IDS : build(userId, metrics.breakdown) => checklist
+IC -> IC : compter les points critiques (STATUS_FAIL)
+
+alt checklist critique > 0
+  IC --> U : back()\n(erreur: dépôt bloqué, corriger checklist)
+else OK
+  IC -> IC : validate(champs + attachments + accepted certifies_accuracy)
+  IC -> FS : store(photo + identity front/back)\nbaseDir=investment-requests/{userId}/{uuid}
+  IC -> IR : create(status=pending, reviewed_at=null, reviewed_by=null)
+  IC --> U : Redirect /investor/readiness\n(status: dépôt enregistré)
+end
+
+@enduml
+

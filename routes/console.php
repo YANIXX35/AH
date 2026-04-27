@@ -9,3 +9,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('app:premium-expire')->dailyAt('01:00');
+Schedule::command('app:ops-alerts-scan')->everyFifteenMinutes();
+Schedule::command('app:ops-ai-autonomous-approvals')->everyFifteenMinutes();
+Schedule::command('app:billing-dunning-daily')->dailyAt('02:15');

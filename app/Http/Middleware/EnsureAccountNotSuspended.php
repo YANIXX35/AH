@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -23,6 +24,8 @@ class EnsureAccountNotSuspended
             return $next($request);
         }
 
+        // Révoque les sessions persistantes ("remember me") des comptes suspendus.
+        $user->forceFill(['remember_token' => Str::random(60)])->save();
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

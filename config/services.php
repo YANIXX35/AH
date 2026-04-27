@@ -48,7 +48,7 @@ return [
             'public_key' => env('FEDAPAY_SANDBOX_PUBLIC_KEY'),
             'payment_page_url' => env('FEDAPAY_SANDBOX_PAYMENT_PAGE_URL'),
             'payment_page_name' => env('FEDAPAY_SANDBOX_PAYMENT_PAGE_NAME', 'Page de paiement FedaPay'),
-            'payment_page_amount' => env('FEDAPAY_SANDBOX_PAYMENT_PAGE_AMOUNT', '100'),
+            'payment_page_amount' => env('FEDAPAY_SANDBOX_PAYMENT_PAGE_AMOUNT', '15000'),
             'payment_page_currency' => env('FEDAPAY_SANDBOX_PAYMENT_PAGE_CURRENCY', 'CFA'),
             'payment_page_method' => env('FEDAPAY_SANDBOX_PAYMENT_PAGE_METHOD', 'WAVE'),
             'payment_page_country' => env('FEDAPAY_SANDBOX_PAYMENT_PAGE_COUNTRY', 'CIV'),
@@ -92,6 +92,13 @@ return [
         'page_num' => (int) env('PADDLE_OCR_PAGE_NUM', 0),
         'language' => env('PADDLE_OCR_LANGUAGE', 'fr'),
         'max_file_size_kb' => (int) env('PADDLE_OCR_MAX_FILE_SIZE_KB', 20480),
+    ],
+
+    'huggingface' => [
+        'token' => env('HUGGINGFACE_TOKEN'),
+        'model' => env('HUGGINGFACE_MODEL', 'meta-llama/Llama-3.1-8B-Instruct'),
+        'base_url' => env('HUGGINGFACE_BASE_URL', 'https://router.huggingface.co/v1'),
+        'timeout' => (int) env('HUGGINGFACE_TIMEOUT', 45),
     ],
 
 ];

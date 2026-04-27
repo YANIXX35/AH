@@ -1,0 +1,28 @@
+@startuml seq_profile_team_add_member
+title Séquence — Équipe entreprise : ajout d'un collègue (POST /profile/equipe)
+
+actor "Inviteur (compte entreprise Premium)" as I
+participant "EnterpriseTeamController" as ETC
+participant "Validation Request" as VAL
+database "enterprise_licenses" as LIC
+database "users" as UDB
+
+I -> ETC : POST /profile/equipe (name, email, password, password_confirmation)
+ETC -> ETC : authorizeEnterpriseInviter(inviter)
+ETC -> VAL : validate(name, email unique, password confirmed)
+
+ETC -> LIC : lockForUpdate(license)
+alt licence non usable
+  ETC --> I : Erreur (email)\nLicence invalide (révoquée/expirée)
+else siège disponible ?
+  alt aucun siège
+    ETC --> I : Erreur (email)\nMax seats atteint
+  else OK
+    ETC -> UDB : User::create(sharedProfileForNewTeammate + creds)\nenterprise_license_id = license.id
+    ETC -> LIC : syncPrimaryWorkspaceUser()
+    ETC --> I : Redirect /profile/equipe\n(status: compte créé)
+  end
+end
+
+@enduml
+

@@ -1,0 +1,29 @@
+@startuml seq_treasury_transaction_store
+title Séquence — Trésorerie : création transaction + démarrage paiement (POST /treasury)
+
+actor Utilisateur as U
+participant "TreasuryController" as TC
+participant "StripeTreasuryService" as STS
+participant "ClientWorkspace" as CWS
+database "treasury_transactions" as TT
+participant "TreasuryPeriodLock" as LOCK
+participant "TreasuryAudit" as AUDIT
+
+U -> TC : POST /treasury (type, payment_module, amount, date, status=effectue|...)
+TC -> TC : validate + normaliser champs + ensureTrackingReference()
+TC -> CWS : workspaceUserId()
+TC -> LOCK : assertTreasuryPeriodUnlocked(workspaceOwnerId, transaction_date)
+TC -> TT : create(user_id=workspaceOwnerId, actor_user_id=Auth::id)
+TC -> AUDIT : log(treasury.transaction.create)
+
+TC -> TC : maybeStartProviderCheckout(request, transaction, STS)
+alt payment_module=fedapay_mobile et status=effectue
+  TC --> U : Redirect /treasury/{tx}/fedapay/checkout?country=...
+else payment_module=stripe et status=effectue
+  TC --> U : Redirect Stripe (checkout/payout) ou erreurs config
+else aucun checkout
+  TC --> U : Redirect /treasury/tracking\n(success: transaction ajoutée)
+end
+
+@enduml
+

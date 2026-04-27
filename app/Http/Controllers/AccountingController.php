@@ -2,25 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\UsesClientWorkspace;
 use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
 use App\Models\AccountingMonthClosure;
 use App\Models\PlanComptableAccount;
 use App\Models\PlanComptableImport;
 use App\Models\TreasuryTransaction;
-use App\Services\OcrService;
 use App\Services\OcrPipelineService;
-use Illuminate\Http\UploadedFile;
+use App\Services\OcrService;
+use App\Support\OcrStatus;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Support\Carbon;
+use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use App\Http\Controllers\Concerns\UsesClientWorkspace;
 
 class AccountingController extends Controller
 {
@@ -146,7 +147,7 @@ class AccountingController extends Controller
             'actor_user_id' => Auth::id(),
         ]);
 
-        $entry = !empty($entryPayload['document_id'])
+        $entry = ! empty($entryPayload['document_id'])
             ? AccountingEntry::updateOrCreate(
                 ['document_id' => $entryPayload['document_id']],
                 $entryPayload
@@ -158,7 +159,7 @@ class AccountingController extends Controller
             $statusMessage .= ' et document OCR lié au brouillon d’écriture';
         }
 
-        return redirect()->route('accounting')->with('status', $statusMessage . '.');
+        return redirect()->route('accounting')->with('status', $statusMessage.'.');
     }
 
     /**
@@ -252,7 +253,7 @@ class AccountingController extends Controller
         }
 
         // Si le justificatif est remplacé, on relance immédiatement l'OCR pour prendre en compte le nouveau fichier.
-        if ($attachmentReplaced && !empty($validated['attachment_path'])) {
+        if ($attachmentReplaced && ! empty($validated['attachment_path'])) {
             $entryOcrAnalysis = $this->analyzeEntryAttachment(
                 $validated['attachment_path'],
                 [
@@ -270,7 +271,7 @@ class AccountingController extends Controller
             $ocrRechecked = true;
         } elseif ($ocrNeedsRecheck && ! $attachmentRemoved) {
             $storedPathForRecheck = $validated['attachment_path'] ?? $entry->attachment_path;
-            if (!empty($storedPathForRecheck)) {
+            if (! empty($storedPathForRecheck)) {
                 $entryOcrAnalysis = $this->analyzeEntryAttachment(
                     (string) $storedPathForRecheck,
                     [
@@ -345,7 +346,7 @@ class AccountingController extends Controller
 
         return redirect()
             ->route('accounting')
-            ->with('status', $deleted . ' écriture(s) supprimée(s) avec succès.');
+            ->with('status', $deleted.' écriture(s) supprimée(s) avec succès.');
     }
 
     public function bulkRetryEntryOcr(Request $request)
@@ -361,13 +362,15 @@ class AccountingController extends Controller
         $skipped = 0;
 
         foreach ($entries as $entry) {
-            if (!$entry->attachment_path) {
+            if (! $entry->attachment_path) {
                 $skipped++;
+
                 continue;
             }
 
             if (in_array((string) $entry->ocr_status, ['verified', 'manual_verified'], true)) {
                 $skipped++;
+
                 continue;
             }
 
@@ -389,6 +392,7 @@ class AccountingController extends Controller
                     'actor_user_id' => Auth::id(),
                 ]));
                 $failed++;
+
                 continue;
             }
 
@@ -421,7 +425,7 @@ class AccountingController extends Controller
     {
         $this->authorizeEntry($entry);
 
-        if (!$entry->attachment_path) {
+        if (! $entry->attachment_path) {
             return redirect()
                 ->back()
                 ->with('status', 'Relance OCR impossible: aucun justificatif attaché.')
@@ -479,14 +483,14 @@ class AccountingController extends Controller
         ]);
 
         $storedPath = $entry->document?->stored_path ?: $entry->attachment_path;
-        if (!$storedPath) {
+        if (! $storedPath) {
             return redirect()
                 ->back()
                 ->with('status', 'Correction automatique impossible: aucun justificatif OCR lié à cette écriture.')
                 ->with('ocr_retry_error', true);
         }
 
-        $ocrPipeline = new OcrPipelineService();
+        $ocrPipeline = new OcrPipelineService;
         $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
         $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
 
@@ -506,7 +510,7 @@ class AccountingController extends Controller
         }
 
         $ocrText = (string) ($ocrResult['text'] ?? '');
-        $ocrService = new OcrService();
+        $ocrService = new OcrService;
         $initialVerification = $ocrService->verifyCompleteDocument($ocrText, [
             'document_reference' => $entry->document_reference ?? '',
             'date' => $entry->date?->toDateString(),
@@ -537,12 +541,12 @@ class AccountingController extends Controller
 
         return redirect()
             ->route('accounting.entries.show', $entry)
-            ->with('status', 'Écriture corrigée automatiquement depuis l’OCR' . $ocrAnalysis['status_suffix'] . '.');
+            ->with('status', 'Écriture corrigée automatiquement depuis l’OCR'.$ocrAnalysis['status_suffix'].'.');
     }
 
     private function buildAutoCorrectionProposal(AccountingEntry $entry): ?array
     {
-        if (! in_array($entry->ocr_status, ['mismatch', 'mismatched'], true)) {
+        if (OcrStatus::normalize((string) $entry->ocr_status) !== OcrStatus::MISMATCH) {
             return null;
         }
 
@@ -551,7 +555,7 @@ class AccountingController extends Controller
             return null;
         }
 
-        $ocrService = new OcrService();
+        $ocrService = new OcrService;
         $initialVerification = $ocrService->verifyCompleteDocument($ocrText, [
             'document_reference' => $entry->document_reference ?? '',
             'date' => $entry->date?->toDateString(),
@@ -596,14 +600,14 @@ class AccountingController extends Controller
         ]);
 
         $manualLog = "=== VALIDATION MANUELLE OCR ===\n"
-            . 'Date: ' . now()->format('Y-m-d H:i:s') . "\n"
-            . 'Utilisateur: ' . (Auth::user()?->email ?? 'N/A') . "\n"
-            . 'Commentaire: ' . trim($validated['manual_comment']) . "\n\n";
+            .'Date: '.now()->format('Y-m-d H:i:s')."\n"
+            .'Utilisateur: '.(Auth::user()?->email ?? 'N/A')."\n"
+            .'Commentaire: '.trim($validated['manual_comment'])."\n\n";
 
         $entry->update([
             'ocr_status' => 'manual_verified',
             'ocr_verified_at' => now(),
-            'ocr_text' => $manualLog . ($entry->ocr_text ?? ''),
+            'ocr_text' => $manualLog.($entry->ocr_text ?? ''),
             'actor_user_id' => Auth::id(),
         ]);
 
@@ -631,18 +635,18 @@ class AccountingController extends Controller
 
         $file = $request->file('plan_comptable');
         $storedPath = $file->store('plan-comptable-imports', 'public');
-        $fullPath = storage_path('app/public/' . $storedPath);
+        $fullPath = storage_path('app/public/'.$storedPath);
         $extension = strtolower($file->getClientOriginalExtension());
 
         if ($extension === 'pdf') {
-            $ocrPipeline = new OcrPipelineService();
+            $ocrPipeline = new OcrPipelineService;
             $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
             $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
             if (! $ocrResult['success']) {
                 Storage::disk('public')->delete($storedPath);
 
                 return redirect()->back()->withErrors([
-                    'plan_comptable' => 'PDF illisible ou OCR en échec : ' . ($ocrResult['message'] ?? 'erreur inconnue'),
+                    'plan_comptable' => 'PDF illisible ou OCR en échec : '.($ocrResult['message'] ?? 'erreur inconnue'),
                 ]);
             }
             $result = $this->parsePlanComptableFromText($ocrResult['text'] ?? '');
@@ -684,7 +688,7 @@ class AccountingController extends Controller
         );
 
         $response = redirect()->route('accounting.plan')->with('status', $message);
-        if (!empty($invalidRows)) {
+        if (! empty($invalidRows)) {
             $response = $response->with('invalidRows', $invalidRows);
         }
 
@@ -700,7 +704,7 @@ class AccountingController extends Controller
         $plan = [];
         foreach ($request->input('plan') as $prefix => $accountData) {
             $normalizedPrefix = (string) $prefix;
-            if (!preg_match('/^[1-7]$/', $normalizedPrefix)) {
+            if (! preg_match('/^[1-7]$/', $normalizedPrefix)) {
                 continue;
             }
 
@@ -718,11 +722,11 @@ class AccountingController extends Controller
         }
 
         $validation = $this->validatePlan($plan);
-        if (!empty($validation['missingClasses'])) {
+        if (! empty($validation['missingClasses'])) {
             return redirect()
                 ->route('accounting.plan')
                 ->withErrors([
-                    'plan' => 'Impossible d’enregistrer : classes manquantes (' . implode(', ', $validation['missingClasses']) . ').',
+                    'plan' => 'Impossible d’enregistrer : classes manquantes ('.implode(', ', $validation['missingClasses']).').',
                 ]);
         }
 
@@ -745,7 +749,7 @@ class AccountingController extends Controller
     {
         $filePath = storage_path('app/public/plan-comptable-modele.csv');
 
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             abort(404, 'Modèle de plan comptable non trouvé.');
         }
 
@@ -772,7 +776,7 @@ class AccountingController extends Controller
                 continue;
             }
 
-            if (!$headers) {
+            if (! $headers) {
                 foreach ($row as $column => $value) {
                     $normalized = mb_strtolower(trim((string) $value));
 
@@ -791,7 +795,7 @@ class AccountingController extends Controller
                     }
                 }
 
-                if (!isset($headers['code']) || !isset($headers['label'])) {
+                if (! isset($headers['code']) || ! isset($headers['label'])) {
                     continue;
                 }
 
@@ -802,11 +806,11 @@ class AccountingController extends Controller
             $label = trim((string) ($row[$headers['label']] ?? ''));
             $reason = null;
 
-            if (!$code || !$label) {
+            if (! $code || ! $label) {
                 $reason = 'Compte ou libellé manquant';
             } else {
                 $prefix = preg_match('/^([1-7])/', $code, $matches) ? $matches[1] : null;
-                if (!$prefix) {
+                if (! $prefix) {
                     $reason = 'Code invalide ou sans classe 1-7';
                 }
             }
@@ -818,6 +822,7 @@ class AccountingController extends Controller
                     'label' => $label,
                     'reason' => $reason,
                 ];
+
                 continue;
             }
 
@@ -985,6 +990,7 @@ class AccountingController extends Controller
                     'label' => '(vide)',
                     'reason' => 'Libellé vide : classe non exploitable dans les états.',
                 ];
+
                 continue;
             }
 
@@ -1121,7 +1127,7 @@ class AccountingController extends Controller
 
     private function analyzeEntryAttachment(string $storedPath, array $formData): array
     {
-        $ocrPipeline = new OcrPipelineService();
+        $ocrPipeline = new OcrPipelineService;
         $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
         $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
 
@@ -1133,12 +1139,13 @@ class AccountingController extends Controller
                     'ocr_verified_at' => null,
                     'ocr_text' => $this->formatOcrFailureDetails($ocrResult),
                 ],
-                'status_suffix' => ' (Erreur OCR: ' . ($ocrResult['message'] ?? 'erreur inconnue') . ')',
+                'status_suffix' => ' (Erreur OCR: '.($ocrResult['message'] ?? 'erreur inconnue').')',
             ];
         }
 
-        $ocrService = new OcrService();
+        $ocrService = new OcrService;
         $verifyResult = $ocrService->verifyCompleteDocument((string) ($ocrResult['text'] ?? ''), $formData);
+
         return $this->buildEntryOcrDataFromVerification($verifyResult, (string) ($ocrResult['text'] ?? ''));
     }
 
@@ -1156,14 +1163,14 @@ class AccountingController extends Controller
 
         $statusSuffix = '';
         if (($verifyResult['overall_status'] ?? null) === 'verified' && count($verificationDetails) > 0) {
-            $statusSuffix = ' et vérification OCR ✅ (' . count($verificationDetails) . '/' . ($verifyResult['total_fields'] ?? count($verificationDetails)) . ' champs)';
-        } elseif (($verifyResult['overall_status'] ?? null) === 'mismatched') {
+            $statusSuffix = ' et vérification OCR ✅ ('.count($verificationDetails).'/'.($verifyResult['total_fields'] ?? count($verificationDetails)).' champs)';
+        } elseif (OcrStatus::normalize((string) ($verifyResult['overall_status'] ?? null)) === OcrStatus::MISMATCH) {
             $statusSuffix = ' (⚠️ Certains champs OCR ne correspondent pas)';
         }
 
         return [
             'ocr_data' => [
-                'ocr_status' => $verifyResult['overall_status'] ?? 'verified',
+                'ocr_status' => OcrStatus::normalize((string) ($verifyResult['overall_status'] ?? 'verified')),
                 'ocr_detected_amount' => $detectedAmount,
                 'ocr_verified_at' => now(),
                 'ocr_text' => $this->buildOcrVerificationNarrative($verifyResult, $ocrText),
@@ -1225,7 +1232,7 @@ class AccountingController extends Controller
     {
         $parts = array_values(array_filter([$partner !== '' ? $partner : null, $reference !== '' ? $reference : null]));
         if (! empty($parts)) {
-            return '[OCR] ' . implode(' - ', $parts);
+            return '[OCR] '.implode(' - ', $parts);
         }
 
         return (string) $entry->description;
@@ -1276,7 +1283,7 @@ class AccountingController extends Controller
         }
 
         if ($field === 'amount' && is_numeric($value)) {
-            return number_format((float) $value, 2, ',', ' ') . ' FCFA';
+            return number_format((float) $value, 2, ',', ' ').' FCFA';
         }
 
         return (string) $value;
@@ -1326,12 +1333,13 @@ class AccountingController extends Controller
             }
 
             if (str_starts_with($detail, '✅')) {
-                $lines[] = '✅ ' . $label . ' OK';
+                $lines[] = '✅ '.$label.' OK';
+
                 continue;
             }
 
             if (str_starts_with($detail, '⚠️')) {
-                $lines[] = '⚠️ ' . $label . ' différent';
+                $lines[] = '⚠️ '.$label.' différent';
             }
         }
 
@@ -1405,30 +1413,30 @@ class AccountingController extends Controller
         if ($httpStatus === 404) {
             $action = "Vérifier l'URL de l'endpoint OCR et la connectivité sortante serveur.";
         } elseif ($httpStatus === 401 || $httpStatus === 403) {
-            $action = "Vérifier la clé API OCR (droits, quota, activation).";
+            $action = 'Vérifier la clé API OCR (droits, quota, activation).';
         } elseif ($errorCode === 'UNSUPPORTED_MIME') {
-            $action = "Utiliser uniquement un fichier JPG, JPEG, PNG ou PDF lisible.";
+            $action = 'Utiliser uniquement un fichier JPG, JPEG, PNG ou PDF lisible.';
         } elseif ($errorCode === 'LOCAL_OCR_DISABLED') {
             $action = "Activer PADDLE_OCR_ENABLED dans l'environnement Laravel.";
         } elseif ($errorCode === 'LOCAL_OCR_RUNNER_NOT_FOUND') {
-            $action = "Vérifier le chemin PADDLE_OCR_RUNNER_PATH et la présence du script Python local.";
+            $action = 'Vérifier le chemin PADDLE_OCR_RUNNER_PATH et la présence du script Python local.';
         } elseif ($errorCode === 'PADDLE_OCR_IMPORT_ERROR') {
             $action = "Installer PaddleOCR et PaddlePaddle dans l'environnement Python configuré.";
         } elseif ($errorCode === 'PADDLE_OCR_RUNTIME_ERROR') {
-            $action = "Tester le runner local en CPU, puis vérifier la compatibilité GPU si nécessaire.";
+            $action = 'Tester le runner local en CPU, puis vérifier la compatibilité GPU si nécessaire.';
         } elseif ($errorCode === 'LOCAL_OCR_TIMEOUT') {
-            $action = "Augmenter PADDLE_OCR_TIMEOUT ou réduire la taille / le nombre de pages du document.";
+            $action = 'Augmenter PADDLE_OCR_TIMEOUT ou réduire la taille / le nombre de pages du document.';
         }
 
         return "=== ERREUR OCR ===\n"
-            . 'Type: ' . $reason . "\n"
-            . 'Code: ' . $errorCode . "\n"
-            . 'Message: ' . $message . "\n"
-            . 'Emplacement: ' . $location . "\n"
-            . 'Endpoint: ' . $endpoint . "\n"
-            . ($httpStatus ? ('HTTP Status: ' . $httpStatus . "\n") : '')
-            . 'Date: ' . now()->format('Y-m-d H:i:s') . "\n"
-            . 'Action recommandée: ' . $action . "\n";
+            .'Type: '.$reason."\n"
+            .'Code: '.$errorCode."\n"
+            .'Message: '.$message."\n"
+            .'Emplacement: '.$location."\n"
+            .'Endpoint: '.$endpoint."\n"
+            .($httpStatus ? ('HTTP Status: '.$httpStatus."\n") : '')
+            .'Date: '.now()->format('Y-m-d H:i:s')."\n"
+            .'Action recommandée: '.$action."\n";
     }
 
     public function report(Request $request)
@@ -1492,7 +1500,7 @@ class AccountingController extends Controller
 
             $bilanReference = strtoupper(Str::substr(hash('sha256', $referenceInput), 0, 16));
             $qrData = sprintf('BILAN|%s|%s|%s|%s|REF:%s', $companyName, $companySigle, $companyTaxId, $exerciseDate->format('Y'), $bilanReference);
-            $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' . urlencode($qrData);
+            $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='.urlencode($qrData);
         }
 
         return view('accounting.report', array_merge([
@@ -1521,7 +1529,7 @@ class AccountingController extends Controller
         return Pdf::setOptions(['isRemoteEnabled' => true])
             ->loadView('accounting.report-bilan-pdf', $payload)
             ->setPaper('a4', 'portrait')
-            ->download('bilan-' . ($payload['bilanReference'] ?? 'rapport') . '.pdf');
+            ->download('bilan-'.($payload['bilanReference'] ?? 'rapport').'.pdf');
     }
 
     public function viewBilanPdf(Request $request)
@@ -1531,7 +1539,7 @@ class AccountingController extends Controller
         return Pdf::setOptions(['isRemoteEnabled' => true])
             ->loadView('accounting.report-bilan-pdf', $payload)
             ->setPaper('a4', 'portrait')
-            ->stream('bilan-' . ($payload['bilanReference'] ?? 'rapport') . '.pdf');
+            ->stream('bilan-'.($payload['bilanReference'] ?? 'rapport').'.pdf');
     }
 
     public function showBilanPdfViewer(Request $request): View
@@ -1548,7 +1556,7 @@ class AccountingController extends Controller
         ]);
 
         return view('accounting.document-viewer', [
-            'documentName' => 'Bilan - ' . ($payload['exerciseYear'] ?? now()->format('Y')),
+            'documentName' => 'Bilan - '.($payload['exerciseYear'] ?? now()->format('Y')),
             'documentTypeLabel' => 'Rapport bilan (PDF généré)',
             'previewType' => 'pdf',
             'previewUrl' => route('accounting.report.bilan.view', $queryParams),
@@ -1564,14 +1572,14 @@ class AccountingController extends Controller
     private function formatFileSizeLabel(int $bytes): string
     {
         if ($bytes >= 1024 * 1024) {
-            return number_format($bytes / (1024 * 1024), 2, ',', ' ') . ' MB';
+            return number_format($bytes / (1024 * 1024), 2, ',', ' ').' MB';
         }
 
         if ($bytes >= 1024) {
-            return number_format($bytes / 1024, 1, ',', ' ') . ' KB';
+            return number_format($bytes / 1024, 1, ',', ' ').' KB';
         }
 
-        return $bytes . ' octets';
+        return $bytes.' octets';
     }
 
     private function buildReportPayload(Request $request, string $reportType = 'full'): array
@@ -1596,17 +1604,17 @@ class AccountingController extends Controller
         $companySigle = $user->company_sigle ?? '';
         $companyAddress = $user->address ?? '';
         $companyTaxId = $user->company_tax_id ?: $user->rccm;
-        
+
         // Convert logo to base64 for PDF rendering
         $companyLogo = null;
         if ($user->company_logo) {
-            $logoPath = storage_path('app/public/' . $user->company_logo);
+            $logoPath = storage_path('app/public/'.$user->company_logo);
             if (file_exists($logoPath)) {
                 $logoData = file_get_contents($logoPath);
                 $finfo = finfo_open(FILEINFO_MIME_TYPE);
                 $logoMime = finfo_file($finfo, $logoPath);
                 finfo_close($finfo);
-                $companyLogo = 'data:' . $logoMime . ';base64,' . base64_encode($logoData);
+                $companyLogo = 'data:'.$logoMime.';base64,'.base64_encode($logoData);
             }
         }
 
@@ -1630,7 +1638,7 @@ class AccountingController extends Controller
 
             $bilanReference = strtoupper(Str::substr(hash('sha256', $referenceInput), 0, 16));
             $qrData = sprintf('BILAN|%s|%s|%s|%s|REF:%s', $companyName, $companySigle, $companyTaxId, $exerciseDate->format('Y'), $bilanReference);
-            $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' . urlencode($qrData);
+            $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='.urlencode($qrData);
         }
 
         return array_merge([
@@ -1691,7 +1699,7 @@ class AccountingController extends Controller
 
             foreach (['debit_account', 'credit_account'] as $side) {
                 $account = $entry->{$side};
-                if (!isset($ledger[$account])) {
+                if (! isset($ledger[$account])) {
                     $ledger[$account] = ['debit' => 0, 'credit' => 0];
                 }
                 if ($side === 'debit_account') {
@@ -1812,8 +1820,8 @@ class AccountingController extends Controller
     public function documents()
     {
         $documents = AccountingDocument::with(['entries' => function ($query) {
-                $query->orderByDesc('id');
-            }])
+            $query->orderByDesc('id');
+        }])
             ->whereIn('user_id', $this->workspaceDataUserIds())
             ->orderByDesc('created_at')
             ->get();
@@ -1824,8 +1832,8 @@ class AccountingController extends Controller
     public function documentsComparison()
     {
         $documents = AccountingDocument::with(['entries' => function ($query) {
-                $query->orderByDesc('id');
-            }])
+            $query->orderByDesc('id');
+        }])
             ->whereIn('user_id', $this->workspaceDataUserIds())
             ->orderByDesc('created_at')
             ->get();
@@ -1873,8 +1881,8 @@ class AccountingController extends Controller
             }
         }
 
-        $ocrService = new OcrService();
-        $ocrPipeline = new OcrPipelineService();
+        $ocrService = new OcrService;
+        $ocrPipeline = new OcrPipelineService;
         $createdCount = 0;
         $duplicateCount = 0;
         $failedCount = 0;
@@ -1889,6 +1897,7 @@ class AccountingController extends Controller
 
             if ($existing) {
                 $duplicateCount++;
+
                 continue;
             }
 
@@ -2016,7 +2025,7 @@ class AccountingController extends Controller
             $messageParts[] = "{$pendingReviewCount} en revue manuelle";
         }
 
-        return redirect()->route('accounting.documents')->with('status', implode(' · ', $messageParts) . '.');
+        return redirect()->route('accounting.documents')->with('status', implode(' · ', $messageParts).'.');
     }
 
     /**
@@ -2040,8 +2049,8 @@ class AccountingController extends Controller
             abort(403);
         }
 
-        $ocrService = new OcrService();
-        $ocrPipeline = new OcrPipelineService();
+        $ocrService = new OcrService;
+        $ocrPipeline = new OcrPipelineService;
         $pipelineResult = $ocrPipeline->processStoredDocument($document->stored_path);
         $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
 
@@ -2141,7 +2150,7 @@ class AccountingController extends Controller
         TreasuryTransaction::query()
             ->where('user_id', $this->workspaceUserId())
             ->where('payment_module', 'accounting_document')
-            ->where('bank_reference', 'DOC-BANK-' . $document->id)
+            ->where('bank_reference', 'DOC-BANK-'.$document->id)
             ->delete();
 
         if ($document->stored_path) {
@@ -2181,7 +2190,7 @@ class AccountingController extends Controller
                 'date' => (string) ($data['invoice_date'] ?? now()->toDateString()),
                 'document_type' => $type,
                 'document_reference' => $data['invoice_number'] ?? null,
-                'description' => '[OCR] ' . ((string) ($data['partner'] ?? 'Document')) . ' - ' . ((string) ($data['invoice_number'] ?? 'Sans référence')),
+                'description' => '[OCR] '.((string) ($data['partner'] ?? 'Document')).' - '.((string) ($data['invoice_number'] ?? 'Sans référence')),
                 'debit_account' => $debitAccount,
                 'credit_account' => $creditAccount,
                 'amount' => $amount,
@@ -2242,8 +2251,7 @@ class AccountingController extends Controller
         array $extracted,
         array $richExtracted = [],
         ?string $documentType = null
-    ): array
-    {
+    ): array {
         $invoiceDate = $this->normalizeOcrDate((string) ($extracted['date'] ?? ($richExtracted['primary']['invoice_date'] ?? '')));
         if ($invoiceDate === null) {
             $invoiceDate = $this->normalizeOcrDate((string) ($this->extractByPatterns(
@@ -2353,7 +2361,7 @@ class AccountingController extends Controller
 
         foreach ($lines as $index => $line) {
             $candidate = trim((string) $line);
-            if ($candidate === '' || ! preg_match('/(?:' . $labelRegex . ')/iu', $candidate)) {
+            if ($candidate === '' || ! preg_match('/(?:'.$labelRegex.')/iu', $candidate)) {
                 continue;
             }
 
@@ -2452,7 +2460,7 @@ class AccountingController extends Controller
             }
         }
 
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             return null;
         }
 
@@ -2499,14 +2507,14 @@ class AccountingController extends Controller
 
     private function extractFromTextFile(string $path): array
     {
-        $fullPath = storage_path('app/public/' . ltrim($path, '/\\'));
+        $fullPath = storage_path('app/public/'.ltrim($path, '/\\'));
 
-        if (!file_exists($fullPath) || !is_readable($fullPath)) {
+        if (! file_exists($fullPath) || ! is_readable($fullPath)) {
             return [];
         }
 
         $content = file_get_contents($fullPath);
-        if (!is_string($content) || trim($content) === '') {
+        if (! is_string($content) || trim($content) === '') {
             return [];
         }
 
@@ -2521,7 +2529,7 @@ class AccountingController extends Controller
             'data' => $this->extractFromTextFile($storedPath ?? $filename),
             'confidence' => 0,
         ];
-        
+
     }
 
     /**

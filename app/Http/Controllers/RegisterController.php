@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Mail\AccountCreatedMail;
+use App\Models\BillingPlan;
+use App\Models\BillingSubscription;
 use App\Models\EnterpriseLicense;
+use App\Models\KycDocument;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -108,7 +111,52 @@ class RegisterController extends Controller
                 ...$validated,
                 'password' => Hash::make($validated['password']),
                 'enterprise_license_id' => $enterpriseLicenseId,
+                'kyc_status' => 'submitted',
+                'kyc_submitted_at' => now(),
             ]);
+
+            // Chaque nouvel inscrit dispose de sa propre donnée d'abonnement.
+            $freePlan = BillingPlan::query()->where('slug', 'free-trial')->first();
+            if ($freePlan !== null) {
+                BillingSubscription::query()->create([
+                    'user_id' => $created->id,
+                    'billing_plan_id' => $freePlan->id,
+                    'status' => 'active',
+                    'starts_at' => now(),
+                    'next_billing_at' => now(),
+                    'auto_renew' => true,
+                    'meta' => [
+                        'source' => 'registration',
+                        'requires_payment_for_accounting' => true,
+                    ],
+                ]);
+            }
+
+            $kycDocuments = [];
+            if (! empty($validated['trade_register_file'])) {
+                $kycDocuments[] = [
+                    'document_type' => 'trade_register',
+                    'stored_path' => (string) $validated['trade_register_file'],
+                    'original_name' => 'Registre de commerce',
+                ];
+            }
+            if (! empty($validated['company_logo'])) {
+                $kycDocuments[] = [
+                    'document_type' => 'company_logo',
+                    'stored_path' => (string) $validated['company_logo'],
+                    'original_name' => 'Logo entreprise',
+                ];
+            }
+            foreach ($kycDocuments as $doc) {
+                KycDocument::query()->create([
+                    'user_id' => $created->id,
+                    'document_type' => $doc['document_type'],
+                    'stored_path' => $doc['stored_path'],
+                    'original_name' => $doc['original_name'],
+                    'status' => 'pending',
+                    'submitted_at' => now(),
+                ]);
+            }
 
             if ($license !== null) {
                 $license->syncPrimaryWorkspaceUser();
@@ -134,7 +182,7 @@ class RegisterController extends Controller
         }
 
         return redirect()
-            ->route('profile.company.fird')
-            ->with('status', 'Inscription réussie. Merci de compléter la fiche entreprise (FIRD).');
+            ->route('payments.sandbox')
+            ->with('status', 'Inscription réussie. Pour activer la fonctionnalité Comptabilité, veuillez effectuer le paiement de l’abonnement Enterprise Premium (15 000 FCFA).');
     }
 }

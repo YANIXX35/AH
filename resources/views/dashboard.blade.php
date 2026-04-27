@@ -15,6 +15,22 @@
         margin-left: auto;
         margin-right: auto;
     }
+    .dashboard-ai-live-card {
+        border: 1px solid rgba(59, 125, 221, .2);
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    }
+    .dashboard-ai-live-text {
+        font-size: .92rem;
+        line-height: 1.45;
+        white-space: pre-wrap;
+    }
+    .dashboard-ai-inco-item + .dashboard-ai-inco-item {
+        border-top: 1px solid rgba(0, 0, 0, .06);
+    }
+    .dashboard-ai-refresh-status {
+        font-size: .78rem;
+        color: #6c757d;
+    }
 </style>
 @endpush
 
@@ -49,8 +65,52 @@
                 - jusqu'au {{ auth()->user()->premium_ends_at->format('d/m/Y') }}
             @endif
         </span>
-        <a href="{{ route('accounting') }}" class="btn btn-outline-primary btn-sm">Comptabilité</a>
+        <a href="{{ ($u && !$u->is_platform_admin && !($u->is_accountant ?? false) && !$dashPremiumActive) ? route('payments.sandbox') : route('accounting') }}" class="btn btn-outline-primary btn-sm">Comptabilité</a>
         <a href="{{ route('treasury.tracking') }}" class="btn btn-outline-success btn-sm">Trésorerie</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-xl-7 d-flex">
+        <div class="card dashboard-ai-live-card shadow-sm w-100">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-0">IA en temps reel - recommandations</h5>
+                    <small class="text-muted">Analyse comptabilite + tresorerie pour booster le chiffre d'affaires</small>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-primary">LIVE</span>
+                    <div id="dashboardAiRefreshStatus" class="dashboard-ai-refresh-status mt-1">Auto-refresh: 30s</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="dashboardAiLiveText" class="dashboard-ai-live-text">{{ $aiLiveInsight ?? "L'IA prepare une recommandation..." }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-xl-5 d-flex">
+        <div class="card shadow-sm w-100">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="card-title mb-0">Incoherences detectees</h5>
+                <small class="text-muted">Comptabilite et tresorerie</small>
+            </div>
+            <div class="card-body py-1" id="dashboardAiIncoBody">
+                @forelse(($aiInconsistencies ?? []) as $item)
+                    <div class="dashboard-ai-inco-item py-3 d-flex justify-content-between gap-2">
+                        <div>
+                            <div class="fw-medium">{{ $item['title'] ?? 'Incoherence' }}</div>
+                            <div class="small text-muted">{{ $item['detail'] ?? '' }}</div>
+                            <div class="small mt-1"><strong>Proposition :</strong> {{ $item['proposal'] ?? '' }}</div>
+                        </div>
+                        <span class="badge bg-{{ $item['severity'] ?? 'secondary' }} align-self-start">
+                            {{ strtoupper((string) ($item['severity'] ?? 'n/a')) }}
+                        </span>
+                    </div>
+                @empty
+                    <p class="text-muted my-3">Aucune incoherence detectee.</p>
+                @endforelse
+            </div>
+        </div>
     </div>
 </div>
 
@@ -382,6 +442,90 @@
         const ocrColors = @json($ocrDonutColors ?? []);
         const turnoverLabels = @json($turnoverChartLabels ?? []);
         const turnoverData = @json($turnoverChartData ?? []);
+        const aiEndpoint = @json(route('dashboard.ai.live'));
+        const aiLiveText = document.getElementById('dashboardAiLiveText');
+        const aiIncoBody = document.getElementById('dashboardAiIncoBody');
+        const aiRefreshStatus = document.getElementById('dashboardAiRefreshStatus');
+        let aiCountdown = 30;
+        let aiRefreshing = false;
+
+        const severityBadgeClass = (severity) => {
+            if (severity === 'danger') return 'danger';
+            if (severity === 'warning') return 'warning';
+            if (severity === 'success') return 'success';
+            return 'secondary';
+        };
+
+        const escapeHtml = (value) => String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+        const renderAiStatus = (text) => {
+            if (!aiRefreshStatus) return;
+            aiRefreshStatus.textContent = text || `Auto-refresh: ${aiCountdown}s`;
+        };
+
+        const animateAiText = (text) => {
+            if (!aiLiveText) return;
+            const content = String(text || '');
+            let i = 0;
+            aiLiveText.textContent = '';
+            const timer = window.setInterval(() => {
+                i += 6;
+                aiLiveText.textContent = content.slice(0, i);
+                if (i >= content.length) {
+                    window.clearInterval(timer);
+                }
+            }, 14);
+        };
+
+        const renderInconsistencies = (items) => {
+            if (!aiIncoBody) return;
+            if (!Array.isArray(items) || items.length === 0) {
+                aiIncoBody.innerHTML = '<p class="text-muted my-3">Aucune incoherence detectee.</p>';
+                return;
+            }
+
+            aiIncoBody.innerHTML = items.map((item) => {
+                const severity = String(item.severity || 'secondary');
+                return '' +
+                    '<div class="dashboard-ai-inco-item py-3 d-flex justify-content-between gap-2">' +
+                        '<div>' +
+                            '<div class="fw-medium">' + escapeHtml(item.title || 'Incoherence') + '</div>' +
+                            '<div class="small text-muted">' + escapeHtml(item.detail || '') + '</div>' +
+                            '<div class="small mt-1"><strong>Proposition :</strong> ' + escapeHtml(item.proposal || '') + '</div>' +
+                        '</div>' +
+                        '<span class="badge bg-' + severityBadgeClass(severity) + ' align-self-start">' + escapeHtml(severity.toUpperCase()) + '</span>' +
+                    '</div>';
+            }).join('');
+        };
+
+        const refreshAiPanel = () => {
+            if (!aiEndpoint || aiRefreshing) return;
+            aiRefreshing = true;
+            renderAiStatus('Mise a jour IA...');
+            fetch(aiEndpoint, { cache: 'no-store', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                .then((response) => response.json())
+                .then((json) => {
+                    if (!json || !json.ok) throw new Error('ai live unavailable');
+                    animateAiText(json.live_insight || '');
+                    renderInconsistencies(json.inconsistencies || []);
+                    aiCountdown = 30;
+                    renderAiStatus();
+                })
+                .catch(() => {
+                    if (aiLiveText) {
+                        aiLiveText.textContent = "L'IA live est momentanement indisponible.";
+                    }
+                    renderAiStatus('Auto-refresh: echec');
+                })
+                .finally(() => {
+                    aiRefreshing = false;
+                });
+        };
 
         const lineEl = document.getElementById('dashboardTreasuryLine');
         if (lineEl && typeof Chart !== 'undefined') {
@@ -553,6 +697,19 @@
                     },
                 },
             });
+        }
+
+        if (aiLiveText || aiIncoBody) {
+            refreshAiPanel();
+            window.setInterval(() => {
+                if (aiCountdown <= 1) {
+                    refreshAiPanel();
+                    aiCountdown = 30;
+                    return;
+                }
+                aiCountdown -= 1;
+                renderAiStatus();
+            }, 1000);
         }
     });
 </script>

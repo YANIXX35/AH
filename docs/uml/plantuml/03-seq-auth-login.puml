@@ -1,0 +1,37 @@
+@startuml seq_auth_login
+title Séquence — Connexion (login) + contrôles (reCAPTCHA / suspension / FIRD)
+
+actor Visiteur as V
+participant "AuthController" as AC
+participant "reCAPTCHA" as RC
+participant "Auth (session)" as AUTH
+database "users" as UDB
+
+V -> AC : POST /login (email, password, remember, g-recaptcha-response)
+AC -> RC : verifyRecaptcha(token, ip)
+
+alt reCAPTCHA invalide
+  AC --> V : Erreur (login.email)\nValidation reCAPTCHA échouée
+else reCAPTCHA OK
+  AC -> AUTH : Auth::attempt(email, password, remember)
+  alt identifiants invalides
+    AC --> V : Erreur (login.email)\nIdentifiants invalides
+  else authentifié
+    AC -> AUTH : session()->regenerate()
+    AC -> UDB : Charger User (request->user)
+    alt compte suspendu
+      AC -> AUTH : logout + invalidate session
+      AC --> V : Erreur (login.email)\nCompte suspendu
+    else compte actif
+      AC -> UDB : Vérifier champs FIRD (company_name, tax_id, fiscal_year_end_date, main_activity_description)
+      alt FIRD incomplet (hors admin/comptable)
+        AC --> V : Redirect /profile/entreprise/fird\n(status: compléter FIRD)
+      else OK
+        AC --> V : Redirect intended /dashboard
+      end
+    end
+  end
+end
+
+@enduml
+

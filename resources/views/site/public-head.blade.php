@@ -4,6 +4,8 @@
 @endphp
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" href="{{ asset('images/sitiam.png') }}">
+<link rel="apple-touch-icon" href="{{ asset('images/sitiam.png') }}">
 @if($pageDescription !== '')
     <meta name="description" content="{{ $pageDescription }}">
 @endif

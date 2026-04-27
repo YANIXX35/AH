@@ -2,17 +2,19 @@
 
 namespace App\Services;
 
+use App\Contracts\FinancialRatioServiceContract;
 use App\Models\AccountingEntry;
 use App\Models\TreasuryTransaction;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 /**
  * Ratios financiers PME à partir des écritures (plan OHADA simplifié) et de la trésorerie.
  * Les commentaires d’interprétation sont volontairement prudents (outil d’aide à la décision).
  */
-class SmeFinancialRatioService
+class SmeFinancialRatioService implements FinancialRatioServiceContract
 {
     /**
      * @return array<string, mixed>
@@ -145,8 +147,7 @@ class SmeFinancialRatioService
     /**
      * Classement automatique solvable / finançable (règles indicatives, même logique que scores & verdicts).
      *
-     * @param array<string, mixed> $analysis
-     *
+     * @param  array<string, mixed>  $analysis
      * @return array<string, mixed>
      */
     public function evaluateClassementFinancier(array $analysis): array
@@ -263,7 +264,7 @@ class SmeFinancialRatioService
             $lignes[] = [
                 'user' => $user,
                 'classement' => $classement,
-                'synthese_fiabilisee' => \Illuminate\Support\Arr::get($analysis, 'scores.global.valeur_fiabilisee'),
+                'synthese_fiabilisee' => Arr::get($analysis, 'scores.global.valeur_fiabilisee'),
                 'entries_count' => (int) ($analysis['entries_count'] ?? 0),
             ];
         }
@@ -335,6 +336,7 @@ class SmeFinancialRatioService
                     }
                 }
             }
+
             return $total;
         };
 
@@ -771,8 +773,7 @@ class SmeFinancialRatioService
     /**
      * Scores 0–100 (indicatifs) alignés sur les ratios et une pénalité liée à la qualité des données.
      *
-     * @param list<array{ niveau: string, titre: string, texte: string }> $qualiteDonnees
-     *
+     * @param  list<array{ niveau: string, titre: string, texte: string }>  $qualiteDonnees
      * @return array<string, mixed>
      */
     private function buildScores(
@@ -1043,8 +1044,7 @@ class SmeFinancialRatioService
     }
 
     /**
-     * @param list<array{ niveau: string, titre: string, texte: string }> $qualiteDonnees
-     *
+     * @param  list<array{ niveau: string, titre: string, texte: string }>  $qualiteDonnees
      * @return array{ pourcent: float, motif: string }
      */
     private function calculerIndiceFiabiliteDonnees(int $entriesCount, array $qualiteDonnees): array

@@ -3,6 +3,39 @@
 @section('title', 'Profil | Sitiame Capitale')
 @section('page_title', 'Profil & paramètres')
 
+@push('styles')
+<style>
+    .profile-locale-field {
+        min-height: calc(1.5em + .75rem + 2px);
+        padding: .375rem .75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+    }
+    .profile-locale-field .gtranslate_wrapper {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+    }
+    .profile-locale-field .gt_selector,
+    .profile-locale-field .gtranslate_wrapper select {
+        width: 100%;
+        margin: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        min-height: 30px;
+        font-size: .95rem;
+        color: #495057;
+    }
+    .gt_float_switcher {
+        display: none !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid p-0">
     <div class="row g-3">
@@ -25,9 +58,9 @@
             </div>
             <div class="card border-primary border-opacity-25">
                 <div class="card-body">
-                    <h6 class="card-title mb-2">Fiche entreprise (FIRD)</h6>
-                    <p class="small text-muted mb-3">Après inscription, complétez l’identification légale, les exercices, les registres, les bancaires — comme sur une fiche administrative.</p>
-                    <a href="{{ route('profile.company.fird') }}" class="btn btn-primary btn-sm w-100">Ouvrir la fiche entreprise</a>
+                    <h6 class="card-title mb-2">Référentiel entreprise complet</h6>
+                    <p class="small text-muted mb-3">Tous les champs liés à l’entreprise sont disponibles dans cette page Paramètres. La fiche FIRD avancée reste accessible pour les données expertes.</p>
+                    <a href="{{ route('profile.company.fird') }}" class="btn btn-outline-primary btn-sm w-100">Ouvrir aussi la fiche FIRD avancée</a>
                 </div>
             </div>
             @if($user->canManageEnterpriseTeam())
@@ -98,37 +131,43 @@
                                 Rappel : l'abonnement Premium est mensuel, un paiement est attendu à chaque échéance.
                             </p>
                         @else
-                            <p class="small text-muted mb-1">Version : <strong>Gratuite</strong></p>
+                            <p class="small text-muted mb-1">Version : <strong>Gratuit (période d'essai)</strong></p>
                             <p class="small mb-0 text-muted">
-                                Passez en Premium après configuration du moyen de paiement définitif.
+                                Passez en Enterprise Premium après configuration du moyen de paiement définitif.
                             </p>
                         @endif
 
                         <hr>
-                        <div class="d-grid mb-3">
+                        <div class="d-grid">
                             <a href="{{ route('subscriptions.history') }}" class="btn btn-sm btn-outline-secondary">Voir l'historique des abonnements</a>
                         </div>
-                        <h6 class="mb-2">Simulation abonnement (temporaire)</h6>
-                        <form method="POST" action="{{ route('profile.subscription.simulate') }}" class="row g-2">
-                            @csrf
-                            <div class="col-12">
-                                <select name="plan_type" class="form-select form-select-sm">
-                                    <option value="free">Version gratuite</option>
-                                    <option value="trial">Essai gratuit</option>
-                                    <option value="premium">Premium actif</option>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <input type="number" name="duration_days" min="1" max="365" value="30" class="form-control form-control-sm" placeholder="Durée en jours">
-                                <small class="text-muted">30 jours = cycle mensuel.</small>
-                            </div>
-                            <div class="col-12 d-grid">
-                                <button type="submit" class="btn btn-sm btn-outline-primary">Appliquer la simulation</button>
-                            </div>
-                        </form>
                     @endif
                 </div>
             </div>
+            @if(! $user->is_platform_admin && ! ($user->is_accountant ?? false))
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Conformité KYC/KYB</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">
+                            Statut :
+                            <span class="badge bg-{{ ($user->kyc_status ?? 'pending') === 'approved' ? 'success' : (($user->kyc_status ?? 'pending') === 'rejected' ? 'danger' : 'warning text-dark') }}">
+                                {{ strtoupper((string) ($user->kyc_status ?? 'pending')) }}
+                            </span>
+                        </p>
+                        @if($user->kyc_rejection_reason)
+                            <div class="alert alert-danger small">{{ $user->kyc_rejection_reason }}</div>
+                        @endif
+                        <form method="POST" action="{{ route('compliance.kyc.submit') }}" enctype="multipart/form-data">
+                            @csrf
+                            <label class="form-label">Pièces KYC/KYB (PDF/JPG/PNG)</label>
+                            <input type="file" name="documents[]" class="form-control mb-2" accept=".pdf,.jpg,.jpeg,.png" multiple required>
+                            <button class="btn btn-sm btn-outline-primary">Soumettre à l’administrateur</button>
+                        </form>
+                    </div>
+                </div>
+            @endif
         </div>
 
         <div class="col-xl-8 col-md-7">
@@ -187,6 +226,16 @@
                                 @error('company_tax_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label">Numéro RCCM / Registre</label>
+                                <input type="text" name="rccm" value="{{ old('rccm', $user->rccm) }}" class="form-control @error('rccm') is-invalid @enderror">
+                                @error('rccm')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Désignation légale de l’entreprise</label>
+                                <input type="text" name="company_designation" value="{{ old('company_designation', $user->company_designation) }}" class="form-control @error('company_designation') is-invalid @enderror" placeholder="Ex: Société à responsabilité limitée au capital de ...">
+                                @error('company_designation')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label">Secteur</label>
                                 <input type="text" name="sector" value="{{ old('sector', $user->sector) }}" class="form-control @error('sector') is-invalid @enderror">
                                 @error('sector')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -202,6 +251,26 @@
                                 @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label">Code postal</label>
+                                <input type="text" name="postal_code" value="{{ old('postal_code', $user->postal_code) }}" class="form-control @error('postal_code') is-invalid @enderror">
+                                @error('postal_code')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Boîte postale</label>
+                                <input type="text" name="po_box" value="{{ old('po_box', $user->po_box) }}" class="form-control @error('po_box') is-invalid @enderror">
+                                @error('po_box')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Adresse géographique complète</label>
+                                <textarea name="full_geographic_address" rows="2" class="form-control @error('full_geographic_address') is-invalid @enderror" placeholder="Commune, quartier, rue, repère...">{{ old('full_geographic_address', $user->full_geographic_address) }}</textarea>
+                                @error('full_geographic_address')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Activité principale</label>
+                                <textarea name="main_activity_description" rows="2" class="form-control @error('main_activity_description') is-invalid @enderror" placeholder="Décrivez brièvement votre activité">{{ old('main_activity_description', $user->main_activity_description) }}</textarea>
+                                @error('main_activity_description')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6">
                                 @include('partials.file-input-camera', [
                                     'name' => 'company_logo',
                                     'id' => 'profile_company_logo',
@@ -209,6 +278,16 @@
                                     'accept' => 'image/jpeg,image/png,image/webp,image/gif',
                                     'capture' => 'environment',
                                     'help' => 'Logo ou photo du document : appareil arrière utile pour scanner une carte de visite ou un logo imprimé. Max. 5 Mo.',
+                                ])
+                            </div>
+                            <div class="col-md-6">
+                                @include('partials.file-input-camera', [
+                                    'name' => 'trade_register',
+                                    'id' => 'profile_trade_register',
+                                    'label' => 'Registre de commerce',
+                                    'accept' => 'application/pdf,image/jpeg,image/png,image/webp',
+                                    'capture' => 'environment',
+                                    'help' => 'Fichier légal entreprise (PDF/JPG/PNG/WEBP) — max. 5 Mo.',
                                 ])
                             </div>
                             @if($user->company_logo)
@@ -219,6 +298,15 @@
                                     </div>
                                 </div>
                             @endif
+                            @if($user->trade_register_file)
+                                <div class="col-md-6">
+                                    <label class="form-label">Registre actuel</label>
+                                    <div class="border rounded p-2 d-flex align-items-center justify-content-between gap-2">
+                                        <span class="small text-muted text-truncate">{{ basename((string) $user->trade_register_file) }}</span>
+                                        <a href="{{ asset('storage/' . $user->trade_register_file) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Voir</a>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
                         <hr class="my-4">
@@ -226,10 +314,11 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">Langue</label>
-                                <select name="locale" class="form-select @error('locale') is-invalid @enderror">
-                                    <option value="fr" {{ old('locale', $user->locale ?? 'fr') === 'fr' ? 'selected' : '' }}>Français</option>
-                                    <option value="en" {{ old('locale', $user->locale ?? 'fr') === 'en' ? 'selected' : '' }}>Anglais</option>
-                                </select>
+                                <div class="form-control profile-locale-field">
+                                    <div class="gtranslate_wrapper w-100"></div>
+                                </div>
+                                <small class="text-muted">Choisissez la langue directement dans le menu déroulant.</small>
+                                <input type="hidden" id="profile-locale-hidden" name="locale" value="{{ old('locale', $user->locale ?? app()->getLocale() ?? 'fr') }}">
                                 @error('locale')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
@@ -292,3 +381,59 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    const profileLocaleHidden = document.getElementById('profile-locale-hidden');
+    const profileUpdateForm = document.querySelector('form[action="{{ route('profile.update') }}"]');
+
+    function syncLocaleFromGTranslateCombo() {
+        const combo = document.querySelector('.profile-locale-field .gt_selector, .profile-locale-field .gtranslate_wrapper select');
+        if (!combo || !profileLocaleHidden) {
+            return false;
+        }
+
+        const applyValue = function () {
+            if (!combo.value) {
+                return;
+            }
+            profileLocaleHidden.value = combo.value;
+            localStorage.setItem('preferred_locale', combo.value);
+            document.cookie = "googtrans=/fr/" + combo.value + ";path=/";
+            document.cookie = "googtrans=/auto/" + combo.value + ";path=/";
+        };
+
+        combo.addEventListener('change', function () {
+            applyValue();
+        });
+
+        // Préselection selon la langue stockée dans le profil/session.
+        if (profileLocaleHidden.value) {
+            combo.value = profileLocaleHidden.value;
+            combo.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+            applyValue();
+        }
+
+        return true;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 40;
+    const interval = window.setInterval(function () {
+        attempts += 1;
+        if (syncLocaleFromGTranslateCombo() || attempts >= maxAttempts) {
+            window.clearInterval(interval);
+        }
+    }, 200);
+
+    if (profileUpdateForm) {
+        profileUpdateForm.addEventListener('submit', function () {
+            const combo = document.querySelector('.profile-locale-field .gt_selector, .profile-locale-field .gtranslate_wrapper select');
+            if (combo && combo.value && profileLocaleHidden) {
+                profileLocaleHidden.value = combo.value;
+            }
+        });
+    }
+</script>
+@endpush

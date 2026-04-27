@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-04-23T00:00:00.000Z" agent="Cursor" version="24.7.17" type="device" compressed="false">
+    <diagram id="rubrique-02-http" name="02 Entree HTTP Laravel">
+        <mxGraphModel dx="520" dy="409" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="Rubrique 02 - Entree HTTP Laravel" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=22;fontStyle=1;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="20" width="500" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="Chemin d'une requete depuis les routes jusqu'aux controles d'acces." style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=12;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="52" width="520" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="Flux HTTP" style="swimlane;horizontal=0;rounded=1;fillColor=#ffe599;strokeColor=#bf9000;strokeWidth=3;fontStyle=1;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="100" width="1600" height="500" as="geometry">
+                        <mxRectangle x="40" y="100" width="40" height="90" as="alternateBounds"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="11" value="Routes principales&#10;ref: routes/web.php" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffaf0;strokeColor=#bf9000;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="90" y="200" width="210" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="Middlewares web&#10;refs: EnsureAccountNotSuspended, SanitizeClientWorkspaceSession, EnforceAccountantPortalPolicy, LogMenuNavigation, AttachRequestContext" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffaf0;strokeColor=#bf9000;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="180" width="330" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="Limitation de debit&#10;refs: auth-sensitive, ocr-intensive, investor-actions, finance-write, stripe-webhook" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffaf0;strokeColor=#bf9000;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="760" y="180" width="270" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="Controles d'acces&#10;refs: auth, guest, accountant, platform.admin, premium.accounting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffaf0;strokeColor=#bf9000;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="1100" y="190" width="260" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="Dispatch vers les controleurs&#10;selon domaine et role" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffaf0;strokeColor=#bf9000;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="1430" y="200" width="170" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="" style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#4d4d4d;" parent="1" source="11" target="12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="" style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#4d4d4d;" parent="1" source="12" target="13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="" style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#4d4d4d;" parent="1" source="13" target="14" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="" style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#4d4d4d;" parent="1" source="14" target="15" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

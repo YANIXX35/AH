@@ -4,11 +4,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Réinitialiser mot de passe</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/sitiam.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/sitiam.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-slate-50">
 <div class="mx-auto max-w-md px-4 py-12">
     <div class="rounded-2xl bg-white p-6 shadow">
+        <div class="mb-5 flex justify-center">
+            <a href="{{ route('home') }}" class="inline-flex items-center gap-2">
+                <img src="{{ asset('images/sitiam.png') }}" alt="Logo Sitiame Capital" class="h-12 w-auto">
+            </a>
+        </div>
         <h1 class="text-2xl font-bold text-slate-900 mb-2">Réinitialiser le mot de passe</h1>
         <p class="text-sm text-slate-600 mb-6">Saisissez l’e-mail, le code OTP reçu, puis votre nouveau mot de passe.</p>
 

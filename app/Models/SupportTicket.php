@@ -17,6 +17,8 @@ class SupportTicket extends Model
 
     protected $fillable = [
         'user_id',
+        'assigned_to_user_id',
+        'assigned_by_user_id',
         'subject',
         'status',
     ];
@@ -24,6 +26,16 @@ class SupportTicket extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to_user_id');
+    }
+
+    public function assignedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_by_user_id');
     }
 
     public function messages(): HasMany

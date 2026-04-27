@@ -4,13 +4,40 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Connexion</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/sitiam.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/sitiam.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @if(config('services.recaptcha.site_key'))
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     @endif
+    <style>
+        .app-preloader{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.96);transition:opacity .25s ease,visibility .25s ease}
+        .app-preloader.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+        .app-preloader-inner{position:relative;display:inline-flex;align-items:center;justify-content:center;width:230px;height:230px}
+        .app-preloader-logo{width:160px;max-width:44vw;height:auto;position:relative;z-index:3;filter:drop-shadow(0 0 14px rgba(255,184,0,.45)) drop-shadow(0 0 24px rgba(0,45,173,.35));animation:pulseScale 1.8s ease-in-out infinite}
+        .app-preloader-glow{position:absolute;border-radius:999px;pointer-events:none}
+        .app-preloader-glow-ring-1{width:210px;height:210px;border:2px solid rgba(255,190,11,.35);box-shadow:0 0 26px rgba(255,190,11,.25),inset 0 0 20px rgba(255,190,11,.15);animation:glowRotateGold 3.4s linear infinite}
+        .app-preloader-glow-ring-2{width:186px;height:186px;border:2px solid rgba(24,72,214,.35);box-shadow:0 0 26px rgba(24,72,214,.25),inset 0 0 20px rgba(24,72,214,.15);animation:glowRotateBlue 2.7s linear infinite}
+        .app-preloader-glow-halo{width:150px;height:150px;background:radial-gradient(circle, rgba(255,196,0,.28) 0%, rgba(0,45,173,.22) 45%, rgba(255,255,255,0) 72%);filter:blur(2px);animation:haloPulse 2.2s ease-in-out infinite}
+        .app-preloader-spinner{position:absolute;bottom:8px;width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#f59f00;border-radius:50%;z-index:4;animation:spin 1s linear infinite}
+        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes pulseScale{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.03);opacity:.92}}
+        @keyframes glowRotateGold{0%{transform:rotate(0deg) scale(1);opacity:.65}50%{transform:rotate(180deg) scale(1.02);opacity:.95}100%{transform:rotate(360deg) scale(1);opacity:.65}}
+        @keyframes glowRotateBlue{0%{transform:rotate(360deg) scale(1);opacity:.55}50%{transform:rotate(180deg) scale(.98);opacity:.9}100%{transform:rotate(0deg) scale(1);opacity:.55}}
+        @keyframes haloPulse{0%,100%{transform:scale(.95);opacity:.7}50%{transform:scale(1.08);opacity:1}}
+    </style>
 </head>
 <body class="min-h-screen bg-white">
+    <div id="appPreloader" class="app-preloader" aria-live="polite" aria-label="Chargement en cours">
+        <div class="app-preloader-inner">
+            <span class="app-preloader-glow app-preloader-glow-ring-1"></span>
+            <span class="app-preloader-glow app-preloader-glow-ring-2"></span>
+            <span class="app-preloader-glow app-preloader-glow-halo"></span>
+            <img src="{{ asset('images/sitiam.png') }}" alt="Sitiame Capital" class="app-preloader-logo">
+            <div class="app-preloader-spinner" aria-hidden="true"></div>
+        </div>
+    </div>
     <div class="flex min-h-screen">
         <!-- Left Side - Branding -->
         <div class="hidden w-2/5 overflow-hidden lg:flex flex-col justify-between relative">
@@ -23,8 +50,8 @@
                     </div>
                 </a>
                 <div class="space-y-4">
-                    <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
-                        <i class="fas fa-cube text-white text-3xl"></i>
+                    <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm p-2">
+                        <img src="{{ asset('images/sitiam.png') }}" alt="Logo Sitiame Capital" class="h-full w-auto">
                     </div>
                     <h2 class="text-4xl font-bold">Sitiame Capitale</h2>
                     <p class="text-white/90 text-lg leading-relaxed">Accédez à votre espace professionnel sécurisé. Une plateforme moderne et performante pour gérer vos activités.</p>
@@ -51,6 +78,9 @@
             <div class="w-full max-w-md space-y-8">
                 <!-- Header -->
                 <div class="text-center lg:text-left">
+                    <div class="mb-5 flex justify-center lg:justify-start">
+                        <img src="{{ asset('images/sitiam.png') }}" alt="Logo Sitiame Capital" class="h-12 w-auto">
+                    </div>
                     <p class="text-sm font-medium text-orange-600 uppercase tracking-[0.3em]">Veuillez entrer vos identifiants</p>
                     <h1 class="mt-4 text-4xl font-bold text-slate-900">Bienvenue</h1>
                 </div>
@@ -82,10 +112,13 @@
                     </div>
 
                     <!-- Remember & Forgot Password -->
-                    <div class="flex items-center justify-between">
-                        <label class="flex items-center gap-2 text-sm text-slate-600">
-                            <input type="checkbox" name="remember" value="1" @checked(old('remember')) class="rounded border-orange-300 text-orange-500 focus:ring-orange-500" />
-                            <span>Se souvenir de moi</span>
+                    <div class="flex items-center justify-between gap-4">
+                        <label class="flex items-start gap-2 text-sm text-slate-600">
+                            <input type="checkbox" name="remember" value="1" @checked(old('remember')) class="mt-0.5 rounded border-orange-300 text-orange-500 focus:ring-orange-500" />
+                            <span>
+                                <span class="block font-medium text-slate-700">Se souvenir de moi (30 jours)</span>
+                                <span class="block text-xs text-amber-700">A utiliser uniquement sur un appareil personnel.</span>
+                            </span>
                         </label>
                         <a href="{{ route('password.request') }}" class="text-sm font-medium text-orange-600 hover:text-orange-700 transition">Mot de passe oublié ?</a>
                     </div>
@@ -147,6 +180,30 @@
             </div>
         </div>
     </div>
+    <script>
+        (function () {
+            var preloaderStartAt = Date.now();
+            var preloaderMinimumMs = 3000;
+            var preloaderHidden = false;
+            var hidePreloader = function () {
+                if (preloaderHidden) return;
+                preloaderHidden = true;
+                var loader = document.getElementById('appPreloader');
+                if (!loader) return;
+                loader.classList.add('is-hidden');
+                window.setTimeout(function () {
+                    if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+                }, 320);
+            };
+            var hideWhenReady = function () {
+                var elapsed = Date.now() - preloaderStartAt;
+                var remaining = Math.max(0, preloaderMinimumMs - elapsed);
+                window.setTimeout(hidePreloader, remaining);
+            };
+            window.addEventListener('load', hideWhenReady);
+            window.setTimeout(hidePreloader, 8000);
+        })();
+    </script>
     <script>
         (function () {
             const password = document.getElementById('password');

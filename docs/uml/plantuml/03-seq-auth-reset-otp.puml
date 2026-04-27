@@ -1,0 +1,58 @@
+@startuml seq_auth_password_reset_otp
+title Séquence — Réinitialisation mot de passe (OTP)
+
+actor Utilisateur as U
+participant "AuthController" as AC
+database "password_reset_otps" as OTP
+participant "Mail (PasswordResetOtpMail)" as MAIL1
+participant "Mail (PasswordResetConfirmedMail)" as MAIL2
+database "users" as UDB
+
+U -> AC : POST /forgot-password (email)
+AC -> UDB : Rechercher User par email
+
+alt email inconnu
+  AC --> U : Redirect /reset-password?email=...\n(status: "Si l'adresse existe...")
+else email connu
+  AC -> OTP : Vérifier cooldown (dernier OTP < 60s ?)
+  alt cooldown actif
+    AC --> U : Redirect /reset-password?email=...\n(erreur: patienter)
+  else OK
+    AC -> OTP : delete(email) + insert(otp_hash, expires_at=+10min, attempts=0)
+    AC -> MAIL1 : envoyer OTP
+    alt échec mail
+      AC -> OTP : delete(email)
+      AC --> U : Erreur (email)\nImpossible d'envoyer OTP
+    else mail envoyé
+      AC --> U : Redirect /reset-password?email=...\n(status: OTP envoyé)
+    end
+  end
+end
+
+== Validation OTP ==
+
+U -> AC : POST /reset-password (email, otp, password, password_confirmation)
+AC -> OTP : Lire record + vérifier expires_at
+
+alt record absent/expiré
+  AC --> U : Erreur (otp)\nOTP invalide ou expiré
+else record présent
+  AC -> OTP : Vérifier attempts (< 5)
+  alt trop de tentatives
+    AC --> U : Erreur (otp)\nTrop de tentatives
+  else tentatives OK
+    AC -> OTP : Comparer hash OTP
+    alt OTP incorrect
+      AC -> OTP : attempts++
+      AC --> U : Erreur (otp)\nOTP incorrect
+    else OTP valide
+      AC -> UDB : Charger User + update(password hash)
+      AC -> OTP : delete(email)
+      AC -> MAIL2 : envoyer confirmation (best effort)
+      AC --> U : Redirect /login\n(status: mot de passe réinitialisé)
+    end
+  end
+end
+
+@enduml
+
