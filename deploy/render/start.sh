@@ -12,6 +12,15 @@ if [ -z "$APP_KEY" ] || [[ "$APP_KEY" != base64:* ]]; then
     export APP_KEY="$GENERATED"
 fi
 
+# ── Valeurs par défaut (si les env vars Render ne sont pas injectées) ─────────
+: "${APP_ENV:=production}"
+: "${APP_DEBUG:=false}"
+: "${SESSION_DRIVER:=file}"
+: "${CACHE_STORE:=file}"
+: "${LOG_CHANNEL:=stderr}"
+: "${QUEUE_CONNECTION:=sync}"
+: "${FILESYSTEM_DISK:=local}"
+
 echo "==> Découverte des packages Composer..."
 php artisan package:discover --ansi
 
