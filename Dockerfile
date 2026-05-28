@@ -16,7 +16,10 @@ RUN apt-get update && apt-get install -y \
         pdo pdo_pgsql pdo_mysql \
         mbstring bcmath gd zip pcntl exif \
     && a2enmod rewrite negotiation \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    # php.ini production : display_errors=Off + output_buffering=4096
+    && cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini \
+    && echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
