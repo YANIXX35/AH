@@ -18,11 +18,11 @@ services:
       - key: APP_ENV
         value: production
       - key: APP_KEY
-        generateValue: true
+        sync: false   # ← à renseigner manuellement : base64:AqCx3Ve+NnPEYb6pyFj06Pqy2mXWLMYidQIxpzUNI2g=
       - key: APP_DEBUG
         value: "false"
       - key: APP_URL
-        value: https://sitiame-capitale.onrender.com   # ← mettre l'URL réelle après le 1er deploy
+        value: https://ah-xnl0.onrender.com
 
       # ── Base de données PostgreSQL (Render injecte automatiquement) ─────────
       - key: DB_CONNECTION
@@ -50,11 +50,11 @@ services:
 
       # ── Session / Cache / Queue ─────────────────────────────────────────────
       - key: SESSION_DRIVER
-        value: database
+        value: file
       - key: SESSION_LIFETIME
         value: "120"
       - key: CACHE_STORE
-        value: database
+        value: file
       - key: QUEUE_CONNECTION
         value: sync
       - key: FILESYSTEM_DISK
