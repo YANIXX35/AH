@@ -18,28 +18,27 @@ php artisan package:discover --ansi
 echo "==> Migrations..."
 php artisan migrate --force
 
-echo "==> Cache config..."
+echo "==> Optimisation (config + routes + vues + services)..."
 php artisan config:cache
+php artisan route:cache 2>&1 || { echo "route:cache KO (closures) → route:clear"; php artisan route:clear; }
+php artisan view:cache  2>&1 || { echo "view:cache KO → ignoré"; true; }
+php artisan event:cache 2>&1 || true
 
 echo "==> Config check..."
 php -r "
 \$c = include '/var/www/html/bootstrap/cache/config.php';
-echo 'app.debug    = ' . (\$c['app']['debug'] ? 'true' : 'false') . PHP_EOL;
+echo 'app.debug      = ' . (\$c['app']['debug'] ? 'true' : 'false') . PHP_EOL;
+echo 'app.env        = ' . \$c['app']['env'] . PHP_EOL;
 echo 'session.driver = ' . \$c['session']['driver'] . PHP_EOL;
-echo 'app.key      = ' . substr(\$c['app']['key'], 0, 30) . '...' . PHP_EOL;
+echo 'log.channel    = ' . \$c['logging']['default'] . PHP_EOL;
+echo 'app.key        = ' . substr(\$c['app']['key'], 0, 30) . '...' . PHP_EOL;
 " 2>&1
-
-echo "==> Cache routes (fallback:clear si closures)..."
-php artisan route:cache 2>&1 || { echo "route:cache KO → route:clear"; php artisan route:clear; }
-
-echo "==> Cache vues..."
-php artisan view:cache 2>&1 || { echo "view:cache KO → ignoré"; true; }
 
 echo "==> Lien storage..."
 php artisan storage:link 2>/dev/null || true
 
-# ── Diagnostic requête HTTP ───────────────────────────────────────────────────
-echo "==> Diagnostic requête HTTP..."
+# ── Diagnostic CLI PHP (avant Apache) ────────────────────────────────────────
+echo "==> Diagnostic requête HTTP (PHP-CLI)..."
 php -d display_errors=1 -r "
 define('LARAVEL_START', microtime(true));
 \$_SERVER = [
@@ -57,7 +56,7 @@ try {
     \$body = ob_get_clean();
     \$status = http_response_code();
     echo 'HTTP status: ' . \$status . PHP_EOL;
-    echo 'Body (' . strlen(\$body) . ' bytes): ' . substr(strip_tags(\$body), 0, 400) . PHP_EOL;
+    echo 'Body (' . strlen(\$body) . ' bytes): ' . substr(strip_tags(\$body), 0, 300) . PHP_EOL;
 } catch (Throwable \$e) {
     ob_end_clean();
     echo 'EXCEPTION : ' . get_class(\$e) . PHP_EOL;
@@ -74,6 +73,16 @@ chown -R www-data:www-data /var/www/html/bootstrap/cache /var/www/html/storage
 
 echo "==> Config Apache..."
 apachectl configtest 2>&1 || true
+
+# ── Diagnostic Apache en arrière-plan (capture la vraie réponse HTTP) ────────
+# Ce job survit à l'exec ci-dessous ; son output apparaît dans les logs Render.
+(
+    sleep 12
+    echo "====== DIAGNOSTIC RÉPONSE APACHE ======" >&2
+    RESP=$(curl -s -m 10 -w "\n---HTTP_CODE:%{http_code}---\n" http://localhost/ 2>/dev/null)
+    echo "$RESP" | grep -v '<' | grep -v '^$' | head -80 >&2
+    echo "====== FIN DIAGNOSTIC ======" >&2
+) &
 
 echo "==> Démarrage Apache..."
 exec apache2-foreground
