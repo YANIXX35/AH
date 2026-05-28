@@ -69,5 +69,11 @@ try {
 }
 " 2>&1 || true
 
+echo "==> Permissions runtime (www-data)..."
+chown -R www-data:www-data /var/www/html/bootstrap/cache /var/www/html/storage
+
+echo "==> Config Apache..."
+apachectl configtest 2>&1 || true
+
 echo "==> Démarrage Apache..."
 exec apache2-foreground

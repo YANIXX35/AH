@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install \
         pdo pdo_pgsql pdo_mysql \
         mbstring bcmath gd zip pcntl exif \
-    && a2enmod rewrite \
+    && a2enmod rewrite negotiation \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -45,8 +45,8 @@ RUN printf '<VirtualHost *:80>\n\
         AllowOverride All\n\
         Require all granted\n\
     </Directory>\n\
-    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
-    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+    ErrorLog /proc/self/fd/2\n\
+    CustomLog /proc/self/fd/1 combined\n\
 </VirtualHost>\n' > /etc/apache2/sites-available/000-default.conf
 
 EXPOSE 80
