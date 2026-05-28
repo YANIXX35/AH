@@ -1,0 +1,97 @@
+databases:
+  - name: sitiame-db
+    databaseName: sitiame
+    plan: free
+
+services:
+  - type: web
+    name: sitiame-capitale
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    autoDeploy: true
+
+    envVars:
+      # ── App ────────────────────────────────────────────────────────────────
+      - key: APP_NAME
+        value: "Sitiame Capitale"
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        value: https://sitiame-capitale.onrender.com   # ← mettre l'URL réelle après le 1er deploy
+
+      # ── Base de données PostgreSQL (Render injecte automatiquement) ─────────
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: sitiame-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: sitiame-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: sitiame-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: sitiame-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: sitiame-db
+          property: password
+
+      # ── Session / Cache / Queue ─────────────────────────────────────────────
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: FILESYSTEM_DISK
+        value: local
+
+      # ── Logs ────────────────────────────────────────────────────────────────
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: error
+
+      # ── Sécurité ─────────────────────────────────────────────────────────────
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+
+      # ── Identifiants à renseigner manuellement dans le dashboard Render ─────
+      - key: PLATFORM_ADMIN_EMAIL
+        sync: false
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: CINETPAY_API_KEY
+        sync: false
+      - key: CINETPAY_SITE_ID
+        sync: false
+      - key: CINETPAY_SECRET_KEY
+        sync: false
+      - key: HUGGINGFACE_TOKEN
+        sync: false

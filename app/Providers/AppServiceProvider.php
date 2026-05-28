@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -39,6 +40,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Limite utf8mb4 pour les index uniques MySQL (varchar 255 → 191).
+        Schema::defaultStringLength(191);
+
         AppNotification::created(function (AppNotification $notification): void {
             $notification->loadMissing('user');
             $recipient = $notification->user;

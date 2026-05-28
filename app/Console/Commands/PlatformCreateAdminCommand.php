@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Services\UserPremiumService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -19,7 +20,7 @@ class PlatformCreateAdminCommand extends Command
 
     protected $description = 'Crée un compte administrateur plateforme ou accorde le rôle si l’e-mail existe déjà';
 
-    public function handle(): int
+    public function handle(UserPremiumService $userPremium): int
     {
         $email = mb_strtolower(trim((string) $this->argument('email')));
         $name = (string) $this->option('name');
@@ -41,7 +42,9 @@ class PlatformCreateAdminCommand extends Command
                 'is_platform_admin' => true,
                 'is_accountant' => false,
             ])->save();
+            $userPremium->ensurePlatformAdminPremium($existing->fresh());
             $this->info("Rôle administrateur accordé pour le compte existant : {$email}");
+            $this->info('Mode Premium administrateur activé (sans échéance).');
 
             return self::SUCCESS;
         }
@@ -53,7 +56,7 @@ class PlatformCreateAdminCommand extends Command
             $this->line('<fg=green>'.$password.'</>');
         }
 
-        User::query()->create([
+        $admin = User::query()->create([
             'name' => $name,
             'email' => $email,
             'password' => Hash::make($password),
@@ -62,7 +65,9 @@ class PlatformCreateAdminCommand extends Command
             'is_accountant' => false,
         ]);
 
+        $userPremium->ensurePlatformAdminPremium($admin);
         $this->info("Compte administrateur créé : {$email}");
+        $this->info('Mode Premium administrateur activé (sans échéance).');
         $this->line('Vous pouvez vous connecter sur la page Connexion de l’application.');
 
         return self::SUCCESS;

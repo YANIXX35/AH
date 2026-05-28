@@ -40,6 +40,27 @@ return [
         'secret_key' => env('RECAPTCHA_SECRET_KEY'),
     ],
 
+    'cinetpay' => [
+        'enabled' => (bool) env('CINETPAY_ENABLED', false),
+        'api_key' => env('CINETPAY_API_KEY'),
+        'site_id' => env('CINETPAY_SITE_ID'),
+        'secret_key' => env('CINETPAY_SECRET_KEY'),
+        'checkout_url' => env('CINETPAY_CHECKOUT_URL', 'https://api-checkout.cinetpay.com/v2/payment'),
+        'check_url' => env('CINETPAY_CHECK_URL', 'https://api-checkout.cinetpay.com/v2/payment/check'),
+        'currency' => env('CINETPAY_CURRENCY', 'XOF'),
+        'channels' => env('CINETPAY_CHANNELS', 'ALL'),
+        'lang' => env('CINETPAY_LANG', 'fr'),
+        'subscription_amount' => (int) env('CINETPAY_SUBSCRIPTION_AMOUNT', 15000),
+        'premium_days' => (int) env('CINETPAY_PREMIUM_DAYS', 30),
+        'customer_country' => env('CINETPAY_CUSTOMER_COUNTRY', 'CI'),
+        'timeout' => (int) env('CINETPAY_TIMEOUT', 30),
+        'simulate_when_unconfigured' => (bool) env('CINETPAY_SIMULATE_WHEN_UNCONFIGURED', true),
+        'mobile_methods' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'CINETPAY_MOBILE_METHODS',
+            'MOBILE_MONEY,WAVE,ORANGE_MONEY,MTN_MOMO,MOOV_MONEY,CREDIT_CARD'
+        ))))),
+    ],
+
     'fedapay' => [
         'sandbox' => [
             'enabled' => (bool) env('FEDAPAY_SANDBOX_ENABLED', env('PAWAPAY_SANDBOX_ENABLED', false)),

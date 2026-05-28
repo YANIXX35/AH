@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PaymentTransaction;
 use App\Models\SubscriptionHistory;
 use App\Models\User;
+use App\Services\CinetPayService;
 use App\Services\FedaPaySandboxService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -107,15 +108,17 @@ class FedaPaySandboxController extends Controller
         ];
     }
 
-    public function index(Request $request, FedaPaySandboxService $service): View
+    public function index(Request $request, FedaPaySandboxService $service, CinetPayService $cinetPay): View
     {
         $user = $request->user();
         $eventResult = ['success' => true, 'events' => [], 'message' => null];
 
-        $fixedAmount = 15000;
+        $fixedAmount = $cinetPay->isEnabled()
+            ? $cinetPay->subscriptionAmount()
+            : 15000;
 
         $localTransactions = PaymentTransaction::query()
-            ->where('provider', 'fedapay_sandbox')
+            ->whereIn('provider', ['fedapay_sandbox', 'cinetpay'])
             ->where('user_id', (int) $user->id)
             ->latest('id')
             ->limit(20)
@@ -150,12 +153,27 @@ class FedaPaySandboxController extends Controller
             ];
         }
 
+        $paymentRedirectUrl = trim((string) config('services.fedapay.sandbox.payment_page_url', ''));
+        $isHostedPaymentMode = filter_var($paymentRedirectUrl, FILTER_VALIDATE_URL) !== false;
+        $canPaySubscription = $user !== null
+            && ! $user->isPlatformAdmin()
+            && ! ($user->is_accountant ?? false);
+
         return view('payments.sandbox', [
+            'useCinetPay' => $cinetPay->isEnabled(),
+            'isCinetPayConfigured' => $cinetPay->isConfigured(),
+            'cinetPayMobileMethods' => config('services.cinetpay.mobile_methods', []),
             'isFedaPaySandboxEnabled' => (bool) config('services.fedapay.sandbox.enabled', false),
-            'isHostedPaymentMode' => filter_var(trim((string) config('services.fedapay.sandbox.payment_page_url', '')), FILTER_VALIDATE_URL) !== false,
+            'isHostedPaymentMode' => $isHostedPaymentMode && ! $cinetPay->isEnabled(),
             'paymentAmount' => $fixedAmount,
-            'paymentRedirectUrl' => trim((string) config('services.fedapay.sandbox.payment_page_url', '')),
+            'paymentRedirectUrl' => $paymentRedirectUrl,
             'mobileMethods' => config('services.fedapay.sandbox.mobile_methods', []),
+            'gatewayConfig' => $this->gatewayConfig(),
+            'defaultCountry' => 'CIV',
+            'defaultPhone' => (string) ($user->phone ?? ''),
+            'canPaySubscription' => $canPaySubscription,
+            'isPremiumActive' => $user?->hasActivePremiumPeriod() ?? false,
+            'premiumEndsAt' => $user?->premium_ends_at,
             'fedapayEvents' => $eventResult['events'],
             'fedapayEventsError' => $eventResult['success'] ? null : $eventResult['message'],
         ]);
@@ -230,8 +248,8 @@ class FedaPaySandboxController extends Controller
 
         $state = (string) $request->query('state', 'pending');
         $status = strtoupper((string) ($transaction?->status ?? 'PENDING'));
-        $isSuccess = in_array($status, ['APPROVED', 'COMPLETED'], true) || $state === 'success';
-        $isFailure = in_array($status, ['FAILED', 'REJECTED', 'CANCELED', 'DECLINED'], true) || $state === 'failed';
+        $isSuccess = in_array($status, ['APPROVED', 'COMPLETED', 'ACCEPTED', 'SUCCESS'], true) || $state === 'success';
+        $isFailure = in_array($status, ['FAILED', 'REJECTED', 'CANCELED', 'DECLINED', 'REFUSED'], true) || $state === 'failed';
 
         return view('payments.result', [
             'transaction' => $transaction,

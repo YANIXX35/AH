@@ -14,6 +14,7 @@ use App\Models\TreasuryTransaction;
 use App\Models\User;
 use App\Services\AdminAuditTrailService;
 use App\Services\HuggingFaceOpsAssistantService;
+use App\Services\UserPremiumService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -28,7 +29,8 @@ class AdminController extends Controller
 {
     public function __construct(
         private readonly AdminAuditTrailService $auditTrail,
-        private readonly HuggingFaceOpsAssistantService $hfAssistant
+        private readonly HuggingFaceOpsAssistantService $hfAssistant,
+        private readonly UserPremiumService $userPremium
     ) {}
 
     /**
@@ -832,7 +834,14 @@ class AdminController extends Controller
             $payload['premium_status'] = 'free';
         }
 
-        // Les administrateurs plateforme ne sont pas gérés comme Gratuit / Premium.
+        if ($asPlatformAdmin) {
+            $payload['is_premium'] = true;
+            $payload['premium_status'] = 'active';
+            $payload['premium_ends_at'] = null;
+            $payload['premium_trial_ends_at'] = null;
+        }
+
+        // Abonnement entreprise (hors admin / comptable).
         if (! $asPlatformAdmin && ! $asAccountant) {
             $payload['is_premium'] = (bool) ($data['is_premium'] ?? false);
 
@@ -866,6 +875,10 @@ class AdminController extends Controller
 
         $user->update($payload);
 
+        if ($asPlatformAdmin) {
+            $this->userPremium->ensurePlatformAdminPremium($user->fresh(), $actor, $request);
+        }
+
         $this->auditTrail->log(
             'user.admin_update',
             User::class,
@@ -891,6 +904,52 @@ class AdminController extends Controller
         return redirect()
             ->route('admin.users.edit', $user)
             ->with('status', 'Compte mis à jour.');
+    }
+
+    public function activatePremiumTrial(Request $request, User $user): RedirectResponse
+    {
+        if (! $this->userPremium->canManageEnterprisePremium($user)) {
+            return back()->withErrors([
+                'premium' => 'Le Premium d’essai concerne uniquement les comptes entreprise (clients).',
+            ]);
+        }
+
+        $validated = $request->validate([
+            'days' => ['required', 'integer', 'in:7,14,30,90'],
+        ]);
+
+        $days = (int) $validated['days'];
+        $this->userPremium->activateForDays(
+            $user,
+            $days,
+            'admin_users_trial',
+            "Essai Premium {$days} jours activé par l’administrateur (test application).",
+            $request->user(),
+            ['admin_user_id' => $request->user()?->id],
+            $request
+        );
+
+        return back()->with('status', "Premium activé pour {$days} jour(s) sur le compte {$user->email}.");
+    }
+
+    public function deactivatePremium(Request $request, User $user): RedirectResponse
+    {
+        if (! $this->userPremium->canManageEnterprisePremium($user)) {
+            return back()->withErrors([
+                'premium' => 'Cette action concerne uniquement les comptes entreprise.',
+            ]);
+        }
+
+        $this->userPremium->deactivate(
+            $user,
+            'admin_users_trial',
+            'Premium désactivé manuellement par l’administrateur.',
+            $request->user(),
+            ['admin_user_id' => $request->user()?->id],
+            $request
+        );
+
+        return back()->with('status', "Le compte {$user->email} est repassé en mode Gratuit.");
     }
 
     /**

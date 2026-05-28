@@ -1,0 +1,7 @@
+# À placer à la RACINE du site (public_html ou www), pas dans public/
+# Doc LWS : https://aide.lws.fr/base/Hebergement-web-mutualise/Creer-un-site-Internet/tutoriel-installation-laravel-hebergement-mutualise-lws
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

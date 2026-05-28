@@ -21,6 +21,7 @@ use App\Http\Controllers\AdminSupportTicketController;
 use App\Http\Controllers\AiBusinessAdvisorController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\CinetPayController;
 use App\Http\Controllers\CompanyFirdController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentationController;
@@ -44,7 +45,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 Route::get('/', function () {
-    return Auth::check() ? redirect()->route('dashboard') : view('welcome');
+    return Auth::check()
+        ? redirect()->route('dashboard')
+        : app(AuthController::class)->showLogin();
 })->name('home');
 Route::view('/about-us', 'about-us')->name('about-us');
 Route::view('/tarifs', 'pricing')->name('pricing');
@@ -65,13 +68,17 @@ Route::post('/locale', function (Request $request) {
 })->name('locale.switch');
 
 Route::get('/payments/sandbox/callback', [FedaPaySandboxController::class, 'callback'])->name('payments.sandbox.callback');
+Route::match(['get', 'post'], '/payments/cinetpay/notify', [CinetPayController::class, 'notify'])
+    ->withoutMiddleware(VerifyCsrfToken::class)
+    ->name('payments.cinetpay.notify');
+Route::get('/payments/cinetpay/return', [CinetPayController::class, 'return'])->name('payments.cinetpay.return');
 Route::post('/payments/stripe/webhook', [TreasuryController::class, 'stripeWebhook'])
     ->middleware('throttle:stripe-webhook')
     ->withoutMiddleware(VerifyCsrfToken::class)
     ->name('payments.stripe.webhook');
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::get('/login', fn () => redirect()->route('home'))->name('login');
     Route::view('/register', 'register')->name('register');
 
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth-sensitive')->name('login.post');
@@ -92,7 +99,7 @@ Route::middleware('auth')->group(function () {
             'user' => $request->user(),
             'recentSandboxPayments' => PaymentTransaction::query()
                 ->where('user_id', $request->user()->id)
-                ->where('provider', 'fedapay_sandbox')
+                ->whereIn('provider', ['fedapay_sandbox', 'cinetpay'])
                 ->latest()
                 ->limit(5)
                 ->get(),
@@ -249,8 +256,14 @@ Route::middleware('auth')->group(function () {
     })->name('profile.subscription.simulate');
     Route::get('/payments/sandbox', [FedaPaySandboxController::class, 'index'])->name('payments.sandbox');
     Route::post('/payments/sandbox', [FedaPaySandboxController::class, 'store'])->name('payments.sandbox.store');
+    Route::post('/payments/cinetpay/checkout', [CinetPayController::class, 'checkout'])->name('payments.cinetpay.checkout');
     Route::get('/payments/sandbox/result', [FedaPaySandboxController::class, 'result'])->name('payments.sandbox.result');
     Route::get('/payments/redirect', function (Request $request) {
+        if ((bool) config('services.cinetpay.enabled', false)) {
+            return redirect()
+                ->route('payments.sandbox')
+                ->with('status', 'Utilisez le bouton CinetPay sur cette page pour payer votre abonnement.');
+        }
 
         $paymentUrl = trim((string) $request->query('url', ''));
         if ($paymentUrl === '') {
@@ -351,6 +364,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/users', [AdminController::class, 'store'])->name('users.store');
         Route::get('/users/{user}/edit', [AdminController::class, 'edit'])->name('users.edit');
         Route::put('/users/{user}', [AdminController::class, 'update'])->name('users.update');
+        Route::post('/users/{user}/premium/activate', [AdminController::class, 'activatePremiumTrial'])->name('users.premium.activate');
+        Route::post('/users/{user}/premium/deactivate', [AdminController::class, 'deactivatePremium'])->name('users.premium.deactivate');
         Route::get('/dashboard/ai/live', [AdminController::class, 'dashboardLiveInsights'])->name('dashboard.ai.live');
         Route::get('/financial-analysis', [AdminFinancialAnalysisController::class, 'index'])->name('financial-analysis');
         Route::get('/financial-ranking', [AdminFinancialAnalysisController::class, 'ranking'])->name('financial-ranking');

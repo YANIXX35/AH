@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('enterprise_licenses', function (Blueprint $table) {
             // NIF normalisé : la clé ne peut couvrir qu’une seule entreprise après attribution.
-            $table->string('assigned_company_tax_id', 255)->nullable()->after('license_key');
+            $table->string('assigned_company_tax_id', 64)->nullable()->after('license_key');
             $table->index('assigned_company_tax_id');
         });
     }

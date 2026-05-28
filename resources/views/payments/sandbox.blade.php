@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Paiement FedaPay Sandbox | ' . config('app.name'))
-@section('page_title', 'Paiement FedaPay sandbox')
+@section('title', 'Abonnement Enterprise Premium | ' . config('app.name'))
+@section('page_title', 'Payer mon abonnement')
 
 @push('styles')
 <style>
@@ -43,6 +43,27 @@
         display: inline-flex;
         align-items: center;
     }
+    .sandbox-pay-card {
+        border: 0;
+        border-radius: 1rem;
+        box-shadow: 0 12px 32px rgba(30, 57, 109, 0.12);
+        overflow: hidden;
+    }
+    .sandbox-pay-card .pay-accent {
+        background: linear-gradient(135deg, #f59f00 0%, #ea580c 100%);
+        color: #fff;
+    }
+    .sandbox-pay-btn {
+        font-size: 1.05rem;
+        font-weight: 700;
+        padding: .85rem 1.5rem;
+        border-radius: .65rem;
+        box-shadow: 0 8px 20px rgba(234, 88, 12, 0.35);
+    }
+    .sandbox-pay-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(234, 88, 12, 0.42);
+    }
 </style>
 @endpush
 
@@ -57,22 +78,48 @@
 @endphp
 
 <div class="container-fluid p-0">
+    @if(session('status'))
+        <div class="alert alert-success py-2 small mb-3">{{ session('status') }}</div>
+    @endif
+
     <div class="mb-4">
         <div class="sandbox-hero p-4">
             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
                 <div>
-                    <h1 class="h3 mb-1 text-white"><strong>Paiements sandbox</strong> FedaPay</h1>
-                    <p class="mb-0 text-white-50">Suivi des événements de paiement avec statuts opérationnels harmonisés AdminKit.</p>
+                    <h1 class="h3 mb-1 text-white"><strong>Enterprise Premium</strong></h1>
+                    <p class="mb-0 text-white-50">Payez {{ number_format((float) $paymentAmount, 0, ',', ' ') }} FCFA / mois pour activer la comptabilité et le module Premium.</p>
                 </div>
-                <div class="text-lg-end d-flex flex-column gap-2">
+                <div class="text-lg-end d-flex flex-column gap-2 align-items-lg-end">
+                    @if($canPaySubscription ?? true)
+                        @if($isPremiumActive ?? false)
+                            <span class="badge bg-warning text-dark border-0">Premium actif</span>
+                            @if(! empty($premiumEndsAt))
+                                <span class="badge bg-light text-dark border-0">Jusqu’au {{ $premiumEndsAt->format('d/m/Y') }}</span>
+                            @endif
+                        @else
+                            <span class="badge bg-light text-dark border-0">Mode Gratuit — paiement requis</span>
+                        @endif
+                    @endif
                     <span class="badge bg-white text-primary border-0">
-                        {{ $isFedaPaySandboxEnabled ? 'Sandbox active' : 'Simulation locale' }}
+                        @if($useCinetPay ?? false)
+                            CinetPay{{ ($isCinetPayConfigured ?? false) ? '' : ' (test)' }}
+                        @else
+                            {{ $isFedaPaySandboxEnabled ? 'FedaPay sandbox' : 'Simulation locale' }}
+                        @endif
                     </span>
-                    <span class="badge bg-light text-dark border-0">Événements: {{ $events->count() }}</span>
                 </div>
             </div>
         </div>
     </div>
+
+    @if($canPaySubscription ?? true)
+        @include('payments.partials.subscription-pay-card')
+    @else
+        <div class="alert alert-info mb-4">
+            Les comptes administrateur et comptable cabinet n’utilisent pas ce flux de paiement entreprise.
+            <a href="{{ route('admin.dashboard') }}" class="alert-link">Retour à l’administration</a>.
+        </div>
+    @endif
 
     <div class="row g-3 mb-3">
         <div class="col-md-3">

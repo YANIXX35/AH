@@ -495,6 +495,7 @@
                 $dotClass = ($event['severity'] ?? 'secondary') === 'danger'
                     ? 'bg-danger'
                     : (($event['severity'] ?? '') === 'warning'
+                    
                         ? 'bg-warning'
                         : (($event['severity'] ?? '') === 'info' ? 'bg-info' : 'bg-secondary'));
             @endphp

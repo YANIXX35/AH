@@ -31,7 +31,7 @@
                     <p class="mt-2 text-sm text-slate-500">Découvrir l'application et ses flux principaux.</p>
                     <p class="mt-6 text-4xl font-extrabold text-emerald-600">0 <span class="text-lg font-semibold text-slate-500">FCFA</span></p>
                     <ul class="mt-6 space-y-3 text-sm text-slate-600">
-                        <li><i class="fa fa-check mr-2 text-brand-600"></i>Connexion sécurisée (reCAPTCHA)</li>
+                        <li><i class="fa fa-check mr-2 text-brand-600"></i>Connexion sécurisée</li>
                         <li><i class="fa fa-check mr-2 text-brand-600"></i>Mot de passe oublié avec OTP par e-mail</li>
                         <li><i class="fa fa-check mr-2 text-brand-600"></i>Tableau de bord et profil</li>
                         <li><i class="fa fa-check mr-2 text-brand-600"></i>1 compte utilisateur</li>
@@ -72,7 +72,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white">
-                            <tr><td class="px-4 py-3">Connexion sécurisée reCAPTCHA</td><td class="px-4 py-3">Oui</td><td class="px-4 py-3">Oui</td></tr>
+                            <tr><td class="px-4 py-3">Connexion sécurisée</td><td class="px-4 py-3">Oui</td><td class="px-4 py-3">Oui</td></tr>
                             <tr><td class="px-4 py-3">Réinitialisation mot de passe OTP (e-mail)</td><td class="px-4 py-3">Oui</td><td class="px-4 py-3">Oui</td></tr>
                             <tr><td class="px-4 py-3">Paiement FedaPay sandbox</td><td class="px-4 py-3">Oui</td><td class="px-4 py-3">Oui</td></tr>
                             <tr><td class="px-4 py-3">Activation Premium 30 jours</td><td class="px-4 py-3">Après paiement</td><td class="px-4 py-3">Oui</td></tr>
@@ -140,7 +140,7 @@
                 <h4 class="text-sm font-semibold uppercase tracking-wider text-white">Liens</h4>
                 <ul class="mt-4 space-y-2 text-sm">
                     <li><a href="{{ route('about-us') }}" class="text-slate-400 transition hover:text-white">À propos</a></li>
-                    <li><a href="{{ route('home') }}#expertise" class="text-slate-400 transition hover:text-white">Nos services</a></li>
+                    <li><a href="{{ route('about-us') }}" class="text-slate-400 transition hover:text-white">Nos services</a></li>
                     <li><a href="{{ route('documentation') }}" class="text-slate-400 transition hover:text-white">Documentation</a></li>
                 </ul>
             </div>

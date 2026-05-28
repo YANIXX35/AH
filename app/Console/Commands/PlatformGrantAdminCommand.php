@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Services\UserPremiumService;
 use Illuminate\Console\Command;
 
 /**
@@ -16,7 +17,7 @@ class PlatformGrantAdminCommand extends Command
 
     protected $description = 'Accorde ou révoque le statut administrateur plateforme pour un utilisateur';
 
-    public function handle(): int
+    public function handle(UserPremiumService $userPremium): int
     {
         $email = (string) $this->argument('email');
         $user = User::query()->where('email', $email)->first();
@@ -38,7 +39,10 @@ class PlatformGrantAdminCommand extends Command
             'is_platform_admin' => true,
             'is_accountant' => false,
         ])->save();
+
+        $userPremium->ensurePlatformAdminPremium($user->fresh());
         $this->info("Droit administrateur accordé pour : {$email}");
+        $this->info('Mode Premium administrateur activé (sans échéance).');
 
         return self::SUCCESS;
     }

@@ -1,0 +1,124 @@
+# =============================================================================
+# Production LWS — pme360.sitiame-capital.com
+# Copier en .env à la racine Laravel (à côté de artisan), ne jamais commiter le .env réel.
+# Panneau : Bases MySQL « laravel » = sitia2155967_2gndlk (pas sitia2155967_1rsg7n).
+# =============================================================================
+
+APP_NAME="Sitiame Capitale"
+APP_ENV=production
+APP_KEY=
+APP_DEBUG=false
+APP_URL=https://pme360.sitiame-capital.com
+
+APP_LOCALE=fr
+APP_FALLBACK_LOCALE=fr
+APP_FAKER_LOCALE=fr_FR
+
+APP_MAINTENANCE_DRIVER=file
+
+# -----------------------------------------------------------------------------
+# Session / cache / files (LWS mutualisé : pas de Redis)
+# Garder file jusqu'à « php artisan migrate --force » réussi, puis option database
+# -----------------------------------------------------------------------------
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+SESSION_ENCRYPT=false
+SESSION_PATH=/
+SESSION_DOMAIN=null
+SESSION_SECURE_COOKIE=true
+SESSION_SAME_SITE=lax
+
+CACHE_STORE=file
+QUEUE_CONNECTION=sync
+FILESYSTEM_DISK=local
+BROADCAST_CONNECTION=log
+
+BCRYPT_ROUNDS=12
+
+LOG_CHANNEL=stack
+LOG_STACK=single
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=error
+
+# -----------------------------------------------------------------------------
+# MySQL LWS — DB_HOST=127.0.0.1 obligatoire (évite SQLSTATE[2002])
+# -----------------------------------------------------------------------------
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=sitia2155967_2gndlk
+DB_USERNAME=sitia2155967_2gndlk
+DB_PASSWORD=
+
+# -----------------------------------------------------------------------------
+# E-mail LWS — vérifier l'hôte exact dans le panneau (souvent mailXX.lwspanel.com)
+# -----------------------------------------------------------------------------
+MAIL_MAILER=smtp
+MAIL_HOST=mail61.lwspanel.com
+MAIL_PORT=465
+MAIL_USERNAME=contact@sitiame-capital.com
+MAIL_PASSWORD=
+MAIL_ENCRYPTION=ssl
+MAIL_FROM_ADDRESS=contact@sitiame-capital.com
+MAIL_FROM_NAME="${APP_NAME}"
+
+# reCAPTCHA désactivé côté login — laisser vide
+RECAPTCHA_SITE_KEY=
+RECAPTCHA_SECRET_KEY=
+
+# -----------------------------------------------------------------------------
+# CinetPay — remplacer SITE_ID et SECRET_KEY ; URLs = APP_URL
+# -----------------------------------------------------------------------------
+CINETPAY_ENABLED=true
+CINETPAY_API_KEY=
+CINETPAY_SITE_ID=
+CINETPAY_SECRET_KEY=
+CINETPAY_CHECKOUT_URL=https://api-checkout.cinetpay.com/v2/payment
+CINETPAY_CHECK_URL=https://api-checkout.cinetpay.com/v2/payment/check
+CINETPAY_CURRENCY=XOF
+CINETPAY_CHANNELS=ALL
+CINETPAY_LANG=fr
+CINETPAY_SUBSCRIPTION_AMOUNT=15000
+CINETPAY_PREMIUM_DAYS=30
+CINETPAY_CUSTOMER_COUNTRY=CI
+CINETPAY_TIMEOUT=30
+CINETPAY_SIMULATE_WHEN_UNCONFIGURED=false
+CINETPAY_MOBILE_METHODS=MOBILE_MONEY,WAVE,ORANGE_MONEY,MTN_MOMO,MOOV_MONEY,CREDIT_CARD
+
+# -----------------------------------------------------------------------------
+# OCR / IA — optionnel ; Paddle désactivé sur mutualisé LWS (pas de Python local Windows)
+# -----------------------------------------------------------------------------
+OCR_SPACE_API_KEY=
+OCR_SPACE_ENDPOINT=https://api.ocr.space/parse/image
+OCR_SPACE_LANGUAGE=fre
+OCR_SPACE_ENGINE=2
+OCR_SPACE_TIMEOUT=60
+OCR_SPACE_IS_TABLE=true
+OCR_SPACE_SCALE=true
+OCR_SPACE_DETECT_ORIENTATION=true
+OCR_SPACE_MAX_FILE_SIZE_KB=1024
+
+PADDLE_OCR_ENABLED=false
+PADDLE_OCR_PYTHON_PATH=python3
+PADDLE_OCR_RUNNER_PATH=
+PADDLE_OCR_TIMEOUT=180
+PADDLE_OCR_PREFERRED_DEVICE=cpu
+PADDLE_OCR_FALLBACK_TO_CPU=true
+PADDLE_OCR_PAGE_NUM=0
+PADDLE_OCR_LANGUAGE=fr
+PADDLE_OCR_MAX_FILE_SIZE_KB=20480
+
+HUGGINGFACE_TOKEN=
+HUGGINGFACE_MODEL=meta-llama/Llama-3.1-8B-Instruct
+HUGGINGFACE_BASE_URL=https://router.huggingface.co/v1
+HUGGINGFACE_TIMEOUT=45
+
+VITE_APP_NAME="${APP_NAME}"
+
+# -----------------------------------------------------------------------------
+# Après migrate OK, vous pouvez remplacer (optionnel) :
+# SESSION_DRIVER=database
+# CACHE_STORE=database
+# QUEUE_CONNECTION=database
+# Puis : php artisan config:clear
+# -----------------------------------------------------------------------------

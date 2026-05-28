@@ -7,7 +7,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class SystemBaseUsersSeeder extends Seeder
-{
+{   
     public function run(): void
     {
         $records = [

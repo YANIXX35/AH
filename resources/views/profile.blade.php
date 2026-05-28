@@ -138,7 +138,12 @@
                         @endif
 
                         <hr>
-                        <div class="d-grid">
+                        <div class="d-grid gap-2">
+                            @unless($isPremiumActive)
+                                <a href="{{ route('payments.sandbox') }}" class="btn btn-warning text-dark">
+                                    Payer l’abonnement Premium (15 000 FCFA)
+                                </a>
+                            @endunless
                             <a href="{{ route('subscriptions.history') }}" class="btn btn-sm btn-outline-secondary">Voir l'historique des abonnements</a>
                         </div>
                     @endif

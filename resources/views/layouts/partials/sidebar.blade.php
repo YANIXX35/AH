@@ -11,11 +11,11 @@
                 $sidebarBrandName = (string) ($sidebarUser->company_name ?: $sidebarBrandName);
             }
             if ($sidebarUser && $sidebarUser->is_platform_admin) {
-                $sidebarPremiumLabel = 'Administrateur';
-                $sidebarPremiumBadge = 'bg-primary';
-                $sidebarPremiumIcon = '🛡️';
-                $sidebarPremiumActive = false;
-                $sidebarShowPremiumExpiry = false;
+                $sidebarPremiumActive = $sidebarUser->hasActivePremiumPeriod();
+                $sidebarPremiumLabel = $sidebarPremiumActive ? 'Premium Admin' : 'Administrateur';
+                $sidebarPremiumBadge = $sidebarPremiumActive ? 'bg-warning text-dark' : 'bg-primary';
+                $sidebarPremiumIcon = $sidebarPremiumActive ? '⭐' : '🛡️';
+                $sidebarShowPremiumExpiry = $sidebarPremiumActive && ! empty($sidebarUser->premium_ends_at);
             } elseif ($sidebarUser && ($sidebarUser->is_accountant ?? false)) {
                 $sidebarPremiumLabel = 'Comptable';
                 $sidebarPremiumBadge = 'bg-info text-dark';

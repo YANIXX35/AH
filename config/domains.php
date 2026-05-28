@@ -19,7 +19,7 @@ return [
     'payment' => [
         'label' => 'Payment',
         'owner' => 'finance_ops',
-        'critical_flows' => ['stripe_webhook', 'fedapay'],
+        'critical_flows' => ['stripe_webhook', 'fedapay', 'cinetpay'],
     ],
     'admin' => [
         'label' => 'Admin',

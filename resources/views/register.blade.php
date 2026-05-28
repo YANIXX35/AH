@@ -8,33 +8,8 @@
     <link rel="apple-touch-icon" href="{{ asset('images/sitiam.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .app-preloader{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.96);transition:opacity .25s ease,visibility .25s ease}
-        .app-preloader.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
-        .app-preloader-inner{position:relative;display:inline-flex;align-items:center;justify-content:center;width:230px;height:230px}
-        .app-preloader-logo{width:160px;max-width:44vw;height:auto;position:relative;z-index:3;filter:drop-shadow(0 0 14px rgba(255,184,0,.45)) drop-shadow(0 0 24px rgba(0,45,173,.35));animation:pulseScale 1.8s ease-in-out infinite}
-        .app-preloader-glow{position:absolute;border-radius:999px;pointer-events:none}
-        .app-preloader-glow-ring-1{width:210px;height:210px;border:2px solid rgba(255,190,11,.35);box-shadow:0 0 26px rgba(255,190,11,.25),inset 0 0 20px rgba(255,190,11,.15);animation:glowRotateGold 3.4s linear infinite}
-        .app-preloader-glow-ring-2{width:186px;height:186px;border:2px solid rgba(24,72,214,.35);box-shadow:0 0 26px rgba(24,72,214,.25),inset 0 0 20px rgba(24,72,214,.15);animation:glowRotateBlue 2.7s linear infinite}
-        .app-preloader-glow-halo{width:150px;height:150px;background:radial-gradient(circle, rgba(255,196,0,.28) 0%, rgba(0,45,173,.22) 45%, rgba(255,255,255,0) 72%);filter:blur(2px);animation:haloPulse 2.2s ease-in-out infinite}
-        .app-preloader-spinner{position:absolute;bottom:8px;width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#f59f00;border-radius:50%;z-index:4;animation:spin 1s linear infinite}
-        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        @keyframes pulseScale{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.03);opacity:.92}}
-        @keyframes glowRotateGold{0%{transform:rotate(0deg) scale(1);opacity:.65}50%{transform:rotate(180deg) scale(1.02);opacity:.95}100%{transform:rotate(360deg) scale(1);opacity:.65}}
-        @keyframes glowRotateBlue{0%{transform:rotate(360deg) scale(1);opacity:.55}50%{transform:rotate(180deg) scale(.98);opacity:.9}100%{transform:rotate(0deg) scale(1);opacity:.55}}
-        @keyframes haloPulse{0%,100%{transform:scale(.95);opacity:.7}50%{transform:scale(1.08);opacity:1}}
-    </style>
 </head>
 <body class="min-h-screen bg-white">
-    <div id="appPreloader" class="app-preloader" aria-live="polite" aria-label="Chargement en cours">
-        <div class="app-preloader-inner">
-            <span class="app-preloader-glow app-preloader-glow-ring-1"></span>
-            <span class="app-preloader-glow app-preloader-glow-ring-2"></span>
-            <span class="app-preloader-glow app-preloader-glow-halo"></span>
-            <img src="{{ asset('images/sitiam.png') }}" alt="Sitiame Capital" class="app-preloader-logo">
-            <div class="app-preloader-spinner" aria-hidden="true"></div>
-        </div>
-    </div>
     <div class="flex min-h-screen">
         <!-- Left Side - Branding -->
         <div class="hidden w-2/5 overflow-hidden lg:flex flex-col justify-between relative">
@@ -218,27 +193,6 @@
 
                 </form>
 
-                <!-- Divider -->
-                <div class="relative">
-                    <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-orange-200"></div>
-                    </div>
-                    <div class="relative flex justify-center text-sm">
-                        <span class="bg-white px-2 text-slate-600">Ou</span>
-                    </div>
-                </div>
-
-                <!-- Google Sign In -->
-                <button type="button" class="w-full flex items-center justify-center gap-2 rounded-xl border border-orange-300 bg-white px-4 py-3 font-semibold text-slate-900 hover:bg-orange-50 transition">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24">
-                        <path fill="#EA4335" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#4A90E2" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="#FBBC05" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    <span>Continuer avec Google</span>
-                </button>
-
                 <!-- Login Link -->
                 <div class="text-center">
                     <p class="text-slate-600">
@@ -249,30 +203,6 @@
             </div>
         </div>
     </div>
-    <script>
-        (function () {
-            var preloaderStartAt = Date.now();
-            var preloaderMinimumMs = 3000;
-            var preloaderHidden = false;
-            var hidePreloader = function () {
-                if (preloaderHidden) return;
-                preloaderHidden = true;
-                var loader = document.getElementById('appPreloader');
-                if (!loader) return;
-                loader.classList.add('is-hidden');
-                window.setTimeout(function () {
-                    if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
-                }, 320);
-            };
-            var hideWhenReady = function () {
-                var elapsed = Date.now() - preloaderStartAt;
-                var remaining = Math.max(0, preloaderMinimumMs - elapsed);
-                window.setTimeout(hidePreloader, remaining);
-            };
-            window.addEventListener('load', hideWhenReady);
-            window.setTimeout(hidePreloader, 8000);
-        })();
-    </script>
     <script>
         (function () {
             const step1 = document.getElementById('register-step-1');

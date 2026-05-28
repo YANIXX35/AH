@@ -123,7 +123,12 @@
                 <div class="card-body">
                     @if($user->is_platform_admin)
                         <p class="text-muted small mb-3">
-                            Tant que « Administrateur plateforme » est coché, l’enregistrement <strong>ne modifie pas</strong> Gratuit / Premium (hors périmètre). Décochez le rôle admin pour ajuster l’abonnement client.
+                            Les administrateurs plateforme sont automatiquement en <strong>mode Premium</strong> (sans échéance) pour tester toutes les fonctionnalités.
+                            @if($user->hasActivePremiumPeriod())
+                                <span class="badge bg-warning text-dark ms-1">Premium actif</span>
+                            @else
+                                <span class="badge bg-secondary ms-1">Premium à activer — enregistrez le formulaire pour l’appliquer.</span>
+                            @endif
                         </p>
                     @elseif($user->is_accountant ?? false)
                         <p class="text-muted small mb-3">Compte <strong>comptable cabinet</strong> : pas d’abonnement Gratuit / Premium entreprise (les comptes entreprise sont gérés dans les dossiers clients).</p>

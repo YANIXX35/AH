@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -32,16 +31,7 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
-            'g-recaptcha-response' => ['required', 'string'],
         ]);
-
-        if (! $this->verifyRecaptcha($credentials['g-recaptcha-response'], $request->ip())) {
-            return back()
-                ->withInput($request->only('email'))
-                ->withErrors([
-                    'email' => 'Validation reCAPTCHA échouée. Merci de réessayer.',
-                ], 'login');
-        }
 
         $remember = (bool) $request->boolean('remember');
         if ($remember && method_exists(Auth::guard(), 'setRememberDuration')) {
@@ -279,39 +269,6 @@ class AuthController extends Controller
             ]);
         } catch (\Throwable) {
             // Ne jamais bloquer l'authentification si la journalisation échoue.
-        }
-    }
-
-    /**
-     * Vérifie le jeton Google reCAPTCHA côté serveur.
-     */
-    protected function verifyRecaptcha(string $token, ?string $ip): bool
-    {
-        $secret = (string) config('services.recaptcha.secret_key');
-        if ($secret === '') {
-            return false;
-        }
-
-        try {
-            $response = Http::asForm()
-                ->timeout(8)
-                ->post('https://www.google.com/recaptcha/api/siteverify', [
-                    'secret' => $secret,
-                    'response' => $token,
-                    'remoteip' => $ip,
-                ]);
-
-            if (! $response->ok()) {
-                return false;
-            }
-
-            $payload = $response->json();
-
-            return (bool) ($payload['success'] ?? false);
-        } catch (\Throwable $e) {
-            Log::warning('recaptcha_verification_failed', ['message' => $e->getMessage()]);
-
-            return false;
         }
     }
 }

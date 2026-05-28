@@ -302,7 +302,11 @@
                                                 <td class="small d-none d-lg-table-cell">{{ $user->email }}</td>
                                                 <td>
                                                     @if($user->is_platform_admin)
-                                                        <span class="badge bg-primary">Hors Gratuit/Premium</span>
+                                                        @if($user->hasActivePremiumPeriod())
+                                                            <span class="badge bg-warning text-dark">Premium admin</span>
+                                                        @else
+                                                            <span class="badge bg-primary">Admin</span>
+                                                        @endif
                                                     @elseif($user->is_accountant ?? false)
                                                         <span class="badge bg-info text-dark">Cabinet</span>
                                                     @elseif($premiumOk)
@@ -335,7 +339,28 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-center">
-                                                    <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-primary">Gérer</a>
+                                                    <div class="d-inline-flex flex-wrap gap-1 justify-content-center align-items-center">
+                                                        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-primary">Gérer</a>
+                                                        @if(! $user->is_platform_admin && ! ($user->is_accountant ?? false))
+                                                            @if($premiumOk)
+                                                                <form method="POST" action="{{ route('admin.users.premium.deactivate', $user) }}" class="d-inline" onsubmit="return confirm('Repasser ce compte en Gratuit ?');">
+                                                                    @csrf
+                                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Fin d’essai Premium">Gratuit</button>
+                                                                </form>
+                                                            @else
+                                                                <form method="POST" action="{{ route('admin.users.premium.activate', $user) }}" class="d-inline">
+                                                                    @csrf
+                                                                    <input type="hidden" name="days" value="30">
+                                                                    <button type="submit" class="btn btn-sm btn-warning text-dark" title="Essai Premium 30 jours">Premium 30j</button>
+                                                                </form>
+                                                                <form method="POST" action="{{ route('admin.users.premium.activate', $user) }}" class="d-inline">
+                                                                    @csrf
+                                                                    <input type="hidden" name="days" value="90">
+                                                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Essai Premium 90 jours">90j</button>
+                                                                </form>
+                                                            @endif
+                                                        @endif
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -354,7 +379,7 @@
 <p class="text-muted small mt-3 mb-0">
     <strong>Automatique :</strong> chaque jour à 01:00, les abonnements Premium expirés sont passés en gratuit ;
     les comptes clients peuvent être <strong>suspendus</strong> tant qu’ils n’ont pas régularisé (commande <code>app:premium-expire</code>).
-    Les <strong>administrateurs plateforme</strong> ne sont pas concernés par Gratuit / Premium ni par cette expiration.
+    Les <strong>administrateurs plateforme</strong> disposent du Premium sans échéance (non expiré par le planificateur). Utilisez <strong>Premium 30j</strong> / <strong>90j</strong> pour les comptes clients en essai.
 </p>
 @endsection
 

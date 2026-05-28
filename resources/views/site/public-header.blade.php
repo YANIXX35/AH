@@ -1,7 +1,10 @@
 {{-- Navigation publique : menus déroulants (desktop) + menu mobile responsive --}}
 @php
     $home = route('home');
-    $isHome = request()->routeIs('home');
+    $isLoginPage = request()->routeIs('home', 'login');
+    $servicesLink = route('about-us');
+    $formulairesLink = route('documentation');
+    $contactLink = 'mailto:contact@sitiame-capital.com';
     $linkBase = 'rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200';
     $linkInactive = 'text-slate-600 hover:bg-slate-50/90 hover:text-brand-700';
     $linkActive = 'bg-brand-50 text-brand-800';
@@ -33,10 +36,10 @@
                     <i class="fa fa-chevron-down text-[10px] opacity-70"></i>
                 </button>
                 <div class="invisible absolute left-0 top-full z-50 mt-1 min-w-[220px] rounded-xl border border-slate-100 bg-white py-2 opacity-0 shadow-soft-lg ring-1 ring-slate-900/5 transition-all duration-200 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-                    <a href="{{ $home }}" class="{{ $linkBase }} {{ request()->routeIs('home') ? $linkActive : $linkInactive }} block w-full text-left">Accueil</a>
+                    <a href="{{ $home }}" class="{{ $linkBase }} {{ $isLoginPage ? $linkActive : $linkInactive }} block w-full text-left">Connexion</a>
                     <a href="{{ route('about-us') }}" class="{{ $linkBase }} {{ request()->routeIs('about-us') ? $linkActive : $linkInactive }} block w-full text-left">À propos de nous</a>
-                    <a href="{{ $isHome ? '#expertise' : $home.'#expertise' }}" class="{{ $linkBase }} {{ $linkInactive }} block w-full text-left">Nos services</a>
-                    <a href="{{ $isHome ? '#formulaires' : $home.'#formulaires' }}" class="{{ $linkBase }} {{ $linkInactive }} block w-full text-left">Nos formulaires</a>
+                    <a href="{{ $servicesLink }}" class="{{ $linkBase }} {{ $linkInactive }} block w-full text-left">Nos services</a>
+                    <a href="{{ $formulairesLink }}" class="{{ $linkBase }} {{ $linkInactive }} block w-full text-left">Nos formulaires</a>
                 </div>
             </div>
 
@@ -52,7 +55,7 @@
                 </div>
             </div>
 
-            <a href="{{ $isHome ? '#contact' : $home.'#contact' }}" class="{{ $linkBase }} {{ $linkInactive }}">Nous contacter</a>
+            <a href="{{ $contactLink }}" class="{{ $linkBase }} {{ $linkInactive }}">Nous contacter</a>
 
             <a href="{{ route('login') }}" class="ml-1 rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-800 hover:shadow-md">Mon Espace</a>
         </nav>
@@ -70,10 +73,10 @@
             <div>
                 <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Découvrir</p>
                 <div class="flex flex-col gap-1">
-                    <a href="{{ $home }}" class="rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('home') ? 'bg-brand-50 text-brand-800' : 'text-slate-700 hover:bg-slate-50' }}">Accueil</a>
+                    <a href="{{ $home }}" class="rounded-lg px-3 py-2.5 text-sm font-medium {{ $isLoginPage ? 'bg-brand-50 text-brand-800' : 'text-slate-700 hover:bg-slate-50' }}">Connexion</a>
                     <a href="{{ route('about-us') }}" class="rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('about-us') ? 'bg-brand-50 text-brand-800' : 'text-slate-700 hover:bg-slate-50' }}">À propos de nous</a>
-                    <a href="{{ $isHome ? '#expertise' : $home.'#expertise' }}" class="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Nos services</a>
-                    <a href="{{ $isHome ? '#formulaires' : $home.'#formulaires' }}" class="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Nos formulaires</a>
+                    <a href="{{ $servicesLink }}" class="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Nos services</a>
+                    <a href="{{ $formulairesLink }}" class="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Nos formulaires</a>
                 </div>
             </div>
             <div>
@@ -83,7 +86,7 @@
                     <a href="{{ route('documentation') }}" class="rounded-lg px-3 py-2.5 text-sm font-medium {{ request()->routeIs('documentation') ? 'bg-brand-50 text-brand-800' : 'text-slate-700 hover:bg-slate-50' }}">Documentation</a>
                 </div>
             </div>
-            <a href="{{ $isHome ? '#contact' : $home.'#contact' }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Nous contacter</a>
+            <a href="{{ $contactLink }}" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Nous contacter</a>
             <a href="{{ route('login') }}" class="block rounded-lg bg-brand-700 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-brand-800">Mon Espace</a>
         </nav>
     </div>

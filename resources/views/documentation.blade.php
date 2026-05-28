@@ -151,7 +151,7 @@
             <div>
                 <h4 class="text-sm font-semibold uppercase tracking-wider text-white">Navigation</h4>
                 <ul class="mt-4 space-y-2 text-sm">
-                    <li><a href="{{ route('home') }}" class="text-slate-400 transition hover:text-white">Accueil</a></li>
+                    <li><a href="{{ route('home') }}" class="text-slate-400 transition hover:text-white">Connexion</a></li>
                     <li><a href="{{ route('pricing') }}" class="text-slate-400 transition hover:text-white">Tarifs</a></li>
                     <li><a href="{{ route('documentation') }}" class="text-slate-400 transition hover:text-white">Documentation</a></li>
                 </ul>

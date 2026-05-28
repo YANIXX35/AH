@@ -347,97 +347,6 @@
             background-color: #dbeafe;
             color: #1d4ed8;
         }
-        .app-preloader {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.96);
-            transition: opacity .25s ease, visibility .25s ease;
-        }
-        .app-preloader.is-hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-        .app-preloader-inner {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 230px;
-            height: 230px;
-        }
-        .app-preloader-logo {
-            width: 160px;
-            max-width: 44vw;
-            height: auto;
-            position: relative;
-            z-index: 3;
-            filter: drop-shadow(0 0 14px rgba(255, 184, 0, 0.45)) drop-shadow(0 0 24px rgba(0, 45, 173, 0.35));
-            animation: pulseScale 1.8s ease-in-out infinite;
-        }
-        .app-preloader-glow {
-            position: absolute;
-            border-radius: 999px;
-            pointer-events: none;
-        }
-        .app-preloader-glow-ring-1 {
-            width: 210px;
-            height: 210px;
-            border: 2px solid rgba(255, 190, 11, 0.35);
-            box-shadow: 0 0 26px rgba(255, 190, 11, 0.25), inset 0 0 20px rgba(255, 190, 11, 0.15);
-            animation: glowRotateGold 3.4s linear infinite;
-        }
-        .app-preloader-glow-ring-2 {
-            width: 186px;
-            height: 186px;
-            border: 2px solid rgba(24, 72, 214, 0.35);
-            box-shadow: 0 0 26px rgba(24, 72, 214, 0.25), inset 0 0 20px rgba(24, 72, 214, 0.15);
-            animation: glowRotateBlue 2.7s linear infinite;
-        }
-        .app-preloader-glow-halo {
-            width: 150px;
-            height: 150px;
-            background: radial-gradient(circle, rgba(255, 196, 0, 0.28) 0%, rgba(0, 45, 173, 0.22) 45%, rgba(255, 255, 255, 0) 72%);
-            filter: blur(2px);
-            animation: haloPulse 2.2s ease-in-out infinite;
-        }
-        .app-preloader-spinner {
-            position: absolute;
-            bottom: 8px;
-            width: 32px;
-            height: 32px;
-            border: 3px solid #e5e7eb;
-            border-top-color: #f59f00;
-            border-radius: 50%;
-            z-index: 4;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        @keyframes pulseScale {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.03); opacity: .92; }
-        }
-        @keyframes glowRotateGold {
-            0% { transform: rotate(0deg) scale(1); opacity: .65; }
-            50% { transform: rotate(180deg) scale(1.02); opacity: .95; }
-            100% { transform: rotate(360deg) scale(1); opacity: .65; }
-        }
-        @keyframes glowRotateBlue {
-            0% { transform: rotate(360deg) scale(1); opacity: .55; }
-            50% { transform: rotate(180deg) scale(.98); opacity: .9; }
-            100% { transform: rotate(0deg) scale(1); opacity: .55; }
-        }
-        @keyframes haloPulse {
-            0%, 100% { transform: scale(.95); opacity: .7; }
-            50% { transform: scale(1.08); opacity: 1; }
-        }
 
         @media print {
             body * { visibility: hidden; }
@@ -449,15 +358,6 @@
     </style>
 </head>
 <body>
-    <div id="appPreloader" class="app-preloader" aria-live="polite" aria-label="Chargement en cours">
-        <div class="app-preloader-inner">
-            <span class="app-preloader-glow app-preloader-glow-ring-1"></span>
-            <span class="app-preloader-glow app-preloader-glow-ring-2"></span>
-            <span class="app-preloader-glow app-preloader-glow-halo"></span>
-            <img src="{{ asset('images/sitiam.png') }}" alt="Sitiame Capital" class="app-preloader-logo">
-            <div class="app-preloader-spinner" aria-hidden="true"></div>
-        </div>
-    </div>
     <div class="gtranslate_wrapper gtranslate-global-host" aria-hidden="true"></div>
     <div class="wrapper">
         @include('layouts.partials.sidebar')
@@ -761,32 +661,6 @@
     @include('partials.webcam-modal')
     <script src="{{ asset('js/adminkit-app.js') }}"></script>
     <script src="{{ asset('js/webcam-capture.js') }}" defer></script>
-    <script>
-        (function () {
-            var preloaderStartAt = Date.now();
-            var preloaderMinimumMs = 3000;
-            var preloaderHidden = false;
-            var hidePreloader = function () {
-                if (preloaderHidden) return;
-                preloaderHidden = true;
-                var loader = document.getElementById('appPreloader');
-                if (!loader) return;
-                loader.classList.add('is-hidden');
-                window.setTimeout(function () {
-                    if (loader && loader.parentNode) {
-                        loader.parentNode.removeChild(loader);
-                    }
-                }, 320);
-            };
-            var hideWhenReady = function () {
-                var elapsed = Date.now() - preloaderStartAt;
-                var remaining = Math.max(0, preloaderMinimumMs - elapsed);
-                window.setTimeout(hidePreloader, remaining);
-            };
-            window.addEventListener('load', hideWhenReady);
-            window.setTimeout(hidePreloader, 8000);
-        })();
-    </script>
     <script>
         (function () {
             var supported = ['fr', 'en', 'es', 'de', 'pt', 'ar', 'it', 'nl'];

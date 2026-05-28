@@ -6,6 +6,7 @@ use App\Models\AccountingEntry;
 use App\Models\AppNotification;
 use App\Models\TreasuryTransaction;
 use App\Models\User;
+use App\Services\UserPremiumService;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -146,7 +147,12 @@ class SitiameDemoDataSeeder extends Seeder
         $platformAdminEmail = env('PLATFORM_ADMIN_EMAIL');
         if (is_string($platformAdminEmail) && $platformAdminEmail !== '' && $user->email === $platformAdminEmail) {
             $user->forceFill(['is_platform_admin' => true])->save();
+            app(UserPremiumService::class)->ensurePlatformAdminPremium($user->fresh());
             $this->command?->info('Compte administrateur plateforme : '.$user->email.' (PLATFORM_ADMIN_EMAIL).');
+        }
+
+        if ($user->is_platform_admin) {
+            app(UserPremiumService::class)->ensurePlatformAdminPremium($user->fresh());
         }
     }
 }
