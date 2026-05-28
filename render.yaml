@@ -20,7 +20,7 @@ services:
       - key: APP_KEY
         sync: false   # ← à renseigner manuellement : base64:AqCx3Ve+NnPEYb6pyFj06Pqy2mXWLMYidQIxpzUNI2g=
       - key: APP_DEBUG
-        value: "false"
+        value: "true"
       - key: APP_URL
         value: https://ah-xnl0.onrender.com
 

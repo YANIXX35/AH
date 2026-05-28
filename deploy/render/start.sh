@@ -15,6 +15,14 @@ if [ -z "$APP_KEY" ] || [[ "$APP_KEY" != base64:* ]]; then
     export APP_KEY="$GENERATED"
 fi
 
+echo "==> Test de boot Laravel..."
+php -r "
+define('LARAVEL_START', microtime(true));
+require '/var/www/html/vendor/autoload.php';
+\$app = require '/var/www/html/bootstrap/app.php';
+echo 'Bootstrap OK' . PHP_EOL;
+" 2>&1 || { echo "ERREUR BOOTSTRAP LARAVEL"; exit 1; }
+
 echo "==> Découverte des packages Composer..."
 php artisan package:discover --ansi
 
