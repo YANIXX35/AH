@@ -59,21 +59,28 @@ echo "==> Vérification config Apache..."
 apachectl configtest 2>&1 || true
 
 # ── Diagnostic réponse Apache (arrière-plan) ─────────────────────────────────
-# Ce job survit au exec ci-dessous ; ses sorties apparaissent dans les logs Render.
 (
     sleep 12
     CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 http://localhost/)
     echo "====== DIAGNOSTIC APACHE : HTTP $CODE ======" >&2
+
     if [ "$CODE" != "200" ]; then
-        echo "--- Corps de la réponse (500) ---" >&2
+        # --- Afficher le log Laravel pour voir l'exception réelle ---
+        LOG=/var/www/html/storage/logs/laravel.log
+        if [ -f "$LOG" ]; then
+            echo "--- laravel.log (50 dernières lignes) ---" >&2
+            tail -50 "$LOG" >&2
+        else
+            echo "--- laravel.log absent (LOG_CHANNEL=stderr : erreur dans les logs au-dessus) ---" >&2
+        fi
+        # --- Corps brut de la réponse HTTP ---
+        echo "--- Réponse HTTP brute (texte) ---" >&2
         curl -s --max-time 10 http://localhost/ 2>/dev/null \
             | php -r "
-                \$html = stream_get_contents(STDIN);
-                // Extraire le texte visible
-                \$text = strip_tags(html_entity_decode(\$html, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-                // Nettoyer les lignes vides multiples
-                \$lines = array_filter(array_map('trim', explode(\"\n\", \$text)));
-                echo implode(\"\n\", array_slice(\$lines, 0, 80));
+                \$h = stream_get_contents(STDIN);
+                \$t = strip_tags(html_entity_decode(\$h, ENT_QUOTES|ENT_HTML5, 'UTF-8'));
+                \$l = array_filter(array_map('trim', explode(\"\n\", \$t)));
+                echo implode(\"\n\", array_slice(\$l, 0, 100));
             " 2>/dev/null >&2
     fi
     echo "====== FIN DIAGNOSTIC ======" >&2
