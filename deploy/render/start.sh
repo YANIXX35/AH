@@ -1,10 +1,18 @@
 #!/bin/bash
 set -e
 
-echo "==> Vérification APP_KEY..."
-if [ -z "$APP_KEY" ]; then
-    echo "ERREUR : APP_KEY non défini. Ajoutez-le dans les variables Render."
-    exit 1
+# ── Vérification et génération de APP_KEY ─────────────────────────────────────
+if [ -z "$APP_KEY" ] || [[ "$APP_KEY" != base64:* ]]; then
+    GENERATED=$(php -r "echo 'base64:' . base64_encode(random_bytes(32));")
+    echo ""
+    echo "========================================================"
+    echo "  ERREUR : APP_KEY manquant ou invalide."
+    echo "  Copiez cette valeur dans Render > Environment > APP_KEY :"
+    echo "  $GENERATED"
+    echo "========================================================"
+    echo ""
+    # On continue avec la clé générée pour ce démarrage
+    export APP_KEY="$GENERATED"
 fi
 
 echo "==> Découverte des packages Composer..."

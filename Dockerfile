@@ -30,8 +30,12 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 COPY . .
 COPY --from=frontend /app/public/build public/build
 
-# Permissions storage
-RUN chown -R www-data:www-data storage bootstrap/cache \
+# Garantir l'existence des dossiers runtime (peuvent être vides après .dockerignore)
+RUN mkdir -p storage/framework/{sessions,cache/data,views} \
+        storage/app/public \
+        storage/logs \
+        bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
 # Apache : pointer sur public/
