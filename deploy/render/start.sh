@@ -23,9 +23,40 @@ export QUEUE_CONNECTION=sync
 export FILESYSTEM_DISK=local
 export BCRYPT_ROUNDS="${BCRYPT_ROUNDS:-12}"
 
-# ── Base de données : force PostgreSQL (Render injecte DB_HOST/PORT/etc.) ─────
-# DB_CONNECTION n'est pas auto-injecté par Render → SQLite par défaut → INTERDIT
+# ── Base de données : force PostgreSQL ────────────────────────────────────────
 export DB_CONNECTION=pgsql
+
+# ── Diagnostic : affiche ce que Render injecte réellement ────────────────────
+echo "==> Variables DB injectées par Render :"
+echo "  DATABASE_URL = ${DATABASE_URL:-(non défini)}"
+echo "  DB_HOST      = ${DB_HOST:-(non défini)}"
+echo "  DB_PORT      = ${DB_PORT:-(non défini)}"
+echo "  DB_DATABASE  = ${DB_DATABASE:-(non défini)}"
+echo "  DB_USERNAME  = ${DB_USERNAME:-(non défini)}"
+echo "  DB_PASSWORD  = ${DB_PASSWORD:+****(défini)}"
+
+# ── Si DB_HOST absent mais DATABASE_URL disponible → DB_URL (Laravel pgsql) ──
+# Render fournit DATABASE_URL pour les bases liées ; Laravel config/database.php
+# lit DB_URL en priorité sur DB_HOST/DB_PORT/etc. dans la connexion pgsql.
+if [ -z "$DB_HOST" ] && [ -n "$DATABASE_URL" ]; then
+    echo "  → DB_HOST absent, utilisation de DATABASE_URL via DB_URL"
+    export DB_URL="$DATABASE_URL"
+fi
+
+# ── Garde-fou : aucune variable DB → erreur claire ────────────────────────────
+if [ -z "$DB_HOST" ] && [ -z "$DATABASE_URL" ]; then
+    echo "========================================================"
+    echo "  ERREUR FATALE : aucune variable de base de données !"
+    echo "  Ajoutez ces variables dans Render > sitiame-capitale > Environment :"
+    echo "    DB_HOST      (onglet Connect de sitiame-db)"
+    echo "    DB_PORT      (généralement 5432)"
+    echo "    DB_DATABASE  (onglet Connect de sitiame-db)"
+    echo "    DB_USERNAME  (onglet Connect de sitiame-db)"
+    echo "    DB_PASSWORD  (onglet Connect de sitiame-db)"
+    echo "  OU liez la base via le Blueprint Render (render.yaml)."
+    echo "========================================================"
+    exit 1
+fi
 
 echo "==> Découverte des packages Composer..."
 php artisan package:discover --ansi
