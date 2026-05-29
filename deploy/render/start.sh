@@ -27,6 +27,9 @@ php artisan package:discover --ansi
 echo "==> Migrations..."
 php artisan migrate --force
 
+echo "==> Seed utilisateurs système (updateOrCreate — idempotent)..."
+php artisan db:seed --class=SystemBaseUsersSeeder --force
+
 echo "==> Cache config..."
 php artisan config:cache
 
