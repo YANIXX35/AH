@@ -12,14 +12,16 @@ if [ -z "$APP_KEY" ] || [[ "$APP_KEY" != base64:* ]]; then
     export APP_KEY="$GENERATED"
 fi
 
-# ── Valeurs par défaut (si les env vars Render ne sont pas injectées) ─────────
-: "${APP_ENV:=production}"
-: "${APP_DEBUG:=false}"
-: "${SESSION_DRIVER:=file}"
-: "${CACHE_STORE:=file}"
-: "${LOG_CHANNEL:=stderr}"
-: "${QUEUE_CONNECTION:=sync}"
-: "${FILESYSTEM_DISK:=local}"
+# ── Variables critiques : forcées ici pour ne pas dépendre du dashboard Render ──
+# (les valeurs render.yaml ne sont pas toujours injectées sur un service existant)
+export APP_ENV="${APP_ENV:-production}"
+export APP_DEBUG=true               # temporaire : affiche les exceptions en clair
+export SESSION_DRIVER=file          # toujours file — pas de table sessions requise
+export CACHE_STORE=file
+export LOG_CHANNEL=stderr           # toujours stderr — visible dans les logs Render
+export QUEUE_CONNECTION=sync
+export FILESYSTEM_DISK=local
+export BCRYPT_ROUNDS="${BCRYPT_ROUNDS:-12}"
 
 echo "==> Découverte des packages Composer..."
 php artisan package:discover --ansi
