@@ -15,13 +15,17 @@ fi
 # ── Variables critiques : forcées ici pour ne pas dépendre du dashboard Render ──
 # (les valeurs render.yaml ne sont pas toujours injectées sur un service existant)
 export APP_ENV="${APP_ENV:-production}"
-export APP_DEBUG=true               # temporaire : affiche les exceptions en clair
-export SESSION_DRIVER=file          # toujours file — pas de table sessions requise
+export APP_DEBUG=true               # temporaire — à remettre false après validation
+export SESSION_DRIVER=file
 export CACHE_STORE=file
-export LOG_CHANNEL=stderr           # toujours stderr — visible dans les logs Render
+export LOG_CHANNEL=stderr
 export QUEUE_CONNECTION=sync
 export FILESYSTEM_DISK=local
 export BCRYPT_ROUNDS="${BCRYPT_ROUNDS:-12}"
+
+# ── Base de données : force PostgreSQL (Render injecte DB_HOST/PORT/etc.) ─────
+# DB_CONNECTION n'est pas auto-injecté par Render → SQLite par défaut → INTERDIT
+export DB_CONNECTION=pgsql
 
 echo "==> Découverte des packages Composer..."
 php artisan package:discover --ansi
