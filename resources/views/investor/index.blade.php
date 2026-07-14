@@ -44,6 +44,26 @@
         </p>
     </div>
 
+    {{-- PRD 4.2 — contrôle qualité périodique (méthode provisoire, non bloquante) --}}
+    @if(!$qualityChecked)
+        <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+                ⚠ <strong>Données non vérifiées pour la période {{ $qualityPeriod['start']->format('d/m/Y') }} – {{ $qualityPeriod['end']->format('d/m/Y') }}.</strong>
+                Le score ci-dessous reste calculé et affiché, mais n'a pas encore été confirmé par un contrôle qualité périodique — à interpréter avec prudence.
+                @if($qualityReview)
+                    <span class="d-block small mt-1">Dernier statut enregistré : <strong>{{ $qualityReview->status }}</strong> ({{ optional($qualityReview->reviewed_at)->format('d/m/Y H:i') }}).</span>
+                @endif
+            </div>
+            @if($canReviewQuality)
+                <form action="{{ route('investor.quality-review.store') }}" method="POST" class="d-flex gap-2">
+                    @csrf
+                    <button type="submit" name="status" value="validated" class="btn btn-sm btn-success">Valider la période</button>
+                    <button type="submit" name="status" value="flagged" class="btn btn-sm btn-outline-danger">Signaler un problème</button>
+                </form>
+            @endif
+        </div>
+    @endif
+
     @error('dossier')
         <div class="alert alert-danger">{{ $message }}</div>
     @enderror

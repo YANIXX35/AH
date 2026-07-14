@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Accounting\QualityControlService;
 use App\Http\Controllers\Concerns\UsesClientWorkspace;
 use App\Models\InvestmentRequest;
 use App\Models\InvestorProfile;
 use App\Services\InvestmentDossierChecklistService;
 use App\Services\InvestorReadinessService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -24,10 +26,20 @@ class InvestorController extends Controller
 
     public function index(
         InvestorReadinessService $readiness,
-        InvestmentDossierChecklistService $checklistService
+        InvestmentDossierChecklistService $checklistService,
+        QualityControlService $qualityControl
     ) {
         $userId = $this->workspaceUserId();
         $metrics = $readiness->build($userId);
+
+        // PRD 4.2 — le score reste calculé et affiché normalement (choix volontairement
+        // non bloquant, le moins disruptif : aucune PME n'a de revue qualité enregistrée
+        // avant l'activation de cette fonctionnalité, un blocage dur couperait l'accès au
+        // scoring pour tout le monde du jour au lendemain). Seul un avertissement est
+        // ajouté si la période courante n'a pas été validée par un comptable/admin.
+        $qualityPeriod = $qualityControl->currentPeriod();
+        $qualityReview = $qualityControl->findForPeriod($userId, $qualityPeriod['start'], $qualityPeriod['end']);
+        $qualityChecked = $qualityControl->isQualityCheckedForPeriod($userId, $qualityPeriod['start'], $qualityPeriod['end']);
         $checklist = $checklistService->build($userId, $metrics['breakdown']);
         $checklistSummary = $checklistService->summarize($checklist);
         $requests = InvestmentRequest::where('user_id', $userId)
@@ -58,7 +70,38 @@ class InvestorController extends Controller
             'warningChecklistCount' => collect($checklist)->where('status', InvestmentDossierChecklistService::STATUS_WARNING)->count(),
             'requests' => $requests,
             'investorProfile' => $investorProfile,
+            'qualityPeriod' => $qualityPeriod,
+            'qualityReview' => $qualityReview,
+            'qualityChecked' => $qualityChecked,
+            'canReviewQuality' => (bool) (Auth::user()?->is_accountant || Auth::user()?->is_platform_admin),
         ]);
+    }
+
+    /**
+     * Marquage manuel de la période courante (PRD 4.2, méthode provisoire) — réservé
+     * aux comptables/admins, en attendant la méthode de contrôle définitive.
+     */
+    public function markQualityReview(Request $request, QualityControlService $qualityControl): RedirectResponse
+    {
+        $user = Auth::user();
+        abort_unless($user && ((bool) $user->is_accountant || (bool) $user->is_platform_admin), 403);
+
+        $validated = $request->validate([
+            'status' => ['required', 'in:validated,flagged'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $period = $qualityControl->currentPeriod();
+        $qualityControl->markPeriodReviewed(
+            $this->workspaceUserId(),
+            $period['start'],
+            $period['end'],
+            $validated['status'],
+            $user->id,
+            $validated['notes'] ?? null
+        );
+
+        return back()->with('status', 'Contrôle qualité enregistré pour la période courante.');
     }
 
     public function storeRequest(

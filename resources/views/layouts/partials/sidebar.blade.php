@@ -138,7 +138,7 @@
             @endphp
             @if(! $sidebarAccountantOnly)
             @unless($sidebarAdminCompactNav)
-            <li class="sidebar-header">Pages</li>
+            <li class="sidebar-header">Pilotage</li>
             <li class="sidebar-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <a class="sidebar-link" href="{{ route('dashboard') }}">
                     <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
@@ -151,15 +151,14 @@
                        title="Passez en Premium pour activer la comptabilité."
                        data-premium-locked-message="Vous etes actuellement en mode Gratuit. Pour acceder au module Comptabilite, passez en Enterprise Premium en effectuant le paiement de 15 000 FCFA."
                        data-premium-locked="1">
-                        <span class="icon-wrapper">🔒</span> <span class="align-middle">Comptabilité</span>
+                        <i class="align-middle" data-feather="lock"></i> <span class="align-middle">Comptabilité</span>
                         <span class="badge bg-secondary rounded-pill ms-auto">Premium</span>
                     </a>
                 </li>
             @else
                 <li class="sidebar-item {{ request()->routeIs('accounting*') ? 'active' : '' }}">
                     <a class="sidebar-link {{ request()->routeIs('accounting*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseAccounting" role="button" aria-expanded="{{ request()->routeIs('accounting*') ? 'true' : 'false' }}" aria-controls="collapseAccounting">
-                        <span class="icon-wrapper">📚</span> <span class="align-middle">Comptabilité</span>
-                        <span class="badge bg-primary rounded-pill ms-auto">10</span>
+                        <i class="align-middle" data-feather="book"></i> <span class="align-middle">Comptabilité</span>
                     </a>
                     <div class="collapse {{ request()->routeIs('accounting*') ? 'show' : '' }}" id="collapseAccounting">
                         <ul class="sidebar-nav sidebar-nav-sub">
@@ -233,8 +232,7 @@
             @endif
             <li class="sidebar-item {{ request()->routeIs('treasury*') ? 'active' : '' }}">
                 <a class="sidebar-link {{ request()->routeIs('treasury*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseTreasury" role="button" aria-expanded="{{ request()->routeIs('treasury*') ? 'true' : 'false' }}" aria-controls="collapseTreasury">
-                    <span class="icon-wrapper">💰</span> <span class="align-middle">Trésorerie</span>
-                    <span class="badge bg-success rounded-pill ms-auto">4</span>
+                    <i class="align-middle" data-feather="dollar-sign"></i> <span class="align-middle">Trésorerie</span>
                 </a>
                 <div class="collapse {{ request()->routeIs('treasury*') ? 'show' : '' }}" id="collapseTreasury">
                     <ul class="sidebar-nav sidebar-nav-sub">
@@ -259,7 +257,7 @@
                         </li>
                         <li class="sidebar-item">
                             <a class="sidebar-link {{ request()->routeIs('treasury.mobile-money.*') ? 'active' : '' }}" href="{{ route('treasury.mobile-money.index') }}">
-                                <span class="icon-wrapper">📱</span>
+                                <i class="align-middle" data-feather="smartphone" style="width:16px;height:16px;"></i>
                                 <span class="align-middle">Rapprochement Mobile Money</span>
                             </a>
                         </li>
@@ -268,76 +266,99 @@
             </li>
             <li class="sidebar-item {{ request()->routeIs('invoicing.*') ? 'active' : '' }}">
                 <a class="sidebar-link" href="{{ route('invoicing.index') }}">
-                    <span class="icon-wrapper">🧾</span> <span class="align-middle">Facturation</span>
+                    <i class="align-middle" data-feather="file-text"></i> <span class="align-middle">Facturation</span>
                 </a>
             </li>
             <li class="sidebar-item {{ request()->routeIs('stock.*') ? 'active' : '' }}">
                 <a class="sidebar-link" href="{{ route('stock.index') }}">
-                    <span class="icon-wrapper">📦</span> <span class="align-middle">Stock</span>
+                    <i class="align-middle" data-feather="package"></i> <span class="align-middle">Stock</span>
                     <span class="badge bg-secondary rounded-pill ms-auto">Option</span>
                 </a>
             </li>
             <li class="sidebar-item {{ request()->routeIs('investor.*') ? 'active' : '' }}">
                 <a class="sidebar-link" href="{{ route('investor.readiness') }}">
-                    <span class="icon-wrapper">📈</span> <span class="align-middle">Investisseurs</span>
+                    <i class="align-middle" data-feather="trending-up"></i> <span class="align-middle">Investisseurs</span>
                 </a>
             </li>
-            <li class="sidebar-item {{ request()->routeIs('profile') || request()->routeIs('company.settings') ? 'active' : '' }}">
-                <a class="sidebar-link" href="{{ route('company.settings') }}">
-                    <i class="align-middle" data-feather="user"></i> <span class="align-middle">Profil & paramètres</span>
+
+            @php
+                $sidebarCompanyRoutes = ['profile', 'company.settings', 'profile.company.fird', 'profile.company.fird.update', 'profile.team*'];
+                $sidebarCompanyActive = request()->routeIs($sidebarCompanyRoutes);
+            @endphp
+            <li class="sidebar-item {{ $sidebarCompanyActive ? 'active' : '' }}">
+                <a class="sidebar-link {{ $sidebarCompanyActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseCompany" role="button" aria-expanded="{{ $sidebarCompanyActive ? 'true' : 'false' }}" aria-controls="collapseCompany">
+                    <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Mon entreprise</span>
                 </a>
+                <div class="collapse {{ $sidebarCompanyActive ? 'show' : '' }}" id="collapseCompany">
+                    <ul class="sidebar-nav sidebar-nav-sub">
+                        <li class="sidebar-item {{ request()->routeIs('profile') || request()->routeIs('company.settings') ? 'active' : '' }}">
+                            <a class="sidebar-link" href="{{ route('company.settings') }}">
+                                <i class="align-middle" data-feather="user" style="width:16px;height:16px;"></i> <span class="align-middle">Profil & paramètres</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {{ request()->routeIs(['profile.company.fird', 'profile.company.fird.update']) ? 'active' : '' }}">
+                            <a class="sidebar-link" href="{{ route('profile.company.fird') }}">
+                                <i class="align-middle" data-feather="file" style="width:16px;height:16px;"></i> <span class="align-middle">Fiche entreprise (FIRD)</span>
+                            </a>
+                        </li>
+                        @if($sidebarUser && ! $sidebarUser->is_platform_admin && ! ($sidebarUser->is_accountant ?? false) && $sidebarUser->enterprise_license_id)
+                            @if($sidebarTeamLocked)
+                                <li class="sidebar-item opacity-50">
+                                    <a class="sidebar-link" href="{{ route('payments.sandbox') }}" title="Passez en Premium pour activer l'équipe licence.">
+                                        <i class="align-middle" data-feather="lock" style="width:16px;height:16px;"></i> <span class="align-middle">Équipe (licence)</span>
+                                        <span class="badge bg-secondary rounded-pill ms-auto">Premium</span>
+                                    </a>
+                                </li>
+                                <li class="sidebar-item opacity-50">
+                                    <a class="sidebar-link" href="{{ route('payments.sandbox') }}" title="Passez en Premium pour activer l'historique entreprise.">
+                                        <i class="align-middle" data-feather="lock" style="width:16px;height:16px;"></i> <span class="align-middle">Historique entreprise</span>
+                                        <span class="badge bg-secondary rounded-pill ms-auto">Premium</span>
+                                    </a>
+                                </li>
+                            @else
+                                <li class="sidebar-item {{ request()->routeIs('profile.team*') ? 'active' : '' }}">
+                                    <a class="sidebar-link" href="{{ route('profile.team') }}">
+                                        <i class="align-middle" data-feather="users" style="width:16px;height:16px;"></i> <span class="align-middle">Équipe (licence)</span>
+                                    </a>
+                                </li>
+                                <li class="sidebar-item {{ request()->routeIs('profile.team.history') ? 'active' : '' }}">
+                                    <a class="sidebar-link" href="{{ route('profile.team.history') }}">
+                                        <i class="align-middle" data-feather="list" style="width:16px;height:16px;"></i> <span class="align-middle">Historique entreprise</span>
+                                    </a>
+                                </li>
+                            @endif
+                        @endif
+                    </ul>
+                </div>
             </li>
-            <li class="sidebar-item {{ request()->routeIs(['profile.company.fird', 'profile.company.fird.update']) ? 'active' : '' }}">
-                <a class="sidebar-link" href="{{ route('profile.company.fird') }}">
-                    <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Fiche entreprise (FIRD)</span>
+
+            @php
+                $sidebarSubscriptionRoutes = ['subscriptions.history', 'payments.sandbox*', 'billing.*'];
+                $sidebarSubscriptionActive = request()->routeIs($sidebarSubscriptionRoutes);
+            @endphp
+            <li class="sidebar-item {{ $sidebarSubscriptionActive ? 'active' : '' }}">
+                <a class="sidebar-link {{ $sidebarSubscriptionActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseSubscription" role="button" aria-expanded="{{ $sidebarSubscriptionActive ? 'true' : 'false' }}" aria-controls="collapseSubscription">
+                    <i class="align-middle" data-feather="credit-card"></i> <span class="align-middle">Abonnement</span>
                 </a>
-            </li>
-            @if($sidebarUser && ! $sidebarUser->is_platform_admin && ! ($sidebarUser->is_accountant ?? false) && $sidebarUser->enterprise_license_id)
-                @if($sidebarTeamLocked)
-                    <li class="sidebar-item opacity-50">
-                        <a class="sidebar-link" href="{{ route('payments.sandbox') }}" title="Passez en Premium pour activer l'équipe licence.">
-                            <span class="icon-wrapper">🔒</span> <span class="align-middle">Équipe (licence)</span>
-                            <span class="badge bg-secondary rounded-pill ms-auto">Premium</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item opacity-50">
-                        <a class="sidebar-link" href="{{ route('payments.sandbox') }}" title="Passez en Premium pour activer l'historique entreprise.">
-                            <span class="icon-wrapper">🔒</span> <span class="align-middle">Historique entreprise</span>
-                            <span class="badge bg-secondary rounded-pill ms-auto">Premium</span>
-                        </a>
-                    </li>
-                @else
-                    <li class="sidebar-item {{ request()->routeIs('profile.team*') ? 'active' : '' }}">
-                        <a class="sidebar-link" href="{{ route('profile.team') }}">
-                            <i class="align-middle" data-feather="users"></i> <span class="align-middle">Équipe (licence)</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item {{ request()->routeIs('profile.team.history') ? 'active' : '' }}">
-                        <a class="sidebar-link" href="{{ route('profile.team.history') }}">
-                            <i class="align-middle" data-feather="list"></i> <span class="align-middle">Historique entreprise</span>
-                        </a>
-                    </li>
-                @endif
-            @endif
-            <li class="sidebar-item {{ request()->routeIs('subscriptions.history') ? 'active' : '' }}">
-                <a class="sidebar-link" href="{{ route('subscriptions.history') }}">
-                    <i class="align-middle" data-feather="clock"></i> <span class="align-middle">Historique abonnements</span>
-                </a>
-            </li>
-            <li class="sidebar-item {{ request()->routeIs('payments.sandbox*') ? 'active' : '' }}">
-                <a class="sidebar-link" href="{{ route('payments.sandbox') }}">
-                    <i class="align-middle" data-feather="credit-card"></i> <span class="align-middle">Paiement</span>
-                </a>
-            </li>
-            <li class="sidebar-item {{ request()->routeIs('billing.*') ? 'active' : '' }}">
-                <a class="sidebar-link" href="{{ route('billing.invoices') }}">
-                    <i class="align-middle" data-feather="file-text"></i> <span class="align-middle">Factures & abonnement</span>
-                </a>
-            </li>
-            <li class="sidebar-item {{ request()->routeIs('activity-log.*') ? 'active' : '' }}">
-                <a class="sidebar-link" href="{{ route('activity-log.index') }}">
-                    <i class="align-middle" data-feather="activity"></i> <span class="align-middle">Journal d’activité</span>
-                </a>
+                <div class="collapse {{ $sidebarSubscriptionActive ? 'show' : '' }}" id="collapseSubscription">
+                    <ul class="sidebar-nav sidebar-nav-sub">
+                        <li class="sidebar-item {{ request()->routeIs('payments.sandbox*') ? 'active' : '' }}">
+                            <a class="sidebar-link" href="{{ route('payments.sandbox') }}">
+                                <i class="align-middle" data-feather="dollar-sign" style="width:16px;height:16px;"></i> <span class="align-middle">Paiement</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {{ request()->routeIs('billing.*') ? 'active' : '' }}">
+                            <a class="sidebar-link" href="{{ route('billing.invoices') }}">
+                                <i class="align-middle" data-feather="file-text" style="width:16px;height:16px;"></i> <span class="align-middle">Mes factures SITIAME</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {{ request()->routeIs('subscriptions.history') ? 'active' : '' }}">
+                            <a class="sidebar-link" href="{{ route('subscriptions.history') }}">
+                                <i class="align-middle" data-feather="clock" style="width:16px;height:16px;"></i> <span class="align-middle">Historique abonnements</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </li>
             @else
             <li class="sidebar-header">Espace métier</li>
@@ -362,11 +383,15 @@
                     </a>
                 </li>
             @endif
-            <li class="sidebar-item {{ request()->routeIs(['support.*', 'notifications.*']) ? 'active' : '' }}">
-                <a class="sidebar-link {{ request()->routeIs(['support.*', 'notifications.*']) ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseHelp" role="button" aria-expanded="{{ request()->routeIs(['support.*', 'notifications.*']) ? 'true' : 'false' }}" aria-controls="collapseHelp">
+            @php
+                $sidebarHelpRoutes = ['support.*', 'notifications.*', 'activity-log.*'];
+                $sidebarHelpActive = request()->routeIs($sidebarHelpRoutes);
+            @endphp
+            <li class="sidebar-item {{ $sidebarHelpActive ? 'active' : '' }}">
+                <a class="sidebar-link {{ $sidebarHelpActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseHelp" role="button" aria-expanded="{{ $sidebarHelpActive ? 'true' : 'false' }}" aria-controls="collapseHelp">
                     <i class="align-middle" data-feather="help-circle"></i> <span class="align-middle">Aide & support</span>
                 </a>
-                <div class="collapse {{ request()->routeIs(['support.*', 'notifications.*']) ? 'show' : '' }}" id="collapseHelp">
+                <div class="collapse {{ $sidebarHelpActive ? 'show' : '' }}" id="collapseHelp">
                     <ul class="sidebar-nav sidebar-nav-sub">
                         <li class="sidebar-item">
                             <a class="sidebar-link {{ request()->routeIs('support.index') ? 'active' : '' }}" href="{{ route('support.index') }}">Centre d’aide</a>
@@ -376,6 +401,9 @@
                         </li>
                         <li class="sidebar-item">
                             <a class="sidebar-link {{ request()->routeIs('notifications.index') ? 'active' : '' }}" href="{{ route('notifications.index') }}">Notifications</a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link {{ request()->routeIs('activity-log.*') ? 'active' : '' }}" href="{{ route('activity-log.index') }}">Journal d’activité</a>
                         </li>
                     </ul>
                 </div>

@@ -1959,11 +1959,15 @@ class AccountingController extends Controller
                     'ocr_field_confidence' => (array) ($pipelineResult['field_confidence'] ?? []),
                     'ocr_low_confidence_fields' => (array) ($pipelineResult['low_confidence_fields'] ?? []),
                     'ocr_review_required' => (bool) ($pipelineResult['review_required'] ?? false),
+                    'ocr_missing_required_fields' => (array) ($pipelineResult['missing_required_fields'] ?? []),
                     'ocr_error' => null,
                 ];
 
+                // Filtre de qualité (PRD 4.1, D1/D2) : blocage basé uniquement sur la
+                // présence des champs obligatoires (numéro de pièce, dates, identification
+                // du tiers) — plus sur le score de confiance OCR, qui reste affiché comme
+                // signal de confiance sans être bloquant à lui seul.
                 $canAutoValidate = ! (bool) ($pipelineResult['review_required'] ?? false)
-                    && $confidence >= 55
                     && (float) ($normalizedExtracted['amount_ttc'] ?? 0) > 0;
 
                 if ($canAutoValidate) {
@@ -1972,7 +1976,7 @@ class AccountingController extends Controller
                 } else {
                     $status = 'pending_validation';
                     $extractedData['ocr_auto_validated'] = false;
-                    $extractedData['ocr_auto_validation_reason'] = 'Validation manuelle requise (confiance faible ou montant incomplet).';
+                    $extractedData['ocr_auto_validation_reason'] = 'Validation manuelle requise (informations obligatoires manquantes ou montant incomplet).';
                     $pendingReviewCount++;
                 }
             } else {
@@ -1990,6 +1994,7 @@ class AccountingController extends Controller
                 'document_hash' => $hash,
                 'extracted_data' => $extractedData,
                 'confidence' => $confidence,
+                'compliance_rate' => (float) ($pipelineResult['compliance_rate'] ?? 0),
             ]);
 
             if ($status === 'validated') {
@@ -2103,16 +2108,17 @@ class AccountingController extends Controller
         $data['ocr_field_confidence'] = (array) ($pipelineResult['field_confidence'] ?? []);
         $data['ocr_low_confidence_fields'] = (array) ($pipelineResult['low_confidence_fields'] ?? []);
         $data['ocr_review_required'] = (bool) ($pipelineResult['review_required'] ?? false);
+        $data['ocr_missing_required_fields'] = (array) ($pipelineResult['missing_required_fields'] ?? []);
         $data['ocr_error'] = null;
 
         $confidence = (float) ($pipelineResult['global_confidence'] ?? $ocrResult['confidence'] ?? 0);
+        $complianceRate = (float) ($pipelineResult['compliance_rate'] ?? 0);
         $canAutoValidate = ! (bool) ($pipelineResult['review_required'] ?? false)
-            && $confidence >= 55
             && (float) ($normalizedExtracted['amount_ttc'] ?? 0) > 0;
 
         $data['ocr_auto_validated'] = $canAutoValidate;
         if (! $canAutoValidate) {
-            $data['ocr_auto_validation_reason'] = 'Validation manuelle requise (confiance faible ou montant incomplet).';
+            $data['ocr_auto_validation_reason'] = 'Validation manuelle requise (informations obligatoires manquantes ou montant incomplet).';
         } else {
             $data['ocr_auto_validation_reason'] = null;
         }
@@ -2121,6 +2127,7 @@ class AccountingController extends Controller
             'document_type' => $documentType,
             'status' => $canAutoValidate ? 'validated' : 'pending_validation',
             'confidence' => $confidence,
+            'compliance_rate' => $complianceRate,
             'extracted_data' => $data,
             'actor_user_id' => Auth::id(),
         ]);

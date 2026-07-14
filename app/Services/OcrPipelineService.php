@@ -29,6 +29,7 @@ class OcrPipelineService
         $fieldConfidence = $this->computeFieldConfidence($richData, $text);
         $lowConfidenceFields = $this->resolveLowConfidenceFields($fieldConfidence);
         $globalConfidence = $this->computeGlobalConfidence((float) ($ocrResult['confidence'] ?? 0), $fieldConfidence);
+        $requiredFieldsStatus = $this->computeRequiredFieldsStatus($richData);
 
         return [
             'success' => true,
@@ -37,7 +38,42 @@ class OcrPipelineService
             'field_confidence' => $fieldConfidence,
             'low_confidence_fields' => $lowConfidenceFields,
             'global_confidence' => $globalConfidence,
-            'review_required' => $globalConfidence < 70 || !empty($lowConfidenceFields),
+            'compliance_rate' => $requiredFieldsStatus['compliance_rate'],
+            'missing_required_fields' => $requiredFieldsStatus['missing'],
+            // Filtre de qualité (PRD 4.1, D2/A1) : le blocage se base uniquement sur la
+            // présence des champs obligatoires (numéro de pièce, dates, identification du
+            // tiers) — le score de confiance OCR reste un signal affiché, plus un critère
+            // bloquant à lui seul.
+            'review_required' => ! empty($requiredFieldsStatus['missing']),
+        ];
+    }
+
+    /**
+     * Filtre de qualité déterministe (PRD 4.1, D2/A1) : vérifie la présence des 3
+     * informations obligatoires — numéro de pièce, dates, éléments d'identification
+     * du tiers (NIF/IFU/RCCM) — et calcule un taux de conformité (0-100) distinct de
+     * la confiance technique du moteur OCR.
+     */
+    private function computeRequiredFieldsStatus(array $richData): array
+    {
+        $primary = (array) ($richData['primary'] ?? []);
+        $identifiers = (array) ($richData['identifiers'] ?? []);
+        $taxIds = (array) ($identifiers['tax_ids'] ?? []);
+        $businessIds = (array) ($identifiers['business_ids'] ?? []);
+
+        $requirements = [
+            'invoice_number' => trim((string) ($primary['invoice_number'] ?? '')) !== '',
+            'invoice_date' => trim((string) ($primary['invoice_date'] ?? '')) !== '',
+            'tiers_identification' => ! empty($taxIds) || ! empty($businessIds),
+        ];
+
+        $missing = array_keys(array_filter($requirements, static fn (bool $present) => ! $present));
+        $presentCount = count($requirements) - count($missing);
+        $complianceRate = round(($presentCount / count($requirements)) * 100, 2);
+
+        return [
+            'missing' => $missing,
+            'compliance_rate' => $complianceRate,
         ];
     }
 
@@ -65,6 +101,12 @@ class OcrPipelineService
             (string) ($primary['currency'] ?? ''),
             '/^(FCFA|XOF|XAF|EUR|USD|GBP)$/iu'
         );
+
+        // Identification du tiers (NIF/IFU/RCCM) — présence uniquement, pas de format
+        // unique à valider vu la diversité des identifiants selon les pays UEMOA.
+        $identifiers = (array) ($richData['identifiers'] ?? []);
+        $hasTiersId = ! empty($identifiers['tax_ids'] ?? []) || ! empty($identifiers['business_ids'] ?? []);
+        $scores['tiers_identification'] = $hasTiersId ? 90.0 : 25.0;
 
         // Bonus de cohérence TTC = HT + TVA si les 3 montants existent.
         $ht = is_numeric($primary['amount_ht'] ?? null) ? (float) $primary['amount_ht'] : null;

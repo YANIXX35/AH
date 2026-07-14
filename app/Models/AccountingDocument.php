@@ -19,11 +19,13 @@ class AccountingDocument extends Model
         'document_hash',
         'extracted_data',
         'confidence',
+        'compliance_rate',
     ];
 
     protected $casts = [
         'extracted_data' => 'array',
         'confidence' => 'decimal:2',
+        'compliance_rate' => 'decimal:2',
     ];
 
     public function user(): BelongsTo

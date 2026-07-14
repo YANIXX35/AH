@@ -23,6 +23,15 @@
                     <p><strong>Nom :</strong> {{ $document->original_name }}</p>
                     <p><strong>Type détecté :</strong> {{ $document->document_type }}</p>
                     <p><strong>Confiance :</strong> {{ number_format($document->confidence, 2, ',', ' ') }}%</p>
+                    @php($missingRequired = (array) ($document->extracted_data['ocr_missing_required_fields'] ?? []))
+                    @php($complianceBadge = $document->compliance_rate >= 100 ? 'success' : ($document->compliance_rate > 0 ? 'warning' : 'danger'))
+                    <p>
+                        <strong>Taux de conformité :</strong>
+                        <span class="badge bg-{{ $complianceBadge }}-subtle text-{{ $complianceBadge }}-emphasis">{{ number_format((float) $document->compliance_rate, 0, ',', ' ') }}%</span>
+                        @if(!empty($missingRequired))
+                            <span class="small text-muted">— informations obligatoires manquantes : {{ implode(', ', $missingRequired) }}</span>
+                        @endif
+                    </p>
                     <div class="d-flex gap-2 flex-wrap mb-3">
                         <a href="{{ route('accounting.documents.viewer', $document) }}" class="btn btn-icon btn-outline-primary" title="Ouvrir le document">
                             <i data-feather="file-text" class="icon-sm"></i>

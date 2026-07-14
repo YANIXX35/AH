@@ -348,6 +348,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/investor/readiness', [InvestorController::class, 'index'])->name('investor.readiness');
         Route::post('/investor/investment-request', [InvestorController::class, 'storeRequest'])->middleware('throttle:investor-actions')->name('investor.investment-request.store');
         Route::post('/investor/investment-request/{investmentRequest}/workflow', [InvestorController::class, 'updateRequestWorkflow'])->middleware('throttle:investor-actions')->name('investor.investment-request.workflow');
+        Route::post('/investor/quality-review', [InvestorController::class, 'markQualityReview'])->middleware('throttle:investor-actions')->name('investor.quality-review.store');
     });
     Route::post('/ai/business/chat', [AiBusinessAdvisorController::class, 'chat'])->name('ai.business.chat');
 

@@ -163,6 +163,7 @@
                                     <th>Date facture</th>
                                     <th>Montants OCR</th>
                                     <th>Confiance</th>
+                                    <th>Conformité</th>
                                     <th>Détection</th>
                                     <th>Actions</th>
                                 </tr>
@@ -245,6 +246,14 @@
                                             <div class="small">TTC: <strong>{{ $amountTtc !== null ? number_format($amountTtc, 2, ',', ' ') : '—' }}</strong> {{ $currency }}</div>
                                         </td>
                                         <td>{{ number_format($document->confidence, 2, ',', ' ') }}%</td>
+                                        <td>
+                                            @php($missingRequired = (array) ($document->extracted_data['ocr_missing_required_fields'] ?? []))
+                                            @php($complianceBadge = $document->compliance_rate >= 100 ? 'success' : ($document->compliance_rate > 0 ? 'warning' : 'danger'))
+                                            <span class="badge bg-{{ $complianceBadge }}-subtle text-{{ $complianceBadge }}-emphasis"
+                                                  @if(!empty($missingRequired)) title="Manquant : {{ implode(', ', $missingRequired) }}" @endif>
+                                                {{ number_format((float) $document->compliance_rate, 0, ',', ' ') }}%
+                                            </span>
+                                        </td>
                                         <td>{{ $document->created_at->format('d/m/Y H:i') }}</td>
                                         <td>
                                             <a href="{{ route('accounting.documents.viewer', $document) }}" class="btn btn-sm btn-icon btn-outline-secondary" title="Voir le document">
@@ -431,7 +440,7 @@
                                             <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ ucfirst(str_replace('_', ' ', $document->status)) }}</span>
                                         @endif
                                     </div>
-                                    <div class="small text-muted mt-1">{{ $document->document_type }} · {{ $document->created_at->format('d/m/Y H:i') }} · {{ number_format($document->confidence, 2, ',', ' ') }}%</div>
+                                    <div class="small text-muted mt-1">{{ $document->document_type }} · {{ $document->created_at->format('d/m/Y H:i') }} · Confiance {{ number_format($document->confidence, 2, ',', ' ') }}% · Conformité {{ number_format((float) $document->compliance_rate, 0, ',', ' ') }}%</div>
                                 </summary>
 
                                 <div class="mobile-doc-body">
