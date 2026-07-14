@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TreasuryTransaction extends Model
 {
@@ -67,6 +68,11 @@ class TreasuryTransaction extends Model
     public function paymentTransaction(): BelongsTo
     {
         return $this->belongsTo(PaymentTransaction::class, 'payment_transaction_id');
+    }
+
+    public function mobileMoneyTransaction(): HasOne
+    {
+        return $this->hasOne(MobileMoneyTransaction::class);
     }
 
     /**

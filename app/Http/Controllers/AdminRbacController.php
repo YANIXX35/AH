@@ -27,7 +27,7 @@ class AdminRbacController extends Controller
                 'analyst' => 'Analyste',
                 'viewer' => 'Lecture seule',
             ],
-            'modules' => ['dashboard', 'accounting', 'treasury', 'investor', 'payments', 'support'],
+            'modules' => ['dashboard', 'accounting', 'treasury', 'invoicing', 'stock', 'investor', 'payments', 'support'],
         ]);
     }
 
@@ -40,7 +40,7 @@ class AdminRbacController extends Controller
 
         $before = $user->only(['role_key', 'module_permissions', 'is_accountant']);
         $modulePermissions = [];
-        foreach (['dashboard', 'accounting', 'treasury', 'investor', 'payments', 'support'] as $module) {
+        foreach (['dashboard', 'accounting', 'treasury', 'invoicing', 'stock', 'investor', 'payments', 'support'] as $module) {
             $modulePermissions[$module] = in_array($module, (array) ($data['modules'] ?? []), true);
         }
 

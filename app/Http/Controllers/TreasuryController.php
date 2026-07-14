@@ -709,6 +709,8 @@ class TreasuryController extends Controller
             ->withErrors(['stripe' => 'Paiement Stripe annulé.']);
     }
 
+    // Initiation de paiement (FedaPaySandboxController) : voir la note de conformité
+    // au sommet de FedaPaySandboxController.php avant toute évolution de ce flux.
     public function fedapayCheckoutForm(Request $request, TreasuryTransaction $transaction)
     {
         $this->authorize('own', $transaction);

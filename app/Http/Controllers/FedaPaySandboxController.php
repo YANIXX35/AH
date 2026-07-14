@@ -12,6 +12,15 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
+/**
+ * NOTE COMPLIANCE (2026-07-13) : cette initiation de paiement Mobile Money (écriture,
+ * mouvement de fonds) déroge à la note de cadrage produit (Cadrage_PME360.docx), qui
+ * classe ce niveau d'intégration WON'T pour l'instant — il exige un agrément
+ * d'établissement de paiement et une conformité KYC/AML, contrairement à la
+ * réconciliation en lecture seule (voir App\Domain\Treasury\MobileMoney). Décision :
+ * documenter et ne pas désactiver tant qu'aucun utilisateur n'est impacté ; toute
+ * extension de ce module doit d'abord repasser par une revue réglementaire.
+ */
 class FedaPaySandboxController extends Controller
 {
     /**

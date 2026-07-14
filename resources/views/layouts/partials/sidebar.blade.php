@@ -257,8 +257,25 @@
                                 <span class="align-middle">Prévisions</span>
                             </a>
                         </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link {{ request()->routeIs('treasury.mobile-money.*') ? 'active' : '' }}" href="{{ route('treasury.mobile-money.index') }}">
+                                <span class="icon-wrapper">📱</span>
+                                <span class="align-middle">Rapprochement Mobile Money</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
+            </li>
+            <li class="sidebar-item {{ request()->routeIs('invoicing.*') ? 'active' : '' }}">
+                <a class="sidebar-link" href="{{ route('invoicing.index') }}">
+                    <span class="icon-wrapper">🧾</span> <span class="align-middle">Facturation</span>
+                </a>
+            </li>
+            <li class="sidebar-item {{ request()->routeIs('stock.*') ? 'active' : '' }}">
+                <a class="sidebar-link" href="{{ route('stock.index') }}">
+                    <span class="icon-wrapper">📦</span> <span class="align-middle">Stock</span>
+                    <span class="badge bg-secondary rounded-pill ms-auto">Option</span>
+                </a>
             </li>
             <li class="sidebar-item {{ request()->routeIs('investor.*') ? 'active' : '' }}">
                 <a class="sidebar-link" href="{{ route('investor.readiness') }}">

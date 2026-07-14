@@ -29,8 +29,11 @@ use App\Http\Controllers\EnterpriseTeamController;
 use App\Http\Controllers\FedaPaySandboxController;
 use App\Http\Controllers\InAppNotificationController;
 use App\Http\Controllers\InvestorController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MenuActivityLogController;
+use App\Http\Controllers\MobileMoneyReconciliationController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\TreasuryController;
 use App\Models\PaymentTransaction;
@@ -481,6 +484,34 @@ Route::middleware('auth')->group(function () {
         Route::post('/treasury/{transaction}/fedapay/checkout', [TreasuryController::class, 'fedapayCheckoutStart'])->name('treasury.fedapay.checkout.start');
         Route::get('/treasury/{transaction}/stripe/success', [TreasuryController::class, 'stripeSuccess'])->name('treasury.stripe.success');
         Route::get('/treasury/{transaction}/stripe/cancel', [TreasuryController::class, 'stripeCancel'])->name('treasury.stripe.cancel');
+
+        Route::get('/treasury/mobile-money', [MobileMoneyReconciliationController::class, 'index'])->name('treasury.mobile-money.index');
+        Route::post('/treasury/mobile-money/import', [MobileMoneyReconciliationController::class, 'store'])->middleware('throttle:finance-write')->name('treasury.mobile-money.import');
+        Route::get('/treasury/mobile-money/{import}', [MobileMoneyReconciliationController::class, 'review'])->name('treasury.mobile-money.review');
+        Route::post('/treasury/mobile-money/transaction/{transaction}/match', [MobileMoneyReconciliationController::class, 'matchTransaction'])->middleware('throttle:finance-write')->name('treasury.mobile-money.match');
+        Route::post('/treasury/mobile-money/transaction/{transaction}/create', [MobileMoneyReconciliationController::class, 'createTreasuryTransaction'])->middleware('throttle:finance-write')->name('treasury.mobile-money.create');
+        Route::post('/treasury/mobile-money/transaction/{transaction}/ignore', [MobileMoneyReconciliationController::class, 'ignoreTransaction'])->middleware('throttle:finance-write')->name('treasury.mobile-money.ignore');
+        Route::post('/treasury/mobile-money/{import}/purge', [MobileMoneyReconciliationController::class, 'purgePersonalData'])->middleware('throttle:finance-write')->name('treasury.mobile-money.purge');
+    });
+
+    Route::middleware('module.permission:invoicing')->group(function () {
+        Route::get('/invoicing', [InvoiceController::class, 'index'])->name('invoicing.index');
+        Route::get('/invoicing/create', [InvoiceController::class, 'create'])->name('invoicing.create');
+        Route::post('/invoicing', [InvoiceController::class, 'store'])->middleware('throttle:finance-write')->name('invoicing.store');
+        Route::get('/invoicing/{invoice}', [InvoiceController::class, 'show'])->name('invoicing.show');
+        Route::post('/invoicing/{invoice}/payments', [InvoiceController::class, 'storePayment'])->middleware('throttle:finance-write')->name('invoicing.payments.store');
+        Route::post('/invoicing/{invoice}/cancel', [InvoiceController::class, 'cancel'])->middleware('throttle:finance-write')->name('invoicing.cancel');
+        Route::get('/invoicing/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoicing.pdf');
+    });
+
+    Route::middleware('module.permission:stock')->group(function () {
+        Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
+        Route::get('/stock/create', [StockController::class, 'create'])->name('stock.create');
+        Route::post('/stock', [StockController::class, 'store'])->middleware('throttle:finance-write')->name('stock.store');
+        Route::get('/stock/{product}', [StockController::class, 'show'])->name('stock.show');
+        Route::get('/stock/{product}/edit', [StockController::class, 'edit'])->name('stock.edit');
+        Route::put('/stock/{product}', [StockController::class, 'update'])->middleware('throttle:finance-write')->name('stock.update');
+        Route::post('/stock/{product}/movements', [StockController::class, 'storeMovement'])->middleware('throttle:finance-write')->name('stock.movements.store');
     });
 
     Route::get('/logout', function (Request $request) {
