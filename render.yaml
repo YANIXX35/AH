@@ -1,8 +1,3 @@
-databases:
-  - name: sitiame-db
-    databaseName: sitiame
-    plan: free
-
 services:
   - type: web
     name: sitiame-capitale
@@ -24,29 +19,14 @@ services:
       - key: APP_URL
         value: https://ah-xnl0.onrender.com
 
-      # ── Base de données PostgreSQL (Render injecte automatiquement) ─────────
+      # ── Base de données PostgreSQL (Neon, externe — plus de base Render native) ──
+      # DATABASE_URL à renseigner manuellement dans Render > Environment avec la
+      # chaîne de connexion Neon (onglet "Connect" du projet Neon, endpoint pooler
+      # recommandé pour une appli web avec plusieurs workers).
       - key: DB_CONNECTION
         value: pgsql
-      - key: DB_HOST
-        fromDatabase:
-          name: sitiame-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: sitiame-db
-          property: port
-      - key: DB_DATABASE
-        fromDatabase:
-          name: sitiame-db
-          property: database
-      - key: DB_USERNAME
-        fromDatabase:
-          name: sitiame-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: sitiame-db
-          property: password
+      - key: DATABASE_URL
+        sync: false   # ← postgresql://neondb_owner:MOT_DE_PASSE@ep-wispy-recipe-as35gq3f-pooler.c-4.eu-central-1.aws.neon.tech/neondb?sslmode=require
 
       # ── Session / Cache / Queue ─────────────────────────────────────────────
       - key: SESSION_DRIVER

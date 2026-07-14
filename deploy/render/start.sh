@@ -47,13 +47,10 @@ fi
 if [ -z "$DB_HOST" ] && [ -z "$DATABASE_URL" ]; then
     echo "========================================================"
     echo "  ERREUR FATALE : aucune variable de base de données !"
-    echo "  Ajoutez ces variables dans Render > sitiame-capitale > Environment :"
-    echo "    DB_HOST      (onglet Connect de sitiame-db)"
-    echo "    DB_PORT      (généralement 5432)"
-    echo "    DB_DATABASE  (onglet Connect de sitiame-db)"
-    echo "    DB_USERNAME  (onglet Connect de sitiame-db)"
-    echo "    DB_PASSWORD  (onglet Connect de sitiame-db)"
-    echo "  OU liez la base via le Blueprint Render (render.yaml)."
+    echo "  Ajoutez DATABASE_URL dans Render > sitiame-capitale > Environment"
+    echo "  avec la chaîne de connexion Neon (onglet Connect du projet Neon,"
+    echo "  endpoint pooler recommandé) :"
+    echo "    postgresql://user:password@host-pooler.../dbname?sslmode=require"
     echo "========================================================"
     exit 1
 fi
