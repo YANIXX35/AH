@@ -5,7 +5,7 @@
     <title>{{ $invoice->invoice_number }}</title>
     <style>
         @page {
-            margin: 110px 40px 80px 40px;
+            margin: 35px 40px;
         }
         body {
             font-family: DejaVu Sans, sans-serif;
@@ -14,30 +14,22 @@
             margin: 0;
         }
         .header {
-            position: fixed;
-            top: -85px;
-            left: 0;
-            right: 0;
-            height: 75px;
             border-bottom: 1px solid #d9dee7;
-            padding-bottom: 8px;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
         }
         .footer {
-            position: fixed;
-            bottom: -60px;
-            left: 0;
-            right: 0;
-            height: 50px;
             border-top: 1px solid #d9dee7;
             font-size: 10px;
             color: #6b7280;
             padding-top: 8px;
+            margin-top: 20px;
         }
         .row { width: 100%; clear: both; }
         .col-left { float: left; width: 58%; }
         .col-right { float: right; width: 40%; text-align: right; }
         .brand-name { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0; }
-        .brand-sub { margin: 4px 0 0; color: #6b7280; font-size: 10px; }
+        .brand-sub { margin: 2px 0 0; color: #6b7280; font-size: 10px; }
         .invoice-title { font-size: 20px; font-weight: 700; margin: 14px 0 2px; }
         .muted { color: #666; }
         .meta-card { border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px; margin-bottom: 12px; }
@@ -49,8 +41,9 @@
         th { background: #f8fafc; color: #334155; font-size: 11px; }
         .totals { margin-top: 14px; width: 45%; margin-left: auto; }
         .totals th { width: 55%; }
+        .totals .balance-row th, .totals .balance-row td { font-weight: 700; }
+        .bank-table { width: 100%; margin-top: 8px; }
         .text-right { text-align: right; }
-        .page-number:after { content: counter(page); }
     </style>
 </head>
 <body>
@@ -58,7 +51,26 @@
         <div class="row">
             <div class="col-left">
                 <p class="brand-name">{{ $invoice->user->company_name ?? $invoice->user->name ?? 'Emetteur' }}</p>
+                @if ($invoice->user->company_sigle)
+                    <p class="brand-sub">{{ $invoice->user->company_sigle }}</p>
+                @endif
+                @php
+                    $issuerAddress = $invoice->user->full_geographic_address
+                        ?: trim(collect([$invoice->user->address ?? null, $invoice->user->city ?? null])->filter()->implode(', '));
+                @endphp
+                @if ($issuerAddress)
+                    <p class="brand-sub">{{ $issuerAddress }}</p>
+                @endif
+                @if ($invoice->user->phone)
+                    <p class="brand-sub">Tel : {{ $invoice->user->phone }}</p>
+                @endif
                 <p class="brand-sub">{{ $invoice->user->email ?? '' }}</p>
+                @if ($invoice->user->rccm)
+                    <p class="brand-sub">RCCM : {{ $invoice->user->rccm }}</p>
+                @endif
+                @if ($invoice->user->company_tax_id)
+                    <p class="brand-sub">NIF : {{ $invoice->user->company_tax_id }}</p>
+                @endif
             </div>
             <div class="col-right">
                 <p class="brand-sub">Date d'emission</p>
@@ -66,13 +78,6 @@
                 <p class="brand-sub" style="margin-top:8px;">Reference facture</p>
                 <p style="margin:0; font-weight:700;">{{ $invoice->invoice_number }}</p>
             </div>
-        </div>
-    </div>
-
-    <div class="footer">
-        <div class="row">
-            <div class="col-left">Document genere via {{ config('app.name') }} - Facturation.</div>
-            <div class="col-right">Page <span class="page-number"></span></div>
         </div>
     </div>
 
@@ -137,11 +142,42 @@
         <tr><th>Sous-total</th><td class="text-right">{{ number_format((float) $invoice->subtotal, 0, ',', ' ') }} {{ $invoice->currency }}</td></tr>
         <tr><th>TVA ({{ $invoice->tax_rate }}%)</th><td class="text-right">{{ number_format((float) $invoice->tax_amount, 0, ',', ' ') }} {{ $invoice->currency }}</td></tr>
         <tr><th>Total TTC</th><td class="text-right"><strong>{{ number_format((float) $invoice->total_amount, 0, ',', ' ') }} {{ $invoice->currency }}</strong></td></tr>
+        <tr><th>Montant paye</th><td class="text-right">{{ number_format((float) $invoice->amount_paid, 0, ',', ' ') }} {{ $invoice->currency }}</td></tr>
+        <tr class="balance-row"><th>Solde du</th><td class="text-right">{{ number_format($invoice->balanceDue(), 0, ',', ' ') }} {{ $invoice->currency }}</td></tr>
     </table>
+
+    @php
+        $bankAccounts = collect($invoice->user->company_bank_accounts ?? [])
+            ->filter(fn ($row) => !empty($row['bank']) || !empty($row['account_number']));
+    @endphp
+    @if ($bankAccounts->isNotEmpty())
+        <div class="spacer"></div>
+        <p class="muted" style="margin:0 0 4px; font-weight:700;">Coordonnees de paiement</p>
+        <table class="bank-table">
+            <thead>
+                <tr>
+                    <th>Banque</th>
+                    <th>Numero de compte</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($bankAccounts as $bank)
+                    <tr>
+                        <td>{{ $bank['bank'] ?? '-' }}</td>
+                        <td>{{ $bank['account_number'] ?? '-' }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
 
     @if ($invoice->notes)
         <div class="spacer"></div>
         <p class="muted">{{ $invoice->notes }}</p>
     @endif
+
+    <div class="footer">
+        Document genere via {{ config('app.name') }} - Facturation, le {{ now()->format('d/m/Y H:i') }}.
+    </div>
 </body>
 </html>
