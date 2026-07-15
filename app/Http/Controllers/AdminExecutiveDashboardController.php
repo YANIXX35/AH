@@ -31,11 +31,12 @@ class AdminExecutiveDashboardController extends Controller
             ->whereIn('status', ['issued', 'overdue'])
             ->count();
 
-        $dso = (float) BillingInvoice::query()
+        $paidInvoiceDates = BillingInvoice::query()
             ->whereNotNull('paid_at')
-            ->selectRaw('AVG(DATEDIFF(paid_at, issued_at)) as avg_days')
-            ->value('avg_days');
-        $dso = round($dso ?: 0.0, 2);
+            ->get(['paid_at', 'issued_at']);
+        $dso = $paidInvoiceDates->isEmpty()
+            ? 0.0
+            : round($paidInvoiceDates->avg(fn (BillingInvoice $invoice) => $invoice->issued_at->diffInDays($invoice->paid_at)), 2);
 
         $cashIn30 = (float) TreasuryTransaction::query()
             ->where('type', 'encaissement')

@@ -28,7 +28,7 @@ class AdminComplianceKycController extends Controller
             $query->where('kyc_status', $status);
         }
 
-        $users = $query->orderByRaw("FIELD(kyc_status,'submitted','pending','rejected','approved')")
+        $users = $query->orderByRaw("CASE kyc_status WHEN 'submitted' THEN 0 WHEN 'pending' THEN 1 WHEN 'rejected' THEN 2 WHEN 'approved' THEN 3 ELSE 4 END")
             ->latest('kyc_submitted_at')
             ->paginate(20)
             ->withQueryString();

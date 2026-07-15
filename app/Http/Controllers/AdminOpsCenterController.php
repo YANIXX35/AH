@@ -955,27 +955,43 @@ class AdminOpsCenterController extends Controller
      */
     private function buildSloMetrics(): array
     {
-        $supportHours = (float) (SupportTicket::query()
-            ->whereNotNull('updated_at')
-            ->where('status', SupportTicket::STATUS_CLOSED)
-            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as avg_hours')
-            ->value('avg_hours') ?? 0.0);
+        $supportHours = $this->averageHoursBetween(
+            SupportTicket::query()->where('status', SupportTicket::STATUS_CLOSED),
+            'created_at',
+            'updated_at'
+        );
 
-        $ocrHours = (float) (AccountingEntry::query()
-            ->whereNotNull('ocr_verified_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, ocr_verified_at)) as avg_hours')
-            ->value('avg_hours') ?? 0.0);
+        $ocrHours = $this->averageHoursBetween(
+            AccountingEntry::query(),
+            'created_at',
+            'ocr_verified_at'
+        );
 
-        $investmentHours = (float) (InvestmentRequest::query()
-            ->whereNotNull('reviewed_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, reviewed_at)) as avg_hours')
-            ->value('avg_hours') ?? 0.0);
+        $investmentHours = $this->averageHoursBetween(
+            InvestmentRequest::query(),
+            'created_at',
+            'reviewed_at'
+        );
 
         return [
             'support' => $this->makeSloRow('Support', $supportHours, 24.0),
             'ocr' => $this->makeSloRow('Validation OCR', $ocrHours, 12.0),
             'investment' => $this->makeSloRow('Traitement demandes', $investmentHours, 48.0),
         ];
+    }
+
+    /**
+     * Moyenne (en heures) entre deux colonnes date, calculée côté PHP plutôt qu'en SQL
+     * (TIMESTAMPDIFF est MySQL-only et casse sous PostgreSQL/Neon en production).
+     */
+    private function averageHoursBetween(\Illuminate\Database\Eloquent\Builder $query, string $fromColumn, string $toColumn): float
+    {
+        $rows = $query->whereNotNull($toColumn)->get([$fromColumn, $toColumn]);
+        if ($rows->isEmpty()) {
+            return 0.0;
+        }
+
+        return (float) $rows->avg(fn ($row) => $row->{$fromColumn}->diffInHours($row->{$toColumn}));
     }
 
     /**
