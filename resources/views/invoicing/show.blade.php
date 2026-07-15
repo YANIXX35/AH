@@ -112,7 +112,7 @@
                 <div class="card mb-3">
                     <div class="card-body">
                         <h5 class="mb-3">Enregistrer un encaissement</h5>
-                        <form action="{{ route('invoicing.payments.store', $invoice) }}" method="POST">
+                        <form action="{{ route('invoicing.payments.store', $invoice) }}" method="POST" id="payment-form">
                             @csrf
 
                             @if ($unlinkedTreasuryTransactions->count() > 0)
@@ -140,7 +140,18 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Méthode</label>
-                                <input type="text" name="method" class="form-control" placeholder="Wave, Orange Money, virement…">
+                                <select name="method" id="payment_method" class="form-select">
+                                    <option value="">— Sélectionner —</option>
+                                    <option value="Wave">Wave</option>
+                                    <option value="Orange Money">Orange Money</option>
+                                    <option value="MTN Money">MTN Money</option>
+                                    <option value="Moov Money">Moov Money</option>
+                                    <option value="Virement bancaire">Virement bancaire</option>
+                                    <option value="Chèque">Chèque</option>
+                                    <option value="Espèces">Espèces</option>
+                                    <option value="autre">Autre…</option>
+                                </select>
+                                <input type="text" id="payment_method_other" class="form-control mt-2 d-none" placeholder="Préciser la méthode">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Référence</label>
@@ -191,6 +202,25 @@
         const date = option.getAttribute('data-date');
         if (amount) document.getElementById('payment_amount').value = amount;
         if (date) document.getElementById('payment_date').value = date;
+    });
+})();
+
+(function () {
+    const methodSelect = document.getElementById('payment_method');
+    const otherInput = document.getElementById('payment_method_other');
+    const form = document.getElementById('payment-form');
+    if (!methodSelect || !otherInput || !form) return;
+
+    methodSelect.addEventListener('change', function () {
+        otherInput.classList.toggle('d-none', methodSelect.value !== 'autre');
+    });
+
+    form.addEventListener('submit', function () {
+        if (methodSelect.value === 'autre') {
+            const custom = otherInput.value.trim();
+            const option = methodSelect.options[methodSelect.selectedIndex];
+            option.value = custom;
+        }
     });
 })();
 </script>
