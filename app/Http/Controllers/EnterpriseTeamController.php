@@ -8,6 +8,7 @@ use App\Models\EnterpriseLicense;
 use App\Models\MenuActionLog;
 use App\Models\TreasuryAuditLog;
 use App\Models\User;
+use App\Services\TreasuryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -158,6 +159,12 @@ class EnterpriseTeamController extends Controller
             'account_suspended' => true,
             'suspended_at' => now(),
             'suspended_reason' => 'Retiré de l’équipe par '.$inviter->name.' ('.$inviter->email.').',
+        ]);
+
+        TreasuryAudit::log($inviter->id, 'profile.team.member_removed', $teammate, [
+            'actor_user_id' => $inviter->id,
+            'teammate_name' => $teammate->name,
+            'teammate_email' => $teammate->email,
         ]);
 
         return redirect()->route('profile.team')->with('status', 'Collaborateur retiré de l’équipe. Le siège est de nouveau disponible.');

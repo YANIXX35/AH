@@ -143,6 +143,51 @@ class InvoiceController extends Controller
         return back()->with('success', 'Encaissement enregistré.');
     }
 
+    public function edit(Invoice $invoice): View
+    {
+        $this->authorizeInvoice($invoice);
+        abort_unless((float) $invoice->amount_paid <= 0 && $invoice->status !== 'cancelled', 403, 'Facture déjà réglée ou annulée : non modifiable.');
+        $invoice->load('items');
+
+        return view('invoicing.edit', ['invoice' => $invoice]);
+    }
+
+    public function update(Request $request, Invoice $invoice): RedirectResponse
+    {
+        $this->authorizeInvoice($invoice);
+
+        $validated = $request->validate([
+            'client_name' => ['required', 'string', 'max:255'],
+            'client_contact' => ['nullable', 'string', 'max:255'],
+            'client_address' => ['nullable', 'string', 'max:255'],
+            'client_tax_id' => ['nullable', 'string', 'max:100'],
+            'due_date' => ['required', 'date'],
+            'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.description' => ['required', 'string', 'max:255'],
+            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        try {
+            $this->invoiceService->updateInvoice($invoice, [
+                'client_name' => $validated['client_name'],
+                'client_contact' => $validated['client_contact'] ?? null,
+                'client_address' => $validated['client_address'] ?? null,
+                'client_tax_id' => $validated['client_tax_id'] ?? null,
+                'due_date' => Carbon::parse($validated['due_date']),
+                'items' => $validated['items'],
+                'tax_rate' => (float) ($validated['tax_rate'] ?? 0),
+                'notes' => $validated['notes'] ?? null,
+            ], auth()->id());
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['items' => $e->getMessage()])->withInput();
+        }
+
+        return redirect()->route('invoicing.show', $invoice)->with('success', 'Facture mise à jour.');
+    }
+
     public function cancel(Request $request, Invoice $invoice): RedirectResponse
     {
         $this->authorizeInvoice($invoice);

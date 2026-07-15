@@ -151,6 +151,77 @@ class InvoiceService
         });
     }
 
+    /**
+     * Corrige une facture pas encore réglée (aucun encaissement enregistré, pas annulée).
+     * La date d'émission n'est jamais modifiable : le numéro de facture a déjà été alloué
+     * pour son année, la changer casserait la cohérence numéro/année. Les lignes sont
+     * remplacées et les écritures comptables de vente régénérées pour rester exactes.
+     *
+     * @param  array{client_name: string, client_contact: ?string, client_address: ?string, client_tax_id: ?string, due_date: \DateTimeInterface, items: array, tax_rate?: float, notes: ?string}  $data
+     */
+    public function updateInvoice(Invoice $invoice, array $data, int $actorUserId): Invoice
+    {
+        if ((float) $invoice->amount_paid > 0 || $invoice->status === 'cancelled') {
+            throw new \InvalidArgumentException(
+                'Facture déjà réglée (partiellement ou totalement) ou annulée : impossible de la modifier.'
+            );
+        }
+
+        return DB::transaction(function () use ($invoice, $data, $actorUserId) {
+            $before = $invoice->only(['client_name', 'due_date', 'tax_rate', 'total_amount']);
+
+            $subtotal = 0.0;
+            foreach ($data['items'] as $item) {
+                $subtotal += round(((float) $item['quantity']) * ((float) $item['unit_price']), 2);
+            }
+            $taxRate = (float) ($data['tax_rate'] ?? 0);
+            $taxAmount = round($subtotal * $taxRate / 100, 2);
+            $totalAmount = round($subtotal + $taxAmount, 2);
+
+            $invoice->update([
+                'client_name' => $data['client_name'],
+                'client_contact' => $data['client_contact'] ?? null,
+                'client_address' => $data['client_address'] ?? null,
+                'client_tax_id' => $data['client_tax_id'] ?? null,
+                'due_date' => $data['due_date']->format('Y-m-d'),
+                'subtotal' => $subtotal,
+                'tax_rate' => $taxRate,
+                'tax_amount' => $taxAmount,
+                'total_amount' => $totalAmount,
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            $invoice->items()->delete();
+            foreach (array_values($data['items']) as $position => $item) {
+                $lineTotal = round(((float) $item['quantity']) * ((float) $item['unit_price']), 2);
+                InvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'position' => $position,
+                    'description' => $item['description'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'line_total' => $lineTotal,
+                ]);
+            }
+
+            AccountingEntry::query()
+                ->where('user_id', $invoice->user_id)
+                ->where('document_type', 'facture_vente')
+                ->where('document_reference', $invoice->invoice_number)
+                ->delete();
+            $this->createSaleAccountingEntries($invoice->fresh(), $actorUserId);
+
+            TreasuryAudit::log($invoice->user_id, 'invoicing.invoice.updated', $invoice, [
+                'invoice_number' => $invoice->invoice_number,
+                'actor_user_id' => $actorUserId,
+                'before' => $before,
+                'after' => $invoice->fresh()->only(['client_name', 'due_date', 'tax_rate', 'total_amount']),
+            ]);
+
+            return $invoice->fresh('items');
+        });
+    }
+
     public function cancelInvoice(Invoice $invoice, string $reason, int $actorUserId): void
     {
         if ($invoice->status === 'paid' || (float) $invoice->amount_paid > 0) {

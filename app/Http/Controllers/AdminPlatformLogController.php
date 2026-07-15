@@ -106,6 +106,20 @@ class AdminPlatformLogController extends Controller
             'treasury.transaction.create' => 'Création transaction',
             'treasury.transaction.update' => 'Mise à jour transaction',
             'treasury.transaction.delete' => 'Suppression transaction',
+            'treasury.transaction.stripe.cancel' => 'Annulation transaction Stripe',
+            'treasury.mobile_money.personal_data_purged' => 'Purge données personnelles Mobile Money',
+            'stock.product.deleted' => 'Suppression produit stock',
+            'stock.product.archived' => 'Archivage produit stock (retiré)',
+            'stock.product.updated' => 'Mise à jour produit stock',
+            'stock.movement.recorded' => 'Mouvement de stock enregistré',
+            'invoicing.invoice.created' => 'Création facture',
+            'invoicing.invoice.updated' => 'Modification facture',
+            'invoicing.invoice.cancelled' => 'Annulation facture',
+            'invoicing.invoice.payment_recorded' => 'Encaissement facture',
+            'accounting.entry.deleted' => 'Suppression écriture comptable',
+            'accounting.document.deleted' => 'Suppression document comptable',
+            'admin.license.revoked' => 'Révocation licence entreprise',
+            'profile.team.member_removed' => 'Retrait d’un membre d’équipe',
         ];
         $treasuryLogs = TreasuryAuditLog::query()
             ->with(['actor:id,name,email', 'user:id,name,email'])

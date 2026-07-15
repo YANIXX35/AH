@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\EnterpriseLicense;
 use App\Models\User;
+use App\Services\TreasuryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -226,6 +228,17 @@ class AdminEnterpriseLicenseController extends Controller
         }
 
         $enterprise_license->update(['revoked_at' => now()]);
+
+        TreasuryAudit::log(
+            $enterprise_license->primary_workspace_user_id ?? $enterprise_license->created_by_user_id,
+            'admin.license.revoked',
+            $enterprise_license,
+            [
+                'actor_user_id' => Auth::id(),
+                'license_key' => $enterprise_license->license_key,
+                'assigned_company_tax_id' => $enterprise_license->assigned_company_tax_id,
+            ]
+        );
 
         return redirect()
             ->route('admin.licenses.index')

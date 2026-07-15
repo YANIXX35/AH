@@ -76,7 +76,12 @@
                                 <td class="text-end">{{ number_format((float) $invoice->total_amount, 0, ',', ' ') }} {{ $invoice->currency }}</td>
                                 <td class="text-end">{{ number_format((float) $invoice->amount_paid, 0, ',', ' ') }} {{ $invoice->currency }}</td>
                                 <td><span class="badge bg-{{ $badge }}">{{ $invoice->status }}</span></td>
-                                <td><a href="{{ route('invoicing.show', $invoice) }}" class="btn btn-sm btn-outline-primary">Détail</a></td>
+                                <td>
+                                    <a href="{{ route('invoicing.show', $invoice) }}" class="btn btn-sm btn-outline-primary">Détail</a>
+                                    @if ((float) $invoice->amount_paid <= 0 && $invoice->status !== 'cancelled')
+                                        <a href="{{ route('invoicing.edit', $invoice) }}" class="btn btn-sm btn-outline-secondary">Modifier</a>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>

@@ -11,6 +11,9 @@
             <p class="text-muted small mb-0">{{ $invoice->client_name }} · Émise le {{ $invoice->issue_date->format('d/m/Y') }} · Échéance {{ $invoice->due_date->format('d/m/Y') }}</p>
         </div>
         <div class="d-flex gap-2">
+            @if ((float) $invoice->amount_paid <= 0 && $invoice->status !== 'cancelled')
+                <a href="{{ route('invoicing.edit', $invoice) }}" class="btn btn-outline-primary btn-sm">Modifier</a>
+            @endif
             <a href="{{ route('invoicing.pdf', $invoice) }}" class="btn btn-outline-secondary btn-sm">Télécharger PDF</a>
             <a href="{{ route('invoicing.index') }}" class="btn btn-outline-secondary btn-sm">Retour</a>
         </div>

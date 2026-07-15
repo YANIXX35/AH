@@ -503,6 +503,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/invoicing/create', [InvoiceController::class, 'create'])->name('invoicing.create');
         Route::post('/invoicing', [InvoiceController::class, 'store'])->middleware('throttle:finance-write')->name('invoicing.store');
         Route::get('/invoicing/{invoice}', [InvoiceController::class, 'show'])->name('invoicing.show');
+        Route::get('/invoicing/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoicing.edit');
+        Route::put('/invoicing/{invoice}', [InvoiceController::class, 'update'])->middleware('throttle:finance-write')->name('invoicing.update');
         Route::post('/invoicing/{invoice}/payments', [InvoiceController::class, 'storePayment'])->middleware('throttle:finance-write')->name('invoicing.payments.store');
         Route::post('/invoicing/{invoice}/cancel', [InvoiceController::class, 'cancel'])->middleware('throttle:finance-write')->name('invoicing.cancel');
         Route::get('/invoicing/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoicing.pdf');

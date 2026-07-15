@@ -11,6 +11,7 @@ use App\Models\PlanComptableImport;
 use App\Models\TreasuryTransaction;
 use App\Services\OcrPipelineService;
 use App\Services\OcrService;
+use App\Services\TreasuryAudit;
 use App\Support\OcrStatus;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -318,6 +319,13 @@ class AccountingController extends Controller
     {
         $this->authorizeEntry($entry);
 
+        TreasuryAudit::log($entry->user_id, 'accounting.entry.deleted', $entry, [
+            'actor_user_id' => Auth::id(),
+            'description' => $entry->description,
+            'amount' => (float) $entry->amount,
+            'document_reference' => $entry->document_reference,
+        ]);
+
         if ($entry->attachment_path) {
             Storage::disk('public')->delete($entry->attachment_path);
         }
@@ -337,6 +345,14 @@ class AccountingController extends Controller
 
         $deleted = 0;
         foreach ($entries as $entry) {
+            TreasuryAudit::log($entry->user_id, 'accounting.entry.deleted', $entry, [
+                'actor_user_id' => Auth::id(),
+                'description' => $entry->description,
+                'amount' => (float) $entry->amount,
+                'document_reference' => $entry->document_reference,
+                'bulk' => true,
+            ]);
+
             if ($entry->attachment_path) {
                 Storage::disk('public')->delete($entry->attachment_path);
             }
@@ -2144,6 +2160,13 @@ class AccountingController extends Controller
         if (! $this->workspaceOwnsDataUserId((int) $document->user_id)) {
             abort(403);
         }
+
+        TreasuryAudit::log($document->user_id, 'accounting.document.deleted', $document, [
+            'actor_user_id' => Auth::id(),
+            'original_name' => $document->original_name,
+            'status' => $document->status,
+            'linked_entries_count' => $document->entries()->count(),
+        ]);
 
         $deletedEntries = 0;
         foreach ($document->entries as $entry) {
