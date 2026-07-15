@@ -93,15 +93,41 @@
                         <th>Nom</th>
                         <th>E-mail</th>
                         <th>Créé le</th>
+                        <th></th>
                     </tr>
                     </thead>
                     <tbody>
                     @foreach($teammates as $mate)
-                        <tr>
-                            <td>{{ $mate->name }}</td>
-                            <td>{{ $mate->email }}</td>
-                            <td class="small text-muted">{{ $mate->created_at->format('d/m/Y H:i') }}</td>
-                        </tr>
+                        @if($mate->account_suspended)
+                            <tr class="text-muted">
+                                <td>{{ $mate->name }}</td>
+                                <td>{{ $mate->email }}</td>
+                                <td class="small">{{ $mate->created_at->format('d/m/Y H:i') }}</td>
+                                <td class="text-end"><span class="badge bg-secondary">Retiré (siège libéré)</span></td>
+                            </tr>
+                        @else
+                            <tr>
+                                <td>
+                                    <form method="post" action="{{ route('profile.team.update', $mate) }}" class="d-flex gap-1 align-items-center">
+                                        @csrf
+                                        @method('PUT')
+                                        <input type="text" name="name" value="{{ $mate->name }}" class="form-control form-control-sm" style="max-width: 160px" required>
+                                </td>
+                                <td>
+                                        <input type="email" name="email" value="{{ $mate->email }}" class="form-control form-control-sm" style="max-width: 200px" required>
+                                </td>
+                                <td class="small text-muted">{{ $mate->created_at->format('d/m/Y H:i') }}</td>
+                                <td class="text-end">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Enregistrer</button>
+                                    </form>
+                                    <form method="post" action="{{ route('profile.team.destroy', $mate) }}" class="d-inline" onsubmit="return confirm('Retirer {{ $mate->name }} de l\'équipe ? Son compte sera suspendu (connexion bloquée) et le siège sera libéré.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Retirer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endif
                     @endforeach
                     </tbody>
                 </table>

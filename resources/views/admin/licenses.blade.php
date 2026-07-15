@@ -159,6 +159,7 @@
                                 <td class="small text-muted">{{ $lic->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="text-end">
                                     @if(!$lic->revoked_at)
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#edit-license-{{ $lic->id }}">Modifier</button>
                                         <form method="post" action="{{ route('admin.licenses.revoke', $lic) }}" class="d-inline" onsubmit="return confirm('Révoquer cette licence ?');">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Révoquer</button>
@@ -168,6 +169,35 @@
                                     @endif
                                 </td>
                             </tr>
+                            @if(!$lic->revoked_at)
+                                <tr class="collapse" id="edit-license-{{ $lic->id }}">
+                                    <td colspan="6" class="bg-light">
+                                        <form method="post" action="{{ route('admin.licenses.update', $lic) }}" class="row g-2 align-items-end py-2">
+                                            @csrf
+                                            @method('PUT')
+                                            <div class="col-md-3">
+                                                <label class="form-label small mb-1">Libellé</label>
+                                                <input type="text" name="label" value="{{ $lic->label }}" class="form-control form-control-sm">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label small mb-1">Sièges (min. {{ $used }})</label>
+                                                <input type="number" name="max_seats" value="{{ $lic->max_seats }}" min="{{ max(1, $used) }}" max="{{ $defaultMaxSeats }}" class="form-control form-control-sm" required>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label small mb-1">Expiration</label>
+                                                <input type="date" name="expires_at" value="{{ $lic->expires_at?->format('Y-m-d') }}" class="form-control form-control-sm">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label small mb-1">Notes internes</label>
+                                                <input type="text" name="notes" value="{{ $lic->notes }}" class="form-control form-control-sm">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="submit" class="btn btn-sm btn-primary w-100">Enregistrer</button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endif
                         @empty
                             <tr><td colspan="6" class="text-center text-muted py-4">Aucune licence pour l’instant.</td></tr>
                         @endforelse

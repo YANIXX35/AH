@@ -184,6 +184,39 @@ class AdminEnterpriseLicenseController extends Controller
     }
 
     /**
+     * Met à jour le libellé, les notes, le plafond de sièges et l’expiration d’une licence existante.
+     */
+    public function update(Request $request, EnterpriseLicense $enterprise_license): RedirectResponse
+    {
+        $seatCap = (int) config('licensing.enterprise_max_users_per_license', 3);
+
+        $data = $request->validate([
+            'label' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'max_seats' => ['required', 'integer', 'min:1', 'max:'.$seatCap],
+            'expires_at' => ['nullable', 'date'],
+        ]);
+
+        $usedSeats = $enterprise_license->seatsUsed();
+        if ((int) $data['max_seats'] < $usedSeats) {
+            return back()->withErrors([
+                'max_seats' => "Impossible de descendre sous {$usedSeats} sièges : c’est le nombre de comptes actifs déjà rattachés à cette licence.",
+            ])->withInput();
+        }
+
+        $enterprise_license->update([
+            'label' => $data['label'] ?? null,
+            'notes' => $data['notes'] ?? null,
+            'max_seats' => (int) $data['max_seats'],
+            'expires_at' => ! empty($data['expires_at']) ? $data['expires_at'] : null,
+        ]);
+
+        return redirect()
+            ->route('admin.licenses.index')
+            ->with('status', 'Licence mise à jour.');
+    }
+
+    /**
      * Révoque une licence (plus aucune nouvelle inscription possible).
      */
     public function revoke(Request $request, EnterpriseLicense $enterprise_license): RedirectResponse

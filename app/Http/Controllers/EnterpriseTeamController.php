@@ -124,6 +124,59 @@ class EnterpriseTeamController extends Controller
     }
 
     /**
+     * Met à jour le nom/e-mail d’un collaborateur rattaché à la même licence.
+     */
+    public function update(Request $request, User $teammate): RedirectResponse
+    {
+        $inviter = $request->user();
+        $this->authorizeEnterpriseInviter($inviter);
+        $this->authorizeTeammate($inviter, $teammate);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$teammate->id],
+        ]);
+
+        $teammate->update($validated);
+
+        return redirect()->route('profile.team')->with('status', 'Collaborateur mis à jour.');
+    }
+
+    /**
+     * Retire un collaborateur de l’équipe : suspend son compte (connexion bloquée, historique
+     * conservé) plutôt qu’une suppression — un compte a déjà pu créer des écritures/documents
+     * référencés en piste d’audit. La suspension libère aussitôt le siège (seatsUsed() exclut
+     * déjà les comptes suspendus).
+     */
+    public function destroy(Request $request, User $teammate): RedirectResponse
+    {
+        $inviter = $request->user();
+        $this->authorizeEnterpriseInviter($inviter);
+        $this->authorizeTeammate($inviter, $teammate);
+
+        $teammate->update([
+            'account_suspended' => true,
+            'suspended_at' => now(),
+            'suspended_reason' => 'Retiré de l’équipe par '.$inviter->name.' ('.$inviter->email.').',
+        ]);
+
+        return redirect()->route('profile.team')->with('status', 'Collaborateur retiré de l’équipe. Le siège est de nouveau disponible.');
+    }
+
+    /**
+     * Un collaborateur ne peut être géré que par un membre de la même licence, jamais lui-même.
+     */
+    protected function authorizeTeammate(User $inviter, User $teammate): void
+    {
+        if ($teammate->id === $inviter->id) {
+            abort(403, 'Vous ne pouvez pas gérer votre propre compte depuis cette page.');
+        }
+        if ($teammate->enterprise_license_id === null || $teammate->enterprise_license_id !== $inviter->enterprise_license_id) {
+            abort(403, 'Ce compte n’appartient pas à votre licence.');
+        }
+    }
+
+    /**
      * Réservé aux comptes entreprise disposant d’une licence.
      */
     protected function authorizeEnterpriseInviter(?User $user): void
@@ -163,7 +216,7 @@ class EnterpriseTeamController extends Controller
             ->clients()
             ->where('enterprise_license_id', $license->id)
             ->orderBy('name')
-            ->get(['id', 'name', 'email', 'created_at']);
+            ->get(['id', 'name', 'email', 'created_at', 'account_suspended']);
         $teamUserIds = $teammates->pluck('id')->map(fn ($id) => (int) $id)->all();
 
         return [$inviter, $license, $teammates, $teamUserIds];

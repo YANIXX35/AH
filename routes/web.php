@@ -116,6 +116,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/equipe', [EnterpriseTeamController::class, 'index'])->name('profile.team');
     Route::post('/profile/equipe', [EnterpriseTeamController::class, 'store'])->name('profile.team.store');
     Route::get('/profile/equipe/historique', [EnterpriseTeamController::class, 'history'])->name('profile.team.history');
+    Route::put('/profile/equipe/{teammate}', [EnterpriseTeamController::class, 'update'])->name('profile.team.update');
+    Route::delete('/profile/equipe/{teammate}', [EnterpriseTeamController::class, 'destroy'])->name('profile.team.destroy');
 
     Route::post('/profile', function (Request $request) {
         $user = $request->user();
@@ -379,6 +381,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/licenses', [AdminEnterpriseLicenseController::class, 'index'])->name('licenses.index');
         Route::post('/licenses', [AdminEnterpriseLicenseController::class, 'store'])->name('licenses.store');
         Route::post('/licenses/assign', [AdminEnterpriseLicenseController::class, 'assign'])->name('licenses.assign');
+        Route::put('/licenses/{enterprise_license}', [AdminEnterpriseLicenseController::class, 'update'])->name('licenses.update');
         Route::post('/licenses/{enterprise_license}/revoke', [AdminEnterpriseLicenseController::class, 'revoke'])->name('licenses.revoke');
         Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments.index');
         Route::post('/payments/{paymentTransaction}/activate-premium', [AdminPaymentController::class, 'activatePremium'])->name('payments.activate-premium');
