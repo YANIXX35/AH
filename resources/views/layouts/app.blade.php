@@ -395,6 +395,18 @@
                             $topbarSupportTickets = $topbarSupportTickets ?? collect();
                             $openSupportTicketsCount = $openSupportTicketsCount ?? 0;
                         @endphp
+                        <li class="nav-item d-flex align-items-center gap-1 me-2" id="topbar-locale-switch">
+                            <form action="{{ route('locale.switch') }}" method="POST" class="m-0">
+                                @csrf
+                                <input type="hidden" name="locale" value="fr">
+                                <button type="submit" class="btn btn-sm {{ app()->getLocale() === 'fr' ? 'btn-primary' : 'btn-outline-secondary' }}" onclick="window.setTopbarLocale('fr')">FR</button>
+                            </form>
+                            <form action="{{ route('locale.switch') }}" method="POST" class="m-0">
+                                @csrf
+                                <input type="hidden" name="locale" value="en">
+                                <button type="submit" class="btn btn-sm {{ app()->getLocale() === 'en' ? 'btn-primary' : 'btn-outline-secondary' }}" onclick="window.setTopbarLocale('en')">EN</button>
+                            </form>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-icon dropdown-toggle" href="#" id="alertsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <div class="position-relative">
@@ -674,6 +686,14 @@
     <script src="{{ asset('js/adminkit-app.js') }}"></script>
     <script src="{{ asset('js/webcam-capture.js') }}" defer></script>
     <script>
+        // Bouton topbar FR/EN : même mécanisme que le sélecteur de langue de la page Profil
+        // (localStorage.preferred_locale + cookie googtrans lus par GTranslate au chargement).
+        window.setTopbarLocale = function (locale) {
+            localStorage.setItem('preferred_locale', locale);
+            document.cookie = "googtrans=/fr/" + locale + ";path=/";
+            document.cookie = "googtrans=/auto/" + locale + ";path=/";
+        };
+
         (function () {
             var supported = ['fr', 'en', 'es', 'de', 'pt', 'ar', 'it', 'nl'];
             var preferred = localStorage.getItem('preferred_locale') || "{{ app()->getLocale() }}";
