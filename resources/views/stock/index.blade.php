@@ -32,6 +32,10 @@
         </div>
     </div>
 
+    @if ($archivedCount > 0)
+        <p class="text-muted small mb-3">{{ $archivedCount }} produit{{ $archivedCount > 1 ? 's' : '' }} archivé{{ $archivedCount > 1 ? 's' : '' }} (mouvements existants, historique conservé, masqué{{ $archivedCount > 1 ? 's' : '' }} de cette liste).</p>
+    @endif
+
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
@@ -59,7 +63,16 @@
                                 <td class="text-end">{{ number_format((float) $product->quantity_on_hand, 2, ',', ' ') }} {{ $product->unit }}</td>
                                 <td class="text-end">{{ number_format((float) $product->average_cost, 0, ',', ' ') }}</td>
                                 <td class="text-end">{{ number_format($product->stockValue(), 0, ',', ' ') }} FCFA</td>
-                                <td><a href="{{ route('stock.show', $product) }}" class="btn btn-sm btn-outline-primary">Détail</a></td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <a href="{{ route('stock.show', $product) }}" class="btn btn-sm btn-outline-primary">Détail</a>
+                                        <form action="{{ route('stock.destroy', $product) }}" method="POST" onsubmit="return confirm('Supprimer ce produit ? S\'il a déjà des mouvements, il sera archivé (conservé pour l\'historique) plutôt que supprimé.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr><td colspan="6" class="text-center text-muted py-4">Aucun produit pour l'instant.</td></tr>

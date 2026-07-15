@@ -12,6 +12,11 @@
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('stock.edit', $product) }}" class="btn btn-outline-primary btn-sm">Éditer</a>
+            <form action="{{ route('stock.destroy', $product) }}" method="POST" onsubmit="return confirm('Supprimer ce produit ? S\'il a déjà des mouvements, il sera archivé (conservé pour l\'historique) plutôt que supprimé.');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
+            </form>
             <a href="{{ route('stock.index') }}" class="btn btn-outline-secondary btn-sm">Retour</a>
         </div>
     </div>

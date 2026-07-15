@@ -72,6 +72,38 @@ class StockService
     }
 
     /**
+     * Supprime le produit si son historique est vide, sinon l'archive
+     * (is_active=false) pour préserver la piste d'audit du stock déjà mouvementé
+     * — supprimer physiquement casserait la valorisation CUMP déjà comptabilisée
+     * et le lien financier avec les mouvements passés (movements.product_id est
+     * en cascadeOnDelete, donc un vrai delete effacerait aussi tout l'historique).
+     *
+     * @return string 'deleted' | 'archived'
+     */
+    public function deleteProduct(StockProduct $product, int $actorUserId): string
+    {
+        $hasMovements = $product->movements()->exists();
+
+        if ($hasMovements) {
+            $product->update(['is_active' => false]);
+            TreasuryAudit::log($product->user_id, 'stock.product.archived', $product, [
+                'actor_user_id' => $actorUserId,
+            ]);
+
+            return 'archived';
+        }
+
+        TreasuryAudit::log($product->user_id, 'stock.product.deleted', $product, [
+            'actor_user_id' => $actorUserId,
+            'name' => $product->name,
+            'sku' => $product->sku,
+        ]);
+        $product->delete();
+
+        return 'deleted';
+    }
+
+    /**
      * @param  string  $type  'entree' | 'sortie' | 'ajustement'
      * @param  float  $quantity  Toujours positive pour entree/sortie ; signée pour ajustement (négatif = correction à la baisse)
      */

@@ -22,22 +22,30 @@ class StockController extends Controller
     public function index(): View
     {
         $products = StockProduct::where('user_id', $this->workspaceUserId())
+            ->where('is_active', true)
             ->orderBy('name')
             ->paginate(20);
 
         $totalValue = StockProduct::where('user_id', $this->workspaceUserId())
+            ->where('is_active', true)
             ->selectRaw('SUM(quantity_on_hand * average_cost) as total')
             ->value('total');
 
         $lowStockCount = StockProduct::where('user_id', $this->workspaceUserId())
+            ->where('is_active', true)
             ->whereNotNull('reorder_threshold')
             ->whereColumn('quantity_on_hand', '<', 'reorder_threshold')
+            ->count();
+
+        $archivedCount = StockProduct::where('user_id', $this->workspaceUserId())
+            ->where('is_active', false)
             ->count();
 
         return view('stock.index', [
             'products' => $products,
             'totalValue' => (float) ($totalValue ?? 0),
             'lowStockCount' => $lowStockCount,
+            'archivedCount' => $archivedCount,
         ]);
     }
 
@@ -78,6 +86,19 @@ class StockController extends Controller
         $this->stockService->updateProduct($product, $request->validated(), auth()->id());
 
         return redirect()->route('stock.show', $product)->with('success', 'Produit mis à jour.');
+    }
+
+    public function destroy(StockProduct $product): RedirectResponse
+    {
+        $this->authorizeProduct($product);
+
+        $result = $this->stockService->deleteProduct($product, auth()->id());
+
+        $message = $result === 'deleted'
+            ? 'Produit supprimé.'
+            : "Produit archivé (des mouvements existent, l'historique est conservé) — retirable de la liste mais toujours consultable.";
+
+        return redirect()->route('stock.index')->with('success', $message);
     }
 
     public function storeMovement(Request $request, StockProduct $product): RedirectResponse

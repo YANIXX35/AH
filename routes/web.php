@@ -512,6 +512,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/stock/{product}', [StockController::class, 'show'])->name('stock.show');
         Route::get('/stock/{product}/edit', [StockController::class, 'edit'])->name('stock.edit');
         Route::put('/stock/{product}', [StockController::class, 'update'])->middleware('throttle:finance-write')->name('stock.update');
+        Route::delete('/stock/{product}', [StockController::class, 'destroy'])->middleware('throttle:finance-write')->name('stock.destroy');
         Route::post('/stock/{product}/movements', [StockController::class, 'storeMovement'])->middleware('throttle:finance-write')->name('stock.movements.store');
     });
 
