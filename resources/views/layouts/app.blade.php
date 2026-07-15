@@ -100,22 +100,22 @@
 
         /* ===== ADMINKIT EXACT SIDEBAR DESIGN ===== */
 
-        /* SIDEBAR CONTAINER - AdminKit Exact */
+        /* SIDEBAR CONTAINER - Habillage maquette 2026-07-15 (navy + accent or) */
         .sidebar {
             min-width: 260px;
             max-width: 260px;
             direction: ltr;
-            background: #222e3c;
+            background: #0F2747;
             transition: margin-left .35s ease-in-out, left .35s ease-in-out,
                         margin-right .35s ease-in-out, right .35s ease-in-out;
         }
 
-        /* SIDEBAR CONTENT WRAPPER - AdminKit Exact */
+        /* SIDEBAR CONTENT WRAPPER */
         .sidebar-content {
             display: flex;
             height: 100vh;
             flex-direction: column;
-            background: #222e3c;
+            background: #0F2747;
             overflow: hidden;
             transition: margin-left .35s ease-in-out, left .35s ease-in-out,
                         margin-right .35s ease-in-out, right .35s ease-in-out;
@@ -160,73 +160,77 @@
             outline: 0;
         }
 
-        /* SIDEBAR HEADER (SECTION LABELS) - AdminKit Exact */
+        /* SIDEBAR HEADER (SECTION LABELS) - habillage maquette : petit, majuscules, espacé */
         .sidebar-header {
             background: transparent;
-            padding: 1.5rem 1.5rem 0.375rem 1.5rem;
-            font-size: 0.75rem;
-            color: #ced4da;
-            font-weight: 400;
-            text-transform: none;
+            padding: 1.35rem 1.5rem 0.5rem 1.5rem;
+            font-size: 0.68rem;
+            color: #6C82A6;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
         }
 
-        /* SIDEBAR LINKS - DEFAULT STATE - AdminKit Exact */
+        /* SIDEBAR LINKS - DEFAULT STATE */
         .sidebar-link,
         a.sidebar-link {
             display: block;
-            padding: 0.625rem 1.625rem;
-            font-weight: 400;
-            color: rgba(233, 236, 239, 0.5);
-            background: #222e3c;
+            padding: 0.55rem 1rem;
+            margin: 0.1rem 0.6rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            color: #CBD6E8;
+            background: transparent;
             border-left: 3px solid transparent;
             cursor: pointer;
             position: relative;
             text-decoration: none;
-            transition: background 0.1s ease-in-out;
+            transition: background 0.12s ease-in-out, color 0.12s ease-in-out;
         }
 
-        /* Icons in sidebar links - AdminKit Exact */
+        /* Icons in sidebar links */
         .sidebar-link i,
         .sidebar-link svg,
         a.sidebar-link i,
         a.sidebar-link svg {
             margin-right: 0.75rem;
-            color: rgba(233, 236, 239, 0.5);
+            color: #CBD6E8;
+            opacity: .9;
         }
 
-        /* SIDEBAR LINKS - FOCUS STATE - AdminKit Exact */
+        /* SIDEBAR LINKS - FOCUS STATE */
         .sidebar-link:focus {
             outline: 0;
         }
 
-        /* SIDEBAR LINKS - HOVER STATE - AdminKit Exact */
+        /* SIDEBAR LINKS - HOVER STATE */
         .sidebar-link:hover {
-            color: rgba(233, 236, 239, 0.75);
-            background: #222e3c;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.06);
             border-left-color: transparent;
         }
 
         .sidebar-link:hover i,
         .sidebar-link:hover svg {
-            color: rgba(233, 236, 239, 0.75);
+            color: #fff;
+            opacity: 1;
         }
 
-        /* SIDEBAR ITEMS - ACTIVE STATE - AdminKit Exact */
+        /* SIDEBAR ITEMS - ACTIVE STATE - pastille arrondie or, façon maquette */
         .sidebar-item.active > .sidebar-link,
         .sidebar-item.active .sidebar-link:hover {
-            background: linear-gradient(90deg,
-                        rgba(59, 125, 221, 0.1) 0%,
-                        rgba(59, 125, 221, 0.0875) 50%,
-                        transparent 100%);
-            border-left-color: #3b7ddd;
-            color: #e9ecef;
+            background: rgba(217, 165, 68, 0.16);
+            border-left-color: transparent;
+            color: #F2D89B;
+            font-weight: 650;
         }
 
         .sidebar-item.active > .sidebar-link i,
         .sidebar-item.active > .sidebar-link svg,
         .sidebar-item.active .sidebar-link:hover i,
         .sidebar-item.active .sidebar-link:hover svg {
-            color: #e9ecef;
+            color: #F2D89B;
+            opacity: 1;
         }
 
         /* COLLAPSE/SUBMENU HANDLING - AdminKit Exact */
@@ -254,29 +258,36 @@
             list-style: none;
         }
 
-        /* SUBMENU LINKS - AdminKit Exact (same as main links) */
+        /* SUBMENU LINKS - même habillage que les liens principaux, légèrement plus compacts */
+        .sidebar-nav-sub {
+            padding-left: 0.5rem;
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            margin-left: 1.6rem;
+        }
+
         .sidebar-nav-sub .sidebar-link {
-            padding: 0.625rem 1.625rem;
-            font-weight: 400;
-            color: rgba(233, 236, 239, 0.5);
-            background: #222e3c;
+            padding: 0.45rem 0.85rem;
+            margin: 0.05rem 0.6rem 0.05rem 0;
+            font-weight: 450;
+            font-size: 0.86rem;
+            color: #A9B7CE;
+            background: transparent;
             border-left: 3px solid transparent;
-            transition: background 0.1s ease-in-out;
+            border-radius: 0.5rem;
+            transition: background 0.12s ease-in-out, color 0.12s ease-in-out;
         }
 
         .sidebar-nav-sub .sidebar-link:hover {
-            color: rgba(233, 236, 239, 0.75);
-            background: #222e3c;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.06);
             border-left-color: transparent;
         }
 
         .sidebar-nav-sub .sidebar-item.active > .sidebar-link {
-            background: linear-gradient(90deg,
-                        rgba(59, 125, 221, 0.1) 0%,
-                        rgba(59, 125, 221, 0.0875) 50%,
-                        transparent 100%);
-            border-left-color: #3b7ddd;
-            color: #e9ecef;
+            background: rgba(217, 165, 68, 0.16);
+            border-left-color: transparent;
+            color: #F2D89B;
+            font-weight: 600;
         }
 
         /* CHEVRON FOR COLLAPSE - AdminKit Exact */
@@ -328,13 +339,14 @@
             opacity: 0.7;
         }
 
-        /* CATEGORY HEADERS - Custom but AdminKit compatible */
+        /* CATEGORY HEADERS (sous-titres à l'intérieur d'un dropdown, ex. "Saisie des données") */
         .sidebar-item-category {
-            padding: 1.5rem 1.5rem 0.375rem 1.5rem;
-            font-size: 0.75rem;
-            color: #ced4da;
-            font-weight: 400;
-            text-transform: none;
+            padding: 1rem 1rem 0.4rem 1rem;
+            font-size: 0.66rem;
+            color: #6C82A6;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
             margin: 0;
             display: block;
         }
@@ -344,8 +356,8 @@
         }
 
         .sidebar-nav-sub .sidebar-link.active:hover {
-            background-color: #dbeafe;
-            color: #1d4ed8;
+            background: rgba(217, 165, 68, 0.22);
+            color: #F2D89B;
         }
 
         @media print {
