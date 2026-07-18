@@ -19,6 +19,11 @@
     .balance-kpi-card {
         height: 100%;
         border-left: 4px solid #dee2e6;
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .balance-kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important;
     }
     .balance-kpi-card.kpi-success { border-left-color: #198754; }
     .balance-kpi-card.kpi-danger { border-left-color: #dc3545; }
@@ -30,18 +35,31 @@
         letter-spacing: .04em;
         color: #6c757d;
         font-weight: 600;
-        margin-bottom: .35rem;
+        margin-bottom: .4rem;
     }
     .balance-kpi-value {
-        font-size: 1.35rem;
+        font-size: 1.6rem;
         font-weight: 700;
         line-height: 1.2;
-        margin-bottom: .2rem;
+        margin-bottom: .25rem;
     }
     .balance-kpi-meta {
         font-size: .8rem;
         color: #6c757d;
     }
+    .balance-kpi-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .balance-kpi-icon.icon-primary { background: rgba(13, 110, 253, .1); color: #0d6efd; }
+    .balance-kpi-icon.icon-success { background: rgba(25, 135, 84, .1); color: #198754; }
+    .balance-kpi-icon.icon-danger { background: rgba(220, 53, 69, .1); color: #dc3545; }
+    .balance-kpi-icon.icon-warning { background: rgba(253, 126, 20, .1); color: #fd7e14; }
     .balance-health-chip {
         display: inline-flex;
         align-items: center;
@@ -263,37 +281,49 @@
     <div class="row g-3 mb-4">
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="balance-kpi-card kpi-primary">
-                <div class="card-body">
-                    <div class="balance-kpi-title">Solde actuel</div>
-                    <div class="balance-kpi-value {{ $soldeActuel >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($soldeActuel, 0, ',', ' ') }} FCFA</div>
-                    <div class="balance-kpi-meta">Ouverture période : {{ number_format($soldeOuverture, 0, ',', ' ') }} FCFA</div>
+                <div class="card-body d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <div class="balance-kpi-title">Solde actuel</div>
+                        <div class="balance-kpi-value {{ $soldeActuel >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($soldeActuel, 0, ',', ' ') }} FCFA</div>
+                        <div class="balance-kpi-meta">Ouverture période : {{ number_format($soldeOuverture, 0, ',', ' ') }} FCFA</div>
+                    </div>
+                    <span class="balance-kpi-icon icon-primary"><i data-feather="dollar-sign" style="width:20px;height:20px;"></i></span>
                 </div>
             </div>
         </div>
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="balance-kpi-card kpi-success">
-                <div class="card-body">
-                    <div class="balance-kpi-title">Encaissements du mois</div>
-                    <div class="balance-kpi-value text-success">{{ number_format($monthInflow, 0, ',', ' ') }} FCFA</div>
-                    <div class="balance-kpi-meta">Cumul effectué</div>
+                <div class="card-body d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <div class="balance-kpi-title">Encaissements du mois</div>
+                        <div class="balance-kpi-value text-success">{{ number_format($monthInflow, 0, ',', ' ') }} FCFA</div>
+                        <div class="balance-kpi-meta">Cumul effectué</div>
+                    </div>
+                    <span class="balance-kpi-icon icon-success"><i data-feather="trending-up" style="width:20px;height:20px;"></i></span>
                 </div>
             </div>
         </div>
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="balance-kpi-card kpi-danger">
-                <div class="card-body">
-                    <div class="balance-kpi-title">Décaissements du mois</div>
-                    <div class="balance-kpi-value text-danger">{{ number_format($monthOutflow, 0, ',', ' ') }} FCFA</div>
-                    <div class="balance-kpi-meta">Cumul effectué</div>
+                <div class="card-body d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <div class="balance-kpi-title">Décaissements du mois</div>
+                        <div class="balance-kpi-value text-danger">{{ number_format($monthOutflow, 0, ',', ' ') }} FCFA</div>
+                        <div class="balance-kpi-meta">Cumul effectué</div>
+                    </div>
+                    <span class="balance-kpi-icon icon-danger"><i data-feather="trending-down" style="width:20px;height:20px;"></i></span>
                 </div>
             </div>
         </div>
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="balance-kpi-card {{ $monthNet >= 0 ? 'kpi-success' : 'kpi-warning' }}">
-                <div class="card-body">
-                    <div class="balance-kpi-title">Net mensuel</div>
-                    <div class="balance-kpi-value {{ $monthNet >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($monthNet, 0, ',', ' ') }} FCFA</div>
-                    <div class="balance-kpi-meta">Entrées - sorties du mois</div>
+                <div class="card-body d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <div class="balance-kpi-title">Net mensuel</div>
+                        <div class="balance-kpi-value {{ $monthNet >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($monthNet, 0, ',', ' ') }} FCFA</div>
+                        <div class="balance-kpi-meta">Entrées - sorties du mois</div>
+                    </div>
+                    <span class="balance-kpi-icon {{ $monthNet >= 0 ? 'icon-success' : 'icon-warning' }}"><i data-feather="activity" style="width:20px;height:20px;"></i></span>
                 </div>
             </div>
         </div>
