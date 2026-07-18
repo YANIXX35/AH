@@ -507,6 +507,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/invoicing/{invoice}', [InvoiceController::class, 'update'])->middleware('throttle:finance-write')->name('invoicing.update');
         Route::post('/invoicing/{invoice}/payments', [InvoiceController::class, 'storePayment'])->middleware('throttle:finance-write')->name('invoicing.payments.store');
         Route::post('/invoicing/{invoice}/cancel', [InvoiceController::class, 'cancel'])->middleware('throttle:finance-write')->name('invoicing.cancel');
+        Route::delete('/invoicing/{invoice}', [InvoiceController::class, 'destroy'])->middleware('throttle:finance-write')->name('invoicing.destroy');
         Route::get('/invoicing/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoicing.pdf');
     });
 

@@ -13,6 +13,12 @@
         <div class="d-flex gap-2">
             @if ((float) $invoice->amount_paid <= 0 && $invoice->status !== 'cancelled')
                 <a href="{{ route('invoicing.edit', $invoice) }}" class="btn btn-outline-primary btn-sm">Modifier</a>
+                <form action="{{ route('invoicing.destroy', $invoice) }}" method="POST" class="d-inline"
+                      onsubmit="return confirm('Supprimer définitivement cette facture ? Cette action est irréversible.');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
+                </form>
             @endif
             <a href="{{ route('invoicing.pdf', $invoice) }}" class="btn btn-outline-secondary btn-sm">Télécharger PDF</a>
             <a href="{{ route('invoicing.index') }}" class="btn btn-outline-secondary btn-sm">Retour</a>

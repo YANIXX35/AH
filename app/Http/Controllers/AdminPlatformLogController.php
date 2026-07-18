@@ -114,6 +114,7 @@ class AdminPlatformLogController extends Controller
             'stock.movement.recorded' => 'Mouvement de stock enregistré',
             'invoicing.invoice.created' => 'Création facture',
             'invoicing.invoice.updated' => 'Modification facture',
+            'invoicing.invoice.deleted' => 'Suppression facture',
             'invoicing.invoice.cancelled' => 'Annulation facture',
             'invoicing.invoice.payment_recorded' => 'Encaissement facture',
             'accounting.entry.deleted' => 'Suppression écriture comptable',

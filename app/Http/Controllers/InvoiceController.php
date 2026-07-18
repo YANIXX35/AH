@@ -205,6 +205,19 @@ class InvoiceController extends Controller
         return back()->with('success', 'Facture annulée.');
     }
 
+    public function destroy(Invoice $invoice): RedirectResponse
+    {
+        $this->authorizeInvoice($invoice);
+
+        try {
+            $this->invoiceService->deleteInvoice($invoice, auth()->id());
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['invoice' => $e->getMessage()]);
+        }
+
+        return redirect()->route('invoicing.index')->with('success', 'Facture supprimée.');
+    }
+
     public function downloadPdf(Invoice $invoice): StreamedResponse
     {
         $this->authorizeInvoice($invoice);

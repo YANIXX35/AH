@@ -241,6 +241,23 @@ class InvoiceService
         ]);
     }
 
+    public function deleteInvoice(Invoice $invoice, int $actorUserId): void
+    {
+        if ((float) $invoice->amount_paid > 0 || $invoice->status === 'cancelled') {
+            throw new \InvalidArgumentException(
+                'Facture déjà réglée (partiellement ou totalement) ou annulée : impossible de la supprimer.'
+            );
+        }
+
+        TreasuryAudit::log($invoice->user_id, 'invoicing.invoice.deleted', $invoice, [
+            'invoice_number' => $invoice->invoice_number,
+            'actor_user_id' => $actorUserId,
+            'before' => $invoice->only(['invoice_number', 'client_name', 'total_amount', 'status', 'issue_date']),
+        ]);
+
+        $invoice->delete();
+    }
+
     private function createSaleAccountingEntries(Invoice $invoice, ?int $actorUserId): void
     {
         AccountingEntry::create([
