@@ -121,7 +121,7 @@
                 <div class="card mb-3">
                     <div class="card-body">
                         <h5 class="mb-3">Enregistrer un encaissement</h5>
-                        <form action="{{ route('invoicing.payments.store', $invoice) }}" method="POST" id="payment-form">
+                        <form action="{{ route('invoicing.payments.store', $invoice) }}" method="POST" id="payment-form" data-balance-due="{{ $invoice->balanceDue() }}">
                             @csrf
 
                             @if ($unlinkedTreasuryTransactions->count() > 0)
@@ -229,6 +229,24 @@
             const custom = otherInput.value.trim();
             const option = methodSelect.options[methodSelect.selectedIndex];
             option.value = custom;
+        }
+    });
+})();
+
+(function () {
+    const form = document.getElementById('payment-form');
+    const amountInput = document.getElementById('payment_amount');
+    if (!form || !amountInput) return;
+
+    form.addEventListener('submit', function (e) {
+        const amount = parseFloat(amountInput.value) || 0;
+        const balanceDue = parseFloat(form.dataset.balanceDue) || 0;
+        const isFullSettlement = Math.abs(amount - balanceDue) < 0.01;
+        const message = isFullSettlement
+            ? 'Ce montant solde entièrement la facture : elle passera au statut "Payée". Confirmer l\'encaissement ?'
+            : 'Confirmer l\'enregistrement de cet encaissement ?';
+        if (!confirm(message)) {
+            e.preventDefault();
         }
     });
 })();
