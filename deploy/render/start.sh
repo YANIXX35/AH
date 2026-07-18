@@ -16,6 +16,8 @@ fi
 # (les valeurs render.yaml ne sont pas toujours injectées sur un service existant)
 export APP_ENV="${APP_ENV:-production}"
 export APP_DEBUG=true               # temporaire — à remettre false après validation
+export APP_LOCALE=fr
+export APP_FALLBACK_LOCALE=fr
 export SESSION_DRIVER=file
 export CACHE_STORE=file
 export LOG_CHANNEL=stderr
