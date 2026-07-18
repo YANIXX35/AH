@@ -713,7 +713,30 @@
                 languages: supported,
                 wrapper_selector: ".gtranslate_wrapper"
             };
+
+            window.__preferredLocale = preferred;
         })();
+
+        // Sur un site multi-pages (pas une SPA), GTranslate ne relit pas toujours le
+        // cookie de façon fiable à chaque nouveau chargement de page pour retraduire
+        // automatiquement (limite documentée par l'éditeur pour les intégrations
+        // hors CMS). On force donc explicitement la traduction via son API JS dès
+        // que dropdown.js est prêt, au lieu de compter uniquement sur le cookie.
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.__preferredLocale === 'fr') {
+                return;
+            }
+
+            var attempts = 0;
+            (function tryTranslate() {
+                if (typeof window.doGTranslate === 'function') {
+                    window.doGTranslate('fr|' + window.__preferredLocale);
+                } else if (attempts < 20) {
+                    attempts++;
+                    setTimeout(tryTranslate, 150);
+                }
+            })();
+        });
     </script>
     <script src="https://cdn.gtranslate.net/widgets/latest/dropdown.js" defer></script>
     <script>
