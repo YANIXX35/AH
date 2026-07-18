@@ -137,9 +137,9 @@ class AdminPlatformLogController extends Controller
                     'actor_name' => $actor?->name ?? '—',
                     'actor_email' => $actor?->email,
                     'action' => $treasuryLabels[$row->action] ?? $row->action,
-                    'detail' => ! empty($row->properties)
+                    'detail' => $this->formatInvoiceLogDetail($row) ?? (! empty($row->properties)
                         ? (string) json_encode($row->properties, JSON_UNESCAPED_UNICODE)
-                        : '—',
+                        : '—'),
                     'ip' => $row->ip_address,
                 ];
             });
@@ -242,6 +242,70 @@ class AdminPlatformLogController extends Controller
             ->concat($authLogs)
             ->sortByDesc(fn ($row) => $row['created_at']?->getTimestamp() ?? 0)
             ->values();
+    }
+
+    /**
+     * Résumé lisible d'une modification/suppression de facture (avant → après),
+     * pour remplacer le JSON brut des `properties` dans la colonne Détail.
+     */
+    private function formatInvoiceLogDetail(TreasuryAuditLog $row): ?string
+    {
+        $props = $row->properties ?? [];
+        $invoiceNumber = $props['invoice_number'] ?? '—';
+
+        if ($row->action === 'invoicing.invoice.updated') {
+            $before = $props['before'] ?? [];
+            $after = $props['after'] ?? [];
+            $labels = [
+                'client_name' => 'Client',
+                'due_date' => 'Échéance',
+                'tax_rate' => 'TVA',
+                'total_amount' => 'Total',
+            ];
+
+            $changes = [];
+            foreach ($labels as $key => $label) {
+                $oldValue = $this->formatInvoiceFieldValue($key, $before[$key] ?? null);
+                $newValue = $this->formatInvoiceFieldValue($key, $after[$key] ?? null);
+                if ($oldValue !== $newValue) {
+                    $changes[] = $label.' : '.$oldValue.' → '.$newValue;
+                }
+            }
+
+            return 'Facture '.$invoiceNumber.' — '.($changes !== [] ? implode(' · ', $changes) : 'aucun champ suivi modifié');
+        }
+
+        if ($row->action === 'invoicing.invoice.deleted') {
+            $before = $props['before'] ?? [];
+
+            return 'Facture '.$invoiceNumber.' supprimée — Client : '.($before['client_name'] ?? '—')
+                .' · Total : '.$this->formatInvoiceFieldValue('total_amount', $before['total_amount'] ?? null)
+                .' · Statut : '.($before['status'] ?? '—')
+                .' · Émise le '.$this->formatInvoiceFieldValue('issue_date', $before['issue_date'] ?? null);
+        }
+
+        return null;
+    }
+
+    private function formatInvoiceFieldValue(string $key, mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return '—';
+        }
+
+        if (in_array($key, ['due_date', 'issue_date'], true)) {
+            return Carbon::parse((string) $value)->format('d/m/Y');
+        }
+
+        if ($key === 'total_amount') {
+            return number_format((float) $value, 0, ',', ' ');
+        }
+
+        if ($key === 'tax_rate') {
+            return number_format((float) $value, 2, ',', '').' %';
+        }
+
+        return (string) $value;
     }
 }
 
