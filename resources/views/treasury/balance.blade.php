@@ -337,7 +337,8 @@
                             }
 
                             $allSeriesValues = array_merge($seriesIn, $seriesOut, $seriesBal);
-                            $hasChartData = count($chartDates) > 0 && count($allSeriesValues) > 0;
+                            $hasRealValues = count($chartDates) > 0 && count($allSeriesValues) > 0;
+                            $hasChartData = $hasRealValues && (max($allSeriesValues) > 0 || min($allSeriesValues) < 0);
                             $chartMin = $hasChartData ? min(min($allSeriesValues), 0) : 0;
                             $chartMax = $hasChartData ? max(max($allSeriesValues), 1) : 1;
                             $chartSpan = max(1, $chartMax - $chartMin);
