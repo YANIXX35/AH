@@ -1929,47 +1929,58 @@ class AccountingController extends Controller
     private function getPlanAccounts(): array
     {
         $userId = $this->workspaceUserId();
-        $storedAccounts = PlanComptableAccount::where('user_id', $userId)
-            ->orderBy('sort_order', 'asc')
-            ->orderBy('numero_compte', 'asc')
-            ->orderBy('prefix', 'asc')
-            ->get();
+        try {
+            $storedAccounts = PlanComptableAccount::where('user_id', $userId)
+                ->orderBy('sort_order', 'asc')
+                ->orderBy('numero_compte', 'asc')
+                ->orderBy('prefix', 'asc')
+                ->get();
+        } catch (\Illuminate\Database\QueryException $e) {
+            // If sort_order or numero_compte columns don't exist yet, fall back to old behavior
+            $storedAccounts = PlanComptableAccount::where('user_id', $userId)
+                ->orderBy('prefix', 'asc')
+                ->get();
+        }
 
-        // Check if we have detailed accounts (with numero_compte set)
-        $hasDetailedAccounts = $storedAccounts->filter(fn($a) => !empty($a->numero_compte))->isNotEmpty();
+        try {
+            // Check if we have detailed accounts (with numero_compte set)
+            $hasDetailedAccounts = $storedAccounts->filter(fn($a) => !empty($a->numero_compte))->isNotEmpty();
 
-        if ($storedAccounts->isNotEmpty()) {
-            if ($hasDetailedAccounts) {
+            if ($storedAccounts->isNotEmpty()) {
+                if ($hasDetailedAccounts) {
+                    return $storedAccounts->mapWithKeys(function (PlanComptableAccount $account) {
+                        $key = $account->numero_compte ?? $account->prefix;
+                        return [
+                            $key => [
+                                'label' => $account->label,
+                                'libelle_compte' => $account->libelle_compte ?? $account->label,
+                                'category' => $account->category,
+                                'subtype' => $account->subtype,
+                                'type_compte' => $account->type_compte ?? null,
+                                'sous_type' => $account->sous_type ?? null,
+                                'classe' => $account->classe ?? null,
+                                'observation' => $account->observation ?? null,
+                                'is_actif' => $account->is_actif ?? true,
+                                'prefix' => $account->prefix,
+                                'numero_compte' => $account->numero_compte ?? null,
+                                'sort_order' => $account->sort_order ?? 0,
+                            ],
+                        ];
+                    })->toArray();
+                }
+                // Fallback to old behavior for backward compatibility
                 return $storedAccounts->mapWithKeys(function (PlanComptableAccount $account) {
-                    $key = $account->numero_compte ?? $account->prefix;
                     return [
-                        $key => [
+                        $account->prefix => [
                             'label' => $account->label,
-                            'libelle_compte' => $account->libelle_compte ?? $account->label,
                             'category' => $account->category,
                             'subtype' => $account->subtype,
-                            'type_compte' => $account->type_compte,
-                            'sous_type' => $account->sous_type,
-                            'classe' => $account->classe,
-                            'observation' => $account->observation,
-                            'is_actif' => $account->is_actif,
-                            'prefix' => $account->prefix,
-                            'numero_compte' => $account->numero_compte,
-                            'sort_order' => $account->sort_order,
                         ],
                     ];
                 })->toArray();
             }
-            // Fallback to old behavior for backward compatibility
-            return $storedAccounts->mapWithKeys(function (PlanComptableAccount $account) {
-                return [
-                    $account->prefix => [
-                        'label' => $account->label,
-                        'category' => $account->category,
-                        'subtype' => $account->subtype,
-                    ],
-                ];
-            })->toArray();
+        } catch (\Exception $e) {
+            // If anything goes wrong, fall back to config
         }
 
         return config('plancomptable.accounts', []);
