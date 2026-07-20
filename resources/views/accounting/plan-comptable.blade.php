@@ -216,7 +216,7 @@
                                         @endif
                                         <td class="text-center">
                                             <input type="text" class="form-control form-control-sm text-center"
-                                                value="{{ ($account['category'] ?? (in_array($class, ['6', '7']) ? 'Résultat' : 'Bilan') }}"
+                                                value="{{ $account['category'] ?? (in_array($class, ['6', '7']) ? 'Résultat' : 'Bilan') }}"
                                                 readonly>
                                             <input type="hidden" name="plan[{{ $key }}][category]" value="{{ $account['category'] ?? (in_array($class, ['6', '7']) ? 'resultat' : 'balance') }}">
                                         </td>
