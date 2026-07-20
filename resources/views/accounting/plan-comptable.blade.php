@@ -172,7 +172,7 @@
                         @csrf
                     <div class="table-responsive">
                         @php
-                            $hasDetailedAccounts = collect($plan)->filter(fn($a, $k) => isset($a['numero_compte'] ?? null) !== null)->isNotEmpty();
+                            $hasDetailedAccounts = collect($plan)->filter(fn($a, $k) => isset($a['numero_compte']))->isNotEmpty();
                         @endphp
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-dark">
