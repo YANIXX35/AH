@@ -831,7 +831,20 @@ class AccountingController extends Controller
     private function parsePlanComptable(string $path): array
     {
         $spreadsheet = IOFactory::load($path);
-        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Try to get the right sheet first, fall back to active sheet
+        $sheetNames = ['Plan_Comptable', 'Plan Comptable', 'Plan Comptable SYSCOHADA'];
+        $sheet = null;
+        foreach ($sheetNames as $name) {
+            if ($spreadsheet->sheetNameExists($name)) {
+                $sheet = $spreadsheet->getSheetByName($name);
+                break;
+            }
+        }
+        
+        if (! $sheet) {
+            $sheet = $spreadsheet->getActiveSheet();
+        }
         $rows = $sheet->toArray(null, true, true, true);
 
         $accounts = [];
