@@ -7,11 +7,24 @@ use App\Models\BillingSubscription;
 use App\Models\PaymentTransaction;
 use App\Models\TreasuryTransaction;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class AdminExecutiveDashboardController extends Controller
 {
     public function index(): View
+    {
+        // Vue plateforme entière, identique pour tout admin : un cache court évite
+        // de recompter tous les agrégats (MRR, DSO, churn...) à chaque clic.
+        $data = Cache::remember('admin.executive-dashboard.aggregates', now()->addMinutes(3), fn () => $this->buildDashboardData());
+
+        return view('admin.executive-dashboard', $data);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildDashboardData(): array
     {
         $now = now();
         $startCurrent = $now->copy()->startOfMonth();
@@ -76,7 +89,7 @@ class AdminExecutiveDashboardController extends Controller
             return [...$alert, 'status' => $status];
         })->all();
 
-        return view('admin.executive-dashboard', [
+        return [
             'kpis' => [
                 'mrr' => round($mrr, 2),
                 'churn' => $churn,
@@ -87,6 +100,6 @@ class AdminExecutiveDashboardController extends Controller
             ],
             'topRiskClients' => $failedPayments,
             'alerts' => $alerts,
-        ]);
+        ];
     }
 }

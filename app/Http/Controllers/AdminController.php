@@ -20,6 +20,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -37,6 +38,22 @@ class AdminController extends Controller
      * Tableau de bord administrateur (vue synthétique multi-tenant).
      */
     public function index(Request $request): View
+    {
+        // Vue plateforme entière, identique pour tout admin : un cache court évite
+        // de recompter tous les agrégats à chaque clic (auparavant recalculés à
+        // chaque chargement, sans jamais devenir plus rapide).
+        $data = Cache::remember('admin.dashboard.aggregates', now()->addMinutes(3), fn () => $this->buildDashboardData());
+
+        // La recommandation IA est chargée en tâche de fond par le JS de la vue
+        // (route admin.dashboard.ai.live) : la calculer ici aussi bloquerait
+        // l'affichage de la page pendant jusqu'à 45s (timeout de l'appel HuggingFace).
+        return view('admin.dashboard', $data);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildDashboardData(): array
     {
         $userCount = User::query()->count();
         $premiumCount = User::query()->where('is_premium', true)->count();
@@ -160,21 +177,8 @@ class AdminController extends Controller
         $healthScore -= min(15.0, $pendingInvestmentRate * 0.18);
         $healthScore = max(0.0, round($healthScore, 1));
         $aiInconsistencies = $this->buildAccountingTreasuryInconsistencies();
-        $aiLiveInsight = $this->buildDashboardLiveInsight(
-            [
-                'open_ticket_rate' => $openTicketRate,
-                'pending_investment_rate' => $pendingInvestmentRate,
-                'pct_trade_register' => (float) $pctTradeRegister,
-                'pct_premium' => (float) $pctPremium,
-                'menu_errors_24h' => (int) $menuErrors24h,
-                'entries_count' => $entriesCount,
-                'treasury_count' => $treasuryCount,
-                'health_score' => $healthScore,
-            ],
-            $aiInconsistencies
-        );
 
-        return view('admin.dashboard', [
+        return [
             'userCount' => $userCount,
             'premiumCount' => $premiumCount,
             'entriesCount' => $entriesCount,
@@ -197,7 +201,6 @@ class AdminController extends Controller
             'actionsOfDay' => $actionsOfDay,
             'menuErrors24h' => $menuErrors24h,
             'aiInconsistencies' => $aiInconsistencies,
-            'aiLiveInsight' => $aiLiveInsight,
             'licenseAlerts' => [
                 'active' => $licensesActiveCount,
                 'expiring_7' => $licensesExpiring7Count,
@@ -211,7 +214,7 @@ class AdminController extends Controller
                 'next_expiry' => $nextSubscriptionExpiry,
             ],
             'generatedAt' => now(),
-        ]);
+        ];
     }
 
     public function dashboardLiveInsights(): JsonResponse

@@ -7,19 +7,25 @@ COPY . .
 RUN npm run build
 
 # ── Stage 2 : image PHP de production ─────────────────────────────────────────
-FROM php:8.4-apache
+FROM php:8.3-apache
 
 RUN apt-get update && apt-get install -y \
         git zip unzip curl \
         libpng-dev libonig-dev libxml2-dev libpq-dev libzip-dev \
+        libsqlite3-dev \
     && docker-php-ext-install \
-        pdo pdo_pgsql pdo_mysql \
+        pdo pdo_pgsql pdo_mysql pdo_sqlite \
         mbstring bcmath gd zip pcntl exif \
     && a2enmod rewrite negotiation \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     # php.ini production : display_errors=Off + output_buffering=4096
     && cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini \
-    && echo "ServerName localhost" >> /etc/apache2/apache2.conf
+    && echo "ServerName localhost" >> /etc/apache2/apache2.conf \
+    # Optimisations PHP pour production
+    && echo "memory_limit=256M" >> /usr/local/etc/php/php.ini \
+    && echo "max_execution_time=300" >> /usr/local/etc/php/php.ini \
+    && echo "upload_max_filesize=20M" >> /usr/local/etc/php/php.ini \
+    && echo "post_max_size=20M" >> /usr/local/etc/php/php.ini
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -39,7 +45,11 @@ RUN mkdir -p storage/framework/{sessions,cache/data,views} \
         storage/logs \
         bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache \
+    # Optimisation Laravel pour production
+    && php artisan config:cache --env=production \
+    && php artisan route:cache --env=production \
+    && php artisan view:cache --env=production
 
 # Apache : pointer sur public/
 RUN printf '<VirtualHost *:80>\n\

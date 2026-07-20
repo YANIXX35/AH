@@ -16,6 +16,19 @@ class PlanComptableAccount extends Model
         'label',
         'category',
         'subtype',
+        'numero_compte',
+        'libelle_compte',
+        'type_compte',
+        'sous_type',
+        'classe',
+        'observation',
+        'is_actif',
+        'sort_order',
+    ];
+
+    protected $casts = [
+        'is_actif' => 'boolean',
+        'sort_order' => 'integer',
     ];
 
     public $timestamps = true;

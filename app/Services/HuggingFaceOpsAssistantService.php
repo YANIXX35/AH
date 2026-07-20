@@ -18,10 +18,13 @@ class HuggingFaceOpsAssistantService
         $timeout = (int) config('services.huggingface.timeout', 45);
 
         if ($token === '') {
+            \Log::warning('HuggingFace token non configuré - chat impossible');
+            
             return [
                 'ok' => false,
                 'answer' => '',
-                'error' => 'HUGGINGFACE_TOKEN non configuré.',
+                'error' => 'HUGGINGFACE_TOKEN non configuré. Configurez HUGGINGFACE_TOKEN pour utiliser l\'assistant IA.',
+                'enabled' => false,
             ];
         }
 
@@ -37,32 +40,55 @@ class HuggingFaceOpsAssistantService
                 ]);
 
             if (! $response->successful()) {
+                \Log::error('HuggingFace API error', [
+                    'status_code' => $response->status(),
+                    'model' => $model,
+                ]);
+                
                 return [
                     'ok' => false,
                     'answer' => '',
                     'error' => 'Erreur HF API: HTTP '.$response->status(),
+                    'enabled' => true,
                 ];
             }
 
             $json = $response->json();
             $answer = (string) data_get($json, 'choices.0.message.content', '');
             if ($answer === '') {
+                \Log::warning('HuggingFace réponse vide', [
+                    'model' => $model,
+                ]);
+                
                 return [
                     'ok' => false,
                     'answer' => '',
                     'error' => 'Réponse vide du modèle Hugging Face.',
+                    'enabled' => true,
                 ];
             }
+
+            \Log::info('HuggingFace chat réussi', [
+                'model' => $model,
+                'answer_length' => strlen($answer),
+            ]);
 
             return [
                 'ok' => true,
                 'answer' => trim($answer),
+                'enabled' => true,
             ];
         } catch (\Throwable $e) {
+            \Log::error('HuggingFace chat exception', [
+                'error' => $e->getMessage(),
+                'model' => $model,
+            ]);
+            
             return [
                 'ok' => false,
                 'answer' => '',
                 'error' => $e->getMessage(),
+                'enabled' => true,
             ];
         }
     }

@@ -38,6 +38,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Log Level
+    |--------------------------------------------------------------------------
+    |
+    | This option defines the minimum log level that should be logged.
+    | Available levels: "emergency", "alert", "critical", "error", 
+    | "warning", "notice", "info", "debug"
+    |
+    */
+
+    'level' => env('LOG_LEVEL', 'warning'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Log Channels
     |--------------------------------------------------------------------------
     |
@@ -151,6 +164,84 @@ return [
             'path' => storage_path('logs/financial-audit.log'),
             'level' => env('LOG_LEVEL', 'info'),
             'days' => (int) env('LOG_FINANCIAL_AUDIT_DAYS', 180),
+            'replace_placeholders' => true,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Journal des actions OCR
+        |--------------------------------------------------------------------------
+        */
+        'ocr' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/ocr.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => (int) env('LOG_OCR_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Journal des emails envoyés
+        |--------------------------------------------------------------------------
+        */
+        'email' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/email.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => (int) env('LOG_EMAIL_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Journal des uploads de fichiers
+        |--------------------------------------------------------------------------
+        */
+        'uploads' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/uploads.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => (int) env('LOG_UPLOADS_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Journal des appels API externes
+        |--------------------------------------------------------------------------
+        */
+        'api' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/api.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => (int) env('LOG_API_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Journal des exceptions
+        |--------------------------------------------------------------------------
+        */
+        'exceptions' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/exceptions.log'),
+            'level' => env('LOG_LEVEL', 'error'),
+            'days' => (int) env('LOG_EXCEPTIONS_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Journal des jobs queue
+        |--------------------------------------------------------------------------
+        */
+        'queue' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/queue.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => (int) env('LOG_QUEUE_DAYS', 30),
             'replace_placeholders' => true,
         ],
 

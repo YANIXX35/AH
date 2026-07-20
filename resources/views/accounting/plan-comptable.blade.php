@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Plan comptable OHADA | Sitiame Capitale')
 @section('page_title', 'Plan comptable OHADA')
@@ -171,41 +171,60 @@
                     <form id="plan-edit-form" action="{{ route('accounting.plan.update') }}" method="POST">
                         @csrf
                     <div class="table-responsive">
+                        @php
+                            $hasDetailedAccounts = collect($plan)->filter(fn($a, $k) => isset($a['numero_compte'] ?? null) !== null)->isNotEmpty();
+                        @endphp
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-dark">
                                 <tr>
                                     <th class="text-center" style="width: 80px;">Classe</th>
-                                    <th class="text-center" style="width: 100px;">Numéro</th>
+                                    @if($hasDetailedAccounts)
+                                        <th class="text-center" style="width: 120px;">Numéro</th>
+                                    @endif
                                     <th>Libellé du compte</th>
+                                    @if($hasDetailedAccounts)
+                                        <th class="text-center" style="width: 120px;">Type</th>
+                                    @endif
                                     <th class="text-center" style="width: 120px;">Catégorie</th>
                                     <th class="text-center" style="width: 120px;">Sous-catégorie</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($plan as $class => $account)
+                                @forelse($plan as $key => $account)
+                                    @php
+                                        $class = $account['classe'] ?? $account['prefix'] ?? $key;
+                                    @endphp
                                     <tr class="table-{{ $class === '1' ? 'primary' : ($class === '2' ? 'success' : ($class === '3' ? 'info' : ($class === '4' ? 'warning' : ($class === '5' ? 'secondary' : ($class === '6' ? 'danger' : 'light'))))) }} bg-opacity-10">
                                         <td class="text-center fw-bold">{{ $class }}</td>
-                                        <td class="text-center">
-                                            <input type="text" name="plan[{{ $class }}][prefix]" value="{{ $class }}" class="form-control form-control-sm text-center" readonly style="background-color: transparent; border: none; font-weight: bold;">
-                                        </td>
+                                        @if($hasDetailedAccounts)
+                                            <td class="text-center">
+                                                <input type="text" name="plan[{{ $key }}][numero_compte]" value="{{ $account['numero_compte'] ?? $class }}" class="form-control form-control-sm text-center" @if(isset($account['numero_compte'])) readonly @endif>
+                                                <input type="hidden" name="plan[{{ $key }}][prefix]" value="{{ $class }}">
+                                            </td>
+                                        @else
+                                            <td class="text-center">
+                                                <input type="text" name="plan[{{ $key }}][prefix]" value="{{ $class }}" class="form-control form-control-sm text-center" readonly style="background-color: transparent; border: none; font-weight: bold;">
+                                            </td>
+                                        @endif
                                         <td>
-                                            <input type="text" name="plan[{{ $class }}][label]" value="{{ $account['label'] }}" class="form-control form-control-sm" required>
+                                            <input type="text" name="plan[{{ $key }}][label]" value="{{ $account['libelle_compte'] ?? $account['label'] }}" class="form-control form-control-sm" required>
                                         </td>
+                                        @if($hasDetailedAccounts)
+                                            <td class="text-center">
+                                                <input type="text" name="plan[{{ $key }}][type_compte]" value="{{ $account['type_compte'] ?? '' }}" class="form-control form-control-sm text-center">
+                                            </td>
+                                        @endif
                                         <td class="text-center">
                                             <input type="text" class="form-control form-control-sm text-center"
-                                                value="{{ $class === '6' || $class === '7' ? 'Résultat' : 'Bilan' }}"
+                                                value="{{ ($account['category'] ?? (in_array($class, ['6', '7']) ? 'Résultat' : 'Bilan') }}"
                                                 readonly>
-                                            <input type="hidden" name="plan[{{ $class }}][category]" value="{{ $class === '6' || $class === '7' ? 'resultat' : 'balance' }}">
+                                            <input type="hidden" name="plan[{{ $key }}][category]" value="{{ $account['category'] ?? (in_array($class, ['6', '7']) ? 'resultat' : 'balance') }}">
                                         </td>
                                         <td class="text-center">
-                                            @if($class === '2')
-                                                <input type="text" class="form-control form-control-sm text-center"
-                                                    value="Investissement"
-                                                    readonly>
-                                            @elseif(in_array($class, ['6', '7'], true))
-                                                <select name="plan[{{ $class }}][subtype]" class="form-select form-select-sm">
-                                                    <option value="charge" {{ $class === '6' ? 'selected' : '' }}>Charge</option>
-                                                    <option value="produit" {{ $class === '7' ? 'selected' : '' }}>Produit</option>
+                                            @if(in_array($class, ['6', '7'], true))
+                                                <select name="plan[{{ $key }}][subtype]" class="form-select form-select-sm">
+                                                    <option value="charge" {{ ($account['subtype'] ?? ($class === '6' ? 'charge' : 'produit')) === 'charge' ? 'selected' : '' }}>Charge</option>
+                                                    <option value="produit" {{ ($account['subtype'] ?? ($class === '7' ? 'produit' : 'charge')) === 'produit' ? 'selected' : '' }}>Produit</option>
                                                 </select>
                                             @else
                                                 <span class="text-muted small">-</span>
@@ -214,7 +233,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">
+                                        <td colspan="{{ $hasDetailedAccounts ? 6 : 5 }}" class="text-center text-muted py-4">
                                             <i data-feather="file-x" class="mb-2"></i>
                                             <br>Aucun compte chargé pour l'instant.
                                         </td>

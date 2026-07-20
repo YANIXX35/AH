@@ -9,6 +9,7 @@ use App\Services\HuggingFaceOpsAssistantService;
 use App\Support\ClientWorkspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -21,13 +22,21 @@ class DashboardController extends Controller
     public function index(Request $request): View
     {
         $userIds = ClientWorkspace::dataScopeUserIds($request->user());
-        $metrics = $this->dashboardMetricsService->build($userIds);
-        $inconsistencies = $this->buildFinancialInconsistencies($userIds);
-        $liveInsight = $this->buildDashboardLiveInsight($metrics, $inconsistencies);
 
-        return view('dashboard', array_merge($metrics, [
-            'aiLiveInsight' => $liveInsight,
-            'aiInconsistencies' => $inconsistencies,
+        // Les agrégats (CA, trésorerie, écritures...) recalculaient une dizaine de
+        // requêtes à chaque clic ; un cache court garde le tableau de bord réactif
+        // sans afficher des chiffres obsolètes de plus de quelques minutes.
+        $cacheKey = 'dashboard.summary.'.md5(implode(',', $userIds));
+        $cached = Cache::remember($cacheKey, now()->addMinutes(3), fn () => [
+            'metrics' => $this->dashboardMetricsService->build($userIds),
+            'inconsistencies' => $this->buildFinancialInconsistencies($userIds),
+        ]);
+
+        // La recommandation IA est chargée en tâche de fond par le JS de la vue
+        // (route dashboard.ai.live) : la calculer ici aussi bloquerait l'affichage
+        // de la page pendant jusqu'à 45s (timeout de l'appel HuggingFace).
+        return view('dashboard', array_merge($cached['metrics'], [
+            'aiInconsistencies' => $cached['inconsistencies'],
         ]));
     }
 

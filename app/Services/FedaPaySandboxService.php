@@ -106,6 +106,11 @@ class FedaPaySandboxService
             $normalizedPayload = is_array($payload) ? $payload : ['raw' => $response->body()];
 
             if ($response->successful()) {
+                \Log::info('FedaPay transaction créée avec succès', [
+                    'user_id' => $user->id,
+                    'provider_reference' => $providerReference,
+                    'status' => $normalizedPayload['transaction']['status'] ?? 'unknown',
+                ]);
                 $transaction = $normalizedPayload['transaction'] ?? $normalizedPayload['data'] ?? $normalizedPayload;
                 $transactionId = (int) ($transaction['id'] ?? 0);
                 if ($transactionId <= 0) {
@@ -160,6 +165,13 @@ class FedaPaySandboxService
 
             $errorMessage = (string) ($normalizedPayload['message'] ?? $normalizedPayload['error'] ?? 'Erreur API FedaPay sandbox.');
 
+            \Log::error('FedaPay transaction error', [
+                'user_id' => $user->id,
+                'provider_reference' => $providerReference,
+                'error' => $errorMessage,
+                'status_code' => $response->status(),
+            ]);
+
             return [
                 'success' => false,
                 'status' => 'API_ERROR',
@@ -168,8 +180,15 @@ class FedaPaySandboxService
                 'checkout_url' => null,
                 'request_payload' => $requestPayload,
                 'response_payload' => $normalizedPayload,
+                'enabled' => true,
             ];
         } catch (\Throwable $e) {
+            \Log::error('FedaPay transaction exception', [
+                'user_id' => $user->id,
+                'provider_reference' => $providerReference,
+                'error' => $e->getMessage(),
+            ]);
+            
             return [
                 'success' => false,
                 'status' => 'EXCEPTION',
@@ -178,6 +197,7 @@ class FedaPaySandboxService
                 'checkout_url' => null,
                 'request_payload' => $requestPayload,
                 'response_payload' => null,
+                'enabled' => true,
             ];
         }
     }
@@ -277,10 +297,13 @@ class FedaPaySandboxService
         $baseUrl = rtrim((string) config('services.fedapay.sandbox.base_url', 'https://sandbox-api.fedapay.com'), '/');
 
         if ($apiKey === '') {
+            \Log::warning('FedaPay fetchRecentEvents: API key manquante');
+            
             return [
                 'success' => false,
                 'message' => 'Clé API FedaPay sandbox absente.',
                 'events' => [],
+                'enabled' => false,
             ];
         }
 

@@ -4,6 +4,7 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile
     plan: free
+    region: frankfurt
     autoDeploy: true
 
     envVars:
@@ -15,7 +16,7 @@ services:
       - key: APP_KEY
         sync: false   # ← à renseigner manuellement : base64:AqCx3Ve+NnPEYb6pyFj06Pqy2mXWLMYidQIxpzUNI2g=
       - key: APP_DEBUG
-        value: "true"
+        value: "false"
       - key: APP_URL
         value: https://ah-xnl0.onrender.com
 
@@ -42,9 +43,11 @@ services:
 
       # ── Logs ────────────────────────────────────────────────────────────────
       - key: LOG_CHANNEL
-        value: stderr
+        value: stack
+      - key: LOG_STACK
+        value: stderr,single
       - key: LOG_LEVEL
-        value: error
+        value: warning
 
       # ── Sécurité ─────────────────────────────────────────────────────────────
       - key: BCRYPT_ROUNDS

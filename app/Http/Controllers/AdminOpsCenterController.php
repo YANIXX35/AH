@@ -22,6 +22,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -36,13 +37,22 @@ class AdminOpsCenterController extends Controller
 
     public function index(): View
     {
-        $slo = $this->buildSloMetrics();
-        $alertCenter = $this->buildAlertCenter();
-        $noc = $this->buildNocMetrics();
-        $queue = $this->buildQueueMetrics();
+        // Métriques agrégées (SLO, NOC, KPI business...) : coûteuses à recalculer
+        // et pas besoin d'être seconde par seconde, contrairement aux checks de
+        // santé et aux files d'approbation ci-dessous qui doivent rester en direct.
+        $metrics = Cache::remember('admin.ops-center.metrics', now()->addMinutes(3), function () {
+            $slo = $this->buildSloMetrics();
+            $alertCenter = $this->buildAlertCenter();
+            $noc = $this->buildNocMetrics();
+            $queue = $this->buildQueueMetrics();
+            $businessKpis = $this->buildBusinessKpis();
+            $growthIdeas = $this->buildGrowthIdeas($businessKpis, $alertCenter, $slo);
+
+            return compact('slo', 'alertCenter', 'noc', 'queue', 'businessKpis', 'growthIdeas');
+        });
+        ['slo' => $slo, 'alertCenter' => $alertCenter, 'noc' => $noc, 'queue' => $queue, 'businessKpis' => $businessKpis, 'growthIdeas' => $growthIdeas] = $metrics;
+
         $healthChecks = $this->runHealthChecks();
-        $businessKpis = $this->buildBusinessKpis();
-        $growthIdeas = $this->buildGrowthIdeas($businessKpis, $alertCenter, $slo);
         $aiAutonomousApprovals = PlatformSetting::query()->firstOrCreate(
             ['key' => 'ops_ai_autonomous_approvals'],
             ['value' => [

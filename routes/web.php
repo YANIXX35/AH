@@ -470,6 +470,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/accounting/report/bilan/view', [AccountingController::class, 'viewBilanPdf'])->name('accounting.report.bilan.view');
         Route::get('/accounting/report/bilan/download', [AccountingController::class, 'downloadBilan'])->name('accounting.report.bilan.download');
     });
+    
+    Route::get('/accounting/analyze-syscohada', [AccountingController::class, 'analyzeSyscohadaFile'])->name('accounting.analyze-syscohada');
 
     Route::middleware('module.permission:treasury')->group(function () {
         Route::redirect('/treasury', '/treasury/tracking')->name('treasury.index');

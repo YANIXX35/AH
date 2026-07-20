@@ -11,6 +11,7 @@ use App\Support\ClientWorkspace;
 use App\Support\OcrStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -25,45 +26,53 @@ class AccountantDashboardController extends Controller
      */
     public function index(Request $request): View
     {
-        $clients = User::query()->clients()->orderBy('company_name')->orderBy('name');
+        // Portefeuille clients identique pour tous les comptables (pas de scope par
+        // acteur) : un cache court partagé évite de recompter tout le portefeuille
+        // à chaque clic.
+        $aggregates = Cache::remember('accountant.dashboard.aggregates', now()->addMinutes(3), function () {
+            $clientIds = User::query()->clients()->pluck('id');
 
-        $clientCount = (clone $clients)->count();
+            return [
+                'clientCount' => User::query()->clients()->count(),
+                'entriesTotal' => AccountingEntry::query()->whereIn('user_id', $clientIds)->count(),
+                'documentsPending' => AccountingDocument::query()
+                    ->whereIn('user_id', $clientIds)
+                    ->whereIn('status', ['pending', 'pending_validation', 'ocr_failed'])
+                    ->count(),
+                'ocrStressEntries' => AccountingEntry::query()
+                    ->whereIn('user_id', $clientIds)
+                    ->whereIn('ocr_status', [OcrStatus::FAILED, OcrStatus::MISMATCH, OcrStatus::LEGACY_MISMATCHED])
+                    ->count(),
+                'treasuryVolume' => (float) TreasuryTransaction::query()
+                    ->whereIn('user_id', $clientIds)
+                    ->where('status', 'effectue')
+                    ->sum('amount'),
+                'recentClients' => User::query()
+                    ->clients()
+                    ->latest()
+                    ->limit(10)
+                    ->get(['id', 'name', 'email', 'company_name', 'created_at']),
+                'inconsistencies' => $this->buildFinancialInconsistencies($clientIds->all()),
+            ];
+        });
 
-        $clientIds = User::query()->clients()->pluck('id');
-
-        $entriesTotal = AccountingEntry::query()
-            ->whereIn('user_id', $clientIds)
-            ->count();
-
-        $documentsPending = AccountingDocument::query()
-            ->whereIn('user_id', $clientIds)
-            ->whereIn('status', ['pending', 'pending_validation', 'ocr_failed'])
-            ->count();
-
-        $ocrStressEntries = AccountingEntry::query()
-            ->whereIn('user_id', $clientIds)
-            ->whereIn('ocr_status', [OcrStatus::FAILED, OcrStatus::MISMATCH, OcrStatus::LEGACY_MISMATCHED])
-            ->count();
-
-        $treasuryVolume = (float) TreasuryTransaction::query()
-            ->whereIn('user_id', $clientIds)
-            ->where('status', 'effectue')
-            ->sum('amount');
-
-        $recentClients = User::query()
-            ->clients()
-            ->latest()
-            ->limit(10)
-            ->get(['id', 'name', 'email', 'company_name', 'created_at']);
+        $clientCount = $aggregates['clientCount'];
+        $entriesTotal = $aggregates['entriesTotal'];
+        $documentsPending = $aggregates['documentsPending'];
+        $ocrStressEntries = $aggregates['ocrStressEntries'];
+        $treasuryVolume = $aggregates['treasuryVolume'];
+        $recentClients = $aggregates['recentClients'];
+        $inconsistencies = $aggregates['inconsistencies'];
 
         $workspaceTarget = ClientWorkspace::isViewingClient() ? ClientWorkspace::workspaceTarget() : null;
         $workspaceLabel = '';
         if ($workspaceTarget) {
             $workspaceLabel = (string) ($workspaceTarget->company_name ?: $workspaceTarget->name ?: $workspaceTarget->email);
         }
-        $inconsistencies = $this->buildFinancialInconsistencies($clientIds->all());
-        $liveInsight = $this->buildLiveInsight($clientIds->all(), $inconsistencies);
 
+        // La recommandation IA est chargée en tâche de fond par le JS de la vue
+        // (route accountant.dashboard.ai.live) : la calculer ici aussi bloquerait
+        // l'affichage de la page pendant jusqu'à 45s (timeout de l'appel HuggingFace).
         return view('accountant.dashboard', [
             'clientCount' => $clientCount,
             'entriesTotal' => $entriesTotal,
@@ -74,7 +83,6 @@ class AccountantDashboardController extends Controller
             'accountingWorkspaceOpen' => ClientWorkspace::isViewingClient(),
             'accountingWorkspaceLabel' => $workspaceLabel,
             'aiInconsistencies' => $inconsistencies,
-            'aiLiveInsight' => $liveInsight,
         ]);
     }
 

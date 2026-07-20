@@ -718,23 +718,37 @@ class AccountingController extends Controller
         ]);
 
         $plan = [];
-        foreach ($request->input('plan') as $prefix => $accountData) {
-            $normalizedPrefix = (string) $prefix;
-            if (! preg_match('/^[1-7]$/', $normalizedPrefix)) {
-                continue;
-            }
+        foreach ($request->input('plan') as $key => $accountData) {
+            $normalizedKey = (string) $key;
+            $prefix = (string) ($accountData['prefix'] ?? $normalizedKey);
 
-            $label = trim((string) ($accountData['label'] ?? ''));
+            $label = trim((string) ($accountData['label'] ?? $accountData['libelle_compte'] ?? ''));
             if ($label === '') {
                 continue;
             }
 
-            $plan[$prefix] = [
+            $account = [
+                'prefix' => $prefix,
                 'label' => $label,
-                // En mode expert comptable, la classe pilote toujours la catégorie.
-                'category' => $this->getCategoryByPrefix($normalizedPrefix),
-                'subtype' => $this->getSubtypeByPrefix($normalizedPrefix),
+                'libelle_compte' => $accountData['libelle_compte'] ?? $label,
+                'category' => $this->getCategoryByPrefix($prefix),
+                'subtype' => $accountData['subtype'] ?? $this->getSubtypeByPrefix($prefix),
             ];
+
+            // Add detailed fields if present
+            if (isset($accountData['numero_compte'])) {
+                $account['numero_compte'] = $accountData['numero_compte'];
+            }
+            if (isset($accountData['type_compte'])) {
+                $account['type_compte'] = $accountData['type_compte'];
+            }
+            if (isset($accountData['classe'])) {
+                $account['classe'] = $accountData['classe'];
+            } else {
+                $account['classe'] = $prefix;
+            }
+
+            $plan[$account['numero_compte'] ?? $prefix] = $account;
         }
 
         $validation = $this->validatePlan($plan);
@@ -774,6 +788,46 @@ class AccountingController extends Controller
         ]);
     }
 
+    public function analyzeSyscohadaFile()
+    {
+        $filePath = base_path('Doc_comptabilite/modele_syscohada_PLAN COMPLET + LIASSE BCEAO_5.xlsx');
+        if (!file_exists($filePath)) {
+            return response()->json(['error' => 'Fichier introuvable', 'path' => $filePath], 404);
+        }
+
+        $spreadsheet = IOFactory::load($filePath);
+        $result = [];
+
+        foreach ($spreadsheet->getAllSheets() as $sheetIndex => $sheet) {
+            $sheetName = $sheet->getTitle();
+            $highestRow = $sheet->getHighestRow();
+            $highestCol = $sheet->getHighestColumn();
+
+            $rows = [];
+            $maxRowsToShow = 50;
+
+            for ($row = 1; $row <= min($highestRow, $maxRowsToShow); $row++) {
+                $cells = [];
+                for ($col = 'A'; $col <= $highestCol; $col++) {
+                    $cellValue = $sheet->getCell($col . $row)->getValue();
+                    $cells[] = mb_substr(trim((string)$cellValue), 0, 100);
+                }
+                $rows[] = $cells;
+            }
+
+            $result[] = [
+                'name' => $sheetName,
+                'index' => $sheetIndex,
+                'dimensions' => "{$highestCol} x {$highestRow}",
+                'rows' => $rows,
+                'total_rows' => $highestRow,
+                'total_cols' => $highestCol
+            ];
+        }
+
+        return response()->json($result);
+    }
+
     private function parsePlanComptable(string $path): array
     {
         $spreadsheet = IOFactory::load($path);
@@ -786,6 +840,8 @@ class AccountingController extends Controller
 
         $codeHeaders = ['compte', 'code', 'account', 'account number', 'numero', 'numéro', 'n°', 'n', 'num', 'no', 'compte comptable'];
         $labelHeaders = ['intitulé', 'intitule', 'libellé', 'libelle', 'designation', 'label', 'description', 'name', 'nom', 'nom du compte', 'intitulé compte'];
+        $typeHeaders = ['type', 'type compte', 'type_compte', 'nature', 'type de compte'];
+        $classeHeaders = ['classe', 'class'];
 
         foreach ($rows as $rowIndex => $row) {
             if (empty(array_filter($row))) {
@@ -809,6 +865,20 @@ class AccountingController extends Controller
                             break;
                         }
                     }
+                    
+                    foreach ($typeHeaders as $candidate) {
+                        if (str_contains($normalized, $candidate)) {
+                            $headers['type'] = $column;
+                            break;
+                        }
+                    }
+                    
+                    foreach ($classeHeaders as $candidate) {
+                        if (str_contains($normalized, $candidate)) {
+                            $headers['classe'] = $column;
+                            break;
+                        }
+                    }
                 }
 
                 if (! isset($headers['code']) || ! isset($headers['label'])) {
@@ -820,6 +890,8 @@ class AccountingController extends Controller
 
             $code = trim((string) ($row[$headers['code']] ?? ''));
             $label = trim((string) ($row[$headers['label']] ?? ''));
+            $type = trim((string) ($row[$headers['type']] ?? ''));
+            $classe = trim((string) ($row[$headers['classe']] ?? ''));
             $reason = null;
 
             if (! $code || ! $label) {
@@ -828,6 +900,9 @@ class AccountingController extends Controller
                 $prefix = preg_match('/^([1-7])/', $code, $matches) ? $matches[1] : null;
                 if (! $prefix) {
                     $reason = 'Code invalide ou sans classe 1-7';
+                }
+                if (empty($classe)) {
+                    $classe = $prefix;
                 }
             }
 
@@ -842,10 +917,17 @@ class AccountingController extends Controller
                 continue;
             }
 
-            $accounts[$prefix] = [
+            $accounts[$code] = [
+                'numero_compte' => $code,
+                'libelle_compte' => $label,
                 'label' => $label,
+                'type_compte' => $type,
+                'classe' => $classe,
+                'prefix' => $prefix,
                 'category' => $this->getCategoryByPrefix($prefix),
                 'subtype' => $this->getSubtypeByPrefix($prefix),
+                'is_actif' => true,
+                'sort_order' => count($accounts),
             ];
         }
 
@@ -939,14 +1021,39 @@ class AccountingController extends Controller
 
         PlanComptableAccount::where('user_id', $userId)->delete();
 
-        foreach ($accounts as $prefix => $account) {
-            PlanComptableAccount::create([
+        foreach ($accounts as $key => $account) {
+            $data = [
                 'user_id' => $userId,
-                'prefix' => $prefix,
-                'label' => $account['label'],
+                'prefix' => $account['prefix'] ?? (is_numeric($key) && $key >=1 && $key <=7 ? $key : null),
+                'label' => $account['label'] ?? $account['libelle_compte'] ?? '',
                 'category' => $account['category'] ?? 'other',
                 'subtype' => $account['subtype'] ?? null,
-            ]);
+            ];
+            if (isset($account['numero_compte'])) {
+                $data['numero_compte'] = $account['numero_compte'];
+            }
+            if (isset($account['libelle_compte'])) {
+                $data['libelle_compte'] = $account['libelle_compte'];
+            }
+            if (isset($account['type_compte'])) {
+                $data['type_compte'] = $account['type_compte'];
+            }
+            if (isset($account['sous_type'])) {
+                $data['sous_type'] = $account['sous_type'];
+            }
+            if (isset($account['classe'])) {
+                $data['classe'] = $account['classe'];
+            }
+            if (isset($account['observation'])) {
+                $data['observation'] = $account['observation'];
+            }
+            if (isset($account['is_actif'])) {
+                $data['is_actif'] = $account['is_actif'];
+            }
+            if (isset($account['sort_order'])) {
+                $data['sort_order'] = $account['sort_order'];
+            }
+            PlanComptableAccount::create($data);
         }
     }
 
@@ -974,8 +1081,30 @@ class AccountingController extends Controller
     private function validatePlan(array $plan): array
     {
         $expected = ['1', '2', '3', '4', '5', '6', '7'];
-        $missing = array_values(array_diff($expected, array_keys($plan)));
-
+        // Check if it's class-based first
+        $keys = array_keys($plan);
+        $isClassBased = count(array_filter($keys, fn($k) => in_array($k, $expected))) === count($keys);
+        
+        if ($isClassBased) {
+            $missing = array_values(array_diff($expected, $keys));
+            return [
+                'missingClasses' => $missing,
+                'isValid' => empty($missing),
+            ];
+        }
+        
+        // For detailed accounts, check we have at least one account per class
+        $presentClasses = [];
+        foreach ($plan as $account) {
+            $classe = $account['classe'] ?? $account['prefix'] ?? null;
+            if ($classe && in_array($classe, $expected)) {
+                $presentClasses[] = $classe;
+            }
+        }
+        
+        $presentClasses = array_unique($presentClasses);
+        $missing = array_values(array_diff($expected, $presentClasses));
+        
         return [
             'missingClasses' => $missing,
             'isValid' => empty($missing),
@@ -1788,10 +1917,37 @@ class AccountingController extends Controller
     {
         $userId = $this->workspaceUserId();
         $storedAccounts = PlanComptableAccount::where('user_id', $userId)
-            ->orderBy('prefix')
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('numero_compte', 'asc')
+            ->orderBy('prefix', 'asc')
             ->get();
 
+        // Check if we have detailed accounts (with numero_compte set)
+        $hasDetailedAccounts = $storedAccounts->filter(fn($a) => !empty($a->numero_compte))->isNotEmpty();
+
         if ($storedAccounts->isNotEmpty()) {
+            if ($hasDetailedAccounts) {
+                return $storedAccounts->mapWithKeys(function (PlanComptableAccount $account) {
+                    $key = $account->numero_compte ?? $account->prefix;
+                    return [
+                        $key => [
+                            'label' => $account->label,
+                            'libelle_compte' => $account->libelle_compte ?? $account->label,
+                            'category' => $account->category,
+                            'subtype' => $account->subtype,
+                            'type_compte' => $account->type_compte,
+                            'sous_type' => $account->sous_type,
+                            'classe' => $account->classe,
+                            'observation' => $account->observation,
+                            'is_actif' => $account->is_actif,
+                            'prefix' => $account->prefix,
+                            'numero_compte' => $account->numero_compte,
+                            'sort_order' => $account->sort_order,
+                        ],
+                    ];
+                })->toArray();
+            }
+            // Fallback to old behavior for backward compatibility
             return $storedAccounts->mapWithKeys(function (PlanComptableAccount $account) {
                 return [
                     $account->prefix => [
