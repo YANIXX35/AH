@@ -830,133 +830,174 @@ class AccountingController extends Controller
 
     private function parsePlanComptable(string $path): array
     {
-        $spreadsheet = IOFactory::load($path);
-        
-        // Try to get the right sheet first, fall back to active sheet
-        $sheetNames = ['Plan_Comptable', 'Plan Comptable', 'Plan Comptable SYSCOHADA'];
-        $sheet = null;
-        foreach ($sheetNames as $name) {
-            if ($spreadsheet->sheetNameExists($name)) {
-                $sheet = $spreadsheet->getSheetByName($name);
-                break;
+        try {
+            $spreadsheet = IOFactory::load($path);
+            
+            // Try to get the right sheet first, fall back to active sheet
+            $sheetNames = ['Plan_Comptable', 'Plan Comptable', 'Plan Comptable SYSCOHADA'];
+            $sheet = null;
+            foreach ($sheetNames as $name) {
+                if ($spreadsheet->sheetNameExists($name)) {
+                    $sheet = $spreadsheet->getSheetByName($name);
+                    break;
+                }
             }
-        }
-        
-        if (! $sheet) {
-            $sheet = $spreadsheet->getActiveSheet();
-        }
-        $rows = $sheet->toArray(null, true, true, true);
+            
+            if (! $sheet) {
+                $sheet = $spreadsheet->getActiveSheet();
+            }
 
-        $accounts = [];
-        $invalidRows = [];
-        $headers = [];
+            $accounts = [];
+            $invalidRows = [];
+            $headers = [];
 
-        $codeHeaders = ['compte', 'code', 'account', 'account number', 'numero', 'numéro', 'n°', 'n', 'num', 'no', 'compte comptable'];
+            $codeHeaders = ['compte', 'code', 'account', 'account number', 'numero', 'numéro', 'n°', 'n', 'num', 'no', 'compte comptable'];
         $labelHeaders = ['intitulé', 'intitule', 'libellé', 'libelle', 'designation', 'label', 'description', 'name', 'nom', 'nom du compte', 'intitulé compte'];
         $typeHeaders = ['type', 'type compte', 'type_compte', 'nature', 'type de compte'];
-        $classeHeaders = ['classe', 'class'];
+        $classeHeaders = ['classe', 'class'];$observationHeaders = ['observation', 'obs'];$sousTypeHeaders = ['sous-type', 'sous type', 'sous_type', 'subtype', 'soustype'];
+        $observationHeaders = ['observation', 'obs'];
+        $sousTypeHeaders = ['sous-type', 'sous type', 'sous_type', 'subtype', 'soustype'];
+            $observationHeaders = ['observation', 'obs'];
+            $sousTypeHeaders = ['sous-type', 'sous type', 'sous_type', 'subtype', 'soustype'];
 
-        foreach ($rows as $rowIndex => $row) {
-            if (empty(array_filter($row))) {
-                continue;
-            }
-
-            if (! $headers) {
-                foreach ($row as $column => $value) {
-                    $normalized = mb_strtolower(trim((string) $value));
-
-                    foreach ($codeHeaders as $candidate) {
-                        if (str_contains($normalized, $candidate)) {
-                            $headers['code'] = $column;
-                            break;
-                        }
-                    }
-
-                    foreach ($labelHeaders as $candidate) {
-                        if (str_contains($normalized, $candidate)) {
-                            $headers['label'] = $column;
-                            break;
-                        }
-                    }
-                    
-                    foreach ($typeHeaders as $candidate) {
-                        if (str_contains($normalized, $candidate)) {
-                            $headers['type'] = $column;
-                            break;
-                        }
-                    }
-                    
-                    foreach ($classeHeaders as $candidate) {
-                        if (str_contains($normalized, $candidate)) {
-                            $headers['classe'] = $column;
-                            break;
-                        }
-                    }
+            foreach ($sheet->getRowIterator() as $rowIndex => $row) {
+                $cellIterator = $row->getCellIterator();
+                $cellIterator->setIterateOnlyExistingCells(false);
+                
+                $rowData = [];
+                foreach ($cellIterator as $column => $cell) {
+                    $rowData[$column] = $cell->getValue();
                 }
 
-                if (! isset($headers['code']) || ! isset($headers['label'])) {
+                if (empty(array_filter($rowData))) {
                     continue;
                 }
 
-                continue;
-            }
+                if (! $headers) {
+                    foreach ($rowData as $column => $value) {
+                        $normalized = mb_strtolower(trim((string) $value));
 
-            $code = trim((string) ($row[$headers['code']] ?? ''));
-            $label = trim((string) ($row[$headers['label']] ?? ''));
-            $type = trim((string) ($row[$headers['type']] ?? ''));
-            $classe = trim((string) ($row[$headers['classe']] ?? ''));
-            $reason = null;
+                        foreach ($codeHeaders as $candidate) {
+                            if (str_contains($normalized, $candidate)) {
+                                $headers['code'] = $column;
+                                break;
+                            }
+                        }
 
-            if (! $code || ! $label) {
-                $reason = 'Compte ou libellé manquant';
-            } else {
-                $prefix = preg_match('/^([1-7])/', $code, $matches) ? $matches[1] : null;
-                if (! $prefix) {
-                    $reason = 'Code invalide ou sans classe 1-7';
+                        foreach ($labelHeaders as $candidate) {
+                            if (str_contains($normalized, $candidate)) {
+                                $headers['label'] = $column;
+                                break;
+                            }
+                        }
+                        
+                        foreach ($typeHeaders as $candidate) {
+                            if (str_contains($normalized, $candidate)) {
+                                $headers['type'] = $column;
+                                break;
+                            }
+                        }
+                        
+                        foreach ($classeHeaders as $candidate) {
+                            if (str_contains($normalized, $candidate)) {
+                                $headers['classe'] = $column;
+                                break;
+                            }
+                        }
+
+                        foreach ($observationHeaders as $candidate) {
+                            if (str_contains($normalized, $candidate)) {
+                                $headers['observation'] = $column;
+                                break;
+                            }
+                        }
+
+                        foreach ($sousTypeHeaders as $candidate) {
+                            if (str_contains($normalized, $candidate)) {
+                                $headers['sous_type'] = $column;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (! isset($headers['code']) || ! isset($headers['label'])) {
+                        continue;
+                    }
+
+                    continue;
                 }
-                if (empty($classe)) {
-                    $classe = $prefix;
-                }
-            }
 
-            if ($reason) {
-                $invalidRows[] = [
-                    'row' => $rowIndex,
-                    'code' => $code,
+                $code = trim((string) ($rowData[$headers['code']] ?? ''));
+                $label = trim((string) ($rowData[$headers['label']] ?? ''));
+                $type = trim((string) ($rowData[$headers['type']] ?? ''));
+                $classe = trim((string) ($rowData[$headers['classe']] ?? ''));
+                $observation = trim((string) ($rowData[$headers['observation']] ?? ''));
+                $sous_type = trim((string) ($rowData[$headers['sous_type']] ?? ''));
+                $reason = null;
+
+                if (! $code || ! $label) {
+                    $reason = 'Compte ou libellé manquant';
+                } else {
+                    $prefix = preg_match('/^([1-7])/', $code, $matches) ? $matches[1] : null;
+                    if (! $prefix) {
+                        $reason = 'Code invalide ou sans classe 1-7';
+                    }
+                    if (empty($classe)) {
+                        $classe = $prefix;
+                    }
+                }
+
+                if ($reason) {
+                    $invalidRows[] = [
+                        'row' => $rowIndex,
+                        'code' => $code,
+                        'label' => $label,
+                        'reason' => $reason,
+                    ];
+
+                    continue;
+                }
+
+                $accounts[$code] = [
+                    'numero_compte' => $code,
+                    'libelle_compte' => $label,
                     'label' => $label,
-                    'reason' => $reason,
+                    'type_compte' => $type,
+                    'classe' => $classe,
+                    'prefix' => $prefix,
+                    'category' => $this->getCategoryByPrefix($prefix),
+                    'subtype' => $this->getSubtypeByPrefix($prefix),
+                    'sous_type' => $sous_type,
+                    'observation' => $observation,
+                    'is_actif' => true,
+                    'sort_order' => count($accounts),
                 ];
-
-                continue;
             }
 
-            $accounts[$code] = [
-                'numero_compte' => $code,
-                'libelle_compte' => $label,
-                'label' => $label,
-                'type_compte' => $type,
-                'classe' => $classe,
-                'prefix' => $prefix,
-                'category' => $this->getCategoryByPrefix($prefix),
-                'subtype' => $this->getSubtypeByPrefix($prefix),
-                'is_actif' => true,
-                'sort_order' => count($accounts),
+            if (empty($accounts) && empty($headers)) {
+                $invalidRows[] = [
+                    'row' => 'N/A',
+                    'code' => '',
+                    'label' => '',
+                    'reason' => 'En-têtes non reconnues : utilisez des colonnes Compte/Code et Intitulé/Libellé.',
+                ];
+            }
+
+            return [
+                'accounts' => $accounts,
+                'invalidRows' => $invalidRows,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'accounts' => [],
+                'invalidRows' => [[
+                    'row' => 'N/A',
+                    'code' => '',
+                    'label' => '',
+                    'reason' => 'Erreur lors du parsing du fichier: ' . $e->getMessage(),
+                ]]
             ];
         }
-
-        if (empty($accounts) && empty($headers)) {
-            $invalidRows[] = [
-                'row' => 'N/A',
-                'code' => '',
-                'label' => '',
-                'reason' => 'En-têtes non reconnues : utilisez des colonnes Compte/Code et Intitulé/Libellé.',
-            ];
-        }
-
-        return [
-            'accounts' => $accounts,
-            'invalidRows' => $invalidRows,
-        ];
     }
 
     /**
@@ -1034,6 +1075,8 @@ class AccountingController extends Controller
 
         PlanComptableAccount::where('user_id', $userId)->delete();
 
+        $dataToInsert = [];
+
         foreach ($accounts as $key => $account) {
             $data = [
                 'user_id' => $userId,
@@ -1041,6 +1084,8 @@ class AccountingController extends Controller
                 'label' => $account['label'] ?? $account['libelle_compte'] ?? '',
                 'category' => $account['category'] ?? 'other',
                 'subtype' => $account['subtype'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
             if (isset($account['numero_compte'])) {
                 $data['numero_compte'] = $account['numero_compte'];
@@ -1066,7 +1111,11 @@ class AccountingController extends Controller
             if (isset($account['sort_order'])) {
                 $data['sort_order'] = $account['sort_order'];
             }
-            PlanComptableAccount::create($data);
+            $dataToInsert[] = $data;
+        }
+
+        if (!empty($dataToInsert)) {
+            PlanComptableAccount::insert($dataToInsert);
         }
     }
 
