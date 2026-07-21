@@ -423,23 +423,37 @@
                                 <div class="dropdown-menu-header">Notifications @if($unreadNotificationsCount > 0)({{ $unreadNotificationsCount }} non lues)@endif</div>
                                 <div class="list-group list-group-flush">
                                     @forelse($topbarNotifications as $n)
-                                        <a href="{{ route('notifications.go', $n) }}" class="list-group-item list-group-item-action {{ $n->read_at ? '' : 'bg-light' }}">
+                                        @php
+                                            $nReadAt = is_object($n) ? ($n->read_at ?? null) : (is_array($n) ? ($n['read_at'] ?? null) : null);
+                                            $nId = is_object($n) ? ($n->id ?? null) : (is_array($n) ? ($n['id'] ?? null) : $n);
+                                            $nType = is_object($n) ? ($n->type ?? '') : (is_array($n) ? ($n['type'] ?? '') : '');
+                                            $nTitle = is_object($n) ? ($n->title ?? '') : (is_array($n) ? ($n['title'] ?? '') : '');
+                                            $nBody = is_object($n) ? ($n->body ?? '') : (is_array($n) ? ($n['body'] ?? '') : '');
+                                            $nCreatedAt = is_object($n) ? ($n->created_at ?? null) : (is_array($n) ? ($n['created_at'] ?? null) : null);
+                                        @endphp
+                                        <a href="{{ route('notifications.go', $nId) }}" class="list-group-item list-group-item-action {{ $nReadAt ? '' : 'bg-light' }}">
                                             <div class="d-flex align-items-start gap-2">
                                                 <div class="flex-shrink-0 mt-1">
-                                                    @if(($n->type ?? '') === 'warning')
+                                                    @if($nType === 'warning')
                                                         <i class="text-warning" data-feather="alert-triangle"></i>
-                                                    @elseif(($n->type ?? '') === 'success')
+                                                    @elseif($nType === 'success')
                                                         <i class="text-success" data-feather="check-circle"></i>
                                                     @else
                                                         <i class="text-primary" data-feather="info"></i>
                                                     @endif
                                                 </div>
                                                 <div class="flex-grow-1 min-w-0">
-                                                    <div class="text-dark fw-semibold small">{{ \Illuminate\Support\Str::limit($n->title, 80) }}</div>
-                                                    @if($n->body)
-                                                        <div class="text-muted small mt-1">{{ \Illuminate\Support\Str::limit($n->body, 120) }}</div>
+                                                    <div class="text-dark fw-semibold small">{{ \Illuminate\Support\Str::limit($nTitle, 80) }}</div>
+                                                    @if($nBody)
+                                                        <div class="text-muted small mt-1">{{ \Illuminate\Support\Str::limit($nBody, 120) }}</div>
                                                     @endif
-                                                    <div class="text-muted small mt-1">{{ $n->created_at?->diffForHumans() }}</div>
+                                                    <div class="text-muted small mt-1">
+                                                        @if($nCreatedAt instanceof \Carbon\Carbon)
+                                                            {{ $nCreatedAt->diffForHumans() }}
+                                                        @elseif(!empty($nCreatedAt))
+                                                            {{ \Carbon\Carbon::parse($nCreatedAt)->diffForHumans() }}
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </div>
                                         </a>
@@ -465,12 +479,24 @@
                                 <div class="dropdown-menu-header">Support @if($openSupportTicketsCount > 0)({{ $openSupportTicketsCount }} ouvert(s))@endif</div>
                                 <div class="list-group list-group-flush">
                                     @forelse($topbarSupportTickets as $t)
-                                        <a href="{{ route('support.tickets.show', $t) }}" class="list-group-item list-group-item-action">
-                                            <div class="text-dark fw-semibold small">{{ \Illuminate\Support\Str::limit($t->subject, 55) }}</div>
-                                            @if($t->latestMessage)
-                                                <div class="text-muted small mt-1">{{ \Illuminate\Support\Str::limit($t->latestMessage->body, 90) }}</div>
+                                        @php
+                                            $tId = is_object($t) ? ($t->id ?? null) : (is_array($t) ? ($t['id'] ?? null) : $t);
+                                            $tSubject = is_object($t) ? ($t->subject ?? '') : (is_array($t) ? ($t['subject'] ?? '') : '');
+                                            $tLatestMsg = is_object($t) ? ($t->latestMessage->body ?? null) : (is_array($t) ? ($t['latest_message']['body'] ?? null) : null);
+                                            $tUpdatedAt = is_object($t) ? ($t->updated_at ?? null) : (is_array($t) ? ($t['updated_at'] ?? null) : null);
+                                        @endphp
+                                        <a href="{{ route('support.tickets.show', $tId) }}" class="list-group-item list-group-item-action">
+                                            <div class="text-dark fw-semibold small">{{ \Illuminate\Support\Str::limit($tSubject, 55) }}</div>
+                                            @if($tLatestMsg)
+                                                <div class="text-muted small mt-1">{{ \Illuminate\Support\Str::limit($tLatestMsg, 90) }}</div>
                                             @endif
-                                            <div class="text-muted small mt-1">{{ $t->updated_at?->diffForHumans() }}</div>
+                                            <div class="text-muted small mt-1">
+                                                @if($tUpdatedAt instanceof \Carbon\Carbon)
+                                                    {{ $tUpdatedAt->diffForHumans() }}
+                                                @elseif(!empty($tUpdatedAt))
+                                                    {{ \Carbon\Carbon::parse($tUpdatedAt)->diffForHumans() }}
+                                                @endif
+                                            </div>
                                         </a>
                                     @empty
                                         <div class="list-group-item text-muted small py-4 text-center">Aucun fil support. <a href="{{ route('support.tickets.create') }}">Écrire au support</a></div>
