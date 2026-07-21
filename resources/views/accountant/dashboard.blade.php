@@ -477,17 +477,32 @@ document.addEventListener('DOMContentLoaded', function () {
                         </thead>
                         <tbody>
                         @forelse($recentClients as $u)
+                            @php
+                                $uCompName = is_object($u) ? ($u->company_name ?? null) : (is_array($u) ? ($u['company_name'] ?? null) : null);
+                                $uName = is_object($u) ? ($u->name ?? '') : (is_array($u) ? ($u['name'] ?? '') : (string)$u);
+                                $uEmail = is_object($u) ? ($u->email ?? '') : (is_array($u) ? ($u['email'] ?? '') : '');
+                                $uId = is_object($u) ? ($u->id ?? null) : (is_array($u) ? ($u['id'] ?? null) : $u);
+                                $uCreatedAt = is_object($u) ? ($u->created_at ?? null) : (is_array($u) ? ($u['created_at'] ?? null) : null);
+                            @endphp
                             <tr>
                                 <td>
-                                    <strong>{{ $u->company_name ?: $u->name }}</strong>
-                                    @if($u->company_name)
-                                        <div class="small text-muted">{{ $u->name }}</div>
+                                    <strong>{{ $uCompName ?: $uName }}</strong>
+                                    @if($uCompName)
+                                        <div class="small text-muted">{{ $uName }}</div>
                                     @endif
                                 </td>
-                                <td class="small">{{ $u->email }}</td>
-                                <td class="text-end small">{{ $u->created_at?->format('d/m/Y') }}</td>
+                                <td class="small">{{ $uEmail }}</td>
+                                <td class="text-end small">
+                                    @if($uCreatedAt instanceof \Carbon\Carbon)
+                                        {{ $uCreatedAt->format('d/m/Y') }}
+                                    @elseif(!empty($uCreatedAt))
+                                        {{ \Carbon\Carbon::parse($uCreatedAt)->format('d/m/Y') }}
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                                 <td class="text-end">
-                                    <a href="{{ route('accountant.clients.show', $u) }}" class="btn btn-sm btn-outline-primary">Fiche</a>
+                                    <a href="{{ route('accountant.clients.show', $uId) }}" class="btn btn-sm btn-outline-primary">Fiche</a>
                                 </td>
                             </tr>
                         @empty
