@@ -384,19 +384,28 @@
         .summary-card {
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(108, 117, 125, 0.12);
-            background: radial-gradient(circle at top right, rgba(240, 248, 255, 0.95), rgba(255, 255, 255, 1));
-            box-shadow: 0 18px 45px rgba(33, 37, 41, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            box-shadow: 0 12px 35px rgba(15, 39, 71, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .summary-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(15, 39, 71, 0.12);
+            border-color: rgba(15, 39, 71, 0.15);
         }
 
         .summary-card::before {
             content: "";
             position: absolute;
-            width: 120px;
-            height: 120px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
-            background: rgba(253, 126, 20, 0.08);
-            top: -20px;
+            background: radial-gradient(circle, rgba(15, 39, 71, 0.04) 0%, rgba(255, 255, 255, 0) 70%);
+            top: -30px;
             right: -30px;
             pointer-events: none;
         }
@@ -407,7 +416,7 @@
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            border: 1px dashed rgba(25, 135, 84, 0.18);
+            border: 1px dashed rgba(15, 39, 71, 0.08);
             top: 20px;
             right: 30px;
             pointer-events: none;
@@ -419,7 +428,8 @@
         }
 
         .summary-card .card-title {
-            color: #2b2f38;
+            color: #0F2747;
+            font-weight: 600;
         }
 
         .summary-label {
@@ -428,26 +438,36 @@
         }
 
         .summary-value {
-            font-size: 1.5rem;
+            font-size: 1.55rem;
             font-weight: 700;
+            background: linear-gradient(135deg, #0F2747 0%, #1d4ed8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .summary-value-orange {
-            color: #fd7e14;
+            background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .summary-value-green {
-            color: #198754;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .summary-value-blue {
-            color: #0c5ff4;
+            background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .summary-badge {
-            background-color: rgba(255, 255, 255, 0.85);
-            border: 1px solid rgba(108, 117, 125, 0.18);
-            color: #495057;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(15, 39, 71, 0.1);
+            color: #0F2747;
+            font-weight: 500;
         }
 
         /* Code style */
