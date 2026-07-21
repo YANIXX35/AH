@@ -851,14 +851,14 @@ class AccountingController extends Controller
             $invalidRows = [];
             $headers = [];
 
-            $codeHeaders = ['compte', 'code', 'account', 'account number', 'numero', 'numÃ©ro', 'nÂ°', 'n', 'num', 'no', 'compte comptable'];
-        $labelHeaders = ['intitulÃ©', 'intitule', 'libellÃ©', 'libelle', 'designation', 'label', 'description', 'name', 'nom', 'nom du compte', 'intitulÃ© compte'];
-        $typeHeaders = ['type', 'type compte', 'type_compte', 'nature', 'type de compte'];
-        $classeHeaders = ['classe', 'class'];$observationHeaders = ['observation', 'obs'];$sousTypeHeaders = ['sous-type', 'sous type', 'sous_type', 'subtype', 'soustype'];
-        $observationHeaders = ['observation', 'obs'];
-        $sousTypeHeaders = ['sous-type', 'sous type', 'sous_type', 'subtype', 'soustype'];
+            $codeHeaders = ['compte', 'code', 'account', 'account number', 'numero', 'numéro', 'n°', 'n', 'num', 'no', 'compte comptable'];
+            $labelHeaders = ['intitulé', 'intitule', 'libellé', 'libelle', 'designation', 'label', 'description', 'name', 'nom', 'nom du compte', 'intitulé compte'];
+            $typeHeaders = ['type', 'type compte', 'type_compte', 'nature', 'type de compte'];
+            $classeHeaders = ['classe', 'class'];
             $observationHeaders = ['observation', 'obs'];
             $sousTypeHeaders = ['sous-type', 'sous type', 'sous_type', 'subtype', 'soustype'];
+
+
 
             foreach ($sheet->getRowIterator() as $rowIndex => $row) {
                 $cellIterator = $row->getCellIterator();
