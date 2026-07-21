@@ -605,17 +605,59 @@
         }
     </style>
 
-    <div class="row g-3 mb-4">
-        <div class="col-12">
-            <div class="card border border-primary border-opacity-25">
-                <div class="card-body">
-                    <div class="d-flex flex-wrap gap-2 justify-content-end mb-3">
-                        <a href="{{ route('accounting.documents') }}" class="btn btn-outline-secondary btn-sm"><i data-feather="folder" class="me-1"></i>Documents</a>
-                        <a href="{{ route('accounting.plan') }}" class="btn btn-outline-secondary btn-sm"><i data-feather="layers" class="me-1"></i>Plan OHADA</a>
-                        <a href="{{ route('accounting.bank-reconciliation') }}" class="btn btn-outline-secondary btn-sm"><i data-feather="shuffle" class="me-1"></i>Rapprochement</a>
-                        <a href="{{ route('accounting.monthly-closing') }}" class="btn btn-outline-secondary btn-sm"><i data-feather="calendar" class="me-1"></i>Clôture</a>
-                        <a href="{{ route('accounting.report.journal') }}" class="btn btn-outline-primary btn-sm"><i data-feather="file-text" class="me-1"></i>Rapports</a>
+    <div class="mondays-container pb-4">
+        <!-- HERO MONDAYS HEADER -->
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">
+                <div>
+                    <div class="mondays-hero-date text-muted small fw-semibold">
+                        <i data-feather="calendar" class="me-1" style="width:14px; height:14px;"></i>
+                        {{ \Carbon\Carbon::now()->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
                     </div>
+                    <h1 class="mondays-hero-title fw-bold text-dark h2 mt-1 mb-2">
+                        Moteur Comptable & Saisie — {{ explode(' ', auth()->user()?->name ?? 'Utilisateur')[0] }} 👋
+                    </h1>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <a href="{{ route('accounting.documents') }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                        <i data-feather="folder" class="me-1" style="width:14px; height:14px;"></i> File Documents
+                    </a>
+                    <a href="{{ route('accounting.report.journal') }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-dark">
+                        <i data-feather="file-text" class="me-1" style="width:14px; height:14px;"></i> Journal
+                    </a>
+                    <a href="{{ route('accounting.liasse-bceao') }}" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold">
+                        <i data-feather="award" class="me-1" style="width:14px; height:14px;"></i> Liasse BCEAO
+                    </a>
+                </div>
+            </div>
+
+            <!-- BARRE DE PILULES KPI EN-TÊTE -->
+            <div class="mondays-pill-bar d-inline-flex align-items-center gap-3 bg-white border rounded-pill px-4 py-2 shadow-sm flex-wrap">
+                <div class="mondays-pill-item small fw-bold text-dark">
+                    <span class="text-primary">📖</span> <strong>Écritures :</strong> {{ number_format($accountingEntriesCount ?? 0) }} saisies
+                </div>
+                <div class="text-muted">|</div>
+                <div class="mondays-pill-item small fw-bold text-dark">
+                    <span class="text-success">⚖️</span> <strong>Débit :</strong> {{ number_format($totalDebit ?? 0, 0, ',', ' ') }} FCFA
+                </div>
+                <div class="text-muted">|</div>
+                <div class="mondays-pill-item small fw-bold text-dark">
+                    <span class="text-warning">⚖️</span> <strong>Crédit :</strong> {{ number_format($totalCredit ?? 0, 0, ',', ' ') }} FCFA
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <div class="card mondays-card border-0">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2 justify-content-end mb-3">
+                            <a href="{{ route('accounting.documents') }}" class="btn btn-outline-secondary btn-sm"><i data-feather="folder" class="me-1"></i>Documents</a>
+                            <a href="{{ route('accounting.plan') }}" class="btn btn-outline-secondary btn-sm"><i data-feather="layers" class="me-1"></i>Plan OHADA</a>
+                            <a href="{{ route('accounting.bank-reconciliation') }}" class="btn btn-outline-secondary btn-sm"><i data-feather="shuffle" class="me-1"></i>Rapprochement</a>
+                            <a href="{{ route('accounting.monthly-closing') }}" class="btn btn-outline-secondary btn-sm"><i data-feather="calendar" class="me-1"></i>Clôture</a>
+                            <a href="{{ route('accounting.report.journal') }}" class="btn btn-outline-primary btn-sm"><i data-feather="file-text" class="me-1"></i>Rapports</a>
+                        </div>
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                         <div>
                             <h6 class="mb-1"><i data-feather="upload" class="me-1"></i>Import rapide: uniquement le document</h6>
@@ -1777,5 +1819,6 @@
             });
         });
     </script>
+    </div>
 @endpush
 @endsection

@@ -5,99 +5,119 @@
 
 @push('styles')
     <style>
-        .tracking-crypto {
-            background: linear-gradient(180deg, #f5f7fb 0%, #eef3f9 100%);
-            border-radius: 1rem;
-            padding: 1rem;
+        .mondays-container {
+            background-color: #f8fafc;
+            min-height: 100vh;
         }
-        .crypto-headline {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            gap: .75rem;
+        .mondays-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.02);
+            transition: all 0.2s ease-in-out;
         }
-        .crypto-actions .btn { border-radius: .65rem; }
-        .crypto-card {
-            border: 1px solid #e5e7eb;
-            border-radius: .95rem;
-            background: #fff;
-            box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
-            height: 100%;
+        .mondays-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
         }
-        .crypto-card .card-body { padding: 1rem; }
-        .crypto-label {
-            font-size: .72rem;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            color: #64748b;
-            font-weight: 700;
-        }
-        .crypto-value {
-            font-size: 1.35rem;
-            font-weight: 800;
-            margin-top: .2rem;
-            color: #0f172a;
-        }
-        .crypto-sub {
-            font-size: .8rem;
-            color: #6b7280;
-        }
-        .crypto-table thead th {
-            background: #f8fafc;
-            font-size: .72rem;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            color: #64748b;
-            white-space: nowrap;
-        }
-        .crypto-status {
-            border-radius: 999px;
-            font-size: .7rem;
-            font-weight: 700;
-            padding: .22rem .55rem;
+        .mondays-hero-date { font-size: 0.85rem; font-weight: 500; color: #64748b; }
+        .mondays-hero-title { font-size: 1.85rem; font-weight: 700; color: #0f172a; margin-top: 2px; margin-bottom: 12px; }
+        .mondays-pill-bar {
             display: inline-flex;
             align-items: center;
+            gap: 16px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 9999px;
+            padding: 6px 20px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            flex-wrap: wrap;
         }
-        .crypto-status.ok { background: #dcfce7; color: #166534; }
-        .crypto-status.bad { background: #fee2e2; color: #991b1b; }
-        .crypto-status.pending { background: #e2e8f0; color: #334155; }
+        .mondays-pill-item { font-size: 0.84rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; }
+        .mondays-badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .mondays-badge-success { background: #dcfce7; color: #15803d; }
+        .mondays-badge-pending { background: #f3e8ff; color: #7e22ce; }
+        .mondays-badge-info { background: #dbeafe; color: #1d4ed8; }
+        .mondays-badge-warning { background: #ffedd5; color: #c2410c; }
+        .mondays-metric-val { font-size: 1.65rem; font-weight: 700; color: #0f172a; line-height: 1.2; }
     </style>
 @endpush
 
 @section('content')
-<div class="container-fluid p-0 crypto-page">
-    <div class="crypto-headline">
-        <div>
-            <h2 class="h3 mb-1"><strong>Tableau de bord</strong> Trésorerie</h2>
+<div class="mondays-container pb-4">
+    <!-- HERO MONDAYS HEADER -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">
+            <div>
+                <div class="mondays-hero-date">
+                    <i data-feather="calendar" class="me-1" style="width:14px; height:14px;"></i>
+                    {{ \Carbon\Carbon::now()->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
+                </div>
+                <h1 class="mondays-hero-title">
+                    Suivi de Trésorerie — {{ explode(' ', auth()->user()?->name ?? 'Utilisateur')[0] }} 👋
+                </h1>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <a href="{{ route('treasury.create') }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                    <i data-feather="plus" class="me-1" style="width:14px; height:14px;"></i> Nouvelle Transaction
+                </a>
+                <a href="{{ route('treasury.forecast') }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-dark">
+                    <i data-feather="trending-up" class="me-1" style="width:14px; height:14px;"></i> Prévisions
+                </a>
+            </div>
         </div>
-        <div class="crypto-actions d-flex gap-2">
-            <a href="{{ route('treasury.create') }}" class="btn btn-primary btn-sm">Nouvelle transaction</a>
-            <a href="{{ route('treasury.forecast') }}" class="btn btn-outline-secondary btn-sm">Prévisions</a>
+
+        <!-- BARRE DE PILULES KPI EN-TÊTE -->
+        <div class="mondays-pill-bar">
+            <div class="mondays-pill-item">
+                <span class="text-primary">💰</span> <strong>Solde Nette :</strong> {{ number_format($soldeNetEffectue, 0, ',', ' ') }} FCFA
+            </div>
+            <div class="mondays-pill-item text-muted">|</div>
+            <div class="mondays-pill-item">
+                <span class="text-success">📈</span> <strong>Encaissements :</strong> {{ number_format($encaissementsTotal, 0, ',', ' ') }} FCFA
+            </div>
+            <div class="mondays-pill-item text-muted">|</div>
+            <div class="mondays-pill-item">
+                <span class="text-danger">📉</span> <strong>Décaissements :</strong> {{ number_format($decaissementsTotal, 0, ',', ' ') }} FCFA
+            </div>
         </div>
     </div>
 
-    <div class="row g-3 mb-3">
+    <!-- METRICS CARDS GRID -->
+    <div class="row g-3 mb-4">
         <div class="col-12 col-xl-4">
-            <div class="crypto-card">
-                <div class="card-body">
-                    <div class="crypto-label">Solde global</div>
-                    <div class="crypto-value">{{ number_format($soldeNetEffectue, 0, ',', ' ') }} FCFA</div>
-                    <div class="crypto-sub {{ $soldeNetFiltre >= 0 ? 'text-success' : 'text-danger' }}">
-                        {{ $soldeNetFiltre >= 0 ? '+' : '' }}{{ number_format($soldeNetFiltre, 0, ',', ' ') }} sur la période filtrée
-                    </div>
+            <div class="card mondays-card h-100 border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Solde Global Effectué</span>
+                    <span class="mondays-badge mondays-badge-info">Global</span>
+                </div>
+                <div class="mondays-metric-val text-primary mb-1">{{ number_format($soldeNetEffectue, 0, ',', ' ') }} <small class="fs-6 fw-normal text-muted">FCFA</small></div>
+                <div class="small {{ $soldeNetFiltre >= 0 ? 'text-success' : 'text-danger' }}">
+                    {{ $soldeNetFiltre >= 0 ? '+' : '' }}{{ number_format($soldeNetFiltre, 0, ',', ' ') }} FCFA sur la période
                 </div>
             </div>
         </div>
-        <div class="col-6 col-xl-2">
-            <div class="crypto-card">
-                <div class="card-body">
-                    <div class="crypto-label">Encaissements</div>
-                    <div class="crypto-value">{{ number_format($encaissementsTotal, 0, ',', ' ') }}</div>
-                    <div class="crypto-sub">Encaissements</div>
+        <div class="col-6 col-xl-4">
+            <div class="card mondays-card h-100 border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Encaissements Totaux</span>
+                    <span class="mondays-badge mondays-badge-success">Entrées</span>
                 </div>
+                <div class="mondays-metric-val text-success mb-1">{{ number_format($encaissementsTotal, 0, ',', ' ') }} <small class="fs-6 fw-normal text-muted">FCFA</small></div>
+                <div class="text-muted small">Flux crédités.</div>
             </div>
         </div>
+        <div class="col-6 col-xl-4">
+            <div class="card mondays-card h-100 border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Décaissements Totaux</span>
+                    <span class="mondays-badge mondays-badge-warning">Sorties</span>
+                </div>
+                <div class="mondays-metric-val text-danger mb-1">{{ number_format($decaissementsTotal, 0, ',', ' ') }} <small class="fs-6 fw-normal text-muted">FCFA</small></div>
+                <div class="text-muted small">Flux débités.</div>
+            </div>
+        </div>
+    </div>
         <div class="col-6 col-xl-2">
             <div class="crypto-card">
                 <div class="card-body">
@@ -267,5 +287,6 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 @endsection

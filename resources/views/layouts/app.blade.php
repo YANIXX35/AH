@@ -701,10 +701,17 @@
 
         (function () {
             var supported = ['fr', 'en', 'es', 'de', 'pt', 'ar', 'it', 'nl'];
-            var preferred = "{{ Auth::check() ? Auth::user()->locale : '' }}" || localStorage.getItem('preferred_locale') || "{{ app()->getLocale() }}";
+            var userLoc = "{{ Auth::check() ? (Auth::user()->locale ?: '') : '' }}";
+            var localLoc = localStorage.getItem('preferred_locale');
+            var serverLoc = "{{ app()->getLocale() }}";
+
+            var preferred = userLoc || localLoc || serverLoc || 'fr';
             if (!supported.includes(preferred)) {
                 preferred = 'fr';
             }
+
+            // Persister la langue résolue dans le localStorage pour garantir la cohérence
+            localStorage.setItem('preferred_locale', preferred);
 
             if (preferred === 'fr') {
                 document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -727,8 +734,24 @@
             window.__preferredLocale = preferred;
         })();
 
-        // Force la traduction via l'API Google Translate / GTranslate
+        // Synchroniser l'état actif des boutons FR/EN et forcer la traduction si besoin
         document.addEventListener('DOMContentLoaded', function () {
+            var btnFr = document.querySelector('#topbar-locale-switch form input[value="fr"]')?.nextElementSibling;
+            var btnEn = document.querySelector('#topbar-locale-switch form input[value="en"]')?.nextElementSibling;
+            if (btnFr && btnEn) {
+                if (window.__preferredLocale === 'en') {
+                    btnEn.classList.remove('btn-outline-secondary');
+                    btnEn.classList.add('btn-primary');
+                    btnFr.classList.remove('btn-primary');
+                    btnFr.classList.add('btn-outline-secondary');
+                } else {
+                    btnFr.classList.remove('btn-outline-secondary');
+                    btnFr.classList.add('btn-primary');
+                    btnEn.classList.remove('btn-primary');
+                    btnEn.classList.add('btn-outline-secondary');
+                }
+            }
+
             if (window.__preferredLocale === 'fr') {
                 return;
             }

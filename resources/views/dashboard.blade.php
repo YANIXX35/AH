@@ -5,95 +5,115 @@
 
 @push('styles')
 <style>
-    .dashboard-chart-wrap {
-        position: relative;
-        height: 260px;
+    /* Mondays Design System - Light & Premium */
+    .mondays-container {
+        background-color: #f8fafc;
+        min-height: 100vh;
+        font-family: inherit;
     }
-    .dashboard-chart-wrap--donut {
-        height: 220px;
-        max-width: 280px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    .dashboard-ai-live-card {
-        border: 1px solid rgba(255, 255, 255, 0.45) !important;
-        background: rgba(255, 255, 255, 0.85) !important;
-        backdrop-filter: blur(12px);
+    .mondays-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
         border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(15, 39, 71, 0.04);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.02);
+        transition: all 0.2s ease-in-out;
     }
-    .dashboard-ai-live-text {
-        font-size: .92rem;
-        line-height: 1.45;
-        white-space: pre-wrap;
+    .mondays-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
     }
-    .dashboard-ai-inco-item + .dashboard-ai-inco-item {
-        border-top: 1px solid rgba(0, 0, 0, .06);
+    .mondays-hero-date {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #64748b;
+        letter-spacing: 0.2px;
     }
-    .dashboard-ai-refresh-status {
-        font-size: .78rem;
-        color: #6c757d;
+    .mondays-hero-title {
+        font-size: 1.85rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-top: 2px;
+        margin-bottom: 12px;
+    }
+    .mondays-pill-bar {
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 9999px;
+        padding: 6px 20px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        flex-wrap: wrap;
+    }
+    .mondays-pill-item {
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .mondays-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+    }
+    .mondays-badge-success { background: #dcfce7; color: #15803d; }
+    .mondays-badge-pending { background: #f3e8ff; color: #7e22ce; }
+    .mondays-badge-info { background: #dbeafe; color: #1d4ed8; }
+    .mondays-badge-warning { background: #ffedd5; color: #c2410c; }
+    .mondays-badge-secondary { background: #f1f5f9; color: #475569; }
+
+    .mondays-metric-val {
+        font-size: 1.65rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.2;
     }
 
-    .dashboard-metric-card {
-        position: relative;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.45) !important;
-        background: rgba(255, 255, 255, 0.85) !important;
-        backdrop-filter: blur(12px);
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(15, 39, 71, 0.04);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    .mondays-week-calendar {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        background: #f8fafc;
+        padding: 8px;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
     }
-    .dashboard-metric-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 18px 38px rgba(15, 39, 71, 0.1);
-        border-color: rgba(15, 39, 71, 0.15) !important;
-    }
-    .dashboard-metric-card .card-title {
-        color: #0F2747;
+    .mondays-week-day {
+        flex: 1;
+        text-align: center;
+        padding: 6px 4px;
+        border-radius: 8px;
+        font-size: 0.76rem;
         font-weight: 600;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        color: #64748b;
     }
-    .dashboard-metric-value {
-        font-size: 1.6rem;
-        font-weight: 700;
-        margin: 0.5rem 0;
-        background: linear-gradient(135deg, #0F2747 0%, #1d4ed8 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        display: block;
+    .mondays-week-day.active {
+        background: #2563eb;
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
     }
-    .dashboard-metric-value-orange {
-        background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        display: block;
-    }
-    .dashboard-metric-value-green {
-        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        display: block;
-    }
-    .dashboard-metric-value-danger {
-        background: linear-gradient(135deg, #dc2626 0%, #f87171 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        display: block;
-    }
+
+    .dashboard-chart-wrap { position: relative; height: 250px; }
+    .dashboard-chart-wrap--donut { height: 220px; max-width: 280px; margin: 0 auto; }
+    .dashboard-ai-live-text { font-size: .92rem; line-height: 1.45; white-space: pre-wrap; }
+    .dashboard-ai-inco-item + .dashboard-ai-inco-item { border-top: 1px solid #f1f5f9; }
 </style>
 @endpush
 
 @section('content')
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3">
+<div class="mondays-container pb-4">
     @php
         $u = auth()->user();
         if ($u && $u->is_platform_admin) {
             $dashPremiumActive = false;
-            $dashBadgeClass = 'btn-primary';
+            $dashBadgeClass = 'mondays-badge-info';
             $dashBadgeIcon = '🛡️';
             $dashBadgeText = 'Administrateur plateforme';
             $dashShowExpiry = false;
@@ -101,112 +121,153 @@
             $dashPremiumActive = $u
                 && ($u->is_premium ?? false)
                 && (empty($u->premium_ends_at) || $u->premium_ends_at->isFuture());
-            $dashBadgeClass = $dashPremiumActive ? 'btn-warning text-dark' : 'btn-success';
+            $dashBadgeClass = $dashPremiumActive ? 'mondays-badge-warning' : 'mondays-badge-success';
             $dashBadgeIcon = $dashPremiumActive ? '⭐' : '🟢';
             $dashBadgeText = $dashPremiumActive ? 'Abonnement Premium' : 'Version Gratuite';
             $dashShowExpiry = true;
         }
     @endphp
-    <div>
-        <h1 class="h3 mb-1"><strong>Tableau de bord</strong> global</h1>
-        <p class="text-muted mb-0">Synthèse opérationnelle de la comptabilité et de la trésorerie pour {{ $currentMonthLabel }}.</p>
-    </div>
-    <div class="btn-group">
-        <span class="btn btn-sm {{ $dashBadgeClass }} disabled">
-            {{ $dashBadgeIcon }} {{ $dashBadgeText }}
-            @if($dashShowExpiry && $dashPremiumActive && !empty(auth()->user()->premium_ends_at))
-                - jusqu'au {{ auth()->user()->premium_ends_at->format('d/m/Y') }}
-            @endif
-        </span>
-        <a href="{{ ($u && !$u->is_platform_admin && !($u->is_accountant ?? false) && !$dashPremiumActive) ? route('payments.sandbox') : route('accounting') }}" class="btn btn-outline-primary btn-sm">Comptabilité</a>
-        <a href="{{ route('treasury.tracking') }}" class="btn btn-outline-success btn-sm">Trésorerie</a>
-    </div>
-</div>
 
-<div class="row g-3 mb-3">
-    <div class="col-12 col-xl-7 d-flex">
-        <div class="card dashboard-ai-live-card shadow-sm w-100">
-            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="card-title mb-0">IA en temps reel - recommandations</h5>
-                    <small class="text-muted">Analyse comptabilite + tresorerie pour booster le chiffre d'affaires</small>
+    <!-- HERO MONDAYS HEADER -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">
+            <div>
+                <div class="mondays-hero-date">
+                    <i data-feather="calendar" class="me-1" style="width:14px; height:14px;"></i>
+                    {{ \Carbon\Carbon::now()->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
                 </div>
-                <div class="text-end">
-                    <span class="badge bg-primary">LIVE</span>
-                    <div id="dashboardAiRefreshStatus" class="dashboard-ai-refresh-status mt-1">Auto-refresh: 30s</div>
-                </div>
+                <h1 class="mondays-hero-title">
+                    Bonjour, {{ explode(' ', auth()->user()?->name ?? 'Utilisateur')[0] }} 👋
+                </h1>
             </div>
-            <div class="card-body">
-                <div id="dashboardAiLiveText" class="dashboard-ai-live-text">{{ $aiLiveInsight ?? "L'IA prepare une recommandation..." }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-xl-5 d-flex">
-        <div class="card shadow-sm w-100">
-            <div class="card-header bg-white border-bottom">
-                <h5 class="card-title mb-0">Incoherences detectees</h5>
-                <small class="text-muted">Comptabilite et tresorerie</small>
-            </div>
-            <div class="card-body py-1" id="dashboardAiIncoBody">
-                @forelse(($aiInconsistencies ?? []) as $item)
-                    <div class="dashboard-ai-inco-item py-3 d-flex justify-content-between gap-2">
-                        <div>
-                            <div class="fw-medium">{{ $item['title'] ?? 'Incoherence' }}</div>
-                            <div class="small text-muted">{{ $item['detail'] ?? '' }}</div>
-                            <div class="small mt-1"><strong>Proposition :</strong> {{ $item['proposal'] ?? '' }}</div>
-                        </div>
-                        <span class="badge bg-{{ $item['severity'] ?? 'secondary' }} align-self-start">
-                            {{ strtoupper((string) ($item['severity'] ?? 'n/a')) }}
-                        </span>
-                    </div>
-                @empty
-                    <p class="text-muted my-3">Aucune incoherence detectee.</p>
-                @endforelse
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-xl-3 col-sm-6">
-        <div class="card dashboard-metric-card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title mb-1">Écritures comptables</h5>
-                <span class="dashboard-metric-value">{{ number_format($accountingEntriesCount, 0, ',', ' ') }}</span>
-                <div class="text-muted small">Total des écritures enregistrées.</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-sm-6">
-        <div class="card dashboard-metric-card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title mb-1">Volume comptable mensuel</h5>
-                <span class="dashboard-metric-value-orange">{{ number_format($accountingMonthlyAmount, 0, ',', ' ') }} FCFA</span>
-                <div class="text-muted small">Somme des montants des écritures du mois.</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-sm-6">
-        <div class="card dashboard-metric-card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title mb-1">Documents comptables</h5>
-                <span class="dashboard-metric-value-blue">{{ number_format($documentsCount, 0, ',', ' ') }}</span>
-                <div class="text-muted small">{{ number_format($pendingDocumentsCount, 0, ',', ' ') }} en attente de traitement.</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-sm-6">
-        <div class="card dashboard-metric-card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title mb-1">Solde de trésorerie</h5>
-                <span class="{{ $soldeActuel >= 0 ? 'dashboard-metric-value-green' : 'dashboard-metric-value-danger' }}">
-                    {{ number_format($soldeActuel, 0, ',', ' ') }} FCFA
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="mondays-badge {{ $dashBadgeClass }}">
+                    {{ $dashBadgeIcon }} {{ $dashBadgeText }}
+                    @if($dashShowExpiry && $dashPremiumActive && !empty(auth()->user()->premium_ends_at))
+                        - {{ auth()->user()->premium_ends_at->format('d/m/Y') }}
+                    @endif
                 </span>
-                <div class="text-muted small">Encaissements effectués - décaissements effectués.</div>
+                <a href="{{ route('accounting.documents') }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                    <i data-feather="plus" class="me-1" style="width:14px; height:14px;"></i> Nouveau Document
+                </a>
+                <a href="{{ route('accounting.report') }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-dark">
+                    <i data-feather="file-text" class="me-1" style="width:14px; height:14px;"></i> Rapports
+                </a>
+            </div>
+        </div>
+
+        <!-- BARRE DE PILULES KPI EN-TÊTE -->
+        <div class="mondays-pill-bar">
+            <div class="mondays-pill-item">
+                <span class="text-primary">⏱️</span> <strong>Gain de temps :</strong> 12h économisées ce mois
+            </div>
+            <div class="mondays-pill-item text-muted">|</div>
+            <div class="mondays-pill-item">
+                <span class="text-success">🎯</span> <strong>Écritures :</strong> {{ number_format($accountingEntriesCount, 0, ',', ' ') }} enregistrées
+            </div>
+            <div class="mondays-pill-item text-muted">|</div>
+            <div class="mondays-pill-item">
+                <span class="text-warning">⌛</span> <strong>Traitement OCR :</strong> {{ number_format($pendingDocumentsCount, 0, ',', ' ') }} en attente
             </div>
         </div>
     </div>
-</div>
+
+    <!-- METRICS CARDS GRID (MONDAYS STYLE) -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="card mondays-card h-100 border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Écritures Comptables</span>
+                    <span class="mondays-badge mondays-badge-info">Total</span>
+                </div>
+                <div class="mondays-metric-val text-primary mb-1">{{ number_format($accountingEntriesCount, 0, ',', ' ') }}</div>
+                <div class="text-muted small">Écritures validées en base.</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card mondays-card h-100 border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Volume Mensuel</span>
+                    <span class="mondays-badge mondays-badge-warning">{{ $currentMonthLabel }}</span>
+                </div>
+                <div class="mondays-metric-val text-warning mb-1">{{ number_format($accountingMonthlyAmount, 0, ',', ' ') }} <small class="fs-6 fw-normal text-muted">FCFA</small></div>
+                <div class="text-muted small">Somme des flux du mois.</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card mondays-card h-100 border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Pièces & Documents</span>
+                    <span class="mondays-badge mondays-badge-pending">{{ number_format($pendingDocumentsCount, 0, ',', ' ') }} en attente</span>
+                </div>
+                <div class="mondays-metric-val text-dark mb-1">{{ number_format($documentsCount, 0, ',', ' ') }}</div>
+                <div class="text-muted small">Documents numérisés OCR.</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card mondays-card h-100 border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Trésorerie Nette</span>
+                    <span class="mondays-badge {{ $soldeActuel >= 0 ? 'mondays-badge-success' : 'mondays-badge-warning' }}">
+                        {{ $soldeActuel >= 0 ? 'Positif' : 'Alerte' }}
+                    </span>
+                </div>
+                <div class="mondays-metric-val {{ $soldeActuel >= 0 ? 'text-success' : 'text-danger' }} mb-1">
+                    {{ number_format($soldeActuel, 0, ',', ' ') }} <small class="fs-6 fw-normal text-muted">FCFA</small>
+                </div>
+                <div class="text-muted small">Encaissements − Décaissements.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IA & RECOMMANDATIONS SECTION -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-xl-7 d-flex">
+            <div class="card mondays-card w-100 border-0">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-0 fw-bold text-dark">
+                            <i data-feather="cpu" class="text-primary me-1"></i> IA Recommandations en direct
+                        </h5>
+                        <small class="text-muted">Analyse en temps réel des opportunités de trésorerie & fiscalité</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="mondays-badge mondays-badge-info">LIVE</span>
+                        <div id="dashboardAiRefreshStatus" class="small text-muted mt-1" style="font-size:0.75rem;">Maj: 30s</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="dashboardAiLiveText" class="dashboard-ai-live-text text-dark">{{ $aiLiveInsight ?? "L'assistant IA analyse votre dossier..." }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-5 d-flex">
+            <div class="card mondays-card w-100 border-0">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="card-title mb-0 fw-bold text-dark">Incohérences & Alertes</h5>
+                    <small class="text-muted">Contrôles automatisés comptabilité et banque</small>
+                </div>
+                <div class="card-body py-1" id="dashboardAiIncoBody">
+                    @forelse(($aiInconsistencies ?? []) as $item)
+                        <div class="dashboard-ai-inco-item py-3 d-flex justify-content-between gap-2">
+                            <div>
+                                <div class="fw-semibold text-dark">{{ $item['title'] ?? 'Incohérence' }}</div>
+                                <div class="small text-muted">{{ $item['detail'] ?? '' }}</div>
+                                <div class="small mt-1 text-primary"><strong>Action conseillée :</strong> {{ $item['proposal'] ?? '' }}</div>
+                            </div>
+                            <span class="mondays-badge mondays-badge-warning align-self-start">
+                                {{ strtoupper((string) ($item['severity'] ?? 'n/a')) }}
+                            </span>
+                        </div>
+                    @empty
+                        <p class="text-muted my-3 text-center py-3">
+                            <i data-feather="check-circle" class="text-success me-1"></i> Aucune incohérence détectée.
+                        </p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </div>
 
 <div class="row mb-3">
     <div class="col-12">
@@ -467,6 +528,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 @endsection
 

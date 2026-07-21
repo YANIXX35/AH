@@ -5,122 +5,159 @@
 
 @push('styles')
 <style>
-    .accountant-ai-live-card {
-        border: 1px solid rgba(255, 255, 255, 0.45) !important;
-        background: rgba(255, 255, 255, 0.85) !important;
-        backdrop-filter: blur(12px);
+    /* Mondays Design System - Cabinet Comptable */
+    .mondays-container {
+        background-color: #f8fafc;
+        min-height: 100vh;
+    }
+    .mondays-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
         border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(15, 39, 71, 0.04);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.02);
+        transition: all 0.2s ease-in-out;
     }
-    .accountant-ai-live-text {
-        font-size: .92rem;
-        line-height: 1.45;
-        white-space: pre-wrap;
+    .mondays-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
     }
-    .accountant-ai-inco-item + .accountant-ai-inco-item {
-        border-top: 1px solid rgba(0, 0, 0, .06);
-    }
-    .accountant-ai-refresh-status {
-        font-size: .78rem;
-        color: #6c757d;
-    }
-
-    .dashboard-metric-card {
-        position: relative;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.45) !important;
-        background: rgba(255, 255, 255, 0.85) !important;
-        backdrop-filter: blur(12px);
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(15, 39, 71, 0.04);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .dashboard-metric-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 18px 38px rgba(15, 39, 71, 0.1);
-        border-color: rgba(15, 39, 71, 0.15) !important;
-    }
-    .dashboard-metric-card .card-title {
-        color: #0F2747;
-        font-weight: 600;
+    .mondays-hero-date {
         font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        font-weight: 500;
+        color: #64748b;
     }
-    .dashboard-metric-value {
-        font-size: 1.6rem;
+    .mondays-hero-title {
+        font-size: 1.85rem;
         font-weight: 700;
-        margin: 0.5rem 0;
-        background: linear-gradient(135deg, #0F2747 0%, #1d4ed8 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        display: block;
+        color: #0f172a;
+        margin-top: 2px;
+        margin-bottom: 12px;
     }
-    .dashboard-metric-value-orange {
-        background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        display: block;
+    .mondays-pill-bar {
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 9999px;
+        padding: 6px 20px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        flex-wrap: wrap;
     }
-    .dashboard-metric-value-green {
-        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        display: block;
+    .mondays-pill-item {
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
-    .dashboard-metric-value-danger {
-        background: linear-gradient(135deg, #dc2626 0%, #f87171 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        display: block;
+    .mondays-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
     }
+    .mondays-badge-success { background: #dcfce7; color: #15803d; }
+    .mondays-badge-pending { background: #f3e8ff; color: #7e22ce; }
+    .mondays-badge-info { background: #dbeafe; color: #1d4ed8; }
+    .mondays-badge-warning { background: #ffedd5; color: #c2410c; }
+    .mondays-metric-val {
+        font-size: 1.65rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+    .accountant-ai-live-text { font-size: .92rem; line-height: 1.45; white-space: pre-wrap; }
+    .accountant-ai-inco-item + .accountant-ai-inco-item { border-top: 1px solid #f1f5f9; }
 </style>
 @endpush
 
 @section('content')
-<div class="mb-4">
-    <h1 class="h3 mb-1"><strong>Tableau de bord</strong> cabinet</h1>
-    <p class="text-muted mb-0">Vue d’ensemble des dossiers entreprises : volumes, anomalies et raccourcis vers les dossiers clients.</p>
-</div>
+<div class="mondays-container pb-4">
+    <!-- HERO MONDAYS HEADER -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">
+            <div>
+                <div class="mondays-hero-date">
+                    <i data-feather="calendar" class="me-1" style="width:14px; height:14px;"></i>
+                    {{ \Carbon\Carbon::now()->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
+                </div>
+                <h1 class="mondays-hero-title">
+                    Cabinet Comptable — {{ explode(' ', auth()->user()?->name ?? 'Expert')[0] }} 👋
+                </h1>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <a href="{{ route('accountant.clients.index') }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                    <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i> Dossiers Clients
+                </a>
+                <a href="{{ route('accounting.report') }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-dark">
+                    <i data-feather="file-text" class="me-1" style="width:14px; height:14px;"></i> Rapports
+                </a>
+            </div>
+        </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-6 col-xl-3">
-        <div class="card dashboard-metric-card shadow-sm h-100">
-            <div class="card-body">
-                <div class="card-title text-muted small text-uppercase">Dossiers clients</div>
-                <span class="dashboard-metric-value">{{ number_format($clientCount) }}</span>
-                <p class="small text-muted mb-0">Comptes entreprise (hors admin / cabinet).</p>
+        <!-- BARRE DE PILULES KPI EN-TÊTE -->
+        <div class="mondays-pill-bar">
+            <div class="mondays-pill-item">
+                <span class="text-primary">🏢</span> <strong>Portefeuille :</strong> {{ number_format($clientCount) }} dossiers clients
+            </div>
+            <div class="mondays-pill-item text-muted">|</div>
+            <div class="mondays-pill-item">
+                <span class="text-success">📑</span> <strong>Grand Livre :</strong> {{ number_format($entriesTotal) }} écritures
+            </div>
+            <div class="mondays-pill-item text-muted">|</div>
+            <div class="mondays-pill-item">
+                <span class="text-warning">⌛</span> <strong>À traiter :</strong> {{ number_format($documentsPending) }} pièces
             </div>
         </div>
     </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card dashboard-metric-card shadow-sm h-100">
-            <div class="card-body">
-                <div class="card-title text-muted small text-uppercase">Écritures (tous dossiers)</div>
-                <span class="dashboard-metric-value">{{ number_format($entriesTotal) }}</span>
-                <p class="small text-muted mb-0">Grand livre agrégé.</p>
+
+    <!-- METRICS CARDS GRID -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card mondays-card h-100 border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Dossiers Clients</span>
+                    <span class="mondays-badge mondays-badge-info">Actifs</span>
+                </div>
+                <div class="mondays-metric-val text-primary mb-1">{{ number_format($clientCount) }}</div>
+                <div class="text-muted small">Comptes entreprise suivis.</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card mondays-card h-100 border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Écritures Totales</span>
+                    <span class="mondays-badge mondays-badge-success">Agrégé</span>
+                </div>
+                <div class="mondays-metric-val text-success mb-1">{{ number_format($entriesTotal) }}</div>
+                <div class="text-muted small">Volume d'écritures saisies.</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card mondays-card h-100 border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Documents à Traiter</span>
+                    <span class="mondays-badge mondays-badge-warning">{{ number_format($documentsPending) }} en attente</span>
+                </div>
+                <div class="mondays-metric-val text-warning mb-1">{{ number_format($documentsPending) }}</div>
+                <div class="text-muted small">Pièces OCR à corriger.</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card mondays-card h-100 border-0 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Alertes OCR « Stress »</span>
+                    <span class="mondays-badge mondays-badge-warning">Attention</span>
+                </div>
+                <div class="mondays-metric-val text-danger mb-1">{{ number_format($ocrStressEntries) }}</div>
+                <div class="text-muted small">Saisies ou rapprochements requis.</div>
             </div>
         </div>
     </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card dashboard-metric-card shadow-sm h-100">
-            <div class="card-body">
-                <div class="card-title text-muted small text-uppercase">Documents à traiter</div>
-                <span class="dashboard-metric-value-orange">{{ number_format($documentsPending) }}</span>
-                <p class="small text-muted mb-0">En attente ou OCR à corriger.</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card dashboard-metric-card shadow-sm h-100">
-            <div class="card-body">
-                <div class="card-title text-muted small text-uppercase">Écritures OCR « stress »</div>
-                <span class="dashboard-metric-value-danger">{{ number_format($ocrStressEntries) }}</span>
-                <p class="small text-muted mb-0">À rapprocher ou saisir manuellement.</p>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div class="row g-3 mb-4">
     <div class="col-12 col-xl-7 d-flex">
@@ -477,5 +514,6 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         </div>
     </div>
+</div>
 </div>
 @endsection
