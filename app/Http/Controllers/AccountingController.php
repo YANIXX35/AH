@@ -867,19 +867,28 @@ class AccountingController extends Controller
     private function parsePlanComptableUniversal(string $path): array
     {
         try {
-            $spreadsheet = IOFactory::load($path);
+            $reader = IOFactory::createReaderForFile($path);
+            if (method_exists($reader, 'setReadDataOnly')) {
+                $reader->setReadDataOnly(true);
+            }
 
-            $sheetNames = ['Plan_Comptable', 'Plan Comptable', 'Plan Comptable SYSCOHADA', 'Feuil1', 'Sheet1'];
-            $sheet = null;
-            foreach ($sheetNames as $name) {
-                if ($spreadsheet->sheetNameExists($name)) {
-                    $sheet = $spreadsheet->getSheetByName($name);
-                    break;
+            if (method_exists($reader, 'listWorksheetNames')) {
+                $sheetNames = $reader->listWorksheetNames($path);
+                $candidates = ['Plan_Comptable', 'Plan Comptable', 'Plan Comptable SYSCOHADA', 'Feuil1', 'Sheet1'];
+                $targetSheet = null;
+                foreach ($candidates as $candidate) {
+                    if (in_array($candidate, $sheetNames, true)) {
+                        $targetSheet = $candidate;
+                        break;
+                    }
+                }
+                if ($targetSheet && method_exists($reader, 'setLoadSheetsOnly')) {
+                    $reader->setLoadSheetsOnly([$targetSheet]);
                 }
             }
-            if (! $sheet) {
-                $sheet = $spreadsheet->getActiveSheet();
-            }
+
+            $spreadsheet = $reader->load($path);
+            $sheet = $spreadsheet->getActiveSheet();
 
             $accounts = [];
             $invalidRows = [];
