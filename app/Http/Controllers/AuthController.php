@@ -67,18 +67,18 @@ class AuthController extends Controller
                 ], 'login');
         }
 
-        $firdMissing = empty($user->company_name)
-            || empty($user->company_tax_id)
-            || empty($user->fiscal_year_end_date)
-            || empty($user->main_activity_description);
+        // Efface toute ancienne URL 'intended' stockée en session (ex: fird) pour garantir l'arrivée directe sur le dashboard.
+        $request->session()->forget('url.intended');
 
-        if ($firdMissing && ! ($user->is_platform_admin || ($user->is_accountant ?? false))) {
-            return redirect()
-                ->route('profile.company.fird')
-                ->with('status', 'Complétez votre fiche entreprise (FIRD) pour finaliser le paramétrage.');
+        if ($user->is_platform_admin) {
+            return redirect()->route('admin.dashboard');
         }
 
-        return redirect()->intended(route('dashboard'));
+        if ($user->is_accountant ?? false) {
+            return redirect()->route('accountant.dashboard');
+        }
+
+        return redirect()->route('dashboard');
     }
 
     public function showForgotPassword(): View
