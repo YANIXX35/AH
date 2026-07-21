@@ -3,7 +3,53 @@
 @section('title', 'Aide & support | ' . config('app.name'))
 @section('page_title', 'Aide & support')
 
+@push('styles')
+    <style>
+        /* Ocean Azure & Turquoise Theme */
+        .azure-container { background-color: #f0f9ff; min-height: 100vh; }
+        .azure-card { background: #ffffff; border: 1px solid #e0f2fe; border-radius: 16px; box-shadow: 0 1px 3px rgba(2, 132, 199, 0.05); transition: all 0.2s ease; }
+        .azure-card:hover { border-color: #0284c7; box-shadow: 0 4px 16px rgba(2, 132, 199, 0.08); }
+        .azure-hero-date { font-size: 0.85rem; font-weight: 500; color: #0284c7; }
+        .azure-hero-title { font-size: 1.85rem; font-weight: 700; color: #0c4a6e; margin-top: 2px; margin-bottom: 12px; }
+        .azure-pill-bar { display: inline-flex; align-items: center; gap: 16px; background: #ffffff; border: 1px solid #bae6fd; border-radius: 9999px; padding: 6px 20px; box-shadow: 0 1px 3px rgba(2, 132, 199, 0.08); flex-wrap: wrap; }
+        .azure-pill-item { font-size: 0.84rem; font-weight: 600; color: #0369a1; display: flex; align-items: center; gap: 6px; }
+    </style>
+@endpush
+
 @section('content')
+<div class="azure-container pb-4 px-3 pt-3 rounded-4">
+    <!-- HERO AZURE HEADER -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">
+            <div>
+                <div class="azure-hero-date">
+                    <i data-feather="help-circle" class="me-1" style="width:14px; height:14px;"></i>
+                    Centre d'Aide & Support · {{ \Carbon\Carbon::now()->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
+                </div>
+                <h1 class="azure-hero-title">
+                    Assistance Client — {{ explode(' ', auth()->user()?->name ?? 'Utilisateur')[0] }} 🎧
+                </h1>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <a href="{{ route('support.tickets.create') }}" class="btn btn-sm btn-info rounded-pill px-3 fw-semibold text-white" style="background:#0284c7; border:none;">
+                    <i data-feather="plus-circle" class="me-1" style="width:14px; height:14px;"></i> Nouveau Ticket
+                </a>
+                <a href="{{ route('support.tickets') }}" class="btn btn-sm btn-outline-info rounded-pill px-3 fw-semibold" style="color:#0284c7; border-color:#0284c7;">
+                    <i data-feather="message-square" class="me-1" style="width:14px; height:14px;"></i> Mes Demandes
+                </a>
+            </div>
+        </div>
+
+        <div class="azure-pill-bar">
+            <div class="azure-pill-item">
+                <span>💬</span> <strong>Support Dédié :</strong> 24/7 Assistance
+            </div>
+            <div class="azure-pill-item text-muted">|</div>
+            <div class="azure-pill-item">
+                <span>⚡</span> <strong>FAQ & Base de connaissances :</strong> Réponses instantanées
+            </div>
+        </div>
+    </div>
 <div class="container-fluid p-0">
     <div class="row g-3">
         <div class="col-lg-8">
@@ -56,5 +102,6 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 @endsection

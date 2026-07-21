@@ -5,32 +5,52 @@
 
 @push('styles')
 <style>
+    /* Luxury Gold & Obsidian Theme */
+    .investor-gold-container { background: #0f172a; min-height: 100vh; color: #f8fafc; }
     .investor-hero {
-        background: linear-gradient(120deg, #0f2747 0%, #1e3a5f 100%);
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid #d97706;
         color: #fff;
         border-radius: 1rem;
         padding: 1.25rem 1.5rem;
         margin-bottom: 1.25rem;
-        box-shadow: 0 10px 28px rgba(16, 24, 40, 0.15);
+        box-shadow: 0 10px 28px rgba(217, 119, 6, 0.15);
     }
     .investor-score-card {
-        border: 0;
+        border: 1px solid #334155;
+        background: #1e293b;
+        color: #f8fafc;
         border-radius: 1rem;
-        box-shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         height: 100%;
     }
-    .score-ring-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: #6c757d; }
-    .score-ring-value { font-size: 2rem; font-weight: 700; line-height: 1.1; }
-    .checklist-row { border-bottom: 1px solid #eef2f7; }
+    .score-ring-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8; }
+    .score-ring-value { font-size: 2rem; font-weight: 700; line-height: 1.1; color: #f59e0b; }
+    .checklist-row { border-bottom: 1px solid #334155; }
     .checklist-row:last-child { border-bottom: 0; }
     .badge-status-ok { background: #dcfce7; color: #166534; }
     .badge-status-warning { background: #fef3c7; color: #92400e; }
     .badge-status-fail { background: #fee2e2; color: #991b1b; }
+    .investor-hero-title { color: #fbbf24; font-weight: 800; }
 </style>
 @endpush
 
 @section('content')
-<div class="container-fluid">
+<div class="investor-gold-container pb-4 px-3 pt-3 rounded-4">
+    <!-- HERO LUXURY GOLD HEADER -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">
+            <div>
+                <div class="text-warning small fw-semibold">
+                    <i data-feather="award" class="me-1" style="width:14px; height:14px;"></i>
+                    Investisseurs & Readiness · {{ \Carbon\Carbon::now()->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
+                </div>
+                <h1 class="investor-hero-title h2 mt-1 mb-2">
+                    Scorecard Investisseur — {{ explode(' ', auth()->user()?->name ?? 'Utilisateur')[0] }} 👑
+                </h1>
+            </div>
+        </div>
+    </div>
     <div class="investor-hero">
         <h1 class="h4 mb-2">Dépôt de dossier d’investissement — lecture expert-comptable</h1>
         <p class="mb-2 small opacity-95">
@@ -563,5 +583,6 @@
             </div>
         @endif
     </div>
+</div>
 </div>
 @endsection

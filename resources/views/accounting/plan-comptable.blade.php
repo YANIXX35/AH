@@ -3,7 +3,53 @@
 @section('title', 'Plan comptable OHADA | Sitiame Capitale')
 @section('page_title', 'Plan comptable OHADA')
 
+@push('styles')
+    <style>
+        .emerald-theme-container { background-color: #f8fafc; min-height: 100vh; }
+        .emerald-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s ease; }
+        .emerald-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.08); }
+        .emerald-hero-date { font-size: 0.85rem; font-weight: 500; color: #059669; }
+        .emerald-hero-title { font-size: 1.85rem; font-weight: 700; color: #0f172a; margin-top: 2px; margin-bottom: 12px; }
+        .emerald-pill-bar { display: inline-flex; align-items: center; gap: 16px; background: #ffffff; border: 1px solid #d1fae5; border-radius: 9999px; padding: 6px 20px; box-shadow: 0 1px 3px rgba(5, 150, 105, 0.08); flex-wrap: wrap; }
+        .emerald-pill-item { font-size: 0.84rem; font-weight: 600; color: #065f46; display: flex; align-items: center; gap: 6px; }
+    </style>
+@endpush
+
 @section('content')
+<div class="emerald-theme-container pb-4">
+    <!-- HERO EMERALD HEADER -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">
+            <div>
+                <div class="emerald-hero-date">
+                    <i data-feather="layers" class="me-1" style="width:14px; height:14px;"></i>
+                    Comptabilité · Référentiel OHADA
+                </div>
+                <h1 class="emerald-hero-title">
+                    Plan Comptable OHADA — {{ explode(' ', auth()->user()?->name ?? 'Utilisateur')[0] }} 📘
+                </h1>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <a href="{{ route('accounting') }}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
+                    <i data-feather="arrow-left" class="me-1" style="width:14px; height:14px;"></i> Moteur Comptable
+                </a>
+                <a href="{{ route('accounting.plan.download.template') }}" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold">
+                    <i data-feather="download" class="me-1" style="width:14px; height:14px;"></i> Modèle Excel
+                </a>
+            </div>
+        </div>
+
+        <div class="emerald-pill-bar">
+            <div class="emerald-pill-item">
+                <span>📚</span> <strong>Source actuelle :</strong> {{ $source }}
+            </div>
+            <div class="emerald-pill-item text-muted">|</div>
+            <div class="emerald-pill-item">
+                <span>⚖️</span> <strong>Classes 1 à 7 :</strong> Définition analytique
+            </div>
+        </div>
+    </div>
+</div>
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
@@ -293,4 +339,5 @@
     <div class="text-end">
         <a href="{{ route('accounting') }}" class="btn btn-outline-secondary">Retour au module comptabilité</a>
     </div>
+</div>
 @endsection

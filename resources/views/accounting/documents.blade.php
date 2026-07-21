@@ -1,9 +1,56 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Documents Comptables | Sitiame Capitale')
 @section('page_title', 'Documents Comptables')
 
+@push('styles')
+    <style>
+        /* Emerald Precision & Slate Gold Theme */
+        .emerald-theme-container { background-color: #f8fafc; min-height: 100vh; font-family: inherit; }
+        .emerald-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); transition: all 0.2s ease; }
+        .emerald-card:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.08); }
+        .emerald-hero-date { font-size: 0.85rem; font-weight: 500; color: #059669; }
+        .emerald-hero-title { font-size: 1.85rem; font-weight: 700; color: #0f172a; margin-top: 2px; margin-bottom: 12px; }
+        .emerald-pill-bar { display: inline-flex; align-items: center; gap: 16px; background: #ffffff; border: 1px solid #d1fae5; border-radius: 9999px; padding: 6px 20px; box-shadow: 0 1px 3px rgba(5, 150, 105, 0.08); flex-wrap: wrap; }
+        .emerald-pill-item { font-size: 0.84rem; font-weight: 600; color: #065f46; display: flex; align-items: center; gap: 6px; }
+        .emerald-badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .emerald-badge-gold { background: #fef3c7; color: #92400e; }
+        .emerald-badge-success { background: #d1fae5; color: #065f46; }
+        .emerald-badge-slate { background: #f1f5f9; color: #334155; }
+    </style>
+@endpush
+
 @section('content')
+<div class="emerald-theme-container pb-4">
+    <!-- HERO EMERALD HEADER -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">
+            <div>
+                <div class="emerald-hero-date">
+                    <i data-feather="file-text" class="me-1" style="width:14px; height:14px;"></i>
+                    Comptabilité & Documents · {{ \Carbon\Carbon::now()->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
+                </div>
+                <h1 class="emerald-hero-title">
+                    Gestion des Documents — {{ explode(' ', auth()->user()?->name ?? 'Utilisateur')[0] }} 📄
+                </h1>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <a href="{{ route('accounting') }}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
+                    <i data-feather="arrow-left" class="me-1" style="width:14px; height:14px;"></i> Moteur Comptable
+                </a>
+            </div>
+        </div>
+
+        <div class="emerald-pill-bar">
+            <div class="emerald-pill-item">
+                <span>📁</span> <strong>Numérisation OCR :</strong> Multi-formats PDF & Images
+            </div>
+            <div class="emerald-pill-item text-muted">|</div>
+            <div class="emerald-pill-item">
+                <span>⭐</span> <strong>Conformité :</strong> Plan OHADA / BCEAO
+            </div>
+        </div>
+    </div>
     <style>
         .mobile-doc-card {
             border: 1px solid #e9ecef;
@@ -586,4 +633,5 @@
             });
         })();
     </script>
+</div>
 @endsection

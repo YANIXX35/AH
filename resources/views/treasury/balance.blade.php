@@ -1,9 +1,55 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Solde Trésorerie | Sitiame Capitale')
 @section('page_title', 'Solde de Trésorerie')
 
 @push('styles')
+<style>
+    /* Fintech Electric Indigo & Cyan Theme */
+    .fintech-container { background: #f0f9ff; min-height: 100vh; }
+    .fintech-card { background: #ffffff; border: 1px solid #e0f2fe; border-radius: 16px; box-shadow: 0 4px 20px rgba(6, 182, 212, 0.05); transition: all 0.2s ease; }
+    .fintech-card:hover { border-color: #06b6d4; box-shadow: 0 6px 24px rgba(79, 70, 229, 0.1); }
+    .fintech-hero-date { font-size: 0.85rem; font-weight: 600; color: #0284c7; }
+    .fintech-hero-title { font-size: 1.85rem; font-weight: 800; color: #1e1b4b; margin-top: 2px; margin-bottom: 12px; }
+    .fintech-pill-bar { display: inline-flex; align-items: center; gap: 16px; background: #ffffff; border: 1px solid #bae6fd; border-radius: 9999px; padding: 6px 20px; box-shadow: 0 2px 8px rgba(6, 182, 212, 0.08); flex-wrap: wrap; }
+    .fintech-pill-item { font-size: 0.84rem; font-weight: 700; color: #4338ca; display: flex; align-items: center; gap: 6px; }
+</style>
+@endpush
+
+@section('content')
+<div class="fintech-container pb-4 px-3 pt-3 rounded-4">
+    <!-- HERO FINTECH HEADER -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">
+            <div>
+                <div class="fintech-hero-date">
+                    <i data-feather="dollar-sign" class="me-1" style="width:14px; height:14px;"></i>
+                    Trésorerie & Solde Bancaire · {{ \Carbon\Carbon::now()->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
+                </div>
+                <h1 class="fintech-hero-title">
+                    Solde de Trésorerie — {{ explode(' ', auth()->user()?->name ?? 'Utilisateur')[0] }} 💳
+                </h1>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <a href="{{ route('treasury.tracking') }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold shadow-sm" style="background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); border:none;">
+                    <i data-feather="grid" class="me-1" style="width:14px; height:14px;"></i> Dashboard Trésorerie
+                </a>
+                <a href="{{ route('treasury.forecast') }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-dark">
+                    <i data-feather="trending-up" class="me-1" style="width:14px; height:14px;"></i> Prévisions
+                </a>
+            </div>
+        </div>
+
+        <div class="fintech-pill-bar">
+            <div class="fintech-pill-item">
+                <span>⚡</span> <strong>Néo-Banque :</strong> Rapprochement temps réel
+            </div>
+            <div class="fintech-pill-item text-muted">|</div>
+            <div class="fintech-pill-item">
+                <span>📱</span> <strong>Mobile Money :</strong> Wave, Orange, MTN, Moov
+            </div>
+        </div>
+    </div>
 <style>
     .balance-header-card,
     .balance-panel,
@@ -574,5 +620,6 @@
             <div class="balance-mobile-note mt-2">Astuce mobile : chaque ligne est affichée en carte pour faciliter la lecture sur petit écran.</div>
         </div>
     </div>
+</div>
 </div>
 @endsection

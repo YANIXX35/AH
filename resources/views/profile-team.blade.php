@@ -3,7 +3,53 @@
 @section('title', 'Équipe & licence | ' . config('app.name'))
 @section('page_title', 'Équipe (licence entreprise)')
 
+@push('styles')
+    <style>
+        /* Corporate Violet & Rose Theme */
+        .corporate-container { background-color: #faf5ff; min-height: 100vh; }
+        .corporate-card { background: #ffffff; border: 1px solid #f3e8ff; border-radius: 16px; box-shadow: 0 1px 3px rgba(124, 58, 237, 0.05); transition: all 0.2s ease; }
+        .corporate-card:hover { border-color: #7c3aed; box-shadow: 0 4px 16px rgba(124, 58, 237, 0.08); }
+        .corporate-hero-date { font-size: 0.85rem; font-weight: 500; color: #7c3aed; }
+        .corporate-hero-title { font-size: 1.85rem; font-weight: 700; color: #3b0764; margin-top: 2px; margin-bottom: 12px; }
+        .corporate-pill-bar { display: inline-flex; align-items: center; gap: 16px; background: #ffffff; border: 1px solid #e9d5ff; border-radius: 9999px; padding: 6px 20px; box-shadow: 0 1px 3px rgba(124, 58, 237, 0.08); flex-wrap: wrap; }
+        .corporate-pill-item { font-size: 0.84rem; font-weight: 600; color: #6b21a8; display: flex; align-items: center; gap: 6px; }
+    </style>
+@endpush
+
 @section('content')
+<div class="corporate-container pb-4 px-3 pt-3 rounded-4">
+    <!-- HERO CORPORATE HEADER -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">
+            <div>
+                <div class="corporate-hero-date">
+                    <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i>
+                    Mon Entreprise & Équipe · {{ \Carbon\Carbon::now()->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
+                </div>
+                <h1 class="corporate-hero-title">
+                    Gestion de l'Équipe — {{ explode(' ', auth()->user()?->name ?? 'Utilisateur')[0] }} 👥
+                </h1>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <a href="{{ route('profile') }}" class="btn btn-sm btn-outline-purple rounded-pill px-3 fw-semibold text-purple border-purple" style="color:#7c3aed; border-color:#7c3aed;">
+                    <i data-feather="user" class="me-1" style="width:14px; height:14px;"></i> Mon Profil
+                </a>
+                <a href="{{ route('profile.team.history') }}" class="btn btn-sm btn-purple rounded-pill px-3 fw-semibold text-white" style="background:#7c3aed; border:none;">
+                    <i data-feather="clock" class="me-1" style="width:14px; height:14px;"></i> Historique Entreprise
+                </a>
+            </div>
+        </div>
+
+        <div class="corporate-pill-bar">
+            <div class="corporate-pill-item">
+                <span>🔑</span> <strong>Sièges Utilisés :</strong> {{ $seatsUsed }} / {{ $seatsMax }}
+            </div>
+            <div class="corporate-pill-item text-muted">|</div>
+            <div class="corporate-pill-item">
+                <span>🛡️</span> <strong>Licence NIF :</strong> {{ $license->license_key }}
+            </div>
+        </div>
+    </div>
 <div class="container-fluid p-0">
     <nav aria-label="Fil d'Ariane" class="mb-3">
         <ol class="breadcrumb mb-0">
@@ -189,5 +235,6 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 @endsection
