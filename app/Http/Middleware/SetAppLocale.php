@@ -14,15 +14,7 @@ class SetAppLocale
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $allowedLocales = ['fr', 'en', 'es', 'de', 'pt', 'ar', 'it', 'nl'];
-
-        $sessionLocale = (string) $request->session()->get('locale', '');
-        $userLocale = (string) optional($request->user())->locale;
-
-        $locale = in_array($sessionLocale, $allowedLocales, true)
-            ? $sessionLocale
-            : (in_array($userLocale, $allowedLocales, true) ? $userLocale : config('app.locale', 'fr'));
-
+        $locale = 'fr';
         App::setLocale($locale);
         $request->session()->put('locale', $locale);
 

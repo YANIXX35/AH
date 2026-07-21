@@ -398,18 +398,7 @@
                             $topbarSupportTickets = $topbarSupportTickets ?? collect();
                             $openSupportTicketsCount = $openSupportTicketsCount ?? 0;
                         @endphp
-                        <li class="nav-item d-flex align-items-center gap-1 me-2" id="topbar-locale-switch">
-                            <form action="{{ route('locale.switch') }}" method="POST" class="m-0">
-                                @csrf
-                                <input type="hidden" name="locale" value="fr">
-                                <button type="submit" class="btn btn-sm {{ app()->getLocale() === 'fr' ? 'btn-primary' : 'btn-outline-secondary' }}" onclick="window.setTopbarLocale('fr')">FR</button>
-                            </form>
-                            <form action="{{ route('locale.switch') }}" method="POST" class="m-0">
-                                @csrf
-                                <input type="hidden" name="locale" value="en">
-                                <button type="submit" class="btn btn-sm {{ app()->getLocale() === 'en' ? 'btn-primary' : 'btn-outline-secondary' }}" onclick="window.setTopbarLocale('en')">EN</button>
-                            </form>
-                        </li>
+
                         <li class="nav-item dropdown">
                             <a class="nav-icon dropdown-toggle" href="#" id="alertsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <div class="position-relative">
@@ -717,88 +706,14 @@
     <script src="{{ asset('js/adminkit-app.js') }}"></script>
     <script src="{{ asset('js/webcam-capture.js') }}" defer></script>
     <script>
-        // Bouton topbar FR/EN : même mécanisme que le sélecteur de langue de la page Profil
-        window.setTopbarLocale = function (locale) {
-            localStorage.setItem('preferred_locale', locale);
-            if (locale === 'fr') {
-                document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
-                document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=." + window.location.hostname;
-            } else {
-                document.cookie = "googtrans=/fr/" + locale + ";path=/";
-                document.cookie = "googtrans=/auto/" + locale + ";path=/";
-            }
-        };
-
         (function () {
-            var supported = ['fr', 'en', 'es', 'de', 'pt', 'ar', 'it', 'nl'];
-            var userLoc = "{{ Auth::check() ? (Auth::user()->locale ?: '') : '' }}";
-            var localLoc = localStorage.getItem('preferred_locale');
-            var serverLoc = "{{ app()->getLocale() }}";
-
-            var preferred = userLoc || localLoc || serverLoc || 'fr';
-            if (!supported.includes(preferred)) {
-                preferred = 'fr';
-            }
-
-            // Persister la langue résolue dans le localStorage pour garantir la cohérence
-            localStorage.setItem('preferred_locale', preferred);
-
-            if (preferred === 'fr') {
-                document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
-                document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=." + window.location.hostname;
-            } else {
-                document.cookie = "googtrans=/fr/" + preferred + ";path=/";
-                document.cookie = "googtrans=/auto/" + preferred + ";path=/";
-            }
-
-            window.gtranslateSettings = {
-                default_language: "fr",
-                native_language_names: true,
-                detect_browser_language: false,
-                url_structure: "none",
-                languages: supported,
-                wrapper_selector: ".gtranslate_wrapper"
-            };
-
-            window.__preferredLocale = preferred;
+            // Toujours verrouiller la langue en Français (100% FR) et purger les cookies tiers
+            localStorage.setItem('preferred_locale', 'fr');
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=." + window.location.hostname;
         })();
-
-        // Synchroniser l'état actif des boutons FR/EN et forcer la traduction si besoin
-        document.addEventListener('DOMContentLoaded', function () {
-            var btnFr = document.querySelector('#topbar-locale-switch form input[value="fr"]')?.nextElementSibling;
-            var btnEn = document.querySelector('#topbar-locale-switch form input[value="en"]')?.nextElementSibling;
-            if (btnFr && btnEn) {
-                if (window.__preferredLocale === 'en') {
-                    btnEn.classList.remove('btn-outline-secondary');
-                    btnEn.classList.add('btn-primary');
-                    btnFr.classList.remove('btn-primary');
-                    btnFr.classList.add('btn-outline-secondary');
-                } else {
-                    btnFr.classList.remove('btn-outline-secondary');
-                    btnFr.classList.add('btn-primary');
-                    btnEn.classList.remove('btn-primary');
-                    btnEn.classList.add('btn-outline-secondary');
-                }
-            }
-
-            if (window.__preferredLocale === 'fr') {
-                return;
-            }
-
-            var attempts = 0;
-            (function tryTranslate() {
-                if (typeof window.doGTranslate === 'function') {
-                    window.doGTranslate('fr|' + window.__preferredLocale);
-                } else if (attempts < 20) {
-                    attempts++;
-                    setTimeout(tryTranslate, 150);
-                }
-            })();
-        });
     </script>
-    <script src="https://cdn.gtranslate.net/widgets/latest/dropdown.js" defer async></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             if (window.feather) {
