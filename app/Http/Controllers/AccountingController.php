@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -851,8 +852,8 @@ class AccountingController extends Controller
             $invalidRows = [];
             $headers = [];
 
-            $codeHeaders = ['compte', 'code', 'account', 'account number', 'numero', 'numéro', 'n°', 'n', 'num', 'no', 'compte comptable'];
-            $labelHeaders = ['intitulé', 'intitule', 'libellé', 'libelle', 'designation', 'label', 'description', 'name', 'nom', 'nom du compte', 'intitulé compte'];
+            $codeHeaders = ['compte', 'code', 'account', 'account number', 'numero', 'numï¿½ro', 'nï¿½', 'n', 'num', 'no', 'compte comptable'];
+            $labelHeaders = ['intitulï¿½', 'intitule', 'libellï¿½', 'libelle', 'designation', 'label', 'description', 'name', 'nom', 'nom du compte', 'intitulï¿½ compte'];
             $typeHeaders = ['type', 'type compte', 'type_compte', 'nature', 'type de compte'];
             $classeHeaders = ['classe', 'class'];
             $observationHeaders = ['observation', 'obs'];
