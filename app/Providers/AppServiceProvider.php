@@ -88,30 +88,24 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(120)->by('stripe|'.$request->ip());
         });
 
-        // Données cloche (notifications) et aperçu support pour le layout principal (mis en cache 30s pour accélérer la navigation).
+        // Données cloche (notifications) et aperçu support pour le layout principal.
         View::composer('layouts.app', function ($view) {
             if (! Auth::check()) {
                 return;
             }
             $userId = Auth::id();
-            $cacheKey = "user_layout_composer_data_{$userId}";
-
-            $composerData = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addSeconds(30), function () use ($userId) {
-                return [
-                    'topbarNotifications' => AppNotification::where('user_id', $userId)->latest()->limit(8)->get(),
-                    'unreadNotificationsCount' => AppNotification::where('user_id', $userId)->whereNull('read_at')->count(),
-                    'openSupportTicketsCount' => SupportTicket::where('user_id', $userId)
-                        ->whereIn('status', [SupportTicket::STATUS_OPEN, SupportTicket::STATUS_IN_PROGRESS])
-                        ->count(),
-                    'topbarSupportTickets' => SupportTicket::where('user_id', $userId)
-                        ->with('latestMessage')
-                        ->latest('updated_at')
-                        ->limit(5)
-                        ->get(),
-                ];
-            });
-
-            $view->with($composerData);
+            $view->with([
+                'topbarNotifications' => AppNotification::where('user_id', $userId)->latest()->limit(8)->get(),
+                'unreadNotificationsCount' => AppNotification::where('user_id', $userId)->whereNull('read_at')->count(),
+                'openSupportTicketsCount' => SupportTicket::where('user_id', $userId)
+                    ->whereIn('status', [SupportTicket::STATUS_OPEN, SupportTicket::STATUS_IN_PROGRESS])
+                    ->count(),
+                'topbarSupportTickets' => SupportTicket::where('user_id', $userId)
+                    ->with('latestMessage')
+                    ->latest('updated_at')
+                    ->limit(5)
+                    ->get(),
+            ]);
         });
     }
 }

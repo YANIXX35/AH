@@ -425,13 +425,14 @@
                                     @forelse($topbarNotifications as $n)
                                         @php
                                             $nReadAt = is_object($n) ? ($n->read_at ?? null) : (is_array($n) ? ($n['read_at'] ?? null) : null);
-                                            $nId = is_object($n) ? ($n->id ?? null) : (is_array($n) ? ($n['id'] ?? null) : $n);
+                                            $nId = is_object($n) ? ($n->id ?? null) : (is_array($n) ? ($n['id'] ?? null) : (is_scalar($n) ? $n : null));
                                             $nType = is_object($n) ? ($n->type ?? '') : (is_array($n) ? ($n['type'] ?? '') : '');
                                             $nTitle = is_object($n) ? ($n->title ?? '') : (is_array($n) ? ($n['title'] ?? '') : '');
                                             $nBody = is_object($n) ? ($n->body ?? '') : (is_array($n) ? ($n['body'] ?? '') : '');
                                             $nCreatedAt = is_object($n) ? ($n->created_at ?? null) : (is_array($n) ? ($n['created_at'] ?? null) : null);
+                                            $nTargetUrl = (!empty($nId) && is_scalar($nId)) ? route('notifications.go', $nId) : route('notifications.index');
                                         @endphp
-                                        <a href="{{ route('notifications.go', $nId) }}" class="list-group-item list-group-item-action {{ $nReadAt ? '' : 'bg-light' }}">
+                                        <a href="{{ $nTargetUrl }}" class="list-group-item list-group-item-action {{ $nReadAt ? '' : 'bg-light' }}">
                                             <div class="d-flex align-items-start gap-2">
                                                 <div class="flex-shrink-0 mt-1">
                                                     @if($nType === 'warning')
@@ -480,12 +481,13 @@
                                 <div class="list-group list-group-flush">
                                     @forelse($topbarSupportTickets as $t)
                                         @php
-                                            $tId = is_object($t) ? ($t->id ?? null) : (is_array($t) ? ($t['id'] ?? null) : $t);
+                                            $tId = is_object($t) ? ($t->id ?? null) : (is_array($t) ? ($t['id'] ?? null) : (is_scalar($t) ? $t : null));
                                             $tSubject = is_object($t) ? ($t->subject ?? '') : (is_array($t) ? ($t['subject'] ?? '') : '');
                                             $tLatestMsg = is_object($t) ? ($t->latestMessage->body ?? null) : (is_array($t) ? ($t['latest_message']['body'] ?? null) : null);
                                             $tUpdatedAt = is_object($t) ? ($t->updated_at ?? null) : (is_array($t) ? ($t['updated_at'] ?? null) : null);
+                                            $tTargetUrl = (!empty($tId) && is_scalar($tId)) ? route('support.tickets.show', $tId) : route('support.tickets');
                                         @endphp
-                                        <a href="{{ route('support.tickets.show', $tId) }}" class="list-group-item list-group-item-action">
+                                        <a href="{{ $tTargetUrl }}" class="list-group-item list-group-item-action">
                                             <div class="text-dark fw-semibold small">{{ \Illuminate\Support\Str::limit($tSubject, 55) }}</div>
                                             @if($tLatestMsg)
                                                 <div class="text-muted small mt-1">{{ \Illuminate\Support\Str::limit($tLatestMsg, 90) }}</div>
