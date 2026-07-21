@@ -430,6 +430,172 @@ class AccountingController extends Controller
         return redirect()->route('accounting')->with('status', $status);
     }
 
+    public function seedDemoData()
+    {
+        $userId = $this->workspaceUserId();
+
+        if (! $this->planExists()) {
+            $defaultPlan = [
+                '101000' => ['numero_compte' => '101000', 'libelle_compte' => 'Capital social', 'prefix' => '1', 'category' => 'equity', 'is_actif' => true],
+                '131000' => ['numero_compte' => '131000', 'libelle_compte' => 'Résultat net de l\'exercice', 'prefix' => '1', 'category' => 'equity', 'is_actif' => true],
+                '162000' => ['numero_compte' => '162000', 'libelle_compte' => 'Emprunts auprès des établissements de crédit', 'prefix' => '1', 'category' => 'financial_debts', 'is_actif' => true],
+                '212000' => ['numero_compte' => '212000', 'libelle_compte' => 'Bâtiments et installations', 'prefix' => '2', 'category' => 'fixed_assets', 'is_actif' => true],
+                '241000' => ['numero_compte' => '241000', 'libelle_compte' => 'Matériel automobile', 'prefix' => '2', 'category' => 'fixed_assets', 'is_actif' => true],
+                '284100' => ['numero_compte' => '284100', 'libelle_compte' => 'Amortissements du matériel automobile', 'prefix' => '2', 'category' => 'fixed_assets', 'is_actif' => true],
+                '401100' => ['numero_compte' => '401100', 'libelle_compte' => 'Fournisseurs d\'exploitation', 'prefix' => '4', 'category' => 'payables', 'is_actif' => true],
+                '411100' => ['numero_compte' => '411100', 'libelle_compte' => 'Clients d\'exploitation', 'prefix' => '4', 'category' => 'receivables', 'is_actif' => true],
+                '421000' => ['numero_compte' => '421000', 'libelle_compte' => 'Personnel, rémunérations dues', 'prefix' => '4', 'category' => 'payables', 'is_actif' => true],
+                '445000' => ['numero_compte' => '445000', 'libelle_compte' => 'État, TVA facturée', 'prefix' => '4', 'category' => 'payables', 'is_actif' => true],
+                '512000' => ['numero_compte' => '512000', 'libelle_compte' => 'Banque BOA / Ecobank', 'prefix' => '5', 'category' => 'cash', 'is_actif' => true],
+                '571000' => ['numero_compte' => '571000', 'libelle_compte' => 'Caisse centrale', 'prefix' => '5', 'category' => 'cash', 'is_actif' => true],
+                '601000' => ['numero_compte' => '601000', 'libelle_compte' => 'Achats de marchandises', 'prefix' => '6', 'category' => 'purchases', 'is_actif' => true],
+                '622000' => ['numero_compte' => '622000', 'libelle_compte' => 'Locations et charges locatives', 'prefix' => '6', 'category' => 'operating_expenses', 'is_actif' => true],
+                '661000' => ['numero_compte' => '661000', 'libelle_compte' => 'Rémunérations directes versées au personnel', 'prefix' => '6', 'category' => 'personnel', 'is_actif' => true],
+                '681300' => ['numero_compte' => '681300', 'libelle_compte' => 'Dotations aux amortissements d\'exploitation', 'prefix' => '6', 'category' => 'operating_expenses', 'is_actif' => true],
+                '701000' => ['numero_compte' => '701000', 'libelle_compte' => 'Ventes de marchandises', 'prefix' => '7', 'category' => 'sales', 'is_actif' => true],
+                '706000' => ['numero_compte' => '706000', 'libelle_compte' => 'Services vendus / Prestations', 'prefix' => '7', 'category' => 'sales', 'is_actif' => true],
+            ];
+            $this->savePlanAccounts($defaultPlan);
+        }
+
+        $now = now();
+        $demoEntries = [
+            [
+                'user_id' => $userId,
+                'date' => $now->copy()->subMonths(5)->toDateString(),
+                'document_type' => 'Opérations Diverses',
+                'document_reference' => 'OD-APP-001',
+                'description' => 'Apport en capital social initial (BCEAO)',
+                'amount' => 10000000.00,
+                'debit_account' => '512000',
+                'credit_account' => '101000',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'user_id' => $userId,
+                'date' => $now->copy()->subMonths(4)->toDateString(),
+                'document_type' => 'Vente',
+                'document_reference' => 'FAC-2026-001',
+                'description' => 'Vente de marchandises - Client SOGEFI',
+                'amount' => 12500000.00,
+                'debit_account' => '411100',
+                'credit_account' => '701000',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'user_id' => $userId,
+                'date' => $now->copy()->subMonths(4)->addDays(5)->toDateString(),
+                'document_type' => 'Règlement Client',
+                'document_reference' => 'REG-2026-001',
+                'description' => 'Encaissement virement SOGEFI',
+                'amount' => 12500000.00,
+                'debit_account' => '512000',
+                'credit_account' => '411100',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'user_id' => $userId,
+                'date' => $now->copy()->subMonths(3)->toDateString(),
+                'document_type' => 'Achat',
+                'document_reference' => 'FOURN-2026-044',
+                'description' => 'Achat stocks marchandises chez DISTRIMAX',
+                'amount' => 6200000.00,
+                'debit_account' => '601000',
+                'credit_account' => '401100',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'user_id' => $userId,
+                'date' => $now->copy()->subMonths(3)->addDays(10)->toDateString(),
+                'document_type' => 'Règlement Fournisseur',
+                'document_reference' => 'CHQ-55421',
+                'description' => 'Paiement fournisseur DISTRIMAX par chèque',
+                'amount' => 6200000.00,
+                'debit_account' => '401100',
+                'credit_account' => '512000',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'user_id' => $userId,
+                'date' => $now->copy()->subMonths(2)->toDateString(),
+                'document_type' => 'Frais Généraux',
+                'document_reference' => 'LOYER-02-26',
+                'description' => 'Paiement loyer mensuel des bureaux',
+                'amount' => 850000.00,
+                'debit_account' => '622000',
+                'credit_account' => '512000',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'user_id' => $userId,
+                'date' => $now->copy()->subMonth()->toDateString(),
+                'document_type' => 'Paie',
+                'document_reference' => 'PAIE-06-26',
+                'description' => 'Masse salariale du personnel (Juin)',
+                'amount' => 2400000.00,
+                'debit_account' => '661000',
+                'credit_account' => '512000',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'user_id' => $userId,
+                'date' => $now->copy()->subDays(5)->toDateString(),
+                'document_type' => 'Vente',
+                'document_reference' => 'FAC-2026-002',
+                'description' => 'Prestation de conseils de gestion PME',
+                'amount' => 4800000.00,
+                'debit_account' => '512000',
+                'credit_account' => '706000',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ];
+
+        foreach ($demoEntries as $entryData) {
+            AccountingEntry::create($entryData);
+        }
+
+        TreasuryTransaction::create([
+            'user_id' => $userId,
+            'transaction_date' => $now->copy()->subMonths(5)->toDateString(),
+            'type' => 'encaissement',
+            'amount' => 10000000.00,
+            'category' => 'capital',
+            'description' => 'Apport en capital social (Mode Démo)',
+            'status' => 'effectue',
+        ]);
+        TreasuryTransaction::create([
+            'user_id' => $userId,
+            'transaction_date' => $now->copy()->subMonths(4)->addDays(5)->toDateString(),
+            'type' => 'encaissement',
+            'amount' => 12500000.00,
+            'category' => 'ventes',
+            'description' => 'Encaissement virement SOGEFI (Mode Démo)',
+            'status' => 'effectue',
+        ]);
+        TreasuryTransaction::create([
+            'user_id' => $userId,
+            'transaction_date' => $now->copy()->subMonths(3)->addDays(10)->toDateString(),
+            'type' => 'decaissement',
+            'amount' => 6200000.00,
+            'category' => 'achats',
+            'description' => 'Paiement fournisseur DISTRIMAX (Mode Démo)',
+            'status' => 'effectue',
+        ]);
+
+        return redirect()->route('accounting')->with(
+            'status',
+            'Mode Démo activé avec succès ! Des écritures comptables réelles, un plan SYSCOHADA et des flux de trésorerie ont été générés.'
+        );
+    }
+
     public function showEntry(AccountingEntry $entry)
     {
         $this->authorizeEntry($entry);
@@ -664,7 +830,12 @@ class AccountingController extends Controller
         try {
             $result = ['accounts' => [], 'invalidRows' => []];
 
-            if ($extension === 'pdf') {
+            if ($extension === 'docx' || $extension === 'doc') {
+                $rawText = $this->extractTextFromDocxFile($fullPath);
+                if (trim($rawText) !== '') {
+                    $result = $this->parsePlanComptableFromText($rawText);
+                }
+            } elseif ($extension === 'pdf') {
                 $rawText = $this->extractTextFromPdfFile($fullPath);
                 if (trim($rawText) !== '') {
                     $result = $this->parsePlanComptableFromText($rawText);
@@ -1026,6 +1197,33 @@ class AccountingController extends Controller
         }
 
         return ['accounts' => [], 'invalidRows' => []];
+    }
+
+    private function extractTextFromDocxFile(string $path): string
+    {
+        if (! file_exists($path)) {
+            return '';
+        }
+
+        try {
+            $zip = new \ZipArchive();
+            if ($zip->open($path) === true) {
+                if (($index = $zip->locateName('word/document.xml')) !== false) {
+                    $data = $zip->getFromIndex($index);
+                    $zip->close();
+
+                    $data = str_replace(['</w:p>', '</w:tr>', '</w:tc>'], ["\n", "\n", "\t"], $data);
+                    $text = strip_tags($data);
+
+                    return html_entity_decode($text);
+                }
+                $zip->close();
+            }
+        } catch (\Throwable $e) {
+            // Fallback silencieux
+        }
+
+        return '';
     }
 
     private function extractTextFromPdfFile(string $path): string
