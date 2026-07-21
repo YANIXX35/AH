@@ -440,10 +440,23 @@
                     </thead>
                     <tbody>
                     @forelse($latestEntries as $entry)
+                        @php
+                            $entryDate = is_object($entry) ? ($entry->date ?? null) : (is_array($entry) ? ($entry['date'] ?? null) : null);
+                            $entryDesc = is_object($entry) ? ($entry->description ?? null) : (is_array($entry) ? ($entry['description'] ?? null) : (is_string($entry) ? $entry : null));
+                            $entryAmount = is_object($entry) ? ($entry->amount ?? 0) : (is_array($entry) ? ($entry['amount'] ?? 0) : 0);
+                        @endphp
                         <tr>
-                            <td>{{ $entry->date?->format('d/m/Y') ?? '—' }}</td>
-                            <td>{{ \Illuminate\Support\Str::limit($entry->description ?? '—', 45) }}</td>
-                            <td class="text-end">{{ number_format($entry->amount, 0, ',', ' ') }} FCFA</td>
+                            <td>
+                                @if($entryDate instanceof \Carbon\Carbon)
+                                    {{ $entryDate->format('d/m/Y') }}
+                                @elseif(!empty($entryDate))
+                                    {{ \Carbon\Carbon::parse($entryDate)->format('d/m/Y') }}
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td>{{ \Illuminate\Support\Str::limit($entryDesc ?? '—', 45) }}</td>
+                            <td class="text-end">{{ number_format((float)$entryAmount, 0, ',', ' ') }} FCFA</td>
                         </tr>
                     @empty
                         <tr>
@@ -471,15 +484,28 @@
                     </thead>
                     <tbody>
                     @forelse($latestTransactions as $tx)
+                        @php
+                            $txDate = is_object($tx) ? ($tx->transaction_date ?? null) : (is_array($tx) ? ($tx['transaction_date'] ?? null) : null);
+                            $txType = is_object($tx) ? ($tx->type ?? 'encaissement') : (is_array($tx) ? ($tx['type'] ?? 'encaissement') : 'encaissement');
+                            $txAmount = is_object($tx) ? ($tx->amount ?? 0) : (is_array($tx) ? ($tx['amount'] ?? 0) : 0);
+                        @endphp
                         <tr>
-                            <td>{{ $tx->transaction_date?->format('d/m/Y') ?? '—' }}</td>
                             <td>
-                                <span class="badge bg-{{ $tx->type === 'encaissement' ? 'success' : 'danger' }}">
-                                    {{ ucfirst($tx->type) }}
+                                @if($txDate instanceof \Carbon\Carbon)
+                                    {{ $txDate->format('d/m/Y') }}
+                                @elseif(!empty($txDate))
+                                    {{ \Carbon\Carbon::parse($txDate)->format('d/m/Y') }}
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ $txType === 'encaissement' ? 'success' : 'danger' }}">
+                                    {{ ucfirst($txType) }}
                                 </span>
                             </td>
-                            <td class="text-end {{ $tx->type === 'encaissement' ? 'text-success' : 'text-danger' }}">
-                                {{ $tx->type === 'encaissement' ? '+' : '-' }}{{ number_format($tx->amount, 0, ',', ' ') }} FCFA
+                            <td class="text-end {{ $txType === 'encaissement' ? 'text-success' : 'text-danger' }}">
+                                {{ $txType === 'encaissement' ? '+' : '-' }}{{ number_format((float)$txAmount, 0, ',', ' ') }} FCFA
                             </td>
                         </tr>
                     @empty
@@ -512,11 +538,17 @@
                     </thead>
                     <tbody>
                     @forelse($recentDocuments as $document)
+                        @php
+                            $docName = is_object($document) ? ($document->original_name ?? 'Document') : (is_array($document) ? ($document['original_name'] ?? 'Document') : (string)$document);
+                            $docType = is_object($document) ? ($document->document_type ?? '—') : (is_array($document) ? ($document['document_type'] ?? '—') : '—');
+                            $docStatus = is_object($document) ? ($document->status ?? '—') : (is_array($document) ? ($document['status'] ?? '—') : '—');
+                            $docConfidence = is_object($document) ? ($document->confidence ?? 0) : (is_array($document) ? ($document['confidence'] ?? 0) : 0);
+                        @endphp
                         <tr>
-                            <td>{{ \Illuminate\Support\Str::limit($document->original_name ?? 'Document', 60) }}</td>
-                            <td>{{ $document->document_type ?? '—' }}</td>
-                            <td><span class="badge bg-secondary">{{ $document->status ?? '—' }}</span></td>
-                            <td class="text-end">{{ number_format((float) ($document->confidence ?? 0), 1, ',', ' ') }}%</td>
+                            <td>{{ \Illuminate\Support\Str::limit($docName, 60) }}</td>
+                            <td>{{ $docType }}</td>
+                            <td><span class="badge bg-secondary">{{ $docStatus }}</span></td>
+                            <td class="text-end">{{ number_format((float)$docConfidence, 1, ',', ' ') }}%</td>
                         </tr>
                     @empty
                         <tr>
