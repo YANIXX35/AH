@@ -1157,8 +1157,21 @@ class AccountingController extends Controller
             $dataToInsert[] = $data;
         }
 
-        if (!empty($dataToInsert)) {
-            PlanComptableAccount::insert($dataToInsert);
+        if (! empty($dataToInsert)) {
+            foreach (array_chunk($dataToInsert, 250) as $chunk) {
+                try {
+                    PlanComptableAccount::insert($chunk);
+                } catch (\Throwable $e) {
+                    // Fallback ligne par ligne si un problème de contrainte survient
+                    foreach ($chunk as $singleData) {
+                        try {
+                            PlanComptableAccount::create($singleData);
+                        } catch (\Throwable $ex) {
+                            // Ignorer les lignes en doublon strict
+                        }
+                    }
+                }
+            }
         }
     }
 
