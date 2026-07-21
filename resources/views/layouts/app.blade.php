@@ -687,23 +687,33 @@
     <script src="{{ asset('js/webcam-capture.js') }}" defer></script>
     <script>
         // Bouton topbar FR/EN : même mécanisme que le sélecteur de langue de la page Profil
-        // (localStorage.preferred_locale + cookie googtrans lus par GTranslate au chargement).
         window.setTopbarLocale = function (locale) {
             localStorage.setItem('preferred_locale', locale);
-            document.cookie = "googtrans=/fr/" + locale + ";path=/";
-            document.cookie = "googtrans=/auto/" + locale + ";path=/";
+            if (locale === 'fr') {
+                document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
+                document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=." + window.location.hostname;
+            } else {
+                document.cookie = "googtrans=/fr/" + locale + ";path=/";
+                document.cookie = "googtrans=/auto/" + locale + ";path=/";
+            }
         };
 
         (function () {
             var supported = ['fr', 'en', 'es', 'de', 'pt', 'ar', 'it', 'nl'];
-            var preferred = localStorage.getItem('preferred_locale') || "{{ app()->getLocale() }}";
+            var preferred = "{{ Auth::check() ? Auth::user()->locale : '' }}" || localStorage.getItem('preferred_locale') || "{{ app()->getLocale() }}";
             if (!supported.includes(preferred)) {
                 preferred = 'fr';
             }
 
-            // GTranslate/Google Translate relies on this cookie to persist target language.
-            document.cookie = "googtrans=/fr/" + preferred + ";path=/";
-            document.cookie = "googtrans=/auto/" + preferred + ";path=/";
+            if (preferred === 'fr') {
+                document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
+                document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=." + window.location.hostname;
+            } else {
+                document.cookie = "googtrans=/fr/" + preferred + ";path=/";
+                document.cookie = "googtrans=/auto/" + preferred + ";path=/";
+            }
 
             window.gtranslateSettings = {
                 default_language: "fr",
@@ -717,11 +727,7 @@
             window.__preferredLocale = preferred;
         })();
 
-        // Sur un site multi-pages (pas une SPA), GTranslate ne relit pas toujours le
-        // cookie de façon fiable à chaque nouveau chargement de page pour retraduire
-        // automatiquement (limite documentée par l'éditeur pour les intégrations
-        // hors CMS). On force donc explicitement la traduction via son API JS dès
-        // que dropdown.js est prêt, au lieu de compter uniquement sur le cookie.
+        // Force la traduction via l'API Google Translate / GTranslate
         document.addEventListener('DOMContentLoaded', function () {
             if (window.__preferredLocale === 'fr') {
                 return;
