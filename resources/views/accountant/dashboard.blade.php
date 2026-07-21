@@ -479,10 +479,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         @forelse($recentClients as $u)
                             @php
                                 $uCompName = is_object($u) ? ($u->company_name ?? null) : (is_array($u) ? ($u['company_name'] ?? null) : null);
-                                $uName = is_object($u) ? ($u->name ?? '') : (is_array($u) ? ($u['name'] ?? '') : (string)$u);
+                                $uName = is_object($u) ? ($u->name ?? '') : (is_array($u) ? ($u['name'] ?? '') : (is_scalar($u) ? (string)$u : ''));
                                 $uEmail = is_object($u) ? ($u->email ?? '') : (is_array($u) ? ($u['email'] ?? '') : '');
-                                $uId = is_object($u) ? ($u->id ?? null) : (is_array($u) ? ($u['id'] ?? null) : $u);
+                                $uId = is_object($u) ? ($u->id ?? null) : (is_array($u) ? ($u['id'] ?? null) : (is_scalar($u) ? $u : null));
                                 $uCreatedAt = is_object($u) ? ($u->created_at ?? null) : (is_array($u) ? ($u['created_at'] ?? null) : null);
+                                $uTargetUrl = (!empty($uId) && is_scalar($uId)) ? route('accountant.clients.show', $uId) : route('accountant.clients.index');
                             @endphp
                             <tr>
                                 <td>
@@ -502,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     @endif
                                 </td>
                                 <td class="text-end">
-                                    <a href="{{ route('accountant.clients.show', $uId) }}" class="btn btn-sm btn-outline-primary">Fiche</a>
+                                    <a href="{{ $uTargetUrl }}" class="btn btn-sm btn-outline-primary">Fiche</a>
                                 </td>
                             </tr>
                         @empty
