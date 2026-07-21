@@ -16,8 +16,11 @@
         margin-right: auto;
     }
     .dashboard-ai-live-card {
-        border: 1px solid rgba(59, 125, 221, .2);
-        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        border: 1px solid rgba(255, 255, 255, 0.45) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(15, 39, 71, 0.04);
     }
     .dashboard-ai-live-text {
         font-size: .92rem;
@@ -30,6 +33,56 @@
     .dashboard-ai-refresh-status {
         font-size: .78rem;
         color: #6c757d;
+    }
+
+    .dashboard-metric-card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.45) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(15, 39, 71, 0.04);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .dashboard-metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 38px rgba(15, 39, 71, 0.1);
+        border-color: rgba(15, 39, 71, 0.15) !important;
+    }
+    .dashboard-metric-card .card-title {
+        color: #0F2747;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .dashboard-metric-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin: 0.5rem 0;
+        background: linear-gradient(135deg, #0F2747 0%, #1d4ed8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: block;
+    }
+    .dashboard-metric-value-orange {
+        background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: block;
+    }
+    .dashboard-metric-value-green {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: block;
+    }
+    .dashboard-metric-value-danger {
+        background: linear-gradient(135deg, #dc2626 0%, #f87171 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: block;
     }
 </style>
 @endpush
@@ -116,40 +169,40 @@
 
 <div class="row">
     <div class="col-xl-3 col-sm-6">
-        <div class="card">
+        <div class="card dashboard-metric-card shadow-sm h-100">
             <div class="card-body">
                 <h5 class="card-title mb-1">Écritures comptables</h5>
-                <h1 class="mt-1 mb-1">{{ number_format($accountingEntriesCount, 0, ',', ' ') }}</h1>
-                <div class="text-muted">Total des écritures enregistrées.</div>
+                <span class="dashboard-metric-value">{{ number_format($accountingEntriesCount, 0, ',', ' ') }}</span>
+                <div class="text-muted small">Total des écritures enregistrées.</div>
             </div>
         </div>
     </div>
     <div class="col-xl-3 col-sm-6">
-        <div class="card">
+        <div class="card dashboard-metric-card shadow-sm h-100">
             <div class="card-body">
                 <h5 class="card-title mb-1">Volume comptable mensuel</h5>
-                <h1 class="mt-1 mb-1">{{ number_format($accountingMonthlyAmount, 0, ',', ' ') }} FCFA</h1>
-                <div class="text-muted">Somme des montants des écritures du mois (une fois par ligne, pas masse débit+crédit doublée).</div>
+                <span class="dashboard-metric-value-orange">{{ number_format($accountingMonthlyAmount, 0, ',', ' ') }} FCFA</span>
+                <div class="text-muted small">Somme des montants des écritures du mois.</div>
             </div>
         </div>
     </div>
     <div class="col-xl-3 col-sm-6">
-        <div class="card">
+        <div class="card dashboard-metric-card shadow-sm h-100">
             <div class="card-body">
                 <h5 class="card-title mb-1">Documents comptables</h5>
-                <h1 class="mt-1 mb-1">{{ number_format($documentsCount, 0, ',', ' ') }}</h1>
-                <div class="text-muted">{{ number_format($pendingDocumentsCount, 0, ',', ' ') }} en attente de traitement.</div>
+                <span class="dashboard-metric-value-blue">{{ number_format($documentsCount, 0, ',', ' ') }}</span>
+                <div class="text-muted small">{{ number_format($pendingDocumentsCount, 0, ',', ' ') }} en attente de traitement.</div>
             </div>
         </div>
     </div>
     <div class="col-xl-3 col-sm-6">
-        <div class="card">
+        <div class="card dashboard-metric-card shadow-sm h-100">
             <div class="card-body">
                 <h5 class="card-title mb-1">Solde de trésorerie</h5>
-                <h1 class="mt-1 mb-1 {{ $soldeActuel >= 0 ? 'text-success' : 'text-danger' }}">
+                <span class="{{ $soldeActuel >= 0 ? 'dashboard-metric-value-green' : 'dashboard-metric-value-danger' }}">
                     {{ number_format($soldeActuel, 0, ',', ' ') }} FCFA
-                </h1>
-                <div class="text-muted">Encaissements effectués - décaissements effectués.</div>
+                </span>
+                <div class="text-muted small">Encaissements effectués - décaissements effectués.</div>
             </div>
         </div>
     </div>

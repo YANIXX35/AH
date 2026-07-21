@@ -6,8 +6,11 @@
 @push('styles')
 <style>
     .accountant-ai-live-card {
-        border: 1px solid rgba(59, 125, 221, .2);
-        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        border: 1px solid rgba(255, 255, 255, 0.45) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(15, 39, 71, 0.04);
     }
     .accountant-ai-live-text {
         font-size: .92rem;
@@ -21,6 +24,56 @@
         font-size: .78rem;
         color: #6c757d;
     }
+
+    .dashboard-metric-card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.45) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(15, 39, 71, 0.04);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .dashboard-metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 38px rgba(15, 39, 71, 0.1);
+        border-color: rgba(15, 39, 71, 0.15) !important;
+    }
+    .dashboard-metric-card .card-title {
+        color: #0F2747;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .dashboard-metric-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin: 0.5rem 0;
+        background: linear-gradient(135deg, #0F2747 0%, #1d4ed8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: block;
+    }
+    .dashboard-metric-value-orange {
+        background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: block;
+    }
+    .dashboard-metric-value-green {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: block;
+    }
+    .dashboard-metric-value-danger {
+        background: linear-gradient(135deg, #dc2626 0%, #f87171 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: block;
+    }
 </style>
 @endpush
 
@@ -32,37 +85,37 @@
 
 <div class="row g-3 mb-4">
     <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card dashboard-metric-card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small text-uppercase">Dossiers clients</div>
-                <div class="display-6 fw-bold text-primary">{{ number_format($clientCount) }}</div>
+                <div class="card-title text-muted small text-uppercase">Dossiers clients</div>
+                <span class="dashboard-metric-value">{{ number_format($clientCount) }}</span>
                 <p class="small text-muted mb-0">Comptes entreprise (hors admin / cabinet).</p>
             </div>
         </div>
     </div>
     <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card dashboard-metric-card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small text-uppercase">Écritures (tous dossiers)</div>
-                <div class="display-6 fw-bold">{{ number_format($entriesTotal) }}</div>
+                <div class="card-title text-muted small text-uppercase">Écritures (tous dossiers)</div>
+                <span class="dashboard-metric-value">{{ number_format($entriesTotal) }}</span>
                 <p class="small text-muted mb-0">Grand livre agrégé.</p>
             </div>
         </div>
     </div>
     <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 border-warning">
+        <div class="card dashboard-metric-card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small text-uppercase">Documents à traiter</div>
-                <div class="display-6 fw-bold text-warning">{{ number_format($documentsPending) }}</div>
+                <div class="card-title text-muted small text-uppercase">Documents à traiter</div>
+                <span class="dashboard-metric-value-orange">{{ number_format($documentsPending) }}</span>
                 <p class="small text-muted mb-0">En attente ou OCR à corriger.</p>
             </div>
         </div>
     </div>
     <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 border-danger">
+        <div class="card dashboard-metric-card shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small text-uppercase">Écritures OCR « stress »</div>
-                <div class="display-6 fw-bold text-danger">{{ number_format($ocrStressEntries) }}</div>
+                <div class="card-title text-muted small text-uppercase">Écritures OCR « stress »</div>
+                <span class="dashboard-metric-value-danger">{{ number_format($ocrStressEntries) }}</span>
                 <p class="small text-muted mb-0">À rapprocher ou saisir manuellement.</p>
             </div>
         </div>
