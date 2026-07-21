@@ -469,6 +469,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/accounting/report/bilan/viewer', [AccountingController::class, 'showBilanPdfViewer'])->name('accounting.report.bilan.viewer');
         Route::get('/accounting/report/bilan/view', [AccountingController::class, 'viewBilanPdf'])->name('accounting.report.bilan.view');
         Route::get('/accounting/report/bilan/download', [AccountingController::class, 'downloadBilan'])->name('accounting.report.bilan.download');
+        Route::get('/accounting/liasse-bceao', [AccountingController::class, 'liasseBceao'])->name('accounting.liasse-bceao');
+        Route::get('/accounting/liasse-bceao/pdf/download', [AccountingController::class, 'downloadLiasseBceaoPdf'])->name('accounting.liasse-bceao.pdf.download');
+        Route::get('/accounting/liasse-bceao/pdf/view', [AccountingController::class, 'viewLiasseBceaoPdf'])->name('accounting.liasse-bceao.pdf.view');
     });
     
     Route::get('/accounting/analyze-syscohada', [AccountingController::class, 'analyzeSyscohadaFile'])->name('accounting.analyze-syscohada');

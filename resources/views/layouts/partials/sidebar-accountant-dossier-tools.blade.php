@@ -39,6 +39,9 @@
             <li class="sidebar-item">
                 <a class="sidebar-link {{ request()->routeIs('accounting.report.resultat') ? 'active' : '' }}" href="{{ route('accounting.report.resultat') }}"><span class="icon-wrapper">📊</span> <span class="align-middle">Compte de résultat</span></a>
             </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link {{ request()->routeIs('accounting.liasse-bceao*') ? 'active' : '' }}" href="{{ route('accounting.liasse-bceao') }}"><span class="icon-wrapper">🏛️</span> <span class="align-middle">Liasse Fiscale BCEAO</span></a>
+            </li>
         </ul>
     </div>
 </li>

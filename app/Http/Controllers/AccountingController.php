@@ -9,6 +9,7 @@ use App\Models\AccountingMonthClosure;
 use App\Models\PlanComptableAccount;
 use App\Models\PlanComptableImport;
 use App\Models\TreasuryTransaction;
+use App\Services\BceaoLiasseService;
 use App\Services\OcrPipelineService;
 use App\Services\OcrService;
 use App\Services\TreasuryAudit;
@@ -1775,6 +1776,84 @@ class AccountingController extends Controller
             'textPreview' => null,
             'pdfDataBase64' => base64_encode($pdfBinary),
         ]);
+    }
+
+    public function liasseBceao(Request $request, BceaoLiasseService $liasseService)
+    {
+        $payload = $this->buildLiassePayload($request, $liasseService);
+        return view('accounting.liasse-bceao', $payload);
+    }
+
+    public function downloadLiasseBceaoPdf(Request $request, BceaoLiasseService $liasseService)
+    {
+        $payload = $this->buildLiassePayload($request, $liasseService);
+
+        return Pdf::setOptions(['isRemoteEnabled' => true])
+            ->loadView('accounting.report-liasse-bceao-pdf', $payload)
+            ->setPaper('a4', 'portrait')
+            ->download('liasse-fiscale-bceao-'.($payload['exerciseYear'] ?? date('Y')).'.pdf');
+    }
+
+    public function viewLiasseBceaoPdf(Request $request, BceaoLiasseService $liasseService)
+    {
+        $payload = $this->buildLiassePayload($request, $liasseService);
+
+        return Pdf::setOptions(['isRemoteEnabled' => true])
+            ->loadView('accounting.report-liasse-bceao-pdf', $payload)
+            ->setPaper('a4', 'portrait')
+            ->stream('liasse-fiscale-bceao-'.($payload['exerciseYear'] ?? date('Y')).'.pdf');
+    }
+
+    private function buildLiassePayload(Request $request, BceaoLiasseService $liasseService): array
+    {
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+
+        $entriesN = AccountingEntry::whereIn('user_id', $this->workspaceDataUserIds())
+            ->when($dateFrom, function ($query, $dateFrom) {
+                $query->whereDate('date', '>=', $dateFrom);
+            })
+            ->when($dateTo, function ($query, $dateTo) {
+                $query->whereDate('date', '<=', $dateTo);
+            })
+            ->get();
+
+        $periodStartN = $entriesN->min('date');
+        $periodEndN = $entriesN->max('date');
+        $exerciseDate = $periodEndN ? Carbon::parse($periodEndN) : now();
+        $startN1 = $exerciseDate->copy()->subYear()->startOfYear();
+        $endN1 = $exerciseDate->copy()->subYear()->endOfYear();
+
+        $entriesN1 = AccountingEntry::whereIn('user_id', $this->workspaceDataUserIds())
+            ->whereDate('date', '>=', $startN1)
+            ->whereDate('date', '<=', $endN1)
+            ->get();
+
+        $liasse = $liasseService->generateLiasse($entriesN, $entriesN1);
+
+        $user = Auth::user();
+        $companyName = $user->company_name ?: $user->company_designation ?: config('plancomptable.company.name', config('app.name'));
+        $companySigle = $user->company_sigle ?? '';
+        $companyTaxId = $user->company_tax_id ?: $user->rccm;
+
+        $referenceInput = sprintf('%s|%s|%s|%s', $companyName, $companyTaxId, $exerciseDate->format('Y'), $this->workspaceUserId());
+        $liasseReference = 'BCEAO-'.strtoupper(Str::substr(hash('sha256', $referenceInput), 0, 12));
+        $qrData = sprintf('LIASSE|%s|%s|%s|REF:%s', $companyName, $companyTaxId, $exerciseDate->format('Y'), $liasseReference);
+        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='.urlencode($qrData);
+
+        return [
+            'liasse' => $liasse,
+            'companyName' => $companyName,
+            'companySigle' => $companySigle,
+            'companyTaxId' => $companyTaxId,
+            'exerciseEnd' => $periodEndN ? Carbon::parse($periodEndN)->format('d/m/Y') : '',
+            'exerciseYear' => $exerciseDate->format('Y'),
+            'durationMonths' => $periodStartN && $periodEndN ? Carbon::parse($periodStartN)->diffInMonths(Carbon::parse($periodEndN)) + 1 : 12,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'liasseReference' => $liasseReference,
+            'qrUrl' => $qrUrl,
+        ];
     }
 
     private function formatFileSizeLabel(int $bytes): string
