@@ -102,7 +102,7 @@ class AccountingController extends Controller
             'document_reference' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'attachment' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,xlsx,xls,doc,docx,zip', 'max:20480'],
+            'attachment' => ['nullable', 'file', 'max:51200'],
         ]);
 
         $data = $validated;
@@ -197,7 +197,7 @@ class AccountingController extends Controller
             'document_reference' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'attachment' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,xlsx,xls,doc,docx,zip', 'max:20480'],
+            'attachment' => ['nullable', 'file', 'max:51200'],
             'remove_attachment' => ['nullable', 'boolean'],
         ]);
 
@@ -648,69 +648,102 @@ class AccountingController extends Controller
     public function uploadPlanComptable(Request $request)
     {
         $request->validate([
-            'plan_comptable' => ['required', 'file', 'mimes:xls,xlsx,csv,pdf', 'max:20480'],
+            'plan_comptable' => ['required', 'file', 'max:51200'],
+        ], [
+            'plan_comptable.required' => 'Veuillez choisir un fichier à importer.',
+            'plan_comptable.file' => 'Le fichier soumis est invalide.',
+            'plan_comptable.max' => 'Fichier trop volumineux. Taille maximale: 50 Mo.',
         ]);
 
         $file = $request->file('plan_comptable');
+        $originalName = $file->getClientOriginalName();
         $storedPath = $file->store('plan-comptable-imports', 'public');
         $fullPath = storage_path('app/public/'.$storedPath);
         $extension = strtolower($file->getClientOriginalExtension());
 
-        if ($extension === 'pdf') {
-            $ocrPipeline = new OcrPipelineService;
-            $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
-            $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
-            if (! $ocrResult['success']) {
-                Storage::disk('public')->delete($storedPath);
+        try {
+            $result = ['accounts' => [], 'invalidRows' => []];
+
+            if ($extension === 'pdf') {
+                $rawText = $this->extractTextFromPdfFile($fullPath);
+                if (trim($rawText) !== '') {
+                    $result = $this->parsePlanComptableFromText($rawText);
+                }
+
+                if (empty($result['accounts'])) {
+                    try {
+                        $ocrPipeline = new OcrPipelineService;
+                        $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
+                        $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
+                        if (! empty($ocrResult['text'])) {
+                            $result = $this->parsePlanComptableFromText($ocrResult['text']);
+                        }
+                    } catch (\Throwable $e) {
+                        // Fallback silencieux en cas d'échec du service OCR
+                    }
+                }
+            } else {
+                $result = $this->parsePlanComptableUniversal($fullPath);
+            }
+
+            // Fallback ultime : lecture brute en texte si aucun résultat
+            if (empty($result['accounts']) && file_exists($fullPath)) {
+                $rawContent = @file_get_contents($fullPath);
+                if ($rawContent && is_string($rawContent)) {
+                    $result = $this->parsePlanComptableFromText($rawContent);
+                }
+            }
+
+            Storage::disk('public')->delete($storedPath);
+            $plan = $result['accounts'];
+            $invalidRows = $result['invalidRows'];
+
+            if (empty($plan)) {
+                $this->logPlanComptableImport(
+                    $originalName,
+                    'failed',
+                    'Aucun compte valide trouvé. Assurez-vous d’avoir des numéros de compte (classes 1 à 7) et leurs intitulés.',
+                    0,
+                    count($invalidRows),
+                    $invalidRows
+                );
 
                 return redirect()->back()->withErrors([
-                    'plan_comptable' => 'PDF illisible ou OCR en échec : '.($ocrResult['message'] ?? 'erreur inconnue'),
+                    'plan_comptable' => 'Aucun compte valide trouvé dans ce fichier. Assurez-vous qu’il contient des codes de compte (ex: 101000, 411100, 601100) et des intitulés.',
                 ]);
             }
-            $result = $this->parsePlanComptableFromText($ocrResult['text'] ?? '');
-        } else {
-            $result = $this->parsePlanComptable($fullPath);
-        }
 
-        Storage::disk('public')->delete($storedPath);
-        $plan = $result['accounts'];
-        $invalidRows = $result['invalidRows'];
+            $this->savePlanAccounts($plan);
 
-        if (empty($plan)) {
+            $status = empty($invalidRows) ? 'success' : 'partial';
+            $message = empty($invalidRows)
+                ? 'Plan comptable importé avec succès ('.count($plan).' comptes intégrés).'
+                : 'Plan comptable importé avec '.count($plan).' comptes intégrés.';
+
             $this->logPlanComptableImport(
-                $file->getClientOriginalName(),
-                'failed',
-                'Aucun compte valide trouvé dans le fichier. Vérifiez les colonnes Compte/Code et Intitulé/Libellé.',
-                0,
+                $originalName,
+                $status,
+                $message,
+                count($plan),
                 count($invalidRows),
                 $invalidRows
             );
 
-            return redirect()->back()->withErrors(['plan_comptable' => 'Aucun compte valide trouvé dans le fichier. Vérifiez les colonnes Compte/Code et Intitulé/Libellé.']);
+            $response = redirect()->route('accounting.plan')->with('status', $message);
+            if (! empty($invalidRows)) {
+                $response = $response->with('invalidRows', array_slice($invalidRows, 0, 50));
+            }
+
+            return $response;
+
+        } catch (\Throwable $e) {
+            Storage::disk('public')->delete($storedPath);
+            Log::error('Erreur lors de l’import du plan comptable: '.$e->getMessage(), ['exception' => $e]);
+
+            return redirect()->back()->withErrors([
+                'plan_comptable' => 'Une erreur est survenue lors de la lecture du fichier : '.$e->getMessage().'. Essayez avec un fichier Excel, CSV ou Texte.',
+            ]);
         }
-
-        $this->savePlanAccounts($plan);
-
-        $status = empty($invalidRows) ? 'success' : 'partial';
-        $message = empty($invalidRows)
-            ? 'Plan comptable importé avec succès.'
-            : 'Plan comptable importé avec des lignes invalides.';
-
-        $this->logPlanComptableImport(
-            $file->getClientOriginalName(),
-            $status,
-            $message,
-            count($plan),
-            count($invalidRows),
-            $invalidRows
-        );
-
-        $response = redirect()->route('accounting.plan')->with('status', $message);
-        if (! empty($invalidRows)) {
-            $response = $response->with('invalidRows', $invalidRows);
-        }
-
-        return $response;
     }
 
     public function updatePlanComptable(Request $request)
@@ -750,13 +783,14 @@ class AccountingController extends Controller
                 $account['classe'] = $prefix;
             }
 
-            $plan[$account['numero_compte'] ?? $prefix] = $account;
+            $plan[$normalizedKey] = $account;
         }
 
         $validation = $this->validatePlan($plan);
-        if (! empty($validation['missingClasses'])) {
+        if (! $validation['isValid']) {
             return redirect()
-                ->route('accounting.plan')
+                ->back()
+                ->withInput()
                 ->withErrors([
                     'plan' => 'Impossible d’enregistrer : classes manquantes ('.implode(', ', $validation['missingClasses']).').',
                 ]);
@@ -766,7 +800,7 @@ class AccountingController extends Controller
 
         return redirect()->route('accounting.plan')->with(
             'status',
-            'Plan comptable mis à jour avec règles expertes (catégories pilotées par classes 1 à 7).'
+            'Plan comptable mis à jour avec succès.'
         );
     }
 
@@ -830,13 +864,12 @@ class AccountingController extends Controller
         return response()->json($result);
     }
 
-    private function parsePlanComptable(string $path): array
+    private function parsePlanComptableUniversal(string $path): array
     {
         try {
             $spreadsheet = IOFactory::load($path);
-            
-            // Try to get the right sheet first, fall back to active sheet
-            $sheetNames = ['Plan_Comptable', 'Plan Comptable', 'Plan Comptable SYSCOHADA'];
+
+            $sheetNames = ['Plan_Comptable', 'Plan Comptable', 'Plan Comptable SYSCOHADA', 'Feuil1', 'Sheet1'];
             $sheet = null;
             foreach ($sheetNames as $name) {
                 if ($spreadsheet->sheetNameExists($name)) {
@@ -844,167 +877,166 @@ class AccountingController extends Controller
                     break;
                 }
             }
-            
             if (! $sheet) {
                 $sheet = $spreadsheet->getActiveSheet();
             }
 
             $accounts = [];
             $invalidRows = [];
-            $headers = [];
+            $codeHeaders = ['compte', 'code', 'account', 'numero', 'n°', 'num', 'no', 'code compte', 'numero compte'];
+            $labelHeaders = ['intitulé', 'intitule', 'libellé', 'libelle', 'designation', 'label', 'description', 'nom', 'nom du compte'];
 
-            $codeHeaders = ['compte', 'code', 'account', 'account number', 'numero', 'num�ro', 'n�', 'n', 'num', 'no', 'compte comptable'];
-            $labelHeaders = ['intitul�', 'intitule', 'libell�', 'libelle', 'designation', 'label', 'description', 'name', 'nom', 'nom du compte', 'intitul� compte'];
-            $typeHeaders = ['type', 'type compte', 'type_compte', 'nature', 'type de compte'];
-            $classeHeaders = ['classe', 'class'];
-            $observationHeaders = ['observation', 'obs'];
-            $sousTypeHeaders = ['sous-type', 'sous type', 'sous_type', 'subtype', 'soustype'];
-
-
-
+            $allRows = [];
             foreach ($sheet->getRowIterator() as $rowIndex => $row) {
                 $cellIterator = $row->getCellIterator();
                 $cellIterator->setIterateOnlyExistingCells(false);
-                
                 $rowData = [];
                 foreach ($cellIterator as $column => $cell) {
-                    $rowData[$column] = $cell->getValue();
+                    $val = trim((string) $cell->getValue());
+                    if ($val !== '') {
+                        $rowData[$column] = $val;
+                    }
                 }
-
-                if (empty(array_filter($rowData))) {
-                    continue;
+                if (! empty($rowData)) {
+                    $allRows[$rowIndex] = $rowData;
                 }
+            }
 
-                if (! $headers) {
-                    foreach ($rowData as $column => $value) {
-                        $normalized = mb_strtolower(trim((string) $value));
+            $codeCol = null;
+            $labelCol = null;
 
-                        foreach ($codeHeaders as $candidate) {
-                            if (str_contains($normalized, $candidate)) {
-                                $headers['code'] = $column;
-                                break;
-                            }
-                        }
-
-                        foreach ($labelHeaders as $candidate) {
-                            if (str_contains($normalized, $candidate)) {
-                                $headers['label'] = $column;
-                                break;
-                            }
-                        }
-                        
-                        foreach ($typeHeaders as $candidate) {
-                            if (str_contains($normalized, $candidate)) {
-                                $headers['type'] = $column;
-                                break;
-                            }
-                        }
-                        
-                        foreach ($classeHeaders as $candidate) {
-                            if (str_contains($normalized, $candidate)) {
-                                $headers['classe'] = $column;
-                                break;
-                            }
-                        }
-
-                        foreach ($observationHeaders as $candidate) {
-                            if (str_contains($normalized, $candidate)) {
-                                $headers['observation'] = $column;
-                                break;
-                            }
-                        }
-
-                        foreach ($sousTypeHeaders as $candidate) {
-                            if (str_contains($normalized, $candidate)) {
-                                $headers['sous_type'] = $column;
-                                break;
-                            }
+            foreach ($allRows as $rowIndex => $rowData) {
+                foreach ($rowData as $col => $val) {
+                    $norm = mb_strtolower($val);
+                    foreach ($codeHeaders as $candidate) {
+                        if (str_contains($norm, $candidate)) {
+                            $codeCol = $col;
+                            break;
                         }
                     }
+                    foreach ($labelHeaders as $candidate) {
+                        if (str_contains($norm, $candidate)) {
+                            $labelCol = $col;
+                            break;
+                        }
+                    }
+                }
+                if ($codeCol && $labelCol) {
+                    break;
+                }
+            }
 
-                    if (! isset($headers['code']) || ! isset($headers['label'])) {
+            if (! $codeCol || ! $labelCol) {
+                foreach ($allRows as $rowIndex => $rowData) {
+                    $cols = array_values($rowData);
+                    if (count($cols) >= 2) {
+                        $c0 = trim((string) $cols[0]);
+                        $c1 = trim((string) $cols[1]);
+                        if (preg_match('/^[1-7][0-9]{0,8}$/', $c0) && mb_strlen($c1) >= 2) {
+                            $keys = array_keys($rowData);
+                            $codeCol = $keys[0];
+                            $labelCol = $keys[1];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($codeCol && $labelCol) {
+                foreach ($allRows as $rowIndex => $rowData) {
+                    $code = trim((string) ($rowData[$codeCol] ?? ''));
+                    $label = trim((string) ($rowData[$labelCol] ?? ''));
+
+                    if (! $code || ! $label) {
+                        continue;
+                    }
+                    if (preg_match('/^(compte|code|libelle|intitule|numero)\b/ui', $code)) {
                         continue;
                     }
 
-                    continue;
-                }
-
-                $code = trim((string) ($rowData[$headers['code']] ?? ''));
-                $label = trim((string) ($rowData[$headers['label']] ?? ''));
-                $type = trim((string) ($rowData[$headers['type']] ?? ''));
-                $classe = trim((string) ($rowData[$headers['classe']] ?? ''));
-                $observation = trim((string) ($rowData[$headers['observation']] ?? ''));
-                $sous_type = trim((string) ($rowData[$headers['sous_type']] ?? ''));
-                $reason = null;
-
-                if (! $code || ! $label) {
-                    $reason = 'Compte ou libellé manquant';
-                } else {
-                    $prefix = preg_match('/^([1-7])/', $code, $matches) ? $matches[1] : null;
-                    if (! $prefix) {
-                        $reason = 'Code invalide ou sans classe 1-7';
-                    }
-                    if (empty($classe)) {
-                        $classe = $prefix;
+                    if (preg_match('/^([1-7][0-9]{0,8})$/', $code, $m)) {
+                        $cleanCode = $m[1];
+                        $prefix = substr($cleanCode, 0, 1);
+                        $accounts[$cleanCode] = [
+                            'numero_compte' => $cleanCode,
+                            'libelle_compte' => $label,
+                            'label' => $label,
+                            'prefix' => $prefix,
+                            'category' => $this->getCategoryByPrefix($prefix),
+                            'subtype' => $this->getSubtypeByPrefix($prefix),
+                            'is_actif' => true,
+                            'sort_order' => count($accounts),
+                        ];
                     }
                 }
-
-                if ($reason) {
-                    $invalidRows[] = [
-                        'row' => $rowIndex,
-                        'code' => $code,
-                        'label' => $label,
-                        'reason' => $reason,
-                    ];
-
-                    continue;
-                }
-
-                $accounts[$code] = [
-                    'numero_compte' => $code,
-                    'libelle_compte' => $label,
-                    'label' => $label,
-                    'type_compte' => $type,
-                    'classe' => $classe,
-                    'prefix' => $prefix,
-                    'category' => $this->getCategoryByPrefix($prefix),
-                    'subtype' => $this->getSubtypeByPrefix($prefix),
-                    'sous_type' => $sous_type,
-                    'observation' => $observation,
-                    'is_actif' => true,
-                    'sort_order' => count($accounts),
-                ];
             }
 
-            if (empty($accounts) && empty($headers)) {
-                $invalidRows[] = [
-                    'row' => 'N/A',
-                    'code' => '',
-                    'label' => '',
-                    'reason' => 'En-têtes non reconnues : utilisez des colonnes Compte/Code et Intitulé/Libellé.',
-                ];
+            if (! empty($accounts)) {
+                return ['accounts' => $accounts, 'invalidRows' => $invalidRows];
             }
 
-            return [
-                'accounts' => $accounts,
-                'invalidRows' => $invalidRows,
-            ];
-        } catch (\Exception $e) {
-            return [
-                'accounts' => [],
-                'invalidRows' => [[
-                    'row' => 'N/A',
-                    'code' => '',
-                    'label' => '',
-                    'reason' => 'Erreur lors du parsing du fichier: ' . $e->getMessage(),
-                ]]
-            ];
+        } catch (\Throwable $e) {
+            // Continuation vers le parser CSV et Texte
         }
+
+        // 2. Parsing CSV avec délimiteurs multiples
+        $delimiters = [';', ',', "\t", '|'];
+        foreach ($delimiters as $delim) {
+            if (($handle = @fopen($path, 'r')) !== false) {
+                $accounts = [];
+                while (($data = fgetcsv($handle, 4096, $delim)) !== false) {
+                    if (count($data) >= 2) {
+                        $c0 = trim((string) ($data[0] ?? ''));
+                        $c1 = trim((string) ($data[1] ?? ''));
+                        if (preg_match('/^([1-7][0-9]{0,8})$/', $c0) && mb_strlen($c1) >= 2) {
+                            $prefix = substr($c0, 0, 1);
+                            $accounts[$c0] = [
+                                'numero_compte' => $c0,
+                                'libelle_compte' => $c1,
+                                'label' => $c1,
+                                'prefix' => $prefix,
+                                'category' => $this->getCategoryByPrefix($prefix),
+                                'subtype' => $this->getSubtypeByPrefix($prefix),
+                                'is_actif' => true,
+                                'sort_order' => count($accounts),
+                            ];
+                        }
+                    }
+                }
+                fclose($handle);
+                if (! empty($accounts)) {
+                    return ['accounts' => $accounts, 'invalidRows' => []];
+                }
+            }
+        }
+
+        // 3. Fallback Texte Brut
+        $content = @file_get_contents($path);
+        if ($content && is_string($content)) {
+            return $this->parsePlanComptableFromText($content);
+        }
+
+        return ['accounts' => [], 'invalidRows' => []];
     }
 
-    /**
-     * Extrait les classes 1–7 depuis un texte OCR (PDF scanné ou export texte).
-     */
+    private function extractTextFromPdfFile(string $path): string
+    {
+        if (! file_exists($path)) {
+            return '';
+        }
+        $content = @file_get_contents($path);
+        if (! $content) {
+            return '';
+        }
+
+        preg_match_all('/\(([^)]+)\)\s*Tj/u', $content, $matches);
+        if (! empty($matches[1])) {
+            return implode("\n", $matches[1]);
+        }
+
+        return '';
+    }
+
     private function parsePlanComptableFromText(string $text): array
     {
         $lines = preg_split('/\R/u', $text) ?: [];
@@ -1013,7 +1045,7 @@ class AccountingController extends Controller
 
         foreach ($lines as $line) {
             $line = trim($line);
-            if ($line === '' || mb_strlen($line) < 4) {
+            if ($line === '' || mb_strlen($line) < 3) {
                 continue;
             }
 
@@ -1021,33 +1053,42 @@ class AccountingController extends Controller
                 continue;
             }
 
-            if (preg_match('/^([1-7][0-9]{0,8})\s+(.{2,})$/u', $line, $matches)) {
+            if (preg_match('/^([1-7][0-9]{0,8})\s*[\s\-\:\;\,\t]\s*(.{2,})$/u', $line, $matches)) {
                 $code = $matches[1];
                 $label = trim($matches[2]);
                 $label = preg_replace('/\s{2,}/u', ' ', $label) ?? $label;
+                $prefix = substr($code, 0, 1);
 
-                if (! preg_match('/^([1-7])/', $code, $prefixMatch)) {
-                    continue;
-                }
-                $prefix = $prefixMatch[1];
-
-                $accounts[$prefix] = [
+                $accounts[$code] = [
+                    'numero_compte' => $code,
+                    'libelle_compte' => $label,
                     'label' => $label,
+                    'prefix' => $prefix,
                     'category' => $this->getCategoryByPrefix($prefix),
                     'subtype' => $this->getSubtypeByPrefix($prefix),
+                    'is_actif' => true,
+                    'sort_order' => count($accounts),
                 ];
 
                 continue;
             }
 
-            if (preg_match('/^([1-7])\s+[-–—]?\s*(.{2,})$/u', $line, $matches)) {
+            if (preg_match('/^([1-7])\s*[\s\-\:\;\,\t]\s*(.{2,})$/u', $line, $matches)) {
                 $prefix = $matches[1];
                 $label = trim($matches[2]);
-                $accounts[$prefix] = [
-                    'label' => $label,
-                    'category' => $this->getCategoryByPrefix($prefix),
-                    'subtype' => $this->getSubtypeByPrefix($prefix),
-                ];
+                $code = $prefix.'00000';
+                if (! isset($accounts[$code])) {
+                    $accounts[$code] = [
+                        'numero_compte' => $code,
+                        'libelle_compte' => $label,
+                        'label' => $label,
+                        'prefix' => $prefix,
+                        'category' => $this->getCategoryByPrefix($prefix),
+                        'subtype' => $this->getSubtypeByPrefix($prefix),
+                        'is_actif' => true,
+                        'sort_order' => count($accounts),
+                    ];
+                }
             }
         }
 
@@ -1056,7 +1097,7 @@ class AccountingController extends Controller
                 'row' => 'N/A',
                 'code' => '',
                 'label' => '',
-                'reason' => 'Aucune ligne reconnue dans le PDF. Préférez un export Excel/CSV ou un PDF avec texte sélectionnable.',
+                'reason' => 'Aucune ligne de compte valide (classes 1 à 7) reconnue.',
             ];
         }
 
@@ -2170,15 +2211,14 @@ class AccountingController extends Controller
     {
         $request->validate([
             'documents' => ['required', 'array', 'min:1'],
-            'documents.*' => ['file', 'mimes:pdf,jpg,jpeg,png,xlsx,xls,csv', 'max:20480'],
+            'documents.*' => ['file', 'max:51200'],
         ], [
             'documents.required' => 'Veuillez sélectionner au moins un document.',
             'documents.array' => 'Le lot de documents envoyé est invalide.',
             'documents.min' => 'Veuillez sélectionner au moins un document.',
             'documents.*.file' => 'Chaque élément doit être un fichier valide.',
-            'documents.*.mimes' => 'Format non supporté. Utilisez PDF, JPG, JPEG, PNG, XLSX, XLS ou CSV.',
-            'documents.*.max' => 'Fichier trop volumineux. Taille maximale: 20 Mo par document.',
-            'documents.*.uploaded' => 'Échec de l’upload. Vérifiez la taille du fichier et la configuration serveur (upload_max_filesize / post_max_size).',
+            'documents.*.max' => 'Fichier trop volumineux. Taille maximale: 50 Mo par document.',
+            'documents.*.uploaded' => 'Échec de l’upload. Vérifiez la taille du fichier et la configuration serveur.',
         ]);
 
         $uploadedFiles = array_values(array_filter(
