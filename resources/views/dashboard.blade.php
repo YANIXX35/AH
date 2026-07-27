@@ -128,6 +128,37 @@
         }
     @endphp
 
+    @if($u && $u->created_by_user_id !== null)
+        @php
+            $isTrialActive = $u->is_premium && $u->premium_ends_at && $u->premium_ends_at->isFuture();
+            $daysLeft = $isTrialActive ? now()->diffInDays($u->premium_ends_at) : 0;
+        @endphp
+
+        @if(!$isTrialActive)
+            <div class="alert alert-danger border-0 rounded-4 p-3 mb-4 shadow-sm d-flex align-items-center gap-3">
+                <span class="fs-3">⚠️</span>
+                <div>
+                    <h4 class="alert-heading fw-bold mb-1 small text-uppercase" style="color: #991b1b;">Votre période d'essai d'un mois a expiré</h4>
+                    <p class="mb-0 small text-muted">Veuillez procéder au paiement de votre abonnement pour continuer à utiliser toutes les fonctionnalités Premium de PME360.</p>
+                </div>
+                <div class="ms-auto">
+                    <a href="{{ route('payments.sandbox') }}" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold">Payer l'abonnement</a>
+                </div>
+            </div>
+        @elseif($daysLeft <= 7)
+            <div class="alert alert-warning border-0 rounded-4 p-3 mb-4 shadow-sm d-flex align-items-center gap-3">
+                <span class="fs-3">⌛</span>
+                <div>
+                    <h4 class="alert-heading fw-bold mb-1 small text-uppercase" style="color: #c2410c;">Fin de période d'essai imminente</h4>
+                    <p class="mb-0 small text-muted">Votre accès gratuit d'un mois expire dans <strong>{{ $daysLeft }} jour(s)</strong>. Pensez à régulariser votre abonnement pour éviter toute interruption.</p>
+                </div>
+                <div class="ms-auto">
+                    <a href="{{ route('payments.sandbox') }}" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold">Payer l'abonnement</a>
+                </div>
+            </div>
+        @endif
+    @endif
+
     <!-- HERO MONDAYS HEADER -->
     <div class="mb-4">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-2">

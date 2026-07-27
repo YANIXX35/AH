@@ -422,6 +422,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/executive-dashboard', [AdminExecutiveDashboardController::class, 'index'])->name('executive.index');
         Route::get('/rbac', [AdminRbacController::class, 'index'])->name('rbac.index');
         Route::post('/rbac/{user}', [AdminRbacController::class, 'update'])->name('rbac.update');
+        Route::get('/commerciale', [\App\Http\Controllers\AdminCommercialController::class, 'index'])->name('commerciale');
     });
 
     Route::middleware(['premium.accounting', 'module.permission:accounting'])->group(function () {
@@ -542,4 +543,11 @@ Route::middleware('auth')->group(function () {
 
         return redirect()->route('home');
     })->name('logout');
+
+    Route::middleware('commercial')->prefix('commercial')->name('commercial.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\CommercialController::class, 'index'])->name('dashboard');
+        Route::post('/clients', [\App\Http\Controllers\CommercialController::class, 'store'])->name('clients.store');
+        Route::put('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'update'])->name('clients.update');
+        Route::delete('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'destroy'])->name('clients.destroy');
+    });
 });

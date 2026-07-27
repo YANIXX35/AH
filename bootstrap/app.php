@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureAccountNotSuspended;
 use App\Http\Middleware\EnsureModulePermission;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsurePremiumAccountingAccess;
+use App\Http\Middleware\EnsureCommercial;
 use App\Http\Middleware\LogMenuNavigation;
 use App\Http\Middleware\SanitizeClientWorkspaceSession;
 use App\Http\Middleware\SetAppLocale;
@@ -36,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'accountant' => EnsureAccountant::class,
             'premium.accounting' => EnsurePremiumAccountingAccess::class,
             'module.permission' => EnsureModulePermission::class,
+            'commercial' => EnsureCommercial::class,
         ]);
         $middleware->appendToGroup('web', SetAppLocale::class);
         $middleware->appendToGroup('web', EnsureAccountNotSuspended::class);

@@ -7,9 +7,11 @@
                 $sidebarUser
                 && ! ($sidebarUser->is_platform_admin ?? false)
                 && ! ($sidebarUser->is_accountant ?? false)
+                && $sidebarUser->role_key !== 'commercial'
             ) {
                 $sidebarBrandName = (string) ($sidebarUser->company_name ?: $sidebarBrandName);
             }
+            $sidebarIsCommercial = $sidebarUser && $sidebarUser->role_key === 'commercial';
             if ($sidebarUser && $sidebarUser->is_platform_admin) {
                 $sidebarPremiumActive = $sidebarUser->hasActivePremiumPeriod();
                 $sidebarPremiumLabel = $sidebarPremiumActive ? 'Premium Admin' : 'Administrateur';
@@ -20,6 +22,12 @@
                 $sidebarPremiumLabel = 'Comptable';
                 $sidebarPremiumBadge = 'bg-info text-dark';
                 $sidebarPremiumIcon = '📒';
+                $sidebarPremiumActive = false;
+                $sidebarShowPremiumExpiry = false;
+            } elseif ($sidebarIsCommercial) {
+                $sidebarPremiumLabel = 'Commercial';
+                $sidebarPremiumBadge = 'bg-primary text-white';
+                $sidebarPremiumIcon = '💼';
                 $sidebarPremiumActive = false;
                 $sidebarShowPremiumExpiry = false;
             } else {
@@ -34,7 +42,7 @@
             $sidebarAccountantOnly = $sidebarUser && ($sidebarUser->is_accountant ?? false) && ! ($sidebarUser->is_platform_admin ?? false);
             $sidebarWorkspaceOpen = $sidebarAccountantOnly && \App\Support\ClientWorkspace::isViewingClient();
         @endphp
-        <a class="sidebar-brand d-flex align-items-center gap-2" href="{{ $sidebarAccountantOnly ? route('accountant.dashboard') : route('dashboard') }}">
+        <a class="sidebar-brand d-flex align-items-center gap-2" href="{{ $sidebarIsCommercial ? route('commercial.dashboard') : ($sidebarAccountantOnly ? route('accountant.dashboard') : route('dashboard')) }}">
             <img src="{{ asset('images/sitiam.png') }}" alt="Logo Sitiame Capital" style="height: 28px; width: auto;">
             <span class="align-middle">{{ $sidebarBrandName }}</span>
         </a>
@@ -46,6 +54,19 @@
         </div>
 
         <ul class="sidebar-nav">
+            @if($sidebarIsCommercial)
+                <li class="sidebar-header">Espace Commercial</li>
+                <li class="sidebar-item {{ request()->routeIs('commercial.dashboard') && empty(request()->get('action')) ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial.dashboard') }}">
+                        <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {{ request()->routeIs('commercial.dashboard') && request()->get('action') === 'add-client' ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}">
+                        <i class="align-middle" data-feather="plus-circle"></i> <span class="align-middle">Ajouter Client / Entreprise</span>
+                    </a>
+                </li>
+            @else
             @if($sidebarUser && (($sidebarUser->is_accountant ?? false) || $sidebarUser->is_platform_admin))
                 {{-- Cabinet comptable : dossiers clients et synthèse. --}}
                 <li class="sidebar-item {{ request()->routeIs('accountant.*') ? 'active' : '' }}">
@@ -414,6 +435,7 @@
                     </ul>
                 </div>
             </li>
+            @endif
         </ul>
     </div>
 </nav>

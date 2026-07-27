@@ -19,8 +19,12 @@ class DashboardController extends Controller
         private readonly HuggingFaceOpsAssistantService $hfAssistant
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): \Illuminate\Http\RedirectResponse|\Illuminate\View\View
     {
+        if ($request->user() && $request->user()->role_key === 'commercial') {
+            return redirect()->route('commercial.dashboard');
+        }
+
         $userIds = ClientWorkspace::dataScopeUserIds($request->user());
 
         // Les agrégats (CA, trésorerie, écritures...) recalculaient une dizaine de

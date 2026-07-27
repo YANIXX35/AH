@@ -86,6 +86,7 @@ use Illuminate\Notifications\Notifiable;
     'suspended_reason',
     'auto_suspended_for_payment',
     'enterprise_license_id',
+    'created_by_user_id',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -229,6 +230,16 @@ class User extends Authenticatable
         return $this->belongsTo(EnterpriseLicense::class, 'enterprise_license_id');
     }
 
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    public function createdClients(): HasMany
+    {
+        return $this->hasMany(User::class, 'created_by_user_id');
+    }
+
     public function billingSubscriptions(): HasMany
     {
         return $this->hasMany(BillingSubscription::class);
@@ -260,6 +271,7 @@ class User extends Authenticatable
             'accountant' => in_array($module, ['dashboard', 'accounting', 'treasury', 'support', 'invoicing'], true),
             'analyst' => in_array($module, ['dashboard', 'investor', 'support'], true),
             'viewer' => in_array($module, ['dashboard'], true),
+            'commercial' => in_array($module, ['dashboard', 'clients_management', 'support'], true),
             default => true,
         };
     }
