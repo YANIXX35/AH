@@ -41,8 +41,7 @@ class AccountantClientController extends Controller
                         ->orWhere('company_name', 'like', '%'.$q.'%');
                 });
             })
-            ->orderBy('company_name')
-            ->orderBy('name')
+            ->orderByDesc('created_at')
             ->get();
 
         $enterpriseGroups = $this->groupUsersByEnterprise($users);

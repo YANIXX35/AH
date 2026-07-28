@@ -36,178 +36,168 @@
 
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4" @if(request('action') === 'add-client') style="display: none !important;" @endif>
     <div class="card-body p-0">
-        @forelse($enterpriseGroups as $group)
-            <div class="border-bottom p-4 bg-white">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="avatar-circle bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center fw-bold fs-5" style="width: 44px; height: 44px;">
-                            {{ strtoupper(substr($group['company_name'] ?? 'E', 0, 2)) }}
-                        </div>
-                        <div>
-                            <h5 class="fw-bold text-dark mb-1 fs-6">{{ $group['company_name'] }}</h5>
-                            <div class="d-flex flex-wrap gap-2 align-items-center">
-                                @if(!empty($group['company_tax_id']))
-                                    <span class="badge bg-slate-100 text-slate-700 border font-mono">NIF: {{ $group['company_tax_id'] }}</span>
-                                @endif
-                                @if(!empty($group['enterprise_license_id']))
-                                    <span class="badge bg-info-subtle text-info font-mono">Licence #{{ $group['enterprise_license_id'] }}</span>
-                                @endif
-                                <span class="badge bg-light text-muted border">{{ $group['users_count'] }} membre(s)</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-responsive rounded-3 border">
-                    <table class="table table-hover align-middle mb-0" style="min-width: 600px;">
-                        <thead class="bg-slate-50 text-slate-600 text-uppercase fs-8 font-semibold">
-                            <tr>
-                                <th class="py-3 px-4">Utilisateur / Responsable</th>
-                                <th class="py-3 px-3">E-mail pro</th>
-                                <th class="py-3 px-3 text-center">Inscription</th>
-                                <th class="py-3 px-4 text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                        @foreach($group['users'] as $u)
-                            <tr>
-                                <td class="py-3 px-4">
-                                    <div class="d-flex align-items-center gap-2.5">
-                                        <div class="rounded-circle bg-slate-100 text-slate-700 d-flex align-items-center justify-content-center fw-semibold small" style="width: 32px; height: 32px;">
-                                            {{ strtoupper(substr($u->name, 0, 1)) }}
-                                        </div>
-                                        <div>
-                                            <div class="fw-bold text-dark fs-7 mb-0">{{ $u->name }}</div>
-                                            <span class="badge bg-primary-subtle text-primary fs-8 py-0.5 px-2">{{ $u->accountRoleLabel() === 'Entreprise' ? 'Responsable Client' : $u->accountRoleLabel() }}</span>
-                                        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="min-width: 750px;">
+                <thead class="bg-light text-slate-700 text-uppercase fs-8 fw-bold border-bottom">
+                    <tr>
+                        <th class="py-2.5 px-3 text-center" style="width: 50px;">#</th>
+                        <th class="py-2.5 px-3">Entreprise / Raison sociale</th>
+                        <th class="py-2.5 px-3">Responsable Client</th>
+                        <th class="py-2.5 px-3">E-mail pro</th>
+                        <th class="py-2.5 px-3 text-center">Inscription</th>
+                        <th class="py-2.5 px-3 text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                @php $index = 1; @endphp
+                @forelse($enterpriseGroups as $group)
+                    @foreach($group['users'] as $u)
+                        <tr>
+                            <td class="py-2.5 px-3 text-center fw-bold text-muted small">{{ $index++ }}</td>
+                            <td class="py-2.5 px-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar-circle bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center fw-bold small" style="width: 32px; height: 32px;">
+                                        {{ strtoupper(substr($group['company_name'] ?? 'E', 0, 2)) }}
                                     </div>
-                                </td>
-                                <td class="py-3 px-3 text-slate-600 font-mono small">{{ $u->email }}</td>
-                                <td class="py-3 px-3 text-center text-slate-500 small">{{ $u->created_at?->format('d/m/Y') }}</td>
-                                <td class="py-3 px-4 text-end">
-                                    <div class="d-inline-flex gap-1.5 align-items-center">
-                                        <a href="{{ route('accountant.clients.show', $u) }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold shadow-xs">
-                                            <i data-feather="folder" class="me-1" style="width:13px; height:13px;"></i> Accéder au dossier
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5" data-bs-toggle="modal" data-bs-target="#editAccountantClientModal{{ $u->id }}" title="Modifier">
-                                            <i data-feather="edit-2" style="width:13px; height:13px;"></i>
+                                    <div>
+                                        <div class="fw-bold text-dark fs-7 mb-0">{{ $group['company_name'] }}</div>
+                                        @if(!empty($group['company_tax_id']))
+                                            <span class="badge bg-slate-100 text-slate-600 border py-0 px-1.5" style="font-size:10px;">NIF: {{ $group['company_tax_id'] }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-2.5 px-3">
+                                <div class="fw-semibold text-dark fs-7">{{ $u->name }}</div>
+                                <span class="badge bg-primary-subtle text-primary py-0 px-1.5" style="font-size: 10px;">Responsable Client</span>
+                            </td>
+                            <td class="py-2.5 px-3 text-slate-600 font-mono small">{{ $u->email }}</td>
+                            <td class="py-2.5 px-3 text-center text-slate-500 small">{{ $u->created_at?->format('d/m/Y') }}</td>
+                            <td class="py-2.5 px-3 text-end">
+                                <div class="d-inline-flex gap-1 align-items-center">
+                                    <a href="{{ route('accountant.clients.show', $u) }}" class="btn btn-xs btn-primary rounded-pill px-2.5 fw-semibold">
+                                        <i data-feather="folder" class="me-1" style="width:12px; height:12px;"></i> Accéder au dossier
+                                    </a>
+                                    <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2" data-bs-toggle="modal" data-bs-target="#editAccountantClientModal{{ $u->id }}" title="Modifier">
+                                        <i data-feather="edit-2" style="width:12px; height:12px;"></i>
+                                    </button>
+                                    <form action="{{ route('accountant.clients.destroy', $u->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce compte dossier client ? Cette action est irréversible.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-xs btn-outline-danger rounded-pill px-2" title="Supprimer">
+                                            <i data-feather="trash-2" style="width:12px; height:12px;"></i>
                                         </button>
-                                        <form action="{{ route('accountant.clients.destroy', $u->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce compte dossier client ? Cette action est irréversible.');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2.5" title="Supprimer">
-                                                <i data-feather="trash-2" style="width:13px; height:13px;"></i>
-                                            </button>
-                                        </form>
-                                    </div>
+                                    </form>
+                                </div>
 
-                                    <!-- Edit Modal for Client -->
-                                    <div class="modal fade text-start" id="editAccountantClientModal{{ $u->id }}" data-bs-backdrop="static" tabindex="-1" aria-labelledby="editAccountantClientModalLabel{{ $u->id }}" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-                                            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                                                <div class="modal-header border-0 bg-primary text-white p-3 px-4">
-                                                    <h5 class="modal-title fw-bold text-white mb-0" id="editAccountantClientModalLabel{{ $u->id }}">Modifier le dossier client</h5>
-                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <form action="{{ route('accountant.clients.update', $u->id) }}" method="POST" enctype="multipart/form-data">
-                                                    @csrf
-                                                    @method('PUT')
-                                                    <div class="modal-body px-4 py-3" style="max-height: 65vh; overflow-y: auto;">
-                                                        <h6 class="fw-bold text-uppercase small text-muted mb-3" style="letter-spacing:1px;">1. Informations du responsable</h6>
-                                                        <div class="row g-2 mb-3">
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">Nom du responsable <span class="text-danger">*</span></label>
-                                                                <input type="text" name="name" class="form-control rounded-3 py-2" value="{{ $u->name }}" required>
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">Adresse E-mail <span class="text-danger">*</span></label>
-                                                                <input type="email" name="email" class="form-control rounded-3 py-2" value="{{ $u->email }}" required>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row g-2 mb-3">
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">Téléphone</label>
-                                                                <input type="text" name="phone" class="form-control rounded-3 py-2" value="{{ $u->phone }}" placeholder="ex: +225 07000000">
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">Nouveau mot de passe</label>
-                                                                <input type="password" name="password" class="form-control rounded-3 py-2" placeholder="Laisser vide si inchangé">
-                                                            </div>
-                                                        </div>
-
-                                                        <h6 class="fw-bold text-uppercase small text-muted mb-3 mt-4" style="letter-spacing:1px;">2. Informations de l'entreprise & KYC (Facultatif)</h6>
-                                                        <div class="row g-2 mb-3">
-                                                            <div class="col-md-8">
-                                                                <label class="form-label small fw-semibold">Nom de l'entreprise</label>
-                                                                <input type="text" name="company_name" class="form-control rounded-3 py-2" value="{{ $u->company_name }}" placeholder="ex: Société Ivoirienne SARL">
-                                                            </div>
-                                                            <div class="col-md-4">
-                                                                <label class="form-label small fw-semibold">Sigle usuel</label>
-                                                                <input type="text" name="company_sigle" class="form-control rounded-3 py-2" value="{{ $u->company_sigle }}" placeholder="ex: SIS">
-                                                            </div>
-                                                        </div>
-                                                        <div class="row g-2 mb-3">
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">N° d'identification fiscale (NIF)</label>
-                                                                <input type="text" name="company_tax_id" class="form-control rounded-3 py-2" value="{{ $u->company_tax_id }}" placeholder="ex: 1234567A">
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">Secteur d'activité</label>
-                                                                <select name="sector" class="form-select rounded-3 py-2">
-                                                                    <option value="">Choisir un secteur...</option>
-                                                                    @foreach(['Agroalimentaire', 'Commerce & Distribution', 'BTP & Construction', 'Services aux entreprises', 'Technologies / IT', 'Transport & Logistique', 'Santé', 'Autre'] as $sec)
-                                                                        <option value="{{ $sec }}" {{ $u->sector === $sec ? 'selected' : '' }}>{{ $sec }}</option>
-                                                                    @endforeach
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row g-2 mb-3">
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">Numéro RCCM / SIRET</label>
-                                                                <input type="text" name="rccm" class="form-control rounded-3 py-2" value="{{ $u->rccm }}" placeholder="ex: CI-ABJ-2026-B-1234">
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">Ville</label>
-                                                                <input type="text" name="city" class="form-control rounded-3 py-2" value="{{ $u->city }}" placeholder="ex: Abidjan">
-                                                            </div>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label small fw-semibold">Adresse complète</label>
-                                                            <input type="text" name="address" class="form-control rounded-3 py-2" value="{{ $u->address }}" placeholder="ex: Plateau Rue du Commerce">
-                                                        </div>
-                                                        <div class="row g-2 mb-3">
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">Attestation DFE / NIF (Fichier)</label>
-                                                                <input type="file" name="company_logo" class="form-control rounded-3 py-2" accept="image/*,.pdf">
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">Registre de commerce (PDF/image)</label>
-                                                                <input type="file" name="trade_register" class="form-control rounded-3 py-2" accept="image/*,.pdf">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer border-0 pt-0 px-4 pb-4">
-                                                        <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Annuler</button>
-                                                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Enregistrer les modifications</button>
-                                                    </div>
-                                                </form>
+                                <!-- Edit Modal for Client -->
+                                <div class="modal fade text-start" id="editAccountantClientModal{{ $u->id }}" data-bs-backdrop="static" tabindex="-1" aria-labelledby="editAccountantClientModalLabel{{ $u->id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                                        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                            <div class="modal-header border-0 bg-primary text-white p-3 px-4">
+                                                <h5 class="modal-title fw-bold text-white mb-0" id="editAccountantClientModalLabel{{ $u->id }}">Modifier le dossier client</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
+                                            <form action="{{ route('accountant.clients.update', $u->id) }}" method="POST" enctype="multipart/form-data">
+                                                @csrf
+                                                @method('PUT')
+                                                <div class="modal-body px-4 py-3" style="max-height: 65vh; overflow-y: auto;">
+                                                    <h6 class="fw-bold text-uppercase small text-muted mb-3" style="letter-spacing:1px;">1. Informations du responsable</h6>
+                                                    <div class="row g-2 mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label small fw-semibold">Nom du responsable <span class="text-danger">*</span></label>
+                                                            <input type="text" name="name" class="form-control rounded-3 py-2" value="{{ $u->name }}" required>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label small fw-semibold">Adresse E-mail <span class="text-danger">*</span></label>
+                                                            <input type="email" name="email" class="form-control rounded-3 py-2" value="{{ $u->email }}" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-2 mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label small fw-semibold">Téléphone</label>
+                                                            <input type="text" name="phone" class="form-control rounded-3 py-2" value="{{ $u->phone }}" placeholder="ex: +225 07000000">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label small fw-semibold">Nouveau mot de passe</label>
+                                                            <input type="password" name="password" class="form-control rounded-3 py-2" placeholder="Laisser vide si inchangé">
+                                                        </div>
+                                                    </div>
+
+                                                    <h6 class="fw-bold text-uppercase small text-muted mb-3 mt-4" style="letter-spacing:1px;">2. Informations de l'entreprise & KYC (Facultatif)</h6>
+                                                    <div class="row g-2 mb-3">
+                                                        <div class="col-md-8">
+                                                            <label class="form-label small fw-semibold">Nom de l'entreprise</label>
+                                                            <input type="text" name="company_name" class="form-control rounded-3 py-2" value="{{ $u->company_name }}" placeholder="ex: Société Ivoirienne SARL">
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <label class="form-label small fw-semibold">Sigle usuel</label>
+                                                            <input type="text" name="company_sigle" class="form-control rounded-3 py-2" value="{{ $u->company_sigle }}" placeholder="ex: SIS">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-2 mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label small fw-semibold">N° d'identification fiscale (NIF)</label>
+                                                            <input type="text" name="company_tax_id" class="form-control rounded-3 py-2" value="{{ $u->company_tax_id }}" placeholder="ex: 1234567A">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label small fw-semibold">Secteur d'activité</label>
+                                                            <select name="sector" class="form-select rounded-3 py-2">
+                                                                <option value="">Choisir un secteur...</option>
+                                                                @foreach(['Agroalimentaire', 'Commerce & Distribution', 'BTP & Construction', 'Services aux entreprises', 'Technologies / IT', 'Transport & Logistique', 'Santé', 'Autre'] as $sec)
+                                                                    <option value="{{ $sec }}" {{ $u->sector === $sec ? 'selected' : '' }}>{{ $sec }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-2 mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label small fw-semibold">Numéro RCCM / SIRET</label>
+                                                            <input type="text" name="rccm" class="form-control rounded-3 py-2" value="{{ $u->rccm }}" placeholder="ex: CI-ABJ-2026-B-1234">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label small fw-semibold">Ville</label>
+                                                            <input type="text" name="city" class="form-control rounded-3 py-2" value="{{ $u->city }}" placeholder="ex: Abidjan">
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label small fw-semibold">Adresse complète</label>
+                                                        <input type="text" name="address" class="form-control rounded-3 py-2" value="{{ $u->address }}" placeholder="ex: Plateau Rue du Commerce">
+                                                    </div>
+                                                    <div class="row g-2 mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label small fw-semibold">Attestation DFE / NIF (Fichier)</label>
+                                                            <input type="file" name="company_logo" class="form-control rounded-3 py-2" accept="image/*,.pdf">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label small fw-semibold">Registre de commerce (PDF/image)</label>
+                                                            <input type="file" name="trade_register" class="form-control rounded-3 py-2" accept="image/*,.pdf">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                                                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Annuler</button>
+                                                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Enregistrer les modifications</button>
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        @empty
-            <div class="p-5 text-center text-muted">
-                <i data-feather="inbox" class="mb-2 text-slate-300" style="width: 40px; height: 40px;"></i>
-                <div class="fw-semibold fs-6">Aucun dossier client trouvé.</div>
-                <p class="small text-muted mb-0">Cliquez sur le bouton "Ajouter Client / Entreprise" pour créer un nouveau dossier.</p>
-            </div>
-        @endforelse
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                @empty
+                    <tr>
+                        <td colspan="6" class="p-5 text-center text-muted">
+                            <i data-feather="inbox" class="mb-2 text-slate-300" style="width: 40px; height: 40px;"></i>
+                            <div class="fw-semibold fs-6">Aucun dossier client trouvé.</div>
+                            <p class="small text-muted mb-0">Cliquez sur le bouton "Ajouter Client / Entreprise" pour créer un nouveau dossier.</p>
+                        </td>
+                    </tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
