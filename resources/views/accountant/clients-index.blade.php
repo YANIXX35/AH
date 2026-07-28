@@ -185,10 +185,10 @@
 
 <!-- Add Accountant Client Modal 2-STEP WIZARD -->
 <div class="modal fade text-start" id="addAccountantClientModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addAccountantClientModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable my-3" style="max-width: 850px; width: 95%; margin-left: auto; margin-right: auto;">
-        <div class="modal-content border-0 shadow-2xl rounded-4 overflow-hidden" style="border-radius: 16px;">
-            <!-- 1. Header Fixe -->
-            <div class="modal-header border-bottom bg-white p-3 px-4 d-flex justify-content-between align-items-center">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable my-auto" style="max-width: 850px; width: 95%; max-height: 85vh;">
+        <div class="modal-content border-0 shadow-2xl rounded-4 overflow-hidden d-flex flex-column" style="border-radius: 16px; max-height: 85vh;">
+            <!-- 1. Header Fixe (flex: 0 0 auto) -->
+            <div class="modal-header border-bottom bg-white p-3 px-4 d-flex justify-content-between align-items-center flex-shrink-0">
                 <div class="d-flex align-items-center gap-3">
                     <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1.5 fw-semibold fs-7" id="accStepBadgeLabel">Étape 1/2</span>
                     <h5 class="modal-title fw-bold text-slate-800 mb-0 fs-5" id="accStepTitleLabel">COMPTE DU RESPONSABLE</h5>
@@ -196,19 +196,19 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
-            <div class="progress rounded-0" style="height: 3px; background-color: #f1f5f9;">
+            <div class="progress rounded-0 flex-shrink-0" style="height: 3px; background-color: #f1f5f9;">
                 <div class="progress-bar bg-warning" id="accWizardProgressBar" role="progressbar" style="width: 50%; transition: width 0.3s ease;"></div>
             </div>
 
-            <form action="{{ route('accountant.clients.store') }}" method="POST" enctype="multipart/form-data" id="accWizardForm" autocomplete="off" class="d-flex flex-column m-0">
+            <form action="{{ route('accountant.clients.store') }}" method="POST" enctype="multipart/form-data" id="accWizardForm" autocomplete="off" class="d-flex flex-column m-0 flex-grow-1 overflow-hidden" style="min-height: 0;">
                 @csrf
                 
                 <!-- Fake inputs to trap aggressive browser autofills -->
                 <input type="text" name="fake_usernameremembered" style="display:none" tabindex="-1">
                 <input type="password" name="fake_passwordremembered" style="display:none" tabindex="-1">
 
-                <!-- 2. Corps Scrollable uniquement -->
-                <div class="modal-body p-4 bg-white" id="accWizardModalBody" style="max-height: 58vh; overflow-y: auto; scroll-behavior: smooth;">
+                <!-- 2. Corps Scrollable uniquement (flex: 1 1 auto; overflow-y: auto) -->
+                <div class="modal-body p-4 bg-white flex-grow-1 overflow-y-auto" id="accWizardModalBody" style="min-height: 0; scroll-behavior: smooth;">
 
                     <!-- STEP 1 : COMPTE RESPONSABLE -->
                     <div id="accWizardStep1">
@@ -315,8 +315,8 @@
 
                 </div>
 
-                <!-- 3. Footer Fixe (Toujours visible) -->
-                <div class="modal-footer border-top bg-white p-3 px-4 d-flex justify-content-between align-items-center">
+                <!-- 3. Footer Fixe (flex: 0 0 auto) -->
+                <div class="modal-footer border-top bg-white p-3 px-4 d-flex justify-content-between align-items-center flex-shrink-0">
                     <div>
                         <button type="button" class="btn btn-light rounded-pill px-4 border text-slate-600 font-medium" data-bs-dismiss="modal">Annuler</button>
                     </div>
