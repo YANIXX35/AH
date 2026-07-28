@@ -66,19 +66,19 @@
                         <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Offres Marketing & Service</span>
                     </a>
                 </li>
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="{{ route('commercial.showcase') }}#guides">
+                <li class="sidebar-item {{ request()->routeIs('commercial.guides') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial.guides') }}">
                         <i class="align-middle" data-feather="book-open"></i> <span class="align-middle">Guides & Lead Magnets</span>
                     </a>
                 </li>
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="{{ route('commercial.showcase') }}#club">
+                <li class="sidebar-item {{ request()->routeIs('commercial.club') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial.club') }}">
                         <i class="align-middle" data-feather="users"></i> <span class="align-middle">Sitiame Finance Club</span>
                     </a>
                 </li>
-                <li class="sidebar-item {{ request()->get('action') === 'add-prospect' ? 'active' : '' }}">
-                    <a class="sidebar-link" href="{{ route('commercial.dashboard', ['action' => 'add-prospect']) }}">
-                        <i class="align-middle" data-feather="target"></i> <span class="align-middle">Nouveau Lead CRM</span>
+                <li class="sidebar-item {{ request()->routeIs('commercial.prospects') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial.prospects') }}">
+                        <i class="align-middle" data-feather="target"></i> <span class="align-middle">Pipeline Leads CRM</span>
                     </a>
                 </li>
                 <li class="sidebar-item {{ request()->get('action') === 'add-client' ? 'active' : '' }}">

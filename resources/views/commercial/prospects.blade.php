@@ -1,0 +1,187 @@
+@extends('layouts.app')
+
+@section('title', 'Pipeline Leads CRM & Prospects | SITIAME CAPITAL')
+@section('page_title', 'Pipeline Leads CRM')
+
+@push('styles')
+<style>
+    .prospects-bg {
+        background-color: #f1f5f9;
+        min-height: 100vh;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        padding: 24px;
+    }
+    .prospect-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 24px;
+        box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.03);
+    }
+</style>
+@endpush
+
+@section('content')
+<div class="prospects-bg">
+    <div class="container-fluid max-w-7xl mx-auto">
+        
+        <!-- Header Bar -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h1 class="h3 fw-bold text-dark mb-1">Pipeline des Prospects Inbound CRM 🎯</h1>
+                <p class="text-muted small mb-0">Gestion, suivi et qualification des opportunités d'affaires Sitiame Capital.</p>
+            </div>
+            <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                + Nouveau Lead CRM
+            </button>
+        </div>
+
+        <!-- Notification Status -->
+        @if(session('status'))
+            <div class="alert alert-success alert-dismissible fade show rounded-4 mb-4 border-0 shadow-sm" role="alert">
+                <i data-feather="check-circle" class="me-2 text-success"></i>
+                {{ session('status') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        <!-- Prospects Pipeline Table Card -->
+        <div class="prospect-card p-4 mb-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle border-0 mb-0">
+                    <thead>
+                        <tr class="text-muted text-uppercase small" style="font-size:0.75rem;">
+                            <th class="border-0">Prospect / Dirigeant</th>
+                            <th class="border-0">Entreprise & Poste</th>
+                            <th class="border-0">Besoin Principal</th>
+                            <th class="border-0">Statut CRM</th>
+                            <th class="border-0">Date de création</th>
+                            <th class="border-0 text-end">Mettre à jour statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($prospects as $prospect)
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:38px; height:38px; font-size:0.85rem;">
+                                            {{ strtoupper(substr($prospect->name, 0, 2)) }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">{{ $prospect->name }}</div>
+                                            <div class="text-muted small">{{ $prospect->email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark">{{ $prospect->company_name ?? 'PME non renseignée' }}</div>
+                                    <div class="text-muted small">{{ $prospect->job_title ?? 'Dirigeant / RAF' }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary text-white rounded-pill px-3 py-1">
+                                        {{ $prospect->need_label }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge {{ $prospect->status_badge_class }} px-3 py-2 rounded-pill fw-semibold">
+                                        {{ $prospect->status_label }}
+                                    </span>
+                                </td>
+                                <td>{{ $prospect->created_at->format('d/m/Y') }}</td>
+                                <td class="text-end">
+                                    <form action="{{ route('commercial.prospects.updateStatus', $prospect->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('PUT')
+                                        <select name="status" class="form-select form-select-sm d-inline-block w-auto rounded-pill border me-1 fw-semibold" onchange="this.form.submit()">
+                                            <option value="nouveau" {{ $prospect->status === 'nouveau' ? 'selected' : '' }}>Nouveau</option>
+                                            <option value="contacte" {{ $prospect->status === 'contacte' ? 'selected' : '' }}>Contacté</option>
+                                            <option value="qualifie" {{ $prospect->status === 'qualifie' ? 'selected' : '' }}>Qualifié</option>
+                                            <option value="client" {{ $prospect->status === 'client' ? 'selected' : '' }}>Converti Client</option>
+                                            <option value="sans_suite" {{ $prospect->status === 'sans_suite' ? 'selected' : '' }}>Sans suite</option>
+                                        </select>
+                                    </form>
+                                    <form action="{{ route('commercial.prospects.destroy', $prospect->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Supprimer ce prospect ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-light text-danger rounded-pill border ms-1 px-2">
+                                            <i data-feather="trash-2" style="width:14px; height:14px;"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i data-feather="target" class="mb-2" style="width:40px; height:40px; opacity:0.3;"></i>
+                                    <div>Aucun prospect enregistré pour le moment.</div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-2" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                                        + Ajouter le premier prospect
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal Add Prospect -->
+<div class="modal fade" id="addProspectModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <form action="{{ route('commercial.prospects.store') }}" method="POST">
+                @csrf
+                <div class="modal-header border-0 bg-dark text-white p-4">
+                    <div>
+                        <span class="badge bg-primary text-white rounded-pill px-3 py-1 mb-2 fw-semibold">LEAD GENERATION CRM</span>
+                        <h4 class="modal-title fw-bold text-white mb-0">Nouveau Prospect / Lead Qualifié</h4>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Nom complet du prospect <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control rounded-3" placeholder="Ex: Jean Kouassi" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Adresse Email <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control rounded-3" placeholder="prospect@entreprise.ci" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Numéro de Téléphone / WhatsApp</label>
+                            <input type="text" name="phone" class="form-control rounded-3" placeholder="+225 07 00 00 00 00">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Raison Sociale / PME</label>
+                            <input type="text" name="company_name" class="form-control rounded-3" placeholder="Ex: Ivoire Agro SARL">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Fonction / Poste</label>
+                            <input type="text" name="job_title" class="form-control rounded-3" placeholder="Ex: CEO / RAF">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Besoin Principal Identifié <span class="text-danger">*</span></label>
+                            <select name="need_type" class="form-select rounded-3" required>
+                                <option value="syscohada">Comptabilité SYSCOHADA</option>
+                                <option value="tresorerie">Gestion Trésorerie & Mobile Money</option>
+                                <option value="diagnostic">Diagnostic Financier (FIRD)</option>
+                                <option value="levee_fonds">Préparation Levée de Fonds</option>
+                                <option value="ma">Restructuration & M&A</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Enregistrer le Prospect &check;</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection

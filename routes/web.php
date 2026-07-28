@@ -550,6 +550,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware('commercial')->prefix('commercial')->name('commercial.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\CommercialController::class, 'index'])->name('dashboard');
         Route::get('/offres', [\App\Http\Controllers\CommercialController::class, 'showcase'])->name('showcase');
+        Route::get('/guides', [\App\Http\Controllers\CommercialController::class, 'guides'])->name('guides');
+        Route::get('/club', [\App\Http\Controllers\CommercialController::class, 'club'])->name('club');
+        Route::get('/prospects', [\App\Http\Controllers\CommercialController::class, 'prospects'])->name('prospects');
         Route::post('/clients', [\App\Http\Controllers\CommercialController::class, 'store'])->name('clients.store');
         Route::put('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'update'])->name('clients.update');
         Route::delete('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'destroy'])->name('clients.destroy');

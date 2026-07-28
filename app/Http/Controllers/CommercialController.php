@@ -65,6 +65,31 @@ class CommercialController extends Controller
         return view('commercial.showcase');
     }
 
+    public function guides(): View
+    {
+        return view('commercial.guides');
+    }
+
+    public function club(): View
+    {
+        return view('commercial.club');
+    }
+
+    public function prospects(Request $request): View
+    {
+        $commercial = $request->user();
+        try {
+            $prospects = Prospect::query()
+                ->when(! $commercial->is_platform_admin, fn ($q) => $q->where('commercial_user_id', $commercial->id))
+                ->latest()
+                ->get();
+        } catch (\Throwable $e) {
+            $prospects = collect();
+        }
+
+        return view('commercial.prospects', compact('prospects'));
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
