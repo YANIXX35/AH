@@ -79,34 +79,90 @@
 
                                     <!-- Edit Modal for Client -->
                                     <div class="modal fade text-start" id="editAccountantClientModal{{ $u->id }}" data-bs-backdrop="static" tabindex="-1" aria-labelledby="editAccountantClientModalLabel{{ $u->id }}" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content border-0 shadow-lg rounded-4">
+                                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                                            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
                                                 <div class="modal-header border-0 pb-0">
                                                     <h5 class="modal-title fw-bold text-dark" id="editAccountantClientModalLabel{{ $u->id }}">Modifier le dossier client</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
-                                                <form action="{{ route('accountant.clients.update', $u->id) }}" method="POST">
+                                                <form action="{{ route('accountant.clients.update', $u->id) }}" method="POST" enctype="multipart/form-data">
                                                     @csrf
                                                     @method('PUT')
-                                                    <div class="modal-body py-4">
-                                                        <div class="mb-3">
-                                                            <label class="form-label small fw-semibold">Nom du responsable</label>
-                                                            <input type="text" name="name" class="form-control rounded-3" value="{{ $u->name }}" required>
+                                                    <div class="modal-body px-4 py-3">
+                                                        <h6 class="fw-bold text-uppercase small text-muted mb-3" style="letter-spacing:1px;">1. Informations du responsable</h6>
+                                                        <div class="row g-2 mb-3">
+                                                            <div class="col-md-6">
+                                                                <label class="form-label small fw-semibold">Nom du responsable <span class="text-danger">*</span></label>
+                                                                <input type="text" name="name" class="form-control rounded-3 py-2" value="{{ $u->name }}" required>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="form-label small fw-semibold">Adresse E-mail <span class="text-danger">*</span></label>
+                                                                <input type="email" name="email" class="form-control rounded-3 py-2" value="{{ $u->email }}" required>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row g-2 mb-3">
+                                                            <div class="col-md-6">
+                                                                <label class="form-label small fw-semibold">Téléphone</label>
+                                                                <input type="text" name="phone" class="form-control rounded-3 py-2" value="{{ $u->phone }}" placeholder="ex: +225 07000000">
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="form-label small fw-semibold">Nouveau mot de passe</label>
+                                                                <input type="password" name="password" class="form-control rounded-3 py-2" placeholder="Laisser vide si inchangé">
+                                                            </div>
+                                                        </div>
+
+                                                        <h6 class="fw-bold text-uppercase small text-muted mb-3 mt-4" style="letter-spacing:1px;">2. Informations de l'entreprise & KYC (Facultatif)</h6>
+                                                        <div class="row g-2 mb-3">
+                                                            <div class="col-md-8">
+                                                                <label class="form-label small fw-semibold">Nom de l'entreprise</label>
+                                                                <input type="text" name="company_name" class="form-control rounded-3 py-2" value="{{ $u->company_name }}" placeholder="ex: Société Ivoirienne SARL">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label class="form-label small fw-semibold">Sigle usuel</label>
+                                                                <input type="text" name="company_sigle" class="form-control rounded-3 py-2" value="{{ $u->company_sigle }}" placeholder="ex: SIS">
+                                                            </div>
+                                                        </div>
+                                                        <div class="row g-2 mb-3">
+                                                            <div class="col-md-6">
+                                                                <label class="form-label small fw-semibold">N° d'identification fiscale (NIF)</label>
+                                                                <input type="text" name="company_tax_id" class="form-control rounded-3 py-2" value="{{ $u->company_tax_id }}" placeholder="ex: 1234567A">
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="form-label small fw-semibold">Secteur d'activité</label>
+                                                                <select name="sector" class="form-select rounded-3 py-2">
+                                                                    <option value="">Choisir un secteur...</option>
+                                                                    @foreach(['Agroalimentaire', 'Commerce & Distribution', 'BTP & Construction', 'Services aux entreprises', 'Technologies / IT', 'Transport & Logistique', 'Santé', 'Autre'] as $sec)
+                                                                        <option value="{{ $sec }}" {{ $u->sector === $sec ? 'selected' : '' }}>{{ $sec }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row g-2 mb-3">
+                                                            <div class="col-md-6">
+                                                                <label class="form-label small fw-semibold">Numéro RCCM / SIRET</label>
+                                                                <input type="text" name="rccm" class="form-control rounded-3 py-2" value="{{ $u->rccm }}" placeholder="ex: CI-ABJ-2026-B-1234">
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="form-label small fw-semibold">Ville</label>
+                                                                <input type="text" name="city" class="form-control rounded-3 py-2" value="{{ $u->city }}" placeholder="ex: Abidjan">
+                                                            </div>
                                                         </div>
                                                         <div class="mb-3">
-                                                            <label class="form-label small fw-semibold">Adresse E-mail</label>
-                                                            <input type="email" name="email" class="form-control rounded-3" value="{{ $u->email }}" required>
+                                                            <label class="form-label small fw-semibold">Adresse complète</label>
+                                                            <input type="text" name="address" class="form-control rounded-3 py-2" value="{{ $u->address }}" placeholder="ex: Plateau Rue du Commerce">
                                                         </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label small fw-semibold">Nom de l'entreprise</label>
-                                                            <input type="text" name="company_name" class="form-control rounded-3" value="{{ $u->company_name }}" required>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label small fw-semibold">Nouveau mot de passe (laisser vide pour conserver l'actuel)</label>
-                                                            <input type="password" name="password" class="form-control rounded-3" placeholder="Min. 8 caractères">
+                                                        <div class="row g-2 mb-3">
+                                                            <div class="col-md-6">
+                                                                <label class="form-label small fw-semibold">Attestation DFE / NIF (Fichier)</label>
+                                                                <input type="file" name="company_logo" class="form-control rounded-3 py-2" accept="image/*,.pdf">
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="form-label small fw-semibold">Registre de commerce (PDF/image)</label>
+                                                                <input type="file" name="trade_register" class="form-control rounded-3 py-2" accept="image/*,.pdf">
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div class="modal-footer border-0 pt-0">
+                                                    <div class="modal-footer border-0 pt-0 px-4 pb-4">
                                                         <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Annuler</button>
                                                         <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Enregistrer les modifications</button>
                                                     </div>
@@ -128,7 +184,7 @@
 </div>
 
 <!-- Add Accountant Client Modal 2-STEP WIZARD -->
-<div class="modal fade" id="addAccountantClientModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addAccountantClientModalLabel" aria-hidden="true">
+<div class="modal fade text-start" id="addAccountantClientModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addAccountantClientModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header border-0 pb-0">
@@ -165,7 +221,7 @@
                             <input type="email" name="email" class="form-control rounded-3 py-2" placeholder="ex: contact@societe.ci" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Téléphone</label>
+                            <label class="form-label small fw-semibold">Téléphone (facultatif)</label>
                             <input type="text" name="phone" class="form-control rounded-3 py-2" placeholder="ex: +225 07000000">
                         </div>
                         <div class="row g-2 mb-3">
@@ -183,15 +239,15 @@
                     <!-- STEP 2 : ENTREPRISE & KYC -->
                     <div id="accWizardStep2" style="display: none;">
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Nom de l'entreprise <span class="text-danger">*</span></label>
-                            <input type="text" name="company_name" class="form-control rounded-3 py-2" placeholder="ex: Société Ivoirienne SARL" required>
+                            <label class="form-label small fw-semibold">Nom de l'entreprise (facultatif)</label>
+                            <input type="text" name="company_name" class="form-control rounded-3 py-2" placeholder="ex: Société Ivoirienne SARL">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Sigle usuel</label>
+                            <label class="form-label small fw-semibold">Sigle usuel (facultatif)</label>
                             <input type="text" name="company_sigle" class="form-control rounded-3 py-2" placeholder="ex: SIS">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">N° d'identification fiscale (NIF)</label>
+                            <label class="form-label small fw-semibold">N° d'identification fiscale (NIF - facultatif)</label>
                             <input type="text" name="company_tax_id" class="form-control rounded-3 py-2" placeholder="ex: 1234567A">
                             <div class="form-text small text-muted">Si vous utilisez une clé de licence, le NIF doit être identique à celui de votre entreprise.</div>
                         </div>

@@ -47,7 +47,7 @@ class CommercialController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:255'],
             'password' => ['required', 'string', 'min:8'],
-            'company_name' => ['required', 'string', 'max:255'],
+            'company_name' => ['nullable', 'string', 'max:255'],
             'company_sigle' => ['nullable', 'string', 'max:255'],
             'company_tax_id' => ['nullable', 'string', 'max:255'],
             'company_logo' => ['nullable', 'image', 'max:5120'],
@@ -106,21 +106,36 @@ class CommercialController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'company_name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'company_name' => ['nullable', 'string', 'max:255'],
+            'company_sigle' => ['nullable', 'string', 'max:255'],
+            'company_tax_id' => ['nullable', 'string', 'max:255'],
+            'company_logo' => ['nullable', 'image', 'max:5120'],
+            'sector' => ['nullable', 'string', 'max:255'],
+            'rccm' => ['nullable', 'string', 'max:255'],
+            'trade_register' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:255'],
             'password' => ['nullable', 'string', 'min:8'],
         ]);
 
-        $payload = [
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'company_name' => $validated['company_name'],
-        ];
-
-        if (!empty($validated['password'])) {
-            $payload['password'] = Hash::make($validated['password']);
+        if ($request->hasFile('company_logo')) {
+            $validated['company_logo'] = $request->file('company_logo')->store('company-logos', 'public');
         }
 
-        $user->update($payload);
+        if ($request->hasFile('trade_register')) {
+            $validated['trade_register_file'] = $request->file('trade_register')->store('trade-registers', 'public');
+        }
+
+        unset($validated['trade_register']);
+
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+
+        $user->update($validated);
 
         return back()->with('status', 'Informations du client mises à jour avec succès.');
     }
