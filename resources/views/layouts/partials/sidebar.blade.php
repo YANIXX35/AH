@@ -316,6 +316,12 @@
                     </ul>
                 </div>
             </li>
+            <li class="sidebar-item {{ request()->routeIs('payroll.*') ? 'active' : '' }}">
+                <a class="sidebar-link" href="{{ route('payroll.index') }}">
+                    <i class="align-middle" data-feather="credit-card"></i> <span class="align-middle">Paiement des Salaires</span>
+                    <span class="badge bg-success rounded-pill ms-auto">Nouveau</span>
+                </a>
+            </li>
             <li class="sidebar-item {{ request()->routeIs('invoicing.*') ? 'active' : '' }}">
                 <a class="sidebar-link" href="{{ route('invoicing.index') }}">
                     <i class="align-middle" data-feather="file-text"></i> <span class="align-middle">Facturation</span>

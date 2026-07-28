@@ -507,6 +507,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/treasury/mobile-money/{import}/purge', [MobileMoneyReconciliationController::class, 'purgePersonalData'])->middleware('throttle:finance-write')->name('treasury.mobile-money.purge');
     });
 
+    // Module Paie & Paiement des Salaires
+    Route::get('/payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('payroll.index');
+    Route::get('/payroll/create', [\App\Http\Controllers\PayrollController::class, 'create'])->name('payroll.create');
+    Route::post('/payroll', [\App\Http\Controllers\PayrollController::class, 'store'])->name('payroll.store');
+    Route::get('/payroll/{payroll}', [\App\Http\Controllers\PayrollController::class, 'show'])->name('payroll.show');
+    Route::post('/payroll/{payroll}/sync', [\App\Http\Controllers\PayrollController::class, 'sync'])->name('payroll.sync');
+    Route::delete('/payroll/{payroll}', [\App\Http\Controllers\PayrollController::class, 'destroy'])->name('payroll.destroy');
+
     Route::middleware('module.permission:invoicing')->group(function () {
         Route::get('/invoicing', [InvoiceController::class, 'index'])->name('invoicing.index');
         Route::get('/invoicing/create', [InvoiceController::class, 'create'])->name('invoicing.create');
