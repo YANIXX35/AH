@@ -394,7 +394,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0">Courbes de trésorerie</h5>
-                        <small class="text-muted">{{ $monthStart->format('d/m/Y') }} - {{ $monthEnd->format('d/m/Y') }}</small>
+                        <small class="text-muted">{{ ($monthStart instanceof \Carbon\Carbon ? $monthStart : \Carbon\Carbon::parse($monthStart))->format('d/m/Y') }} - {{ ($monthEnd instanceof \Carbon\Carbon ? $monthEnd : \Carbon\Carbon::parse($monthEnd))->format('d/m/Y') }}</small>
                     </div>
                     <div class="balance-chart-wrap">
                         @php
