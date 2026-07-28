@@ -35,6 +35,11 @@ class CommercialController extends Controller
         return view('commercial.dashboard', compact('clients', 'totalClients', 'activeTrials', 'expiredTrials'));
     }
 
+    public function showcase(): View
+    {
+        return view('commercial.showcase');
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([

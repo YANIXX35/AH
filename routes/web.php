@@ -546,6 +546,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('commercial')->prefix('commercial')->name('commercial.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\CommercialController::class, 'index'])->name('dashboard');
+        Route::get('/offres', [\App\Http\Controllers\CommercialController::class, 'showcase'])->name('showcase');
         Route::post('/clients', [\App\Http\Controllers\CommercialController::class, 'store'])->name('clients.store');
         Route::put('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'update'])->name('clients.update');
         Route::delete('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'destroy'])->name('clients.destroy');

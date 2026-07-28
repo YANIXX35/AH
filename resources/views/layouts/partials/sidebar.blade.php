@@ -61,6 +61,11 @@
                         <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
                     </a>
                 </li>
+                <li class="sidebar-item {{ request()->routeIs('commercial.showcase') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial.showcase') }}">
+                        <i class="align-middle" data-feather="layers"></i> <span class="align-middle">Offres Marketing & Service</span>
+                    </a>
+                </li>
                 <li class="sidebar-item {{ request()->routeIs('commercial.dashboard') && request()->get('action') === 'add-client' ? 'active' : '' }}">
                     <a class="sidebar-link" href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}">
                         <i class="align-middle" data-feather="plus-circle"></i> <span class="align-middle">Ajouter Client / Entreprise</span>
