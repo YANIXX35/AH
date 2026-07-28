@@ -294,8 +294,10 @@
                                         </td>
                                         <td>{{ number_format($document->confidence, 2, ',', ' ') }}%</td>
                                         <td>
-                                            @php($missingRequired = (array) ($document->extracted_data['ocr_missing_required_fields'] ?? []))
-                                            @php($complianceBadge = $document->compliance_rate >= 100 ? 'success' : ($document->compliance_rate > 0 ? 'warning' : 'danger'))
+                                            @php
+                                                 $missingRequired = (array) ($document->extracted_data['ocr_missing_required_fields'] ?? []);
+                                                 $complianceBadge = $document->compliance_rate >= 100 ? 'success' : ($document->compliance_rate > 0 ? 'warning' : 'danger');
+                                            @endphp
                                             <span class="badge bg-{{ $complianceBadge }}-subtle text-{{ $complianceBadge }}-emphasis"
                                                   @if(!empty($missingRequired)) title="Manquant : {{ implode(', ', $missingRequired) }}" @endif>
                                                 {{ number_format((float) $document->compliance_rate, 0, ',', ' ') }}%
