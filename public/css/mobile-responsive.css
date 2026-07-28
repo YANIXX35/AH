@@ -95,3 +95,23 @@
     font-size: 0.85rem !important;
     padding: 0.4rem 0.75rem !important;
 }
+
+/* Modal Scrollbar Custom Styling */
+.modal-body::-webkit-scrollbar {
+    width: 8px !important;
+    display: block !important;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f1f5f9 !important;
+    border-radius: 4px !important;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+    border-radius: 4px !important;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8 !important;
+}

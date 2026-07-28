@@ -185,7 +185,7 @@
 
 <!-- Add Accountant Client Modal 2-STEP WIZARD -->
 <div class="modal fade text-start" id="addAccountantClientModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addAccountantClientModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable my-4" style="max-width: 680px; margin-left: auto; margin-right: auto;">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable my-3" style="max-width: 820px; width: 92%; margin-left: auto; margin-right: auto;">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header border-0 bg-primary text-white p-3 px-4">
                 <div>
@@ -206,7 +206,7 @@
                 <input type="text" name="fake_usernameremembered" style="display:none" tabindex="-1">
                 <input type="password" name="fake_passwordremembered" style="display:none" tabindex="-1">
 
-                <div class="modal-body p-4" id="accWizardModalBody" style="max-height: 70vh; overflow-y: auto; scroll-behavior: smooth;">
+                <div class="modal-body p-4" id="accWizardModalBody" style="max-height: 72vh; overflow-y: scroll; scroll-behavior: smooth;">
 
                     <!-- STEP 1 : COMPTE RESPONSABLE -->
                     <div id="accWizardStep1">
