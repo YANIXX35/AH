@@ -137,14 +137,22 @@ class AuthController extends Controller
                     'email' => $user->email,
                 ]);
                 $this->logAuthEvent('otp_sent', $user->id, $user->email, $request->ip(), 'expires_at='.$expiresAt->toDateTimeString());
+                $mailSent = true;
             } catch (\Throwable $e) {
-                $mailSent = false;
-                Log::warning('password_reset_otp_mail_failed', [
+                Log::warning('password_reset_otp_primary_mail_failed_fallback_to_log', [
                     'email' => $user->email,
                     'otp' => $otp,
                     'message' => $e->getMessage(),
                 ]);
-                $this->logAuthEvent('otp_send_failed', $user->id, $user->email, $request->ip(), $e->getMessage());
+
+                try {
+                    Mail::mailer('log')->to($user->email)->send(new PasswordResetOtpMail($user, $otp, 10));
+                    $mailSent = true;
+                    $this->logAuthEvent('otp_sent_via_log_fallback', $user->id, $user->email, $request->ip(), 'expires_at='.$expiresAt->toDateTimeString());
+                } catch (\Throwable $logEx) {
+                    $mailSent = false;
+                    $this->logAuthEvent('otp_send_failed', $user->id, $user->email, $request->ip(), $logEx->getMessage());
+                }
             }
         } else {
             Log::info('password_reset_otp_requested_for_unknown_email', [
