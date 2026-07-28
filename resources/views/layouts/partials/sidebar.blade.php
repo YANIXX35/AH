@@ -56,19 +56,34 @@
         <ul class="sidebar-nav">
             @if($sidebarIsCommercial)
                 <li class="sidebar-header">Espace Commercial</li>
-                <li class="sidebar-item {{ request()->routeIs('commercial.dashboard') && empty(request()->get('action')) ? 'active' : '' }}">
+                <li class="sidebar-item {{ request()->routeIs('commercial.dashboard') && !request()->has('action') ? 'active' : '' }}">
                     <a class="sidebar-link" href="{{ route('commercial.dashboard') }}">
-                        <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
+                        <i class="align-middle" data-feather="layout"></i> <span class="align-middle">Dashboard & Portefeuille</span>
                     </a>
                 </li>
                 <li class="sidebar-item {{ request()->routeIs('commercial.showcase') ? 'active' : '' }}">
                     <a class="sidebar-link" href="{{ route('commercial.showcase') }}">
-                        <i class="align-middle" data-feather="layers"></i> <span class="align-middle">Offres Marketing & Service</span>
+                        <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Offres Marketing & Service</span>
                     </a>
                 </li>
-                <li class="sidebar-item {{ request()->routeIs('commercial.dashboard') && request()->get('action') === 'add-client' ? 'active' : '' }}">
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="{{ route('commercial.showcase') }}#guides">
+                        <i class="align-middle" data-feather="book-open"></i> <span class="align-middle">Guides & Lead Magnets</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="{{ route('commercial.showcase') }}#club">
+                        <i class="align-middle" data-feather="users"></i> <span class="align-middle">Sitiame Finance Club</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {{ request()->get('action') === 'add-prospect' ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial.dashboard', ['action' => 'add-prospect']) }}">
+                        <i class="align-middle" data-feather="target"></i> <span class="align-middle">Nouveau Lead CRM</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {{ request()->get('action') === 'add-client' ? 'active' : '' }}">
                     <a class="sidebar-link" href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}">
-                        <i class="align-middle" data-feather="plus-circle"></i> <span class="align-middle">Ajouter Client / Entreprise</span>
+                        <i class="align-middle" data-feather="user-plus"></i> <span class="align-middle">Inscrire Client / PME</span>
                     </a>
                 </li>
             @else

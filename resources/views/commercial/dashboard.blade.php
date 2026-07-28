@@ -611,8 +611,17 @@
             document.getElementById('wizardPrevBtn').style.display = 'none';
             document.getElementById('wizardNextBtn').style.display = 'inline-block';
             document.getElementById('wizardSubmitBtn').style.display = 'none';
+    document.addEventListener('DOMContentLoaded', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        if (action === 'add-client') {
+            const modal = new bootstrap.Modal(document.getElementById('addClientModal'));
+            modal.show();
+        } else if (action === 'add-prospect') {
+            const modal = new bootstrap.Modal(document.getElementById('addProspectModal'));
+            modal.show();
         }
-    }
+    });
 </script>
 @endpush
 @endsection
