@@ -26,14 +26,28 @@ class AccountantDashboardController extends Controller
      */
     public function index(Request $request): View
     {
-        // Portefeuille clients identique pour tous les comptables (pas de scope par
-        // acteur) : un cache court partagé évite de recompter tout le portefeuille
-        // à chaque clic.
-        $aggregates = Cache::remember('accountant.dashboard.aggregates', now()->addMinutes(3), function () {
-            $clientIds = User::query()->clients()->pluck('id');
+        $user = $request->user();
+        $cacheKey = 'accountant.dashboard.aggregates.' . ($user?->id ?? 0);
+
+        $aggregates = Cache::remember($cacheKey, now()->addMinutes(3), function () use ($user) {
+            $clientQuery = User::query()->clients();
+            if ($user && ! $user->is_platform_admin) {
+                $clientQuery->where('created_by_user_id', $user->id);
+            }
+            $clientIds = $clientQuery->pluck('id');
+
+            $countQuery = User::query()->clients();
+            if ($user && ! $user->is_platform_admin) {
+                $countQuery->where('created_by_user_id', $user->id);
+            }
+
+            $recentQuery = User::query()->clients();
+            if ($user && ! $user->is_platform_admin) {
+                $recentQuery->where('created_by_user_id', $user->id);
+            }
 
             return [
-                'clientCount' => User::query()->clients()->count(),
+                'clientCount' => $countQuery->count(),
                 'entriesTotal' => AccountingEntry::query()->whereIn('user_id', $clientIds)->count(),
                 'documentsPending' => AccountingDocument::query()
                     ->whereIn('user_id', $clientIds)
@@ -47,8 +61,7 @@ class AccountantDashboardController extends Controller
                     ->whereIn('user_id', $clientIds)
                     ->where('status', 'effectue')
                     ->sum('amount'),
-                'recentClients' => User::query()
-                    ->clients()
+                'recentClients' => $recentQuery
                     ->latest()
                     ->limit(10)
                     ->get(['id', 'name', 'email', 'company_name', 'created_at']),
@@ -88,7 +101,12 @@ class AccountantDashboardController extends Controller
 
     public function liveInsights(Request $request): JsonResponse
     {
-        $clientIds = User::query()->clients()->pluck('id')->all();
+        $user = $request->user();
+        $query = User::query()->clients();
+        if ($user && ! $user->is_platform_admin) {
+            $query->where('created_by_user_id', $user->id);
+        }
+        $clientIds = $query->pluck('id')->all();
         $inconsistencies = $this->buildFinancialInconsistencies($clientIds);
         $liveInsight = $this->buildLiveInsight($clientIds, $inconsistencies);
 

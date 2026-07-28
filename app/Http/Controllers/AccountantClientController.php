@@ -25,9 +25,15 @@ class AccountantClientController extends Controller
     public function index(Request $request): View
     {
         $q = trim((string) $request->query('q', ''));
+        $user = $request->user();
 
-        $users = User::query()
-            ->clients()
+        $query = User::query()->clients();
+
+        if ($user && ! $user->is_platform_admin) {
+            $query->where('created_by_user_id', $user->id);
+        }
+
+        $users = $query
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($query) use ($q) {
                     $query->where('name', 'like', '%'.$q.'%')
@@ -89,6 +95,11 @@ class AccountantClientController extends Controller
 
     public function update(Request $request, User $user): RedirectResponse
     {
+        $accountant = $request->user();
+        if ($accountant && ! $accountant->is_platform_admin && $user->created_by_user_id !== $accountant->id) {
+            abort(403, 'Vous n’êtes pas autorisé à modifier ce dossier client.');
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
@@ -113,6 +124,11 @@ class AccountantClientController extends Controller
 
     public function destroy(Request $request, User $user): RedirectResponse
     {
+        $accountant = $request->user();
+        if ($accountant && ! $accountant->is_platform_admin && $user->created_by_user_id !== $accountant->id) {
+            abort(403, 'Vous n’êtes pas autorisé à supprimer ce dossier client.');
+        }
+
         $user->delete();
 
         return back()->with('status', 'Dossier client supprimé avec succès.');
@@ -169,8 +185,12 @@ class AccountantClientController extends Controller
 
     private function authorizeClient(User $user): void
     {
+        $authUser = auth()->user();
         if (! ClientWorkspace::isAssignableClient($user)) {
             abort(404);
+        }
+        if ($authUser && ! $authUser->is_platform_admin && $user->created_by_user_id !== $authUser->id) {
+            abort(403, 'Vous n’avez pas accès à ce dossier client.');
         }
     }
 
