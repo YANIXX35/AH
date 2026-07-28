@@ -235,8 +235,12 @@
         ],
     ]);
 
-    $nextLicenseExpiryAt = !empty($licenseAlerts['next_expiry'] ?? null) ? \Carbon\Carbon::parse($licenseAlerts['next_expiry']) : null;
-    $nextSubscriptionExpiryAt = !empty($subscriptionAlerts['next_expiry'] ?? null) ? \Carbon\Carbon::parse($subscriptionAlerts['next_expiry']) : null;
+    $parseExpiryDate = function ($val) {
+        if (empty($val) || is_object($val)) return null;
+        try { return \Carbon\Carbon::parse($val); } catch (\Throwable $e) { return null; }
+    };
+    $nextLicenseExpiryAt = $parseExpiryDate($licenseAlerts['next_expiry'] ?? null);
+    $nextSubscriptionExpiryAt = $parseExpiryDate($subscriptionAlerts['next_expiry'] ?? null);
     $licenseCountdown = $nextLicenseExpiryAt ? (int) max(0, now()->diffInDays($nextLicenseExpiryAt, false)) : null;
     $subscriptionCountdown = $nextSubscriptionExpiryAt ? (int) max(0, now()->diffInDays($nextSubscriptionExpiryAt, false)) : null;
 @endphp
