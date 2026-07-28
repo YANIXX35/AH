@@ -185,8 +185,8 @@
 
 <!-- Add Accountant Client Modal 2-STEP WIZARD -->
 <div class="modal fade text-start" id="addAccountantClientModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addAccountantClientModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable my-auto" style="max-width: 850px; width: 95%; max-height: 85vh;">
-        <div class="modal-content border-0 shadow-2xl rounded-4 overflow-hidden d-flex flex-column" style="border-radius: 16px; max-height: 85vh;">
+    <div class="modal-dialog modal-dialog-centered my-2" style="max-width: 850px; width: 95%;">
+        <div class="modal-content border-0 shadow-2xl rounded-4 overflow-hidden d-flex flex-column" style="border-radius: 16px; max-height: 80vh; height: 80vh;">
             <!-- 1. Header Fixe (flex: 0 0 auto) -->
             <div class="modal-header border-bottom bg-white p-3 px-4 d-flex justify-content-between align-items-center flex-shrink-0">
                 <div class="d-flex align-items-center gap-3">
@@ -200,7 +200,7 @@
                 <div class="progress-bar bg-warning" id="accWizardProgressBar" role="progressbar" style="width: 50%; transition: width 0.3s ease;"></div>
             </div>
 
-            <form action="{{ route('accountant.clients.store') }}" method="POST" enctype="multipart/form-data" id="accWizardForm" autocomplete="off" class="d-flex flex-column m-0 flex-grow-1 overflow-hidden" style="min-height: 0;">
+            <form action="{{ route('accountant.clients.store') }}" method="POST" enctype="multipart/form-data" id="accWizardForm" autocomplete="off" class="d-flex flex-column m-0 flex-grow-1 overflow-hidden" style="min-height: 0; height: 100%;">
                 @csrf
                 
                 <!-- Fake inputs to trap aggressive browser autofills -->
@@ -208,7 +208,7 @@
                 <input type="password" name="fake_passwordremembered" style="display:none" tabindex="-1">
 
                 <!-- 2. Corps Scrollable uniquement (flex: 1 1 auto; overflow-y: auto) -->
-                <div class="modal-body p-4 bg-white flex-grow-1 overflow-y-auto" id="accWizardModalBody" style="min-height: 0; scroll-behavior: smooth;">
+                <div class="modal-body p-4 bg-white flex-grow-1" id="accWizardModalBody" style="min-height: 0; overflow-y: auto !important; scroll-behavior: smooth;">
 
                     <!-- STEP 1 : COMPTE RESPONSABLE -->
                     <div id="accWizardStep1">
