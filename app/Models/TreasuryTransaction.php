@@ -53,6 +53,16 @@ class TreasuryTransaction extends Model
     ];
 
     /**
+     * Garantit que transaction_date retourne toujours un objet Carbon ou null
+     */
+    protected function transactionDate(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value ? \Carbon\Carbon::parse($value) : null,
+        );
+    }
+
+    /**
      * Relation avec l'utilisateur
      */
     public function user(): BelongsTo

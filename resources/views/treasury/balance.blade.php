@@ -280,11 +280,8 @@
             $healthLabel = 'À surveiller';
         }
         $monthTransactionsChart = $monthTransactions->map(function ($tx) {
-            $dateStr = $tx->transaction_date instanceof \Carbon\Carbon
-                ? $tx->transaction_date->format('Y-m-d')
-                : \Carbon\Carbon::parse($tx->transaction_date)->format('Y-m-d');
             return [
-                'date' => $dateStr,
+                'date' => $tx->transaction_date?->format('Y-m-d'),
                 'type' => $tx->type,
                 'amount' => (float) $tx->amount,
             ];
@@ -394,7 +391,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0">Courbes de trésorerie</h5>
-                        <small class="text-muted">{{ ($monthStart instanceof \Carbon\Carbon ? $monthStart : \Carbon\Carbon::parse($monthStart))->format('d/m/Y') }} - {{ ($monthEnd instanceof \Carbon\Carbon ? $monthEnd : \Carbon\Carbon::parse($monthEnd))->format('d/m/Y') }}</small>
+                        <small class="text-muted">{{ $monthStart?->format('d/m/Y') }} - {{ $monthEnd?->format('d/m/Y') }}</small>
                     </div>
                     <div class="balance-chart-wrap">
                         @php
@@ -594,7 +591,7 @@
                                 }
                             @endphp
                             <tr>
-                                <td data-label="Date">{{ $tx->transaction_date instanceof \Carbon\Carbon ? $tx->transaction_date->format('d/m/Y') : \Carbon\Carbon::parse($tx->transaction_date)->format('d/m/Y') }}</td>
+                                <td data-label="Date">{{ $tx->transaction_date?->format('d/m/Y') }}</td>
                                 <td data-label="Description">{{ \Illuminate\Support\Str::limit($tx->description, 65) }}</td>
                                 <td data-label="Encaissement" class="text-md-end">
                                     @if($tx->type === 'encaissement')
