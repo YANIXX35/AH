@@ -4,7 +4,7 @@
 @section('page_title', 'Dossiers clients')
 
 @section('content')
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3" @if(request('action') === 'add-client') style="display: none !important;" @endif>
     <div>
         <h1 class="h3 mb-1"><strong>Dossiers</strong> clients</h1>
         <p class="text-muted mb-0">Recherchez une entreprise et ouvrez sa fiche pour accéder aux outils.</p>
@@ -25,7 +25,7 @@
     </div>
 @endif
 
-<form method="get" action="{{ route('accountant.clients.index') }}" class="row g-2 mb-3">
+<form method="get" action="{{ route('accountant.clients.index') }}" class="row g-2 mb-3" @if(request('action') === 'add-client') style="display: none !important;" @endif>
     <div class="col-md-6 col-lg-4">
         <input type="search" name="q" value="{{ $search }}" class="form-control" placeholder="Nom, société, e-mail…">
     </div>
@@ -34,7 +34,7 @@
     </div>
 </form>
 
-<div class="card border-0 shadow-sm">
+<div class="card border-0 shadow-sm" @if(request('action') === 'add-client') style="display: none !important;" @endif>
     <div class="card-body p-0">
         @forelse($enterpriseGroups as $group)
             <div class="border-bottom p-3">
