@@ -257,13 +257,17 @@
                                         <span>{{ $group['company_name'] }}</span>
                                         <span class="enterprise-chip">{{ $group['users_count'] }} utilisateur(s)</span>
                                     </div>
-                                    <div class="enterprise-meta mt-1 d-flex flex-wrap gap-1">
+                                    <div class="enterprise-meta mt-1 d-flex flex-wrap gap-1 align-items-center">
                                         @if(!empty($group['company_tax_id']))
                                             <span class="enterprise-chip">NIF: {{ $group['company_tax_id'] }}</span>
                                         @endif
                                         @if(!empty($group['enterprise_license_id']))
                                             <span class="enterprise-chip">Licence #{{ $group['enterprise_license_id'] }}</span>
                                         @endif
+                                        <span class="text-secondary small ms-1">
+                                            <i class="align-middle me-1" data-feather="user"></i>
+                                            <strong>Membres :</strong> {{ collect($group['users'])->pluck('name')->join(', ') }} ({{ collect($group['users'])->pluck('email')->join(', ') }})
+                                        </span>
                                     </div>
                                 </div>
                                 <div class="d-none d-md-flex flex-wrap gap-1 me-3">
