@@ -550,4 +550,6 @@ Route::middleware('auth')->group(function () {
         Route::put('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'update'])->name('clients.update');
         Route::delete('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'destroy'])->name('clients.destroy');
     });
+
+    Route::middleware('commercial')->get('/dashboard/commercial', [\App\Http\Controllers\CommercialController::class, 'index']);
 });

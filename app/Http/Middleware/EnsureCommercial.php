@@ -15,7 +15,7 @@ class EnsureCommercial
     {
         $user = $request->user();
 
-        if ($user === null || $user->role_key !== 'commercial') {
+        if ($user === null || ! in_array($user->role_key, ['commercial', 'commerciale'], true)) {
             abort(Response::HTTP_FORBIDDEN, 'Accès réservé au personnel commercial.');
         }
 

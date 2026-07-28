@@ -21,7 +21,7 @@ class DashboardController extends Controller
 
     public function index(Request $request): \Illuminate\Http\RedirectResponse|\Illuminate\View\View
     {
-        if ($request->user() && $request->user()->role_key === 'commercial') {
+        if ($request->user() && in_array($request->user()->role_key, ['commercial', 'commerciale'], true)) {
             return redirect()->route('commercial.dashboard');
         }
 
