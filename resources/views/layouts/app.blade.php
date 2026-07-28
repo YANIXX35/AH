@@ -14,6 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="{{ asset('css/adminkit-app.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/mobile-responsive.css') }}" rel="stylesheet">
     @stack('styles')
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -375,6 +376,7 @@
 <body>
     <div class="gtranslate_wrapper gtranslate-global-host" aria-hidden="true"></div>
     <div class="wrapper">
+        <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
         @include('layouts.partials.sidebar')
 
         <div class="main">
@@ -800,6 +802,16 @@
                         fallback.classList.remove('d-none');
                     }
                 }
+            }
+
+            // Mobile Sidebar Backdrop Toggle Handler
+            const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+            const sidebar = document.getElementById('sidebar');
+            if (sidebarBackdrop && sidebar) {
+                sidebarBackdrop.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    sidebarBackdrop.classList.remove('show');
+                });
             }
         });
     </script>

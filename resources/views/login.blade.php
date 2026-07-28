@@ -126,12 +126,12 @@
         </div>
     </div>
     <!-- Floating Support Service Client Button -->
-    <div class="fixed bottom-6 right-6 z-50">
-        <a href="mailto:contact@sitiame-capital.com?subject=Demande%20d'assistance%20-%20Service%20Client%20Sitiame%20Capital&body=Bonjour%20Service%20Client%20Sitiame%20Capital,%0A%0AMon%20message%20:%20" class="group flex items-center gap-3 rounded-full bg-gradient-to-r from-orange-500 to-amber-600 px-5 py-3.5 text-white shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-200 border border-white/20" title="Contacter le Service Client (contact@sitiame-capital.com)">
-            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition">
-                <i class="fas fa-envelope text-white text-lg"></i>
+    <div class="fixed bottom-4 right-4 z-50">
+        <a href="mailto:contact@sitiame-capital.com?subject=Demande%20d'assistance%20-%20Service%20Client%20Sitiame%20Capital&body=Bonjour%20Service%20Client%20Sitiame%20Capital,%0A%0AMon%20message%20:%20" class="group flex items-center gap-2.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-600 p-3 sm:px-5 sm:py-3.5 text-white shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-200 border border-white/20" title="Contacter le Service Client (contact@sitiame-capital.com)">
+            <div class="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition">
+                <i class="fas fa-envelope text-white text-base sm:text-lg"></i>
             </div>
-            <div class="flex flex-col text-left">
+            <div class="hidden sm:flex flex-col text-left">
                 <span class="text-[10px] font-bold uppercase tracking-widest text-orange-100">Service Client</span>
                 <span class="text-xs font-extrabold text-white">contact@sitiame-capital.com</span>
             </div>

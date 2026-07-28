@@ -82,7 +82,8 @@
         align-items: center;
         justify-content: space-between;
         gap: .65rem;
-        min-width: 280px;
+        width: 100%;
+        max-width: 100%;
         border-radius: .6rem;
         border: 1px solid rgba(0,0,0,.08);
         padding: .55rem .7rem;
