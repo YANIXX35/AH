@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Contracts\FinancialRatioServiceContract;
 use App\Models\User;
+use App\Services\UserPremiumService;
 use App\Support\ClientWorkspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,9 @@ use Illuminate\View\View;
 
 class AccountantClientController extends Controller
 {
+    public function __construct(
+        private readonly UserPremiumService $userPremium
+    ) {}
     /**
      * Liste des dossiers clients (entreprises) suivis sur la plateforme.
      */
@@ -68,7 +72,7 @@ class AccountantClientController extends Controller
                 'kyc_submitted_at' => now(),
             ]);
 
-            app(\App\Services\UserPremiumService::class)->activateForDays(
+            $this->userPremium->activateForDays(
                 $user,
                 30,
                 'accountant_creation',
