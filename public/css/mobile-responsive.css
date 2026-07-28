@@ -98,12 +98,12 @@
 
 /* Modal Scrollbar Custom Styling */
 .modal-body::-webkit-scrollbar {
-    width: 8px !important;
+    width: 6px !important;
     display: block !important;
 }
 
 .modal-body::-webkit-scrollbar-track {
-    background: #f1f5f9 !important;
+    background: #f8fafc !important;
     border-radius: 4px !important;
 }
 
