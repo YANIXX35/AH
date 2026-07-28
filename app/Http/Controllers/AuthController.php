@@ -141,10 +141,10 @@ class AuthController extends Controller
                 $mailSent = false;
                 Log::warning('password_reset_otp_mail_failed', [
                     'email' => $user->email,
+                    'otp' => $otp,
                     'message' => $e->getMessage(),
                 ]);
                 $this->logAuthEvent('otp_send_failed', $user->id, $user->email, $request->ip(), $e->getMessage());
-                DB::table('password_reset_otps')->where('email', $user->email)->delete();
             }
         } else {
             Log::info('password_reset_otp_requested_for_unknown_email', [
@@ -154,11 +154,11 @@ class AuthController extends Controller
         }
 
         if (! $mailSent) {
-            return back()
-                ->withInput($request->only('email'))
-                ->withErrors([
-                    'email' => 'Impossible d’envoyer le code OTP pour le moment. Vérifiez la configuration SMTP puis réessayez.',
-                ]);
+            // Même si l'envoi de mail SMTP échoue sur le serveur, on redirige vers le formulaire d'OTP 
+            // pour permettre la saisie (le code est enregistré dans storage/logs/laravel.log)
+            return redirect()
+                ->route('password.reset.form', ['email' => $email])
+                ->with('warning', 'Avertissement SMTP : Le serveur de messagerie SMTP n’est pas configuré. Le code OTP généré pour votre compte a été consigné dans les logs (storage/logs/laravel.log).');
         }
 
         return redirect()
