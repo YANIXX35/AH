@@ -95,6 +95,13 @@ class AccountingController extends Controller
 
     public function storeEntry(Request $request)
     {
+        $user = $request->user();
+        if (! $user || (! $user->isPlatformAdmin() && ! $user->isAccountant())) {
+            return redirect()->back()->withErrors([
+                'access_denied' => 'Seuls les administrateurs et comptables habilités peuvent saisir des écritures comptables.',
+            ]);
+        }
+
         $validated = $request->validate([
             'document_id' => ['nullable', 'integer'],
             'date' => ['required', 'date'],

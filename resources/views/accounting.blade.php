@@ -824,6 +824,12 @@
         </div>
     </div>
 
+    @php
+        $currentUser = auth()->user();
+        $canEditAccounting = $currentUser && ($currentUser->isPlatformAdmin() || $currentUser->isAccountant());
+    @endphp
+
+    @if($canEditAccounting)
     <div class="row g-4 mb-4" id="moteur-ecritures">
         <div class="col-xl-12">
             <div class="card">
@@ -1167,6 +1173,19 @@
             </div>
         </div>
     </div>
+    @else
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning border-0 shadow-sm rounded-3 d-flex align-items-center gap-3 p-3">
+                <i data-feather="lock" class="text-warning flex-shrink-0" style="width: 24px; height: 24px;"></i>
+                <div>
+                    <strong class="d-block text-dark">Mode Consultation Uniquement (Lecture Seule)</strong>
+                    <span class="small text-muted">Seuls les administrateurs et les comptables du cabinet peuvent saisir ou modifier directement des écritures comptables. Vous pouvez consulter les rapports et transmettre vos pièces justificatives.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <script>
         // Gestion du statut OCR
