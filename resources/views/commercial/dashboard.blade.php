@@ -461,7 +461,7 @@
 
 <!-- Modal Add Prospect -->
 <div class="modal fade" id="addProspectModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <form action="{{ route('commercial.prospects.store') }}" method="POST">
                 @csrf
@@ -473,7 +473,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 
-                <div class="modal-body p-4">
+                <div class="modal-body p-4" style="max-height: 65vh; overflow-y: auto;">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold text-dark">Nom complet du prospect <span class="text-danger">*</span></label>
@@ -519,7 +519,7 @@
 
 <!-- Modal Add Client (2-Step Wizard) -->
 <div class="modal fade" id="addClientModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <form action="{{ route('commercial.clients.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
@@ -535,7 +535,7 @@
                     <div class="progress-bar bg-success" role="progressbar" id="wizardProgressBar" style="width: 50%;"></div>
                 </div>
 
-                <div class="modal-body p-4">
+                <div class="modal-body p-4" style="max-height: 65vh; overflow-y: auto;">
                     <div id="wizardStep1">
                         <div class="row g-3">
                             <div class="col-md-6">

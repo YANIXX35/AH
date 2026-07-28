@@ -185,7 +185,7 @@
 
 <!-- Add Accountant Client Modal 2-STEP WIZARD -->
 <div class="modal fade text-start" id="addAccountantClientModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addAccountantClientModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold text-dark" id="addAccountantClientModalLabel">Nouveau Dossier Client & Création d'Entreprise</h5>
@@ -208,7 +208,7 @@
                     </div>
                 </div>
 
-                <div class="modal-body px-4 py-3">
+                <div class="modal-body px-4 py-3" style="max-height: 65vh; overflow-y: auto;">
 
                     <!-- STEP 1 : COMPTE RESPONSABLE -->
                     <div id="accWizardStep1">
