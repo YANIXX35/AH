@@ -78,7 +78,7 @@
                                         </div>
                                         <div>
                                             <div class="fw-bold text-dark fs-7 mb-0">{{ $u->name }}</div>
-                                            <span class="badge bg-secondary-subtle text-secondary fs-8 py-0.5 px-2">{{ $u->role ?? 'Administrateur' }}</span>
+                                            <span class="badge bg-primary-subtle text-primary fs-8 py-0.5 px-2">{{ $u->accountRoleLabel() === 'Entreprise' ? 'Responsable Client' : $u->accountRoleLabel() }}</span>
                                         </div>
                                     </div>
                                 </td>
