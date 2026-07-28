@@ -45,17 +45,35 @@ class CommercialController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'company_name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:255'],
             'password' => ['required', 'string', 'min:8'],
+            'company_name' => ['required', 'string', 'max:255'],
+            'company_sigle' => ['nullable', 'string', 'max:255'],
+            'company_tax_id' => ['nullable', 'string', 'max:255'],
+            'company_logo' => ['nullable', 'image', 'max:5120'],
+            'sector' => ['nullable', 'string', 'max:255'],
+            'rccm' => ['nullable', 'string', 'max:255'],
+            'trade_register' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'license_key' => ['nullable', 'string', 'max:64'],
         ]);
+
+        if ($request->hasFile('company_logo')) {
+            $validated['company_logo'] = $request->file('company_logo')->store('company-logos', 'public');
+        }
+
+        if ($request->hasFile('trade_register')) {
+            $validated['trade_register_file'] = $request->file('trade_register')->store('trade-registers', 'public');
+        }
+
+        unset($validated['trade_register'], $validated['license_key']);
 
         $commercial = $request->user();
 
         DB::transaction(function () use ($validated, $commercial, $request) {
             $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'company_name' => $validated['company_name'],
+                ...$validated,
                 'password' => Hash::make($validated['password']),
                 'role_key' => 'manager',
                 'created_by_user_id' => $commercial->id,

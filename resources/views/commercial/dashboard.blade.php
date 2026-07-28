@@ -227,40 +227,127 @@
 </div>
 
 <!-- Add Client Modal -->
+<!-- Add Client Modal 2-STEP WIZARD -->
 <div class="modal fade" id="addClientModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-dark" id="addClientModalLabel">Nouveau Client & Création Automatique</h5>
+                <h5 class="modal-title fw-bold text-dark" id="addClientModalLabel">Nouveau Client & Création d'Entreprise</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('commercial.clients.store') }}" method="POST">
+            
+            <form action="{{ route('commercial.clients.store') }}" method="POST" enctype="multipart/form-data" id="wizardForm">
                 @csrf
-                <div class="modal-body py-4">
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Nom complet du contact client</label>
-                        <input type="text" name="name" class="form-control rounded-3" placeholder="ex: Yannick Kouamé" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Adresse E-mail pro</label>
-                        <input type="email" name="email" class="form-control rounded-3" placeholder="ex: contact@entreprise.ci" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Nom de l'entreprise</label>
-                        <input type="text" name="company_name" class="form-control rounded-3" placeholder="ex: Kouamé & Fils SARL" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Mot de passe de connexion initial</label>
-                        <input type="text" name="password" class="form-control rounded-3" value="Sitiame{{ date('Y') }}!" placeholder="Min. 8 caractères" required>
-                        <div class="form-text small text-muted">Donnez ce mot de passe de connexion au client pour son premier accès.</div>
-                    </div>
-                    <div class="p-3 bg-light rounded-3 small text-muted border-0 shadow-none">
-                        💡 À la création, ce client bénéficiera automatiquement de **1 mois d'accès gratuit** à la plateforme Premium PME360.
+                
+                <!-- STEP PROGRESS BAR HEADER -->
+                <div class="px-4 pt-3 pb-2">
+                    <div class="p-3 rounded-4 border" style="background:#fff7ed; border-color:#ffedd5 !important;">
+                        <div class="d-flex justify-content-between align-items-center fw-bold small mb-2 text-uppercase" style="letter-spacing:1px; color:#c2410c;">
+                            <span id="stepBadgeLabel">Étape 1/2</span>
+                            <span id="stepTitleLabel">COMPTE</span>
+                        </div>
+                        <div class="progress" style="height: 6px; background-color: #ffedd5;">
+                            <div class="progress-bar" id="wizardProgressBar" role="progressbar" style="width: 50%; background-color: #ea580c; transition: width 0.3s ease;"></div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0">
+
+                <div class="modal-body px-4 py-3">
+
+                    <!-- STEP 1 : COMPTE RESPONSABLE -->
+                    <div id="wizardStep1">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Nom du responsable <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control rounded-3 py-2" placeholder="ex: Yannick Kouamé" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Adresse E-mail pro <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control rounded-3 py-2" placeholder="ex: contact@entreprise.ci" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Téléphone</label>
+                            <input type="text" name="phone" class="form-control rounded-3 py-2" placeholder="ex: +225 07000000">
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Mot de passe <span class="text-danger">*</span></label>
+                                <input type="password" name="password" id="wiz_pass" class="form-control rounded-3 py-2" placeholder="Min. 8 caractères" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Confirmer <span class="text-danger">*</span></label>
+                                <input type="password" name="password_confirmation" id="wiz_pass_conf" class="form-control rounded-3 py-2" placeholder="Confirmer mot de passe" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2 : ENTREPRISE & KYC -->
+                    <div id="wizardStep2" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Nom de l'entreprise <span class="text-danger">*</span></label>
+                            <input type="text" name="company_name" class="form-control rounded-3 py-2" placeholder="ex: Kouamé & Fils SARL" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Sigle usuel</label>
+                            <input type="text" name="company_sigle" class="form-control rounded-3 py-2" placeholder="ex: KFS">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">N° d'identification fiscale (NIF)</label>
+                            <input type="text" name="company_tax_id" class="form-control rounded-3 py-2" placeholder="ex: 1234567A">
+                            <div class="form-text small text-muted">Si vous utilisez une clé de licence, le NIF doit être identique à celui de votre entreprise.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Attestation DFE / NIF (Fichier logo ou PDF)</label>
+                            <input type="file" name="company_logo" class="form-control rounded-3 py-2" accept="image/*,.pdf">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Secteur d'activité</label>
+                            <select name="sector" class="form-select rounded-3 py-2">
+                                <option value="">Choisir un secteur...</option>
+                                <option value="Agroalimentaire">Agroalimentaire</option>
+                                <option value="Commerce & Distribution">Commerce & Distribution</option>
+                                <option value="BTP & Construction">BTP & Construction</option>
+                                <option value="Services aux entreprises">Services aux entreprises</option>
+                                <option value="Technologies / IT">Technologies / IT</option>
+                                <option value="Transport & Logistique">Transport & Logistique</option>
+                                <option value="Santé">Santé</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Numéro RCCM / SIRET</label>
+                            <input type="text" name="rccm" class="form-control rounded-3 py-2" placeholder="ex: CI-ABJ-2026-B-1234">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">📄 Registre de commerce (optionnel)</label>
+                            <input type="file" name="trade_register" class="form-control rounded-3 py-2" accept="image/*,.pdf">
+                            <div class="form-text small text-muted">PDF ou photo (max 5 Mo).</div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-8">
+                                <label class="form-label small fw-semibold">Adresse complète</label>
+                                <input type="text" name="address" class="form-control rounded-3 py-2" placeholder="ex: Cocody Deux Plateaux">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Ville</label>
+                                <input type="text" name="city" class="form-control rounded-3 py-2" placeholder="ex: Abidjan">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Clé de licence (optionnel — 2e, 3e utilisateur...)</label>
+                            <input type="text" name="license_key" class="form-control rounded-3 py-2" placeholder="Fournie par l'administrateur">
+                        </div>
+                        <div class="p-3 bg-light rounded-3 small text-muted">
+                            💡 À la création, ce client bénéficiera automatiquement de **1 mois d'accès gratuit** à la plateforme Premium PME360.
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Créer le compte client</button>
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" id="wizardPrevBtn" style="display:none;" onclick="goToStep(1)">Précédent</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold" id="wizardNextBtn" onclick="goToStep(2)">Suivant : Entreprise &rarr;</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-semibold" id="wizardSubmitBtn" style="display:none;">Créer le compte client &check;</button>
                 </div>
             </form>
         </div>
@@ -269,6 +356,28 @@
 
 @push('scripts')
 <script>
+    function goToStep(step) {
+        if (step === 2) {
+            document.getElementById('wizardStep1').style.display = 'none';
+            document.getElementById('wizardStep2').style.display = 'block';
+            document.getElementById('stepBadgeLabel').innerText = 'Étape 2/2';
+            document.getElementById('stepTitleLabel').innerText = 'ENTREPRISE & KYC';
+            document.getElementById('wizardProgressBar').style.width = '100%';
+            document.getElementById('wizardPrevBtn').style.display = 'inline-block';
+            document.getElementById('wizardNextBtn').style.display = 'none';
+            document.getElementById('wizardSubmitBtn').style.display = 'inline-block';
+        } else {
+            document.getElementById('wizardStep1').style.display = 'block';
+            document.getElementById('wizardStep2').style.display = 'none';
+            document.getElementById('stepBadgeLabel').innerText = 'Étape 1/2';
+            document.getElementById('stepTitleLabel').innerText = 'COMPTE';
+            document.getElementById('wizardProgressBar').style.width = '50%';
+            document.getElementById('wizardPrevBtn').style.display = 'none';
+            document.getElementById('wizardNextBtn').style.display = 'inline-block';
+            document.getElementById('wizardSubmitBtn').style.display = 'none';
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('action') === 'add-client') {
