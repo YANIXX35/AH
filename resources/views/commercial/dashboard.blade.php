@@ -5,85 +5,130 @@
 
 @push('styles')
 <style>
-    /* Soft-UI & Glassmorphic Design System (Matching Mockup) */
-    .soft-bg {
-        background-color: #f1f5f9;
+    /* Exact Layout & Styling Replica of the User's Mockup */
+    .soft-dashboard-body {
+        background-color: #eef2f6;
         min-height: 100vh;
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         color: #1e293b;
+        padding: 24px;
     }
     
-    .soft-card {
+    .soft-dashboard-container {
+        background: #f8fafc;
+        border-radius: 32px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
+        padding: 20px;
+    }
+
+    /* Soft White Cards */
+    .mockup-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 24px;
-        box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.03), 0 4px 12px rgba(15, 23, 42, 0.02);
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.03), 0 4px 12px rgba(15, 23, 42, 0.02);
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .soft-card:hover {
+    .mockup-card:hover {
         box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.06);
         border-color: #cbd5e1;
     }
 
-    .pill-header-bar {
+    /* Top Navigation Header (Matching Mockup) */
+    .mockup-header-bar {
         background: #ffffff;
         border-radius: 9999px;
         padding: 8px 16px;
         border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
     }
 
-    .soft-pill-btn {
+    .pill-tab-btn {
         border-radius: 9999px;
         font-weight: 600;
         font-size: 0.85rem;
-        padding: 8px 20px;
+        padding: 8px 22px;
         border: none;
         transition: all 0.2s ease;
     }
-    .soft-pill-btn-active {
-        background: #0f172a;
-        color: #ffffff !important;
-        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+    .pill-tab-btn-active {
+        background: #ffffff;
+        color: #0f172a !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
     }
-    .soft-pill-btn-inactive {
+    .pill-tab-btn-inactive {
         background: transparent;
         color: #64748b;
     }
-    .soft-pill-btn-inactive:hover {
-        background: #f8fafc;
+    .pill-tab-btn-inactive:hover {
         color: #0f172a;
     }
 
-    .pill-badge {
+    /* Mockup Status Badges */
+    .status-pill {
         display: inline-flex;
         align-items: center;
-        padding: 5px 14px;
-        border-radius: 9999px;
-        font-size: 0.75rem;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 16px;
+        font-size: 0.78rem;
         font-weight: 700;
-        letter-spacing: 0.3px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
-    .pill-badge-emerald { background: #d1fae5; color: #047857; }
-    .pill-badge-purple { background: #f3e8ff; color: #6b21a8; }
-    .pill-badge-blue { background: #dbeafe; color: #1d4ed8; }
-    .pill-badge-amber { background: #fef3c7; color: #b45309; }
-    .pill-badge-rose { background: #ffe4e6; color: #be123c; }
+    .status-pill-green {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+    }
+    .status-pill-purple {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        color: #ffffff;
+    }
+    .status-pill-blue {
+        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+        color: #ffffff;
+    }
 
-    /* Copilot 3D Orb Card */
-    .ai-copilot-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    /* Amber Event Card (Left Bottom - Matching Mockup) */
+    .amber-event-card {
+        background: #facc15;
+        border-radius: 20px;
+        padding: 20px;
+        color: #1e293b;
+    }
+
+    /* Mini Grid Cards 2x2 (Middle Bottom - Matching Mockup) */
+    .mini-user-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 16px;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    .mini-user-card:hover {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    /* 3D Orb AI Copilot Card (Right Bottom - Matching Mockup) */
+    .copilot-card {
+        background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 24px;
-        position: relative;
-        overflow: hidden;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.03);
     }
-    .copilot-orb {
-        width: 90px;
-        height: 90px;
-        background: radial-gradient(circle at 30% 30%, #60a5fa, #2563eb 60%, #1e40af);
+    .copilot-orb-3d {
+        width: 84px;
+        height: 84px;
+        margin: 0 auto 16px auto;
+        background: radial-gradient(circle at 35% 35%, #93c5fd 0%, #3b82f6 50%, #1d4ed8 100%);
         border-radius: 50%;
-        box-shadow: 0 12px 32px rgba(37, 99, 235, 0.35), inset -6px -6px 12px rgba(0, 0, 0, 0.2), inset 6px 6px 12px rgba(255, 255, 255, 0.6);
+        box-shadow: 0 14px 35px rgba(59, 130, 246, 0.4), inset -8px -8px 16px rgba(0, 0, 0, 0.25), inset 8px 8px 16px rgba(255, 255, 255, 0.7);
         animation: floatOrb 4s ease-in-out infinite alternate;
     }
     @keyframes floatOrb {
@@ -91,47 +136,66 @@
         100% { transform: translateY(-8px) scale(1.04); }
     }
 
-    .schedule-grid-header {
+    .calendar-grid-cell {
         background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
-        border-radius: 20px 20px 0 0;
+        border-radius: 12px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .calendar-grid-cell-active {
+        background: #3b82f6;
+        color: #ffffff;
+        font-weight: 700;
+        border-radius: 12px;
     }
 </style>
 @endpush
 
 @section('content')
-<div class="soft-bg pb-5">
-    <div class="container-fluid px-4 py-3">
+<div class="soft-dashboard-body">
+    <div class="soft-dashboard-container">
         
-        <!-- Top Floating Header Bar (Mockup Navigation Style) -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pill-header-bar">
-            <div class="d-flex align-items-center gap-2">
-                <div class="bg-primary text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width:38px; height:38px;">
-                    <i data-feather="grid" style="width:18px; height:18px;"></i>
+        <!-- TOP HEADER BAR (Matching Mockup Navigation Bar) -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 mockup-header-bar">
+            <!-- Left: Logo & Pill Navigation Tabs -->
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                    <i data-feather="grid" style="width:20px; height:20px;"></i>
                 </div>
-                <div class="nav nav-pills border-0" role="tablist">
-                    <button class="soft-pill-btn soft-pill-btn-active me-1" id="tab-btn-dashboard" data-bs-toggle="pill" data-bs-target="#panel-dashboard">
-                        <i data-feather="layout" class="me-1" style="width:14px; height:14px;"></i> Vue Générale
+                <div class="d-flex align-items-center gap-1 bg-light rounded-pill p-1 border">
+                    <button class="pill-tab-btn pill-tab-btn-active">
+                        <i data-feather="layout" class="me-1" style="width:14px; height:14px;"></i> Tableau de bord
                     </button>
-                    <button class="soft-pill-btn soft-pill-btn-inactive me-1" id="tab-btn-prospects" data-bs-toggle="pill" data-bs-target="#panel-prospects">
+                    <button class="pill-tab-btn pill-tab-btn-inactive" data-bs-toggle="modal" data-bs-target="#addProspectModal">
                         <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i> Leads CRM ({{ $totalProspects }})
                     </button>
-                    <button class="soft-pill-btn soft-pill-btn-inactive me-1" id="tab-btn-marketing" data-bs-toggle="pill" data-bs-target="#panel-marketing">
-                        <i data-feather="target" class="me-1" style="width:14px; height:14px;"></i> Kit Marketing & Inbound
-                    </button>
+                    <a href="{{ route('commercial.showcase') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none">
+                        <i data-feather="book-open" class="me-1" style="width:14px; height:14px;"></i> Kit Marketing
+                    </a>
                 </div>
             </div>
 
+            <!-- Right: Search, Avatar Group, and CTA Action Button -->
             <div class="d-flex align-items-center gap-3">
                 <div class="position-relative d-none d-md-block">
-                    <i data-feather="search" class="position-absolute text-muted" style="left:14px; top:10px; width:16px; height:16px;"></i>
-                    <input type="text" class="form-control rounded-pill border-0 bg-light ps-5 pe-4 text-sm" placeholder="Rechercher prospect, PME, client..." style="width:240px; font-size:0.85rem;">
+                    <i data-feather="search" class="position-absolute text-muted" style="left:14px; top:11px; width:15px; height:15px;"></i>
+                    <input type="text" class="form-control rounded-pill border-0 bg-light ps-5 pe-4" placeholder="Rechercher client, PME..." style="width:200px; font-size:0.85rem;">
                 </div>
+                
+                <!-- Avatar Stack (Mockup Style) -->
+                <div class="d-none d-lg-flex align-items-center me-1">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">EK</div>
+                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">JK</div>
+                    <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem;">+{{ $totalClients }}</div>
+                </div>
+
                 <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-bold text-sm" data-bs-toggle="modal" data-bs-target="#addProspectModal">
                     + Lead CRM
                 </button>
                 <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold text-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#addClientModal">
-                    <i data-feather="user-plus" class="me-1" style="width:14px; height:14px;"></i> + Client PME (2 Étapes)
+                    <i data-feather="user-plus" class="me-1" style="width:14px; height:14px;"></i> + Nouveau Client
                 </button>
             </div>
         </div>
@@ -145,357 +209,253 @@
             </div>
         @endif
 
-        <!-- Tab Panels -->
-        <div class="tab-content">
-            
-            <!-- PANEL 1: MAIN DASHBOARD -->
-            <div class="tab-pane fade show active" id="panel-dashboard" role="tabpanel">
-                
-                <!-- Metrics Row (Soft White Floating Cards) -->
-                <div class="row g-4 mb-4">
-                    <div class="col-xl-3 col-md-6">
-                        <div class="soft-card p-4 h-100">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing:0.5px;">PORTEFEUILLE CLIENTS</span>
-                                <span class="pill-badge pill-badge-blue">PME Inscrites</span>
-                            </div>
-                            <div class="display-6 fw-bold text-dark mb-1">{{ number_format($totalClients) }}</div>
-                            <div class="text-muted small">Entreprises gérées dans votre espace.</div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-3 col-md-6">
-                        <div class="soft-card p-4 h-100">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing:0.5px;">PIPELINE PROSPECTS</span>
-                                <span class="pill-badge pill-badge-amber">Inbound Leads</span>
-                            </div>
-                            <div class="display-6 fw-bold text-dark mb-1">{{ number_format($totalProspects) }}</div>
-                            <div class="text-muted small"><strong class="text-warning">{{ $newProspects }}</strong> nouveaux leads à contacter.</div>
-                        </div>
-                    </div>
-
-                    <div class="col-xl-3 col-md-6">
-                        <div class="soft-card p-4 h-100">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing:0.5px;">ESSAIS 1 MOIS ACTIFS</span>
-                                <span class="pill-badge pill-badge-emerald">Free Trial</span>
-                            </div>
-                            <div class="display-6 fw-bold text-emerald mb-1 text-success">{{ number_format($activeTrials) }}</div>
-                            <div class="text-muted small">Clients en période d'essai 30 jours.</div>
-                        </div>
-                    </div>
-
-                    <div class="col-xl-3 col-md-6">
-                        <div class="soft-card p-4 h-100">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing:0.5px;">CONVERSIONS PAYANTES</span>
-                                <span class="pill-badge pill-badge-purple">Abonnés</span>
-                            </div>
-                            <div class="display-6 fw-bold text-dark mb-1">{{ number_format($convertedProspects) }}</div>
-                            <div class="text-muted small">Leads devenus abonnés payants.</div>
-                        </div>
-                    </div>
+        <!-- TOP MAIN SECTION: SCHEDULE & CLIENTS TIMELINE GRID (Exact Mockup Layout) -->
+        <div class="mockup-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                <div>
+                    <h2 class="h4 fw-bold text-dark mb-1">Portefeuille Clients & Planning d'Essai 1 Mois</h2>
+                    <p class="text-muted small mb-0">Suivi des activations d'essai gratuit SYSCOHADA et des conversions PME.</p>
                 </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="btn btn-sm btn-light rounded-pill border px-3 text-muted fw-semibold">
+                        <i data-feather="calendar" class="me-1" style="width:14px; height:14px;"></i> {{ now()->format('d F Y') }}
+                    </span>
+                    <button class="btn btn-sm btn-light rounded-pill border px-3 text-muted fw-semibold" data-bs-toggle="modal" data-bs-target="#addClientModal">
+                        <i data-feather="filter" class="me-1" style="width:14px; height:14px;"></i> Filtrer
+                    </button>
+                </div>
+            </div>
 
-                <!-- Central Content Grid (2 Columns: Main Schedule & AI Copilot Widget) -->
-                <div class="row g-4 mb-4">
-                    
-                    <!-- Left Column: Main Clients Grid & Schedule -->
-                    <div class="col-lg-8">
-                        <div class="soft-card p-4 h-100">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <div>
-                                    <h3 class="h5 fw-bold text-dark mb-1">Portefeuille Clients PME</h3>
-                                    <p class="text-muted small mb-0">Entreprises parrainées et suivi d'essai gratuit 1 mois.</p>
+            <!-- Calendar Days Header Row (Mockup Style) -->
+            <div class="row g-2 text-center text-muted small fw-semibold mb-3">
+                <div class="col-md-3 text-start ps-3">Client PME / Représentant</div>
+                <div class="col"><div class="calendar-grid-cell">Lun 1</div></div>
+                <div class="col"><div class="calendar-grid-cell">Mar 2</div></div>
+                <div class="col"><div class="calendar-grid-cell">Mer 3</div></div>
+                <div class="col"><div class="calendar-grid-cell">Jeu 4</div></div>
+                <div class="col"><div class="calendar-grid-cell">Ven 5</div></div>
+                <div class="col"><div class="calendar-grid-cell calendar-grid-cell-active">Sam 6</div></div>
+                <div class="col"><div class="calendar-grid-cell">Dim 7</div></div>
+                <div class="col"><div class="calendar-grid-cell">Lun 8</div></div>
+            </div>
+
+            <!-- Client Rows with Status Floating Pills (Mockup Style) -->
+            <div class="d-flex flex-column gap-3">
+                @forelse($clients as $client)
+                    @php
+                        $isTrialActive = $client->is_premium && $client->premium_ends_at && $client->premium_ends_at->isFuture();
+                        $daysLeft = $isTrialActive ? now()->diffInDays($client->premium_ends_at) : 0;
+                    @endphp
+                    <div class="row g-2 align-items-center p-2 rounded-4 hover-bg-light border-bottom border-light">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:40px; height:40px; font-size:0.85rem;">
+                                    {{ strtoupper(substr($client->name, 0, 2)) }}
                                 </div>
-                                <button type="button" class="btn btn-sm btn-light rounded-pill px-3 fw-semibold border" data-bs-toggle="modal" data-bs-target="#addClientModal">
-                                    + Nouveau Client
-                                </button>
+                                <div>
+                                    <div class="fw-bold text-dark mb-0">{{ $client->name }}</div>
+                                    <div class="text-muted small" style="font-size:0.78rem;">{{ $client->company_name ?? 'PME Client' }}</div>
+                                </div>
                             </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="d-flex align-items-center justify-content-between">
+                                @if($isTrialActive)
+                                    <span class="status-pill status-pill-green">
+                                        <i data-feather="check-circle" style="width:14px; height:14px;"></i> Essai Gratuit Actif ({{ $daysLeft }} jours restants)
+                                    </span>
+                                @else
+                                    <span class="status-pill status-pill-purple">
+                                        <i data-feather="alert-circle" style="width:14px; height:14px;"></i> Essai Expiré / À Relancer
+                                    </span>
+                                @endif
 
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0 border-0">
-                                    <thead>
-                                        <tr class="text-muted text-uppercase small" style="font-size:0.75rem;">
-                                            <th class="border-0">Client & Dirigeant</th>
-                                            <th class="border-0">Entreprise</th>
-                                            <th class="border-0">Inscription</th>
-                                            <th class="border-0">Statut d'Essai</th>
-                                            <th class="border-0 text-end">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($clients as $client)
-                                            @php
-                                                $isTrialActive = $client->is_premium && $client->premium_ends_at && $client->premium_ends_at->isFuture();
-                                                $daysLeft = $isTrialActive ? now()->diffInDays($client->premium_ends_at) : 0;
-                                            @endphp
-                                            <tr>
-                                                <td class="py-3">
-                                                    <div class="d-flex align-items-center gap-3">
-                                                        <div class="bg-light rounded-circle text-primary fw-bold d-flex align-items-center justify-content-center border" style="width:38px; height:38px; font-size:0.85rem;">
-                                                            {{ strtoupper(substr($client->name, 0, 2)) }}
-                                                        </div>
-                                                        <div>
-                                                            <div class="fw-bold text-dark">{{ $client->name }}</div>
-                                                            <div class="text-muted small">{{ $client->email }}</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <span class="pill-badge pill-badge-blue">{{ $client->company_name ?? 'PME Non Renseignée' }}</span>
-                                                </td>
-                                                <td>
-                                                    <div class="fw-semibold text-dark">{{ $client->created_at->format('d/m/Y') }}</div>
-                                                </td>
-                                                <td>
-                                                    @if($isTrialActive)
-                                                        <span class="pill-badge pill-badge-emerald">
-                                                            Essai Actif ({{ $daysLeft }} j)
-                                                        </span>
-                                                    @else
-                                                        <span class="pill-badge pill-badge-rose">
-                                                            Essai Expiré
-                                                        </span>
-                                                    @endif
-                                                </td>
-                                                <td class="text-end">
-                                                    <button type="button" class="btn btn-sm btn-light rounded-pill border px-3" data-bs-toggle="modal" data-bs-target="#editClientModal{{ $client->id }}">
-                                                        Modifier
-                                                    </button>
-                                                    <form action="{{ route('commercial.clients.destroy', $client->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Supprimer ce compte client ?');">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-link text-danger border-0 p-0 ms-2">
-                                                            <i data-feather="trash-2" style="width:15px; height:15px;"></i>
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-
-                                            <!-- Edit Client Modal -->
-                                            <div class="modal fade" id="editClientModal{{ $client->id }}" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
-                                                <div class="modal-dialog modal-dialog-centered modal-lg">
-                                                    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                                                        <form action="{{ route('commercial.clients.update', $client->id) }}" method="POST">
-                                                            @csrf
-                                                            @method('PUT')
-                                                            <div class="modal-header border-0 bg-dark text-white p-4">
-                                                                <h5 class="modal-title fw-bold">Modifier la Fiche Client — {{ $client->name }}</h5>
-                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                            </div>
-                                                            <div class="modal-body p-4">
-                                                                <div class="row g-3">
-                                                                    <div class="col-md-6">
-                                                                        <label class="form-label small fw-semibold">Nom complet</label>
-                                                                        <input type="text" name="name" class="form-control rounded-3" value="{{ old('name', $client->name) }}" required>
-                                                                    </div>
-                                                                    <div class="col-md-6">
-                                                                        <label class="form-label small fw-semibold">Adresse Email</label>
-                                                                        <input type="email" name="email" class="form-control rounded-3" value="{{ old('email', $client->email) }}" required>
-                                                                    </div>
-                                                                    <div class="col-md-6">
-                                                                        <label class="form-label small fw-semibold">Téléphone</label>
-                                                                        <input type="text" name="phone" class="form-control rounded-3" value="{{ old('phone', $client->phone) }}">
-                                                                    </div>
-                                                                    <div class="col-md-6">
-                                                                        <label class="form-label small fw-semibold">Raison Sociale / Entreprise</label>
-                                                                        <input type="text" name="company_name" class="form-control rounded-3" value="{{ old('company_name', $client->company_name) }}">
-                                                                    </div>
-                                                                    <div class="col-md-6">
-                                                                        <label class="form-label small fw-semibold">Secteur d'activité</label>
-                                                                        <input type="text" name="sector" class="form-control rounded-3" value="{{ old('sector', $client->sector) }}">
-                                                                    </div>
-                                                                    <div class="col-md-6">
-                                                                        <label class="form-label small fw-semibold">Ville</label>
-                                                                        <input type="text" name="city" class="form-control rounded-3" value="{{ old('city', $client->city) }}">
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="modal-footer border-0 p-4 pt-0">
-                                                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuler</button>
-                                                                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Enregistrer</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @empty
-                                            <tr>
-                                                <td colspan="5" class="text-center text-muted py-5">
-                                                    <i data-feather="users" class="mb-2" style="width:36px; height:36px; opacity:0.3;"></i>
-                                                    <div>Aucun client parrainé enregistré.</div>
-                                                </td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-light rounded-pill border px-3" data-bs-toggle="modal" data-bs-target="#editClientModal{{ $client->id }}">
+                                        Modifier
+                                    </button>
+                                    <form action="{{ route('commercial.clients.destroy', $client->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Supprimer ce client ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-light text-danger rounded-pill border px-2">
+                                            <i data-feather="trash-2" style="width:14px; height:14px;"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right Column: AI Assistant / Copilot Orb Widget (Mockup Style) -->
-                    <div class="col-lg-4">
-                        <div class="ai-copilot-card p-4 h-100 d-flex flex-column justify-content-between shadow-sm">
-                            <div>
-                                <div class="d-flex justify-content-center mb-4 pt-2">
-                                    <div class="copilot-orb d-flex align-items-center justify-content-center text-white">
-                                        <i data-feather="cpu" style="width:36px; height:36px;"></i>
+                    <!-- Edit Client Modal -->
+                    <div class="modal fade" id="editClientModal{{ $client->id }}" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                <form action="{{ route('commercial.clients.update', $client->id) }}" method="POST">
+                                    @csrf
+                                    @method('PUT')
+                                    <div class="modal-header border-0 bg-dark text-white p-4">
+                                        <h5 class="modal-title fw-bold">Modifier la Fiche Client — {{ $client->name }}</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
-                                </div>
-                                <div class="text-center mb-4">
-                                    <h4 class="fw-bold text-dark mb-1">Assistant IA Commercial 🚀</h4>
-                                    <p class="text-muted small">Que souhaitez-vous analyser ou accomplir aujourd'hui ?</p>
-                                </div>
-
-                                <div class="d-flex flex-wrap gap-2 justify-content-center mb-4">
-                                    <button type="button" class="btn btn-sm btn-light border rounded-pill text-sm px-3" data-bs-toggle="modal" data-bs-target="#addProspectModal">
-                                        <i data-feather="user-plus" class="me-1" style="width:12px; height:12px;"></i> + Lead CRM
-                                    </button>
-                                    <a href="{{ route('commercial.showcase') }}" class="btn btn-sm btn-light border rounded-pill text-sm px-3">
-                                        <i data-feather="book" class="me-1" style="width:12px; height:12px;"></i> Guides Inbound
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-light border rounded-pill text-sm px-3" data-bs-toggle="modal" data-bs-target="#addClientModal">
-                                        <i data-feather="check-circle" class="me-1" style="width:12px; height:12px;"></i> Inscrire PME
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="position-relative mt-auto">
-                                <input type="text" class="form-control rounded-pill border bg-white ps-4 pe-5 py-2 text-sm" placeholder="Posez une question à l'IA...">
-                                <button type="button" class="btn btn-primary rounded-circle position-absolute p-0 d-flex align-items-center justify-content-center" style="right:6px; top:4px; width:32px; height:32px;">
-                                    <i data-feather="arrow-right" style="width:14px; height:14px;"></i>
-                                </button>
+                                    <div class="modal-body p-4">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label small fw-semibold">Nom complet</label>
+                                                <input type="text" name="name" class="form-control rounded-3" value="{{ old('name', $client->name) }}" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small fw-semibold">Adresse Email</label>
+                                                <input type="email" name="email" class="form-control rounded-3" value="{{ old('email', $client->email) }}" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small fw-semibold">Téléphone</label>
+                                                <input type="text" name="phone" class="form-control rounded-3" value="{{ old('phone', $client->phone) }}">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small fw-semibold">Raison Sociale / Entreprise</label>
+                                                <input type="text" name="company_name" class="form-control rounded-3" value="{{ old('company_name', $client->company_name) }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0 p-4 pt-0">
+                                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuler</button>
+                                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Enregistrer</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
+                    </div>
+                @empty
+                    <div class="text-center text-muted py-4">
+                        <i data-feather="users" class="mb-2" style="width:36px; height:36px; opacity:0.3;"></i>
+                        <div>Aucun client parrainé enregistré dans votre portefeuille.</div>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- BOTTOM ROW (EXACT MOCKUP 3 COLUMNS: FUTURE EVENTS | ONBOARDING LEADS | WELCOME AI COPILOT) -->
+        <div class="row g-4">
+            
+            <!-- COLUMN 1 (LEFT ~33%): FUTURE EVENTS / ÉVÉNEMENTS (Matching Mockup Left Card) -->
+            <div class="col-lg-4">
+                <div class="mockup-card p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="h5 fw-bold text-dark mb-0">Événements & Relances</h3>
+                        <a href="{{ route('commercial.showcase') }}" class="text-decoration-none small text-muted fw-semibold">Voir tout &rarr;</a>
+                    </div>
+
+                    <!-- Highlighted Yellow/Amber Top Event Card (Mockup Style) -->
+                    <div class="amber-event-card mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold fs-6">Webinaire Sitiame Capital</span>
+                            <span class="badge bg-dark text-white rounded-pill px-2 py-1 small">Dans 15 min</span>
+                        </div>
+                        <p class="small text-dark mb-3">Présentation du logiciel comptable SYSCOHADA & Trésorerie Mobile Money.</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-semibold">
+                                <i data-feather="clock" class="me-1" style="width:12px; height:12px;"></i> 14:00 - 15:30
+                            </span>
+                            <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-semibold">
+                                <i data-feather="calendar" class="me-1" style="width:12px; height:12px;"></i> 15 Déc.
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Second Event Item -->
+                    <div class="p-3 bg-light rounded-4 border mb-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold text-dark small">Relances Essais Expirés</div>
+                            <div class="text-muted small" style="font-size:0.75rem;">Session de conversion téléphonique</div>
+                        </div>
+                        <span class="badge bg-white text-dark border rounded-pill">09:00 - 12:00</span>
+                    </div>
+
+                    <!-- Third Event Item -->
+                    <div class="p-3 bg-light rounded-4 border d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold text-dark small">Atelier Sitiame Finance Club</div>
+                            <div class="text-muted small" style="font-size:0.75rem;">Rencontre Dirigeants PME</div>
+                        </div>
+                        <span class="badge bg-white text-dark border rounded-pill">Jeudi</span>
                     </div>
                 </div>
             </div>
 
-            <!-- PANEL 2: PROSPECTS CRM -->
-            <div class="tab-pane fade" id="panel-prospects" role="tabpanel">
-                <div class="soft-card p-4 mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div>
-                            <h3 class="h5 fw-bold text-dark mb-1">Pipeline des Prospects Inbound CRM</h3>
-                            <p class="text-muted small mb-0">Gestion et qualification des opportunités d'affaires Sitiame Capital.</p>
-                        </div>
-                        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#addProspectModal">
-                            + Ajouter un Prospect
+            <!-- COLUMN 2 (MIDDLE ~33%): ONBOARDING / LEADS CRM 2x2 MINI GRID (Matching Mockup Middle Card) -->
+            <div class="col-lg-4">
+                <div class="mockup-card p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="h5 fw-bold text-dark mb-0">Leads CRM Inbound</h3>
+                        <button type="button" class="btn btn-link text-decoration-none p-0 border-0 small text-muted fw-semibold" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                            + Lead
                         </button>
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle border-0">
-                            <thead>
-                                <tr class="text-muted text-uppercase small" style="font-size:0.75rem;">
-                                    <th class="border-0">Prospect</th>
-                                    <th class="border-0">Entreprise & Poste</th>
-                                    <th class="border-0">Besoin Financier</th>
-                                    <th class="border-0">Statut CRM</th>
-                                    <th class="border-0">Date</th>
-                                    <th class="border-0 text-end">Changer Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($prospects as $prospect)
-                                    <tr>
-                                        <td>
-                                            <div class="fw-bold text-dark">{{ $prospect->name }}</div>
-                                            <div class="text-muted small">{{ $prospect->email }}</div>
-                                        </td>
-                                        <td>
-                                            <div class="fw-semibold text-dark">{{ $prospect->company_name ?? 'PME non renseignée' }}</div>
-                                            <div class="text-muted small">{{ $prospect->job_title ?? 'Dirigeant / RAF' }}</div>
-                                        </td>
-                                        <td>
-                                            <span class="pill-badge pill-badge-blue">{{ $prospect->need_label }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge {{ $prospect->status_badge_class }} p-2 rounded-pill">
-                                                {{ $prospect->status_label }}
-                                            </span>
-                                        </td>
-                                        <td>{{ $prospect->created_at->format('d/m/Y') }}</td>
-                                        <td class="text-end">
-                                            <form action="{{ route('commercial.prospects.updateStatus', $prospect->id) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                @method('PUT')
-                                                <select name="status" class="form-select form-select-sm d-inline-block w-auto rounded-pill me-1" onchange="this.form.submit()">
-                                                    <option value="nouveau" {{ $prospect->status === 'nouveau' ? 'selected' : '' }}>Nouveau</option>
-                                                    <option value="contacte" {{ $prospect->status === 'contacte' ? 'selected' : '' }}>Contacté</option>
-                                                    <option value="qualifie" {{ $prospect->status === 'qualifie' ? 'selected' : '' }}>Qualifié</option>
-                                                    <option value="client" {{ $prospect->status === 'client' ? 'selected' : '' }}>Converti Client</option>
-                                                    <option value="sans_suite" {{ $prospect->status === 'sans_suite' ? 'selected' : '' }}>Sans suite</option>
-                                                </select>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted py-5">
-                                            <i data-feather="target" class="mb-2" style="width:36px; height:36px; opacity:0.3;"></i>
-                                            <div>Aucun prospect enregistré.</div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <!-- 2x2 Grid Layout (Mockup Style) -->
+                    <div class="row g-3">
+                        @forelse($prospects->take(4) as $prospect)
+                            <div class="col-6">
+                                <div class="mini-user-card">
+                                    <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center mx-auto mb-2" style="width:44px; height:44px; font-size:0.9rem;">
+                                        {{ strtoupper(substr($prospect->name, 0, 2)) }}
+                                    </div>
+                                    <div class="fw-bold text-dark text-truncate small mb-0">{{ $prospect->name }}</div>
+                                    <div class="text-muted small text-truncate mb-2" style="font-size:0.75rem;">{{ $prospect->company_name ?? 'PME' }}</div>
+                                    <span class="badge {{ $prospect->status_badge_class }} rounded-pill px-2 py-1 small">
+                                        {{ $prospect->status_label }}
+                                    </span>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-12 text-center text-muted py-4">
+                                <i data-feather="target" class="mb-2" style="width:32px; height:32px; opacity:0.3;"></i>
+                                <div class="small">Aucun prospect disponible.</div>
+                            </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
 
-            <!-- PANEL 3: MARKETING KIT -->
-            <div class="tab-pane fade" id="panel-marketing" role="tabpanel">
-                <div class="row g-4 mb-4">
-                    <div class="col-md-7">
-                        <div class="soft-card p-4 h-100">
-                            <h4 class="h5 fw-bold text-dark mb-3">📚 Guides d'Expertise & Lead Magnets</h4>
-                            <p class="text-muted small mb-4">Partagez ces supports de référence SYSCOHADA et Trésorerie pour capturer des leads qualifiés.</p>
-                            
-                            <div class="p-3 mb-3 border rounded-4 bg-light d-flex align-items-center justify-content-between">
-                                <div>
-                                    <h6 class="fw-bold text-dark mb-1">Guide 1 : Réussir son Bilan SYSCOHADA</h6>
-                                    <div class="text-muted small">Manuel pratique de gestion comptable PME.</div>
-                                </div>
-                                <a href="{{ route('commercial.showcase') }}" class="btn btn-sm btn-outline-primary rounded-pill">Télécharger</a>
-                            </div>
+            <!-- COLUMN 3 (RIGHT ~33%): WELCOME AI ASSISTANT CARD (Exact Mockup Right Card with Glowing 3D Orb) -->
+            <div class="col-lg-4">
+                <div class="copilot-card h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <!-- Glowing 3D Orb (Mockup Sphere Style) -->
+                        <div class="copilot-orb-3d"></div>
 
-                            <div class="p-3 mb-3 border rounded-4 bg-light d-flex align-items-center justify-content-between">
-                                <div>
-                                    <h6 class="fw-bold text-dark mb-1">Guide 2 : Trésorerie & Rapprochement Mobile Money</h6>
-                                    <div class="text-muted small">Intégration Wave, Orange Money et MTN.</div>
-                                </div>
-                                <a href="{{ route('commercial.showcase') }}" class="btn btn-sm btn-outline-primary rounded-pill">Télécharger</a>
-                            </div>
+                        <!-- Centered Greeting Text (Mockup Style) -->
+                        <h3 class="fw-bold text-dark mb-1">Bonjour, {{ explode(' ', auth()->user()->name)[0] }}</h3>
+                        <p class="text-muted small mb-4">Que puis-je analyser ou automatiser pour vous aujourd'hui ?</p>
 
-                            <div class="p-3 border rounded-4 bg-light d-flex align-items-center justify-content-between">
-                                <div>
-                                    <h6 class="fw-bold text-dark mb-1">Guide 3 : Préparer sa PME à une Levée de Fonds (FIRD)</h6>
-                                    <div class="text-muted small">Diagnostic de maturité & Investor Readiness.</div>
-                                </div>
-                                <a href="{{ route('commercial.showcase') }}" class="btn btn-sm btn-outline-primary rounded-pill">Télécharger</a>
-                            </div>
+                        <!-- Quick Action Buttons Row (Mockup Style) -->
+                        <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+                            <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 text-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                                <i data-feather="user-plus" class="me-1" style="width:12px; height:12px;"></i> + Lead CRM
+                            </button>
+                            <a href="{{ route('commercial.showcase') }}" class="btn btn-sm btn-light border rounded-pill px-3 text-sm fw-semibold">
+                                <i data-feather="file-text" class="me-1" style="width:12px; height:12px;"></i> Guides Inbound
+                            </a>
                         </div>
                     </div>
 
-                    <div class="col-md-5">
-                        <div class="soft-card p-4 h-100 bg-dark text-white d-flex flex-column justify-content-between">
-                            <div>
-                                <span class="pill-badge pill-badge-purple mb-3">COMMUNAUTÉ SITIAME</span>
-                                <h4 class="fw-bold text-white mb-2">Sitiame Finance Club 🌐</h4>
-                                <p class="text-white-50 small mb-4">Invitez vos dirigeants de PME à rejoindre le réseau exclusif d'entrepreneurs pour accéder aux webinaires mensuels et aux opportunités de financement.</p>
-                            </div>
-                            <a href="{{ route('commercial.showcase') }}" class="btn btn-light text-dark rounded-pill fw-bold w-100 py-2">
-                                Présenter le Sitiame Finance Club &rarr;
-                            </a>
+                    <!-- Bottom Search Input Box ("Ask me anything" - Mockup Style) -->
+                    <div class="bg-light p-2 rounded-4 border">
+                        <input type="text" class="form-control border-0 bg-transparent text-sm text-center mb-2" placeholder="Posez votre question à l'IA...">
+                        <div class="d-flex justify-content-between align-items-center px-2">
+                            <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-2 py-1 text-muted small">
+                                <i data-feather="paperclip" style="width:12px; height:12px;"></i> Joindre
+                            </button>
+                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-bold">
+                                Créer &rarr;
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
         </div>
+
     </div>
 </div>
 
@@ -507,7 +467,7 @@
                 @csrf
                 <div class="modal-header border-0 bg-dark text-white p-4">
                     <div>
-                        <span class="pill-badge pill-badge-blue mb-2">LEAD GENERATION CRM</span>
+                        <span class="badge bg-primary text-white rounded-pill px-3 py-1 mb-2 fw-semibold">LEAD GENERATION CRM</span>
                         <h4 class="modal-title fw-bold text-white mb-0">Nouveau Prospect / Lead Qualifié</h4>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -565,7 +525,7 @@
                 @csrf
                 <div class="modal-header border-0 bg-primary text-white p-4">
                     <div>
-                        <span class="pill-badge pill-badge-emerald mb-2" id="stepBadgeLabel">Étape 1/2</span>
+                        <span class="badge bg-white text-primary rounded-pill px-3 py-1 mb-2 fw-semibold" id="stepBadgeLabel">Étape 1/2</span>
                         <h4 class="modal-title fw-bold text-white mb-0" id="stepTitleLabel">COMPTE CLIENT & CRÉDENTIELS</h4>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
