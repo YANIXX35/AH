@@ -1,6 +1,10 @@
 @php
-    $hfAssistantEnabled = (string) config('services.huggingface.token', '') !== '';
-    $hfModel = (string) config('services.huggingface.model', 'meta-llama/Llama-3.1-8B-Instruct');
+    $geminiKey = (string) config('services.gemini.key', env('GEMINI_API_KEY', ''));
+    $hfToken = (string) config('services.huggingface.token', '');
+    $hfAssistantEnabled = $geminiKey !== '' || $hfToken !== '';
+    $hfModel = $geminiKey !== '' 
+        ? 'Google Gemini 1.5/2.5 Flash' 
+        : (string) config('services.huggingface.model', 'meta-llama/Llama-3.1-8B-Instruct');
     $hasCriticalAlerts = (($unreadNotificationsCount ?? 0) > 0);
     $currentRouteName = request()->route()?->getName() ?? '';
     $authUser = auth()->user();
@@ -299,7 +303,7 @@
                 @if($hfAssistantEnabled)
                     {{ $hfModel }}
                 @else
-                    Inactif (token Hugging Face manquant)
+                    Inactif (Clé GEMINI_API_KEY manquante)
                 @endif
             </small>
         </div>

@@ -12,18 +12,24 @@ class HuggingFaceOpsAssistantService
      */
     public function chat(array $messages): array
     {
+        $geminiKey = (string) config('services.gemini.key', env('GEMINI_API_KEY', ''));
+        if (!empty($geminiKey)) {
+            $geminiService = new \App\Services\GeminiOpsAssistantService();
+            return $geminiService->chat($messages);
+        }
+
         $token = (string) config('services.huggingface.token', '');
         $model = (string) config('services.huggingface.model', 'meta-llama/Llama-3.1-8B-Instruct');
         $baseUrl = rtrim((string) config('services.huggingface.base_url', 'https://router.huggingface.co/v1'), '/');
         $timeout = (int) config('services.huggingface.timeout', 45);
 
         if ($token === '') {
-            \Log::warning('HuggingFace token non configuré - chat impossible');
+            \Log::warning('Ni Gemini API Key ni HuggingFace token ne sont configurés.');
             
             return [
                 'ok' => false,
                 'answer' => '',
-                'error' => 'HUGGINGFACE_TOKEN non configuré. Configurez HUGGINGFACE_TOKEN pour utiliser l\'assistant IA.',
+                'error' => 'GEMINI_API_KEY non configuré. Veuillez définir GEMINI_API_KEY dans le fichier .env.',
                 'enabled' => false,
             ];
         }
