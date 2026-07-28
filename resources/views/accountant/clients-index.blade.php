@@ -187,51 +187,53 @@
 <div class="modal fade text-start" id="addAccountantClientModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addAccountantClientModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-dark" id="addAccountantClientModalLabel">Nouveau Dossier Client & Création d'Entreprise</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header border-0 bg-primary text-white p-4">
+                <div>
+                    <span class="badge bg-white text-primary rounded-pill px-3 py-1 mb-2 fw-semibold" id="accStepBadgeLabel">Étape 1/2</span>
+                    <h4 class="modal-title fw-bold text-white mb-0" id="accStepTitleLabel">COMPTE DU RESPONSABLE</h4>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
-            <form action="{{ route('accountant.clients.store') }}" method="POST" enctype="multipart/form-data" id="accWizardForm">
+            <div class="progress rounded-0" style="height: 5px; background-color: #e2e8f0;">
+                <div class="progress-bar bg-warning" id="accWizardProgressBar" role="progressbar" style="width: 50%; transition: width 0.3s ease;"></div>
+            </div>
+
+            <form action="{{ route('accountant.clients.store') }}" method="POST" enctype="multipart/form-data" id="accWizardForm" autocomplete="off">
                 @csrf
                 
-                <!-- STEP PROGRESS BAR HEADER -->
-                <div class="px-4 pt-3 pb-2">
-                    <div class="p-3 rounded-4 border" style="background:#fff7ed; border-color:#ffedd5 !important;">
-                        <div class="d-flex justify-content-between align-items-center fw-bold small mb-2 text-uppercase" style="letter-spacing:1px; color:#c2410c;">
-                            <span id="accStepBadgeLabel">Étape 1/2</span>
-                            <span id="accStepTitleLabel">COMPTE</span>
-                        </div>
-                        <div class="progress" style="height: 6px; background-color: #ffedd5;">
-                            <div class="progress-bar" id="accWizardProgressBar" role="progressbar" style="width: 50%; background-color: #ea580c; transition: width 0.3s ease;"></div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Fake inputs to trap aggressive browser autofills -->
+                <input type="text" name="fake_usernameremembered" style="display:none" tabindex="-1">
+                <input type="password" name="fake_passwordremembered" style="display:none" tabindex="-1">
 
-                <div class="modal-body px-4 py-3" style="max-height: 65vh; overflow-y: auto;">
+                <div class="modal-body p-4" style="max-height: 65vh; overflow-y: auto;">
 
                     <!-- STEP 1 : COMPTE RESPONSABLE -->
                     <div id="accWizardStep1">
+                        <div class="alert alert-light border rounded-3 mb-4 text-muted small">
+                            <i data-feather="info" class="me-1 text-primary"></i> Renseignez les coordonnées du responsable qui aura accès à cet espace client.
+                        </div>
+
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Nom du responsable <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control rounded-3 py-2" placeholder="ex: Jean Dupont" required>
+                            <label class="form-label small fw-bold text-dark">Nom complet du responsable <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="ex: Jean Dupont" autocomplete="off" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Adresse E-mail pro <span class="text-danger">*</span></label>
-                            <input type="email" name="email" class="form-control rounded-3 py-2" placeholder="ex: contact@societe.ci" required>
+                            <label class="form-label small fw-bold text-dark">Adresse E-mail pro (Identifiant) <span class="text-danger">*</span></label>
+                            <input type="email" name="email" id="accInputEmail" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="ex: client@entreprise.ci" autocomplete="new-email" value="" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Téléphone (facultatif)</label>
-                            <input type="text" name="phone" class="form-control rounded-3 py-2" placeholder="ex: +225 07000000">
+                            <label class="form-label small fw-bold text-dark">Téléphone (facultatif)</label>
+                            <input type="text" name="phone" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="ex: +225 0700000000" autocomplete="off">
                         </div>
-                        <div class="row g-2 mb-3">
+                        <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label small fw-semibold">Mot de passe <span class="text-danger">*</span></label>
-                                <input type="password" name="password" class="form-control rounded-3 py-2" placeholder="Min. 8 caractères" required>
+                                <label class="form-label small fw-bold text-dark">Mot de passe temporaire <span class="text-danger">*</span></label>
+                                <input type="password" name="password" id="accInputPassword" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="Min. 8 caractères" autocomplete="new-password" value="" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-semibold">Confirmer <span class="text-danger">*</span></label>
-                                <input type="password" name="password_confirmation" class="form-control rounded-3 py-2" placeholder="Confirmer mot de passe" required>
+                                <label class="form-label small fw-bold text-dark">Confirmer mot de passe <span class="text-danger">*</span></label>
+                                <input type="password" name="password_confirmation" id="accInputPasswordConfirm" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="Confirmer mot de passe" autocomplete="new-password" value="" required>
                             </div>
                         </div>
                     </div>
@@ -239,25 +241,24 @@
                     <!-- STEP 2 : ENTREPRISE & KYC -->
                     <div id="accWizardStep2" style="display: none;">
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Nom de l'entreprise (facultatif)</label>
-                            <input type="text" name="company_name" class="form-control rounded-3 py-2" placeholder="ex: Société Ivoirienne SARL">
+                            <label class="form-label small fw-bold text-dark">Nom de l'entreprise (facultatif)</label>
+                            <input type="text" name="company_name" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="ex: Société Ivoirienne SARL" autocomplete="off">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Sigle usuel (facultatif)</label>
-                            <input type="text" name="company_sigle" class="form-control rounded-3 py-2" placeholder="ex: SIS">
+                            <label class="form-label small fw-bold text-dark">Sigle usuel (facultatif)</label>
+                            <input type="text" name="company_sigle" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="ex: SIS" autocomplete="off">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">N° d'identification fiscale (NIF - facultatif)</label>
-                            <input type="text" name="company_tax_id" class="form-control rounded-3 py-2" placeholder="ex: 1234567A">
-                            <div class="form-text small text-muted">Si vous utilisez une clé de licence, le NIF doit être identique à celui de votre entreprise.</div>
+                            <label class="form-label small fw-bold text-dark">N° d'identification fiscale (NIF - facultatif)</label>
+                            <input type="text" name="company_tax_id" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="ex: 1234567A" autocomplete="off">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Attestation DFE / NIF (Fichier logo ou PDF)</label>
-                            <input type="file" name="company_logo" class="form-control rounded-3 py-2" accept="image/*,.pdf">
+                            <label class="form-label small fw-bold text-dark">Attestation DFE / NIF (Fichier logo ou PDF)</label>
+                            <input type="file" name="company_logo" class="form-control rounded-3 py-2 border-secondary-subtle" accept="image/*,.pdf">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Secteur d'activité</label>
-                            <select name="sector" class="form-select rounded-3 py-2">
+                            <label class="form-label small fw-bold text-dark">Secteur d'activité</label>
+                            <select name="sector" class="form-select rounded-3 py-2 border-secondary-subtle">
                                 <option value="">Choisir un secteur...</option>
                                 <option value="Agroalimentaire">Agroalimentaire</option>
                                 <option value="Commerce & Distribution">Commerce & Distribution</option>
@@ -270,40 +271,39 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Numéro RCCM / SIRET</label>
-                            <input type="text" name="rccm" class="form-control rounded-3 py-2" placeholder="ex: CI-ABJ-2026-B-1234">
+                            <label class="form-label small fw-bold text-dark">Numéro RCCM / SIRET</label>
+                            <input type="text" name="rccm" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="ex: CI-ABJ-2026-B-1234" autocomplete="off">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">📄 Registre de commerce (optionnel)</label>
-                            <input type="file" name="trade_register" class="form-control rounded-3 py-2" accept="image/*,.pdf">
-                            <div class="form-text small text-muted">PDF ou photo (max 5 Mo).</div>
+                            <label class="form-label small fw-bold text-dark">📄 Registre de commerce (optionnel)</label>
+                            <input type="file" name="trade_register" class="form-control rounded-3 py-2 border-secondary-subtle" accept="image/*,.pdf">
                         </div>
                         <div class="row g-2 mb-3">
                             <div class="col-md-8">
-                                <label class="form-label small fw-semibold">Adresse complète</label>
-                                <input type="text" name="address" class="form-control rounded-3 py-2" placeholder="ex: Plateau Rue du Commerce">
+                                <label class="form-label small fw-bold text-dark">Adresse complète</label>
+                                <input type="text" name="address" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="ex: Plateau Rue du Commerce" autocomplete="off">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small fw-semibold">Ville</label>
-                                <input type="text" name="city" class="form-control rounded-3 py-2" placeholder="ex: Abidjan">
+                                <label class="form-label small fw-bold text-dark">Ville</label>
+                                <input type="text" name="city" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="ex: Abidjan" autocomplete="off">
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Clé de licence (optionnel — 2e, 3e utilisateur...)</label>
-                            <input type="text" name="license_key" class="form-control rounded-3 py-2" placeholder="Fournie par l'administrateur">
+                            <label class="form-label small fw-bold text-dark">Clé de licence (optionnel — 2e, 3e utilisateur...)</label>
+                            <input type="text" name="license_key" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="Fournie par l'administrateur" autocomplete="off">
                         </div>
-                        <div class="p-3 bg-light rounded-3 small text-muted">
+                        <div class="p-3 bg-light rounded-3 small text-muted border">
                             💡 À la création, ce dossier bénéficiera automatiquement de **1 mois d'accès gratuit** à la plateforme.
                         </div>
                     </div>
 
                 </div>
 
-                <div class="modal-footer border-0 pt-0 px-4 pb-4">
-                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Annuler</button>
-                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" id="accWizardPrevBtn" style="display:none;" onclick="goToAccStep(1)">Précédent</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold" id="accWizardNextBtn" onclick="goToAccStep(2)">Suivant : Entreprise &rarr;</button>
-                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-semibold" id="accWizardSubmitBtn" style="display:none;">Créer le dossier client &check;</button>
+                <div class="modal-footer border-0 p-4 pt-2">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="accWizardPrevBtn" style="display:none;" onclick="goToAccStep(1)">Précédent</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" id="accWizardNextBtn" onclick="goToAccStep(2)">Suivant : Entreprise &rarr;</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" id="accWizardSubmitBtn" style="display:none;">Créer le dossier client &check;</button>
                 </div>
             </form>
         </div>
@@ -326,7 +326,7 @@
             document.getElementById('accWizardStep1').style.display = 'block';
             document.getElementById('accWizardStep2').style.display = 'none';
             document.getElementById('accStepBadgeLabel').innerText = 'Étape 1/2';
-            document.getElementById('accStepTitleLabel').innerText = 'COMPTE';
+            document.getElementById('accStepTitleLabel').innerText = 'COMPTE DU RESPONSABLE';
             document.getElementById('accWizardProgressBar').style.width = '50%';
             document.getElementById('accWizardPrevBtn').style.display = 'none';
             document.getElementById('accWizardNextBtn').style.display = 'inline-block';
@@ -334,10 +334,34 @@
         }
     }
 
+    function clearAccModalFields() {
+        const form = document.getElementById('accWizardForm');
+        if (form) {
+            form.reset();
+            const emailInput = document.getElementById('accInputEmail');
+            const passInput = document.getElementById('accInputPassword');
+            const confirmInput = document.getElementById('accInputPasswordConfirm');
+            if (emailInput) emailInput.value = '';
+            if (passInput) passInput.value = '';
+            if (confirmInput) confirmInput.value = '';
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        const modalEl = document.getElementById('addAccountantClientModal');
+        if (modalEl) {
+            modalEl.addEventListener('show.bs.modal', function () {
+                clearAccModalFields();
+                goToAccStep(1);
+            });
+            modalEl.addEventListener('shown.bs.modal', function () {
+                setTimeout(clearAccModalFields, 100);
+                setTimeout(clearAccModalFields, 400);
+            });
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('action') === 'add-client') {
-            const modalEl = document.getElementById('addAccountantClientModal');
             if (modalEl) {
                 const modal = new bootstrap.Modal(modalEl);
                 modal.show();
