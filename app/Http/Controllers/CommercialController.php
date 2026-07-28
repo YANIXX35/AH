@@ -23,10 +23,14 @@ class CommercialController extends Controller
         $commercial = $request->user();
         $clients = $commercial->createdClients()->latest()->get();
 
-        $prospects = Prospect::query()
-            ->when(! $commercial->is_platform_admin, fn ($q) => $q->where('commercial_user_id', $commercial->id))
-            ->latest()
-            ->get();
+        try {
+            $prospects = Prospect::query()
+                ->when(! $commercial->is_platform_admin, fn ($q) => $q->where('commercial_user_id', $commercial->id))
+                ->latest()
+                ->get();
+        } catch (\Throwable $e) {
+            $prospects = collect();
+        }
 
         $totalClients = $clients->count();
         
