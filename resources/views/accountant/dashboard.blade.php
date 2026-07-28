@@ -90,7 +90,10 @@
                 </h1>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
-                <a href="{{ route('accountant.clients.index') }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                <a href="{{ route('accountant.clients.index', ['action' => 'add-client']) }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                    <i data-feather="plus-circle" class="me-1" style="width:14px; height:14px;"></i> Ajouter Client / Entreprise
+                </a>
+                <a href="{{ route('accountant.clients.index') }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-dark">
                     <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i> Dossiers Clients
                 </a>
                 <a href="{{ route('accounting.report') }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-dark">
