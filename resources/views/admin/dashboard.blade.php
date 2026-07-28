@@ -124,6 +124,68 @@
     .admin-ai-inco-item + .admin-ai-inco-item {
         border-top: 1px solid rgba(0,0,0,.06);
     }
+
+    /* Soft-UI & Glassmorphic Design System (Matching Mockup) */
+    .soft-bg {
+        background-color: #f1f5f9;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        color: #1e293b;
+    }
+    .soft-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 24px;
+        box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.03), 0 4px 12px rgba(15, 23, 42, 0.02);
+        transition: all 0.25s ease;
+    }
+    .soft-card:hover {
+        box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.06);
+        border-color: #cbd5e1;
+    }
+    .pill-header-bar {
+        background: #ffffff;
+        border-radius: 9999px;
+        padding: 8px 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+    }
+    .soft-pill-btn {
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 8px 20px;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    .soft-pill-btn-active {
+        background: #0f172a;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+    }
+    .soft-pill-btn-inactive {
+        background: transparent;
+        color: #64748b;
+    }
+    .pill-badge-emerald { background: #d1fae5; color: #047857; }
+    .pill-badge-purple { background: #f3e8ff; color: #6b21a8; }
+    .pill-badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .pill-badge-amber { background: #fef3c7; color: #b45309; }
+
+    .ai-copilot-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+    .copilot-orb {
+        width: 80px;
+        height: 80px;
+        background: radial-gradient(circle at 30% 30%, #60a5fa, #2563eb 60%, #1e40af);
+        border-radius: 50%;
+        box-shadow: 0 12px 32px rgba(37, 99, 235, 0.35), inset -6px -6px 12px rgba(0, 0, 0, 0.2), inset 6px 6px 12px rgba(255, 255, 255, 0.6);
+        animation: floatOrb 4s ease-in-out infinite alternate;
+    }
 </style>
 @endpush
 
@@ -178,24 +240,33 @@
     $subscriptionCountdown = $nextSubscriptionExpiryAt ? (int) max(0, now()->diffInDays($nextSubscriptionExpiryAt, false)) : null;
 @endphp
 
-<div class="mb-4">
-    <nav aria-label="Fil d’Ariane admin" class="mb-2">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item">Administration</li>
-            <li class="breadcrumb-item active" aria-current="page">Tableau de bord admin</li>
-        </ol>
-    </nav>
-    <div class="admin-hero p-4 p-lg-4">
-        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
-            <div>
-                <h1 class="h3 mb-1 text-white"><strong>Tableau de bord</strong> administrateur</h1>
-                <p class="mb-0 text-white-50">Cockpit IT Manager : santé plateforme, charge opérationnelle, conformité et risques métier.</p>
-            </div>
-            <div class="text-lg-end d-flex flex-column gap-2">
-                <span class="badge bg-white text-primary border-0">Mis à jour {{ $generatedAt->format('d/m/Y à H:i') }}</span>
-                <span class="badge {{ $healthBadgeClass }}">Santé plateforme: {{ $healthScore }}/100 · {{ $healthState }}</span>
-            </div>
+<!-- Top Floating Pill Header Bar (Soft-UI Style) -->
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pill-header-bar">
+    <div class="d-flex align-items-center gap-2">
+        <div class="bg-dark text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width:38px; height:38px;">
+            <i data-feather="shield" style="width:18px; height:18px;"></i>
         </div>
+        <div class="nav nav-pills border-0">
+            <a href="{{ route('admin.dashboard') }}" class="soft-pill-btn soft-pill-btn-active me-1 text-decoration-none">
+                <i data-feather="layout" class="me-1" style="width:14px; height:14px;"></i> Vue Générale
+            </a>
+            <a href="{{ route('admin.users.index') }}" class="soft-pill-btn soft-pill-btn-inactive me-1 text-decoration-none">
+                <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i> Utilisateurs ({{ $userCount }})
+            </a>
+            <a href="{{ route('admin.licenses.index') }}" class="soft-pill-btn soft-pill-btn-inactive me-1 text-decoration-none">
+                <i data-feather="key" class="me-1" style="width:14px; height:14px;"></i> Licences
+            </a>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+        <span class="badge bg-light text-dark border rounded-pill px-3 py-2">
+            <i data-feather="activity" class="me-1 text-success" style="width:14px; height:14px;"></i>
+            Santé Plateforme: {{ $healthScore }}/100 ({{ $healthState }})
+        </span>
+        <a href="{{ route('admin.users.index') }}" class="btn btn-dark rounded-pill px-4 py-2 fw-bold text-sm shadow-sm">
+            + Administrer Utilisateurs
+        </a>
     </div>
 </div>
 
