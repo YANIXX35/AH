@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Prospect;
 use App\Models\User;
 use App\Services\UserPremiumService;
 use Illuminate\Http\RedirectResponse;
@@ -22,6 +23,11 @@ class CommercialController extends Controller
         $commercial = $request->user();
         $clients = $commercial->createdClients()->latest()->get();
 
+        $prospects = Prospect::query()
+            ->when(! $commercial->is_platform_admin, fn ($q) => $q->where('commercial_user_id', $commercial->id))
+            ->latest()
+            ->get();
+
         $totalClients = $clients->count();
         
         $activeTrials = $clients->filter(function ($client) {
@@ -32,7 +38,22 @@ class CommercialController extends Controller
             return !$client->is_premium || ($client->premium_ends_at && $client->premium_ends_at->isPast());
         })->count();
 
-        return view('commercial.dashboard', compact('clients', 'totalClients', 'activeTrials', 'expiredTrials'));
+        $totalProspects = $prospects->count();
+        $newProspects = $prospects->where('status', 'nouveau')->count();
+        $qualifiedProspects = $prospects->where('status', 'qualifie')->count();
+        $convertedProspects = $prospects->where('status', 'client')->count();
+
+        return view('commercial.dashboard', compact(
+            'clients',
+            'prospects',
+            'totalClients',
+            'activeTrials',
+            'expiredTrials',
+            'totalProspects',
+            'newProspects',
+            'qualifiedProspects',
+            'convertedProspects'
+        ));
     }
 
     public function showcase(): View
@@ -150,5 +171,56 @@ class CommercialController extends Controller
         $user->delete();
 
         return back()->with('status', 'Client supprimé avec succès.');
+    }
+
+    public function storeProspect(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'company_name' => ['nullable', 'string', 'max:255'],
+            'job_title' => ['nullable', 'string', 'max:255'],
+            'need_type' => ['required', 'string', Rule::in(['diagnostic', 'syscohada', 'tresorerie', 'levee_fonds', 'ma'])],
+            'status' => ['nullable', 'string', Rule::in(['nouveau', 'contacte', 'qualifie', 'client', 'sans_suite'])],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        Prospect::create([
+            ...$validated,
+            'commercial_user_id' => $request->user()->id,
+            'status' => $validated['status'] ?? 'nouveau',
+        ]);
+
+        return back()->with('status', 'Prospect / Lead qualifié enregistré avec succès.');
+    }
+
+    public function updateProspectStatus(Request $request, Prospect $prospect): RedirectResponse
+    {
+        $commercial = $request->user();
+        if (!$commercial->is_platform_admin && $prospect->commercial_user_id !== $commercial->id) {
+            abort(403, 'Vous n’êtes pas autorisé à modifier ce prospect.');
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', 'string', Rule::in(['nouveau', 'contacte', 'qualifie', 'client', 'sans_suite'])],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $prospect->update($validated);
+
+        return back()->with('status', 'Statut du prospect mis à jour avec succès.');
+    }
+
+    public function destroyProspect(Request $request, Prospect $prospect): RedirectResponse
+    {
+        $commercial = $request->user();
+        if (!$commercial->is_platform_admin && $prospect->commercial_user_id !== $commercial->id) {
+            abort(403, 'Vous n’êtes pas autorisé à supprimer ce prospect.');
+        }
+
+        $prospect->delete();
+
+        return back()->with('status', 'Prospect supprimé avec succès.');
     }
 }
