@@ -467,6 +467,16 @@
                 </div>
             </li>
             @endif
+
+            <li class="sidebar-item mt-3 pt-2 border-top border-secondary border-opacity-25">
+                <form action="{{ route('logout') }}" method="POST" class="m-0 px-2">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2 py-2">
+                        <i class="align-middle" data-feather="log-out"></i>
+                        <span class="align-middle fw-semibold">Déconnexion</span>
+                    </button>
+                </form>
+            </li>
         </ul>
     </div>
 </nav>
