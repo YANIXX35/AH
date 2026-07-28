@@ -65,7 +65,55 @@
                                 <td class="small">{{ $u->email }}</td>
                                 <td class="text-end small">{{ $u->created_at?->format('d/m/Y') }}</td>
                                 <td class="text-end">
-                                    <a href="{{ route('accountant.clients.show', $u) }}" class="btn btn-sm btn-outline-primary">Fiche dossier</a>
+                                    <a href="{{ route('accountant.clients.show', $u) }}" class="btn btn-sm btn-outline-primary me-1">Fiche dossier</a>
+                                    <button type="button" class="btn btn-sm btn-light border me-1" data-bs-toggle="modal" data-bs-target="#editAccountantClientModal{{ $u->id }}">
+                                        <i data-feather="edit-2" style="width:13px; height:13px;"></i> Modifier
+                                    </button>
+                                    <form action="{{ route('accountant.clients.destroy', $u->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce compte dossier client ? Cette action est irréversible.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-light text-danger border">
+                                            <i data-feather="trash-2" style="width:13px; height:13px;"></i> Supprimer
+                                        </button>
+                                    </form>
+
+                                    <!-- Edit Modal for Client -->
+                                    <div class="modal fade text-start" id="editAccountantClientModal{{ $u->id }}" data-bs-backdrop="static" tabindex="-1" aria-labelledby="editAccountantClientModalLabel{{ $u->id }}" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow-lg rounded-4">
+                                                <div class="modal-header border-0 pb-0">
+                                                    <h5 class="modal-title fw-bold text-dark" id="editAccountantClientModalLabel{{ $u->id }}">Modifier le dossier client</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form action="{{ route('accountant.clients.update', $u->id) }}" method="POST">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <div class="modal-body py-4">
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-semibold">Nom du responsable</label>
+                                                            <input type="text" name="name" class="form-control rounded-3" value="{{ $u->name }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-semibold">Adresse E-mail</label>
+                                                            <input type="email" name="email" class="form-control rounded-3" value="{{ $u->email }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-semibold">Nom de l'entreprise</label>
+                                                            <input type="text" name="company_name" class="form-control rounded-3" value="{{ $u->company_name }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-semibold">Nouveau mot de passe (laisser vide pour conserver l'actuel)</label>
+                                                            <input type="password" name="password" class="form-control rounded-3" placeholder="Min. 8 caractères">
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer border-0 pt-0">
+                                                        <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Annuler</button>
+                                                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Enregistrer les modifications</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

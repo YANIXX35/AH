@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class AccountantClientController extends Controller
@@ -84,6 +85,37 @@ class AccountantClientController extends Controller
         });
 
         return back()->with('status', 'Dossier client enregistré avec succès. Son compte a été initialisé avec 1 mois d’accès gratuit.');
+    }
+
+    public function update(Request $request, User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'company_name' => ['required', 'string', 'max:255'],
+            'password' => ['nullable', 'string', 'min:8'],
+        ]);
+
+        $payload = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'company_name' => $validated['company_name'],
+        ];
+
+        if (!empty($validated['password'])) {
+            $payload['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($payload);
+
+        return back()->with('status', 'Informations du dossier client mises à jour avec succès.');
+    }
+
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        $user->delete();
+
+        return back()->with('status', 'Dossier client supprimé avec succès.');
     }
 
     /**
