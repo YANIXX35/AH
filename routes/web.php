@@ -358,6 +358,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [AccountantDashboardController::class, 'index'])->name('dashboard');
         Route::get('/ai/live', [AccountantDashboardController::class, 'liveInsights'])->name('dashboard.ai.live');
         Route::get('/clients', [AccountantClientController::class, 'index'])->name('clients.index');
+        Route::post('/clients', [AccountantClientController::class, 'store'])->name('clients.store');
         Route::get('/clients/{user}', [AccountantClientController::class, 'show'])->name('clients.show');
         // Déclarer /workspace/clear avant /workspace/{user}, sinon « clear » est capturé comme identifiant client (POST bloqué).
         Route::match(['get', 'post'], '/workspace/clear', [AccountantClientController::class, 'clearWorkspace'])->name('workspace.clear');

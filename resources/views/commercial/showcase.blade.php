@@ -226,20 +226,25 @@
   <!-- Header Nav bar -->
   <header class="sc-topbar">
     <div class="sc-brand"><span class="dot"></span> SITIAME CAPITAL</div>
-    <nav class="sc-tabnav" id="sc-tabnav">
-      <button data-target="sc-marketing" class="active">
-        <span class="lbl"><span class="status"></span> Marketing</span>
-        <span class="kpi">+120% leads</span>
-      </button>
-      <button data-target="sc-community">
-        <span class="lbl"><span class="status"></span> Community</span>
-        <span class="kpi">4 réseaux actifs</span>
-      </button>
-      <button data-target="sc-service">
-        <span class="lbl"><span class="status"></span> Service client</span>
-        <span class="kpi">réponse 24–48h</span>
-      </button>
-    </nav>
+    <div class="d-flex align-items-center gap-3">
+      <nav class="sc-tabnav" id="sc-tabnav">
+        <button data-target="sc-marketing" class="active">
+          <span class="lbl"><span class="status"></span> Marketing</span>
+          <span class="kpi">+120% leads</span>
+        </button>
+        <button data-target="sc-community">
+          <span class="lbl"><span class="status"></span> Community</span>
+          <span class="kpi">4 réseaux actifs</span>
+        </button>
+        <button data-target="sc-service">
+          <span class="lbl"><span class="status"></span> Service client</span>
+          <span class="kpi">réponse 24–48h</span>
+        </button>
+      </nav>
+      <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-primary rounded-pill px-3 py-2 fw-semibold btn-sm d-flex align-items-center gap-1">
+        <i data-feather="plus-circle" style="width:16px; height:16px;"></i> Ajouter Client / Entreprise
+      </a>
+    </div>
   </header>
 
   <!-- ================= MARKETING ================= -->

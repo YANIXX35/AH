@@ -8,6 +8,8 @@ use App\Support\ClientWorkspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class AccountantClientController extends Controller
@@ -38,6 +40,46 @@ class AccountantClientController extends Controller
             'enterpriseGroups' => $enterpriseGroups,
             'search' => $q,
         ]);
+    }
+
+    /**
+     * Enregistre un nouveau client / entreprise depuis l'espace comptable.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'company_name' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string', 'min:8'],
+        ]);
+
+        $accountant = $request->user();
+
+        DB::transaction(function () use ($validated, $accountant, $request) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'company_name' => $validated['company_name'],
+                'password' => Hash::make($validated['password']),
+                'role_key' => 'manager',
+                'created_by_user_id' => $accountant->id,
+                'kyc_status' => 'submitted',
+                'kyc_submitted_at' => now(),
+            ]);
+
+            app(\App\Services\UserPremiumService::class)->activateForDays(
+                $user,
+                30,
+                'accountant_creation',
+                "Dossier client créé par le cabinet comptable ({$accountant->name}).",
+                $accountant,
+                ['accountant_id' => $accountant->id],
+                $request
+            );
+        });
+
+        return back()->with('status', 'Dossier client enregistré avec succès. Son compte a été initialisé avec 1 mois d’accès gratuit.');
     }
 
     /**
