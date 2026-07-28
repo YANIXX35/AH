@@ -154,16 +154,16 @@ class AuthController extends Controller
         }
 
         if (! $mailSent) {
-            // Même si l'envoi de mail SMTP échoue sur le serveur, on redirige vers le formulaire d'OTP 
-            // pour permettre la saisie (le code est enregistré dans storage/logs/laravel.log)
-            return redirect()
-                ->route('password.reset.form', ['email' => $email])
-                ->with('warning', 'Avertissement SMTP : Le serveur de messagerie SMTP n’est pas configuré. Le code OTP généré pour votre compte a été consigné dans les logs (storage/logs/laravel.log).');
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors([
+                    'email' => 'Impossible d’envoyer l’e-mail contenant le code OTP pour le moment. Vérifiez la configuration du serveur SMTP.',
+                ]);
         }
 
         return redirect()
             ->route('password.reset.form', ['email' => $email])
-            ->with('status', 'Si l’adresse existe, un code OTP de réinitialisation a été envoyé.');
+            ->with('status', 'Un code OTP de réinitialisation à 6 chiffres a été envoyé à votre adresse e-mail. Veuillez le saisir ci-dessous.');
     }
 
     public function showResetPassword(Request $request): View
