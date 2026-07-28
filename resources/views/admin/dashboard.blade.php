@@ -250,7 +250,7 @@
             <a href="{{ route('admin.dashboard') }}" class="soft-pill-btn soft-pill-btn-active me-1 text-decoration-none">
                 <i data-feather="layout" class="me-1" style="width:14px; height:14px;"></i> Vue Générale
             </a>
-            <a href="{{ route('admin.users.index') }}" class="soft-pill-btn soft-pill-btn-inactive me-1 text-decoration-none">
+            <a href="{{ route('admin.users') }}" class="soft-pill-btn soft-pill-btn-inactive me-1 text-decoration-none">
                 <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i> Utilisateurs ({{ $userCount }})
             </a>
             <a href="{{ route('admin.licenses.index') }}" class="soft-pill-btn soft-pill-btn-inactive me-1 text-decoration-none">
@@ -264,7 +264,7 @@
             <i data-feather="activity" class="me-1 text-success" style="width:14px; height:14px;"></i>
             Santé Plateforme: {{ $healthScore }}/100 ({{ $healthState }})
         </span>
-        <a href="{{ route('admin.users.index') }}" class="btn btn-dark rounded-pill px-4 py-2 fw-bold text-sm shadow-sm">
+        <a href="{{ route('admin.users') }}" class="btn btn-dark rounded-pill px-4 py-2 fw-bold text-sm shadow-sm">
             + Administrer Utilisateurs
         </a>
     </div>
