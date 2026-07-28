@@ -4,6 +4,11 @@
 @section('page_title', 'Dossiers clients')
 
 @section('content')
+@php
+    $isAddClient = request('action') === 'add-client';
+@endphp
+
+@if(!$isAddClient)
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <div>
         <h1 class="h3 mb-1"><strong>Dossiers</strong> clients</h1>
@@ -33,6 +38,7 @@
         <button type="submit" class="btn btn-primary">Rechercher</button>
     </div>
 </form>
+@endif
 
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
@@ -105,13 +111,7 @@
                                                                 <label class="form-label small fw-semibold">Téléphone</label>
                                                                 <input type="text" name="phone" class="form-control rounded-3 py-2" value="{{ $u->phone }}" placeholder="ex: +225 07000000">
                                                             </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">Nouveau mot de passe</label>
-                                                                <input type="password" name="password" class="form-control rounded-3 py-2" placeholder="Laisser vide si inchangé">
-                                                            </div>
-                                                        </div>
-
-                                                        <h6 class="fw-bold text-uppercase small text-muted mb-3 mt-4" style="letter-spacing:1px;">2. Informations de l'entreprise & KYC (Facultatif)</h6>
+                                                    <div class="modal-body p-4 text-start">
                                                         <div class="row g-2 mb-3">
                                                             <div class="col-md-8">
                                                                 <label class="form-label small fw-semibold">Nom de l'entreprise</label>
@@ -124,15 +124,15 @@
                                                         </div>
                                                         <div class="row g-2 mb-3">
                                                             <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">N° d'identification fiscale (NIF)</label>
+                                                                <label class="form-label small fw-semibold">N° identification fiscale (NIF)</label>
                                                                 <input type="text" name="company_tax_id" class="form-control rounded-3 py-2" value="{{ $u->company_tax_id }}" placeholder="ex: 1234567A">
                                                             </div>
                                                             <div class="col-md-6">
                                                                 <label class="form-label small fw-semibold">Secteur d'activité</label>
                                                                 <select name="sector" class="form-select rounded-3 py-2">
                                                                     <option value="">Choisir un secteur...</option>
-                                                                    @foreach(['Agroalimentaire', 'Commerce & Distribution', 'BTP & Construction', 'Services aux entreprises', 'Technologies / IT', 'Transport & Logistique', 'Santé', 'Autre'] as $sec)
-                                                                        <option value="{{ $sec }}" {{ $u->sector === $sec ? 'selected' : '' }}>{{ $sec }}</option>
+                                                                    @foreach(['Agroalimentaire','Commerce & Distribution','BTP & Construction','Services aux entreprises','Technologies / IT','Transport & Logistique','Santé','Autre'] as $sec)
+                                                                        <option value="{{ $sec }}" {{ ($u->sector == $sec) ? 'selected' : '' }}>{{ $sec }}</option>
                                                                     @endforeach
                                                                 </select>
                                                             </div>
@@ -151,20 +151,10 @@
                                                             <label class="form-label small fw-semibold">Adresse complète</label>
                                                             <input type="text" name="address" class="form-control rounded-3 py-2" value="{{ $u->address }}" placeholder="ex: Plateau Rue du Commerce">
                                                         </div>
-                                                        <div class="row g-2 mb-3">
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">Attestation DFE / NIF (Fichier)</label>
-                                                                <input type="file" name="company_logo" class="form-control rounded-3 py-2" accept="image/*,.pdf">
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label small fw-semibold">Registre de commerce (PDF/image)</label>
-                                                                <input type="file" name="trade_register" class="form-control rounded-3 py-2" accept="image/*,.pdf">
-                                                            </div>
-                                                        </div>
                                                     </div>
                                                     <div class="modal-footer border-0 pt-0 px-4 pb-4">
                                                         <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Annuler</button>
-                                                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Enregistrer les modifications</button>
+                                                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Enregistrer</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -182,6 +172,7 @@
         @endforelse
     </div>
 </div>
+@endif
 
 <!-- Add Accountant Client Modal 2-STEP WIZARD -->
 <div class="modal fade text-start" id="addAccountantClientModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addAccountantClientModalLabel" aria-hidden="true">
