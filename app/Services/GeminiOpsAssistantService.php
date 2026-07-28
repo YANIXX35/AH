@@ -16,7 +16,7 @@ class GeminiOpsAssistantService
     public function chat(array $messages): array
     {
         $apiKey = (string) config('services.gemini.key', env('GEMINI_API_KEY', ''));
-        $model = (string) config('services.gemini.model', env('GEMINI_MODEL', 'gemini-1.5-flash'));
+        $model = (string) config('services.gemini.model', env('GEMINI_MODEL', 'gemini-2.5-flash'));
         $timeout = (int) config('services.gemini.timeout', 45);
 
         if (empty($apiKey)) {
