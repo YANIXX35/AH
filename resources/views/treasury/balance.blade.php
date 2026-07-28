@@ -280,8 +280,11 @@
             $healthLabel = 'À surveiller';
         }
         $monthTransactionsChart = $monthTransactions->map(function ($tx) {
+            $dateStr = $tx->transaction_date instanceof \Carbon\Carbon
+                ? $tx->transaction_date->format('Y-m-d')
+                : \Carbon\Carbon::parse($tx->transaction_date)->format('Y-m-d');
             return [
-                'date' => $tx->transaction_date->format('Y-m-d'),
+                'date' => $dateStr,
                 'type' => $tx->type,
                 'amount' => (float) $tx->amount,
             ];
@@ -591,7 +594,7 @@
                                 }
                             @endphp
                             <tr>
-                                <td data-label="Date">{{ $tx->transaction_date->format('d/m/Y') }}</td>
+                                <td data-label="Date">{{ $tx->transaction_date instanceof \Carbon\Carbon ? $tx->transaction_date->format('d/m/Y') : \Carbon\Carbon::parse($tx->transaction_date)->format('d/m/Y') }}</td>
                                 <td data-label="Description">{{ \Illuminate\Support\Str::limit($tx->description, 65) }}</td>
                                 <td data-label="Encaissement" class="text-md-end">
                                     @if($tx->type === 'encaissement')
@@ -620,6 +623,5 @@
             <div class="balance-mobile-note mt-2">Astuce mobile : chaque ligne est affichée en carte pour faciliter la lecture sur petit écran.</div>
         </div>
     </div>
-</div>
 </div>
 @endsection
