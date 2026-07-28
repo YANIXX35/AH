@@ -15,6 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="{{ asset('css/adminkit-app.css') }}" rel="stylesheet">
     <link href="{{ asset('css/mobile-responsive.css') }}" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     @stack('styles')
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -521,7 +522,7 @@
                                 }
                             @endphp
                             <a class="nav-link dropdown-toggle d-inline-block" href="#" data-bs-toggle="dropdown">
-                                <img src="{{ Auth::user()->avatar ? asset('storage/' . Auth::user()->avatar) : 'https://via.placeholder.com/40' }}" class="avatar img-fluid rounded me-1" alt="{{ Auth::user()->name }}" /> <span class="text-dark d-none d-sm-inline-block">{{ explode(' ', Auth::user()->name)[0] }}</span>
+                                <img src="{{ Auth::user()->avatar ? asset('storage/' . Auth::user()->avatar) : asset('images/sitiam.png') }}" class="avatar img-fluid rounded me-1" alt="{{ Auth::user()->name }}" /> <span class="text-dark d-none d-sm-inline-block">{{ explode(' ', Auth::user()->name)[0] }}</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <div class="dropdown-item-text small text-muted">

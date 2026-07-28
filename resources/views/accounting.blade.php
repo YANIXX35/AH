@@ -1680,9 +1680,9 @@
 
             function updateBulkBar() {
                 const ids = getSelectedEntryIds();
-                bulkSelectedCount.textContent = ids.length;
-                bulkActionBar.classList.toggle('d-none', ids.length === 0);
-                selectAllEntries.checked = ids.length > 0 && ids.length === document.querySelectorAll('.entry-select-checkbox').length;
+                if (bulkSelectedCount) bulkSelectedCount.textContent = ids.length;
+                if (bulkActionBar) bulkActionBar.classList.toggle('d-none', ids.length === 0);
+                if (selectAllEntries) selectAllEntries.checked = ids.length > 0 && ids.length === document.querySelectorAll('.entry-select-checkbox').length;
             }
 
             function submitBulkAction(url, ids) {
@@ -1815,27 +1815,33 @@
                 }
             });
 
-            selectAllEntries.addEventListener('change', function () {
-                const checked = selectAllEntries.checked;
-                document.querySelectorAll('.entry-select-checkbox').forEach(function (checkbox) {
-                    checkbox.checked = checked;
+            if (selectAllEntries) {
+                selectAllEntries.addEventListener('change', function () {
+                    const checked = selectAllEntries.checked;
+                    document.querySelectorAll('.entry-select-checkbox').forEach(function (checkbox) {
+                        checkbox.checked = checked;
+                    });
+                    updateBulkBar();
                 });
-                updateBulkBar();
-            });
+            }
 
-            bulkDeleteBtn.addEventListener('click', function () {
-                const ids = getSelectedEntryIds();
-                if (!ids.length) return;
-                if (!confirm('Confirmer la suppression de ' + ids.length + ' écriture(s) ?')) return;
-                submitBulkAction('{{ route('accounting.entries.bulk.delete') }}', ids);
-            });
+            if (bulkDeleteBtn) {
+                bulkDeleteBtn.addEventListener('click', function () {
+                    const ids = getSelectedEntryIds();
+                    if (!ids.length) return;
+                    if (!confirm('Confirmer la suppression de ' + ids.length + ' écriture(s) ?')) return;
+                    submitBulkAction('{{ route('accounting.entries.bulk.delete') }}', ids);
+                });
+            }
 
-            bulkRetryBtn.addEventListener('click', function () {
-                const ids = getSelectedEntryIds();
-                if (!ids.length) return;
-                if (!confirm('Relancer OCR pour ' + ids.length + ' écriture(s) ?')) return;
-                submitBulkAction('{{ route('accounting.entries.bulk.ocr.retry') }}', ids);
-            });
+            if (bulkRetryBtn) {
+                bulkRetryBtn.addEventListener('click', function () {
+                    const ids = getSelectedEntryIds();
+                    if (!ids.length) return;
+                    if (!confirm('Relancer OCR pour ' + ids.length + ' écriture(s) ?')) return;
+                    submitBulkAction('{{ route('accounting.entries.bulk.ocr.retry') }}', ids);
+                });
+            }
         });
     </script>
     </div>
