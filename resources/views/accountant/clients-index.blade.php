@@ -206,7 +206,7 @@
                 <input type="text" name="fake_usernameremembered" style="display:none" tabindex="-1">
                 <input type="password" name="fake_passwordremembered" style="display:none" tabindex="-1">
 
-                <div class="modal-body p-4" style="max-height: 65vh; overflow-y: auto;">
+                <div class="modal-body p-4" id="accWizardModalBody" style="max-height: 75vh; overflow-y: auto; scroll-behavior: smooth;">
 
                     <!-- STEP 1 : COMPTE RESPONSABLE -->
                     <div id="accWizardStep1">
@@ -292,18 +292,22 @@
                             <label class="form-label small fw-bold text-dark">Clé de licence (optionnel — 2e, 3e utilisateur...)</label>
                             <input type="text" name="license_key" class="form-control rounded-3 py-2 border-secondary-subtle" placeholder="Fournie par l'administrateur" autocomplete="off">
                         </div>
-                        <div class="p-3 bg-light rounded-3 small text-muted border">
+                        <div class="p-3 bg-light rounded-3 small text-muted border mb-2">
                             💡 À la création, ce dossier bénéficiera automatiquement de **1 mois d'accès gratuit** à la plateforme.
                         </div>
                     </div>
 
                 </div>
 
-                <div class="modal-footer border-0 p-4 pt-2">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuler</button>
-                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="accWizardPrevBtn" style="display:none;" onclick="goToAccStep(1)">Précédent</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" id="accWizardNextBtn" onclick="goToAccStep(2)">Suivant : Entreprise &rarr;</button>
-                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" id="accWizardSubmitBtn" style="display:none;">Créer le dossier client &check;</button>
+                <div class="modal-footer border-top bg-light p-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <button type="button" class="btn btn-light rounded-pill px-4 border" data-bs-dismiss="modal">Annuler</button>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" id="accWizardPrevBtn" style="display:none;" onclick="goToAccStep(1)">&larr; Précédent</button>
+                        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" id="accWizardNextBtn" onclick="goToAccStep(2)">Suivant : Entreprise &rarr;</button>
+                        <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" id="accWizardSubmitBtn" style="display:none;">Créer le dossier client &check;</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -313,6 +317,9 @@
 @push('scripts')
 <script>
     function goToAccStep(step) {
+        const modalBody = document.getElementById('accWizardModalBody');
+        if (modalBody) modalBody.scrollTop = 0;
+
         if (step === 2) {
             document.getElementById('accWizardStep1').style.display = 'none';
             document.getElementById('accWizardStep2').style.display = 'block';
