@@ -34,56 +34,80 @@
     </div>
 </form>
 
-<div class="card border-0 shadow-sm" @if(request('action') === 'add-client') style="display: none !important;" @endif>
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4" @if(request('action') === 'add-client') style="display: none !important;" @endif>
     <div class="card-body p-0">
         @forelse($enterpriseGroups as $group)
-            <div class="border-bottom p-3">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                    <div>
-                        <h6 class="mb-1">{{ $group['company_name'] }}</h6>
-                        <p class="small text-muted mb-0">
-                            @if(!empty($group['company_tax_id'])) NIF: {{ $group['company_tax_id'] }} · @endif
-                            @if(!empty($group['enterprise_license_id'])) Licence #{{ $group['enterprise_license_id'] }} · @endif
-                            {{ $group['users_count'] }} utilisateur(s)
-                        </p>
+            <div class="border-bottom p-4 bg-white">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar-circle bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center fw-bold fs-5" style="width: 44px; height: 44px;">
+                            {{ strtoupper(substr($group['company_name'] ?? 'E', 0, 2)) }}
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-1 fs-6">{{ $group['company_name'] }}</h5>
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                @if(!empty($group['company_tax_id']))
+                                    <span class="badge bg-slate-100 text-slate-700 border font-mono">NIF: {{ $group['company_tax_id'] }}</span>
+                                @endif
+                                @if(!empty($group['enterprise_license_id']))
+                                    <span class="badge bg-info-subtle text-info font-mono">Licence #{{ $group['enterprise_license_id'] }}</span>
+                                @endif
+                                <span class="badge bg-light text-muted border">{{ $group['users_count'] }} membre(s)</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0 align-middle">
-                        <thead class="table-light">
-                        <tr>
-                            <th>Utilisateur</th>
-                            <th>E-mail</th>
-                            <th class="text-end">Inscription</th>
-                            <th class="text-end">Action</th>
-                        </tr>
+
+                <div class="table-responsive rounded-3 border">
+                    <table class="table table-hover align-middle mb-0" style="min-width: 600px;">
+                        <thead class="bg-slate-50 text-slate-600 text-uppercase fs-8 font-semibold">
+                            <tr>
+                                <th class="py-3 px-4">Utilisateur / Responsable</th>
+                                <th class="py-3 px-3">E-mail pro</th>
+                                <th class="py-3 px-3 text-center">Inscription</th>
+                                <th class="py-3 px-4 text-end">Actions</th>
+                            </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-slate-100">
                         @foreach($group['users'] as $u)
                             <tr>
-                                <td>{{ $u->name }}</td>
-                                <td class="small">{{ $u->email }}</td>
-                                <td class="text-end small">{{ $u->created_at?->format('d/m/Y') }}</td>
-                                <td class="text-end">
-                                    <a href="{{ route('accountant.clients.show', $u) }}" class="btn btn-sm btn-outline-primary me-1">Fiche dossier</a>
-                                    <button type="button" class="btn btn-sm btn-light border me-1" data-bs-toggle="modal" data-bs-target="#editAccountantClientModal{{ $u->id }}">
-                                        <i data-feather="edit-2" style="width:13px; height:13px;"></i> Modifier
-                                    </button>
-                                    <form action="{{ route('accountant.clients.destroy', $u->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce compte dossier client ? Cette action est irréversible.');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-light text-danger border">
-                                            <i data-feather="trash-2" style="width:13px; height:13px;"></i> Supprimer
+                                <td class="py-3 px-4">
+                                    <div class="d-flex align-items-center gap-2.5">
+                                        <div class="rounded-circle bg-slate-100 text-slate-700 d-flex align-items-center justify-content-center fw-semibold small" style="width: 32px; height: 32px;">
+                                            {{ strtoupper(substr($u->name, 0, 1)) }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark fs-7 mb-0">{{ $u->name }}</div>
+                                            <span class="badge bg-secondary-subtle text-secondary fs-8 py-0.5 px-2">{{ $u->role ?? 'Administrateur' }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-3 text-slate-600 font-mono small">{{ $u->email }}</td>
+                                <td class="py-3 px-3 text-center text-slate-500 small">{{ $u->created_at?->format('d/m/Y') }}</td>
+                                <td class="py-3 px-4 text-end">
+                                    <div class="d-inline-flex gap-1.5 align-items-center">
+                                        <a href="{{ route('accountant.clients.show', $u) }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold shadow-xs">
+                                            <i data-feather="folder" class="me-1" style="width:13px; height:13px;"></i> Accéder au dossier
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5" data-bs-toggle="modal" data-bs-target="#editAccountantClientModal{{ $u->id }}" title="Modifier">
+                                            <i data-feather="edit-2" style="width:13px; height:13px;"></i>
                                         </button>
-                                    </form>
+                                        <form action="{{ route('accountant.clients.destroy', $u->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce compte dossier client ? Cette action est irréversible.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2.5" title="Supprimer">
+                                                <i data-feather="trash-2" style="width:13px; height:13px;"></i>
+                                            </button>
+                                        </form>
+                                    </div>
 
                                     <!-- Edit Modal for Client -->
                                     <div class="modal fade text-start" id="editAccountantClientModal{{ $u->id }}" data-bs-backdrop="static" tabindex="-1" aria-labelledby="editAccountantClientModalLabel{{ $u->id }}" aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
                                             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                                                <div class="modal-header border-0 pb-0">
-                                                    <h5 class="modal-title fw-bold text-dark" id="editAccountantClientModalLabel{{ $u->id }}">Modifier le dossier client</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                <div class="modal-header border-0 bg-primary text-white p-3 px-4">
+                                                    <h5 class="modal-title fw-bold text-white mb-0" id="editAccountantClientModalLabel{{ $u->id }}">Modifier le dossier client</h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
                                                 <form action="{{ route('accountant.clients.update', $u->id) }}" method="POST" enctype="multipart/form-data">
                                                     @csrf
@@ -178,7 +202,11 @@
                 </div>
             </div>
         @empty
-            <div class="text-center text-muted py-4">Aucun résultat.</div>
+            <div class="p-5 text-center text-muted">
+                <i data-feather="inbox" class="mb-2 text-slate-300" style="width: 40px; height: 40px;"></i>
+                <div class="fw-semibold fs-6">Aucun dossier client trouvé.</div>
+                <p class="small text-muted mb-0">Cliquez sur le bouton "Ajouter Client / Entreprise" pour créer un nouveau dossier.</p>
+            </div>
         @endforelse
     </div>
 </div>
