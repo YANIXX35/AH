@@ -79,7 +79,7 @@
 
                                     <!-- Edit Modal for Client -->
                                     <div class="modal fade text-start" id="editAccountantClientModal{{ $u->id }}" data-bs-backdrop="static" tabindex="-1" aria-labelledby="editAccountantClientModalLabel{{ $u->id }}" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                                        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
                                             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
                                                 <div class="modal-header border-0 pb-0">
                                                     <h5 class="modal-title fw-bold text-dark" id="editAccountantClientModalLabel{{ $u->id }}">Modifier le dossier client</h5>
@@ -88,7 +88,7 @@
                                                 <form action="{{ route('accountant.clients.update', $u->id) }}" method="POST" enctype="multipart/form-data">
                                                     @csrf
                                                     @method('PUT')
-                                                    <div class="modal-body px-4 py-3">
+                                                    <div class="modal-body px-4 py-3" style="max-height: 65vh; overflow-y: auto;">
                                                         <h6 class="fw-bold text-uppercase small text-muted mb-3" style="letter-spacing:1px;">1. Informations du responsable</h6>
                                                         <div class="row g-2 mb-3">
                                                             <div class="col-md-6">
