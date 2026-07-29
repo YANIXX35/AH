@@ -185,6 +185,17 @@ class AdminOpsCenterController extends Controller
             'growth_ideas' => $growthIdeas,
         ];
 
+        // 1. Intercepter les salutations simples pour un accueil personnalisé immédiat
+        $userMessage = trim((string) $data['message']);
+        $cleanMessage = preg_replace('/[^\p{L}\s]/u', '', mb_strtolower($userMessage));
+        $greetings = ['bonjour', 'salut', 'coucou', 'hello', 'hi', 'hey', 'bonsoir', 'yo'];
+        if (in_array($cleanMessage, $greetings)) {
+            return response()->json([
+                'ok' => true,
+                'answer' => "Bonjour ! Je suis l'assistant de Sitiame Capital et que puis-je faire pour vous ?",
+            ]);
+        }
+
         $history = collect((array) ($data['history'] ?? []))
             ->map(fn ($row) => [
                 'role' => (string) ($row['role'] ?? 'user'),
@@ -198,7 +209,15 @@ class AdminOpsCenterController extends Controller
         $messages = [
             [
                 'role' => 'system',
-                'content' => "Tu es un assistant Ops et Performance business pour Sitiame. Réponds en français, concis, orienté action et chiffre. Ne donne pas d'actions destructives. Si escalade >= 2, recommande une action immédiate. Si la demande parle de croissance/chiffre d'affaires, propose un plan sur 30/60/90 jours avec KPI de suivi et impact attendu. Quand tu proposes une priorité, explique systématiquement COMMENT FAIRE sous forme de plan opérationnel: Étapes 1..N, responsable, délai, KPI de contrôle.",
+                'content' => "Tu es l'assistant IA officiel de l'application Sitiame Capital (spécialisé Ops, Performance et Administration). Réponds en français de manière claire, concise, orientée action et chiffre. Ne donne pas d'actions destructives.\n\n"
+                    . "Voici la structure et les pages clés de l'application :\n"
+                    . "- Tableau de bord : Synthèse de la santé financière, métriques de CA et cashflow, alertes et propositions en temps réel.\n"
+                    . "- Comptabilité : Gestion des écritures, saisie et import de justificatifs avec extraction automatique par OCR, plan comptable OHADA et génération de la liasse fiscale BCEAO.\n"
+                    . "- Trésorerie : Balance, suivi des soldes, encaissements/décaissements et net cashflow.\n"
+                    . "- Diagnostics : readiness investor (éligibilité à l'investissement), heatmap des risques et scoring financier à 360°.\n"
+                    . "- Équipe et Profil : Gestion des collaborateurs de l'entreprise et abonnements (Gratuit, Premium activable via CinetPay/FedaPay).\n"
+                    . "- Factures & Support : Historique des factures de la plateforme et messagerie de tickets support technique.\n\n"
+                    . "Tu possèdes une excellente culture générale pour répondre à des questions en dehors de l'application. Cependant, si l'utilisateur pose une question bizarre, inappropriée, offensante ou complètement délirante, refuse poliment d'y répondre en disant exactement : 'Je suis conçu pour vous assister dans la gestion financière et comptable de votre entreprise sur Sitiame Capital. Je ne peux pas répondre à cette demande.'. Si la demande parle de croissance/chiffre d'affaires, propose un plan sur 30/60/90 jours avec KPI de suivi et impact attendu. Quand tu proposes une priorité, explique systématiquement COMMENT FAIRE sous forme de plan opérationnel: Étapes 1..N, responsable, délai, KPI de contrôle.",
             ],
             [
                 'role' => 'system',
@@ -211,7 +230,7 @@ class AdminOpsCenterController extends Controller
         }
         $messages[] = [
             'role' => 'user',
-            'content' => (string) $data['message'],
+            'content' => $userMessage,
         ];
 
         $result = $this->hfAssistant->chat($messages);
