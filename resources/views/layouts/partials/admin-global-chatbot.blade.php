@@ -236,6 +236,19 @@
         from { opacity: 0; transform: translateY(4px); }
         to { opacity: 1; transform: translateY(0); }
     }
+    .gemini-chat-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        border: 0.15em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: gemini-chat-spinner-anim .75s linear infinite;
+    }
+    @keyframes gemini-chat-spinner-anim {
+        to { transform: rotate(360deg); }
+    }
     @media (max-width: 992px) {
         .admin-global-chat-window {
             width: min(430px, calc(100vw - 20px));
@@ -580,13 +593,36 @@ document.addEventListener('DOMContentLoaded', function () {
         writeHistory(history);
         input.value = '';
         sendBtn.disabled = true;
+        if (input) input.disabled = true;
 
         const pendingTs = nowIso();
-        const placeholder = appendMessage('assistant', 'Analyse en cours...', pendingTs, null);
+        const placeholder = appendMessage('assistant', 'L\'assistant prépare une réponse...', pendingTs, null);
         const bubble = placeholder.querySelector('.admin-global-chat-bubble');
         if (bubble) {
-            bubble.innerHTML = 'Analyse en cours <span class="admin-global-typing-dots"><span>.</span><span>.</span><span>.</span></span>';
+            bubble.innerHTML = '<div style="display: flex; align-items: center; gap: 8px;">' +
+                '<span class="gemini-chat-spinner" style="color: #3b7ddd; flex-shrink: 0;"></span>' +
+                '<span>L\'assistant prépare une réponse...</span>' +
+                '</div>';
         }
+
+        // Minuteurs UX de progression pour tenir l'utilisateur informé en direct
+        const progressTimer1 = setTimeout(() => {
+            if (bubble && sendBtn.disabled) {
+                bubble.innerHTML = '<div style="display: flex; align-items: center; gap: 8px;">' +
+                    '<span class="gemini-chat-spinner" style="color: #fd7e14; flex-shrink: 0;"></span>' +
+                    '<span>Nouvelle tentative en cours (forte sollicitation)...</span>' +
+                    '</div>';
+            }
+        }, 4000);
+
+        const progressTimer2 = setTimeout(() => {
+            if (bubble && sendBtn.disabled) {
+                bubble.innerHTML = '<div style="display: flex; align-items: center; gap: 8px;">' +
+                    '<span class="gemini-chat-spinner" style="color: #dc3545; flex-shrink: 0;"></span>' +
+                    '<span>Recherche d\'un modèle alternatif disponible...</span>' +
+                    '</div>';
+            }
+        }, 12000);
 
         try {
             const response = await fetch(endpoint, {
@@ -603,7 +639,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             const json = await response.json();
-            if (!response.ok || !json.ok) throw new Error(json.error || 'Erreur IA');
+            if (!response.ok || !json.ok) throw new Error(json.error || 'Le service IA est momentanément indisponible.');
 
             const answer = String(json.answer || '');
             const answerTs = nowIso();
@@ -620,12 +656,19 @@ document.addEventListener('DOMContentLoaded', function () {
             renderHistory();
         } catch (error) {
             if (bubble) {
-                bubble.textContent = 'Erreur: ' + String(error?.message || error);
-                bubble.classList.add('text-danger');
+                bubble.textContent = String(error?.message || error);
+                bubble.style.color = '#dc3545';
+                bubble.style.backgroundColor = '#fff5f5';
+                bubble.style.borderColor = '#ffc9c9';
             }
         } finally {
+            clearTimeout(progressTimer1);
+            clearTimeout(progressTimer2);
             sendBtn.disabled = false;
-            if (input) input.focus();
+            if (input) {
+                input.disabled = false;
+                input.focus();
+            }
             box.scrollTop = box.scrollHeight;
         }
     };
