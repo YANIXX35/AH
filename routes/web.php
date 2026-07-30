@@ -561,6 +561,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/guides', [\App\Http\Controllers\CommercialController::class, 'guides'])->name('guides');
         Route::get('/club', [\App\Http\Controllers\CommercialController::class, 'club'])->name('club');
         Route::get('/prospects', [\App\Http\Controllers\CommercialController::class, 'prospects'])->name('prospects');
+        Route::get('/import', [\App\Http\Controllers\CommercialController::class, 'importFile'])->name('import');
         Route::post('/clients', [\App\Http\Controllers\CommercialController::class, 'store'])->name('clients.store');
         Route::put('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'update'])->name('clients.update');
         Route::delete('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'destroy'])->name('clients.destroy');

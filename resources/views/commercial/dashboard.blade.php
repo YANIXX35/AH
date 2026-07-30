@@ -191,9 +191,9 @@
                     <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem;">+{{ $totalClients }}</div>
                 </div>
 
-                <button type="button" class="btn btn-outline-success rounded-pill px-3 py-2 fw-bold text-sm" data-bs-toggle="modal" data-bs-target="#importFileModal">
+                <a href="{{ route('commercial.import') }}" class="btn btn-outline-success rounded-pill px-3 py-2 fw-bold text-sm text-decoration-none">
                     <i data-feather="upload-cloud" class="me-1" style="width:14px; height:14px;"></i> Importer & Lire Fichier
-                </button>
+                </a>
                 <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-bold text-sm" data-bs-toggle="modal" data-bs-target="#addProspectModal">
                     + Lead CRM
                 </button>

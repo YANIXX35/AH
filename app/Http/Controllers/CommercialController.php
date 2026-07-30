@@ -75,6 +75,12 @@ class CommercialController extends Controller
         return view('commercial.club');
     }
 
+    public function importFile(): View
+    {
+        return view('commercial.import');
+    }
+
+
     public function prospects(Request $request): View
     {
         $commercial = $request->user();

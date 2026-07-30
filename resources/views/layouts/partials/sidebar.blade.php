@@ -91,11 +91,12 @@
                         <i class="align-middle" data-feather="user-plus"></i> <span class="align-middle">Inscrire Client / PME</span>
                     </a>
                 </li>
-                <li class="sidebar-item {{ request()->get('action') === 'import-file' ? 'active' : '' }}">
-                    <a class="sidebar-link text-success fw-bold" href="{{ route('commercial.dashboard', ['action' => 'import-file']) }}">
+                <li class="sidebar-item {{ request()->routeIs('commercial.import') ? 'active' : '' }}">
+                    <a class="sidebar-link text-success fw-bold" href="{{ route('commercial.import') }}">
                         <i class="align-middle text-success" data-feather="file-text"></i> <span class="align-middle">Importer & Analyser Fichier</span>
                     </a>
                 </li>
+
 
             @else
             @if($sidebarUser && (($sidebarUser->is_accountant ?? false) || $sidebarUser->is_platform_admin))
