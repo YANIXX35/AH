@@ -273,9 +273,9 @@
                 <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-bold text-sm" data-bs-toggle="modal" data-bs-target="#addProspectModal">
                     + Lead CRM
                 </button>
-                <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold text-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#addClientModal">
+                <a href="{{ route('commercial.clients.create') }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold text-sm shadow-sm text-decoration-none">
                     <i data-feather="user-plus" class="me-1" style="width:14px; height:14px;"></i> + Nouveau Client
-                </button>
+                </a>
             </div>
         </div>
 
@@ -299,7 +299,7 @@
                     <span class="btn btn-sm btn-light rounded-pill border px-3 text-muted fw-semibold">
                         <i data-feather="calendar" class="me-1" style="width:14px; height:14px;"></i> {{ now()->format('d F Y') }}
                     </span>
-                    <button class="btn btn-sm btn-light rounded-pill border px-3 text-muted fw-semibold" data-bs-toggle="modal" data-bs-target="#addClientModal">
+                    <button class="btn btn-sm btn-light rounded-pill border px-3 text-muted fw-semibold">
                         <i data-feather="filter" class="me-1" style="width:14px; height:14px;"></i> Filtrer
                     </button>
                 </div>
@@ -872,9 +872,9 @@
     document.addEventListener('DOMContentLoaded', function () {
         const urlParams = new URLSearchParams(window.location.search);
         const action = urlParams.get('action');
+        // action=add-client redirige maintenant vers la page dédiée
         if (action === 'add-client') {
-            const modal = new bootstrap.Modal(document.getElementById('addClientModal'));
-            modal.show();
+            window.location.replace('{{ route("commercial.clients.create") }}');
         } else if (action === 'add-prospect') {
             const modal = new bootstrap.Modal(document.getElementById('addProspectModal'));
             modal.show();

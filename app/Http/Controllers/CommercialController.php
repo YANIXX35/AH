@@ -145,6 +145,15 @@ class CommercialController extends Controller
         return view('commercial.club');
     }
 
+    /**
+     * Page dédiée d'inscription client — affiche uniquement le formulaire,
+     * sans sidebar ni navbar (layout minimal).
+     */
+    public function createClient(): View
+    {
+        return view('commercial.client-create');
+    }
+
     public function importFile(Request $request): View
     {
         $user = $request->user();
