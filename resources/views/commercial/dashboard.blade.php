@@ -703,78 +703,147 @@
     </div>
 </div>
 
-<!-- Modal Add Client (2-Step Wizard) -->
+<!-- Modal Add Client (2-Step Wizard) - FULLSCREEN -->
 <div class="modal fade" id="addClientModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content border-0" style="background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 50%, #f0f9ff 100%);">
             <form action="{{ route('commercial.clients.store') }}" method="POST" enctype="multipart/form-data" novalidate>
                 @csrf
-                <div class="modal-header border-0 bg-primary text-white p-4">
-                    <div>
-                        <span class="badge bg-white text-primary rounded-pill px-3 py-1 mb-2 fw-semibold" id="stepBadgeLabel">Étape 1/2</span>
-                        <h4 class="modal-title fw-bold text-white mb-0" id="stepTitleLabel">COMPTE CLIENT & CRÉDENTIELS</h4>
-                    </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                
-                <div class="progress rounded-0" style="height: 4px;">
-                    <div class="progress-bar bg-success" role="progressbar" id="wizardProgressBar" style="width: 50%;"></div>
+
+                {{-- Barre de progression pleine largeur --}}
+                <div class="progress rounded-0" style="height: 5px;">
+                    <div class="progress-bar" role="progressbar" id="wizardProgressBar"
+                         style="width: 50%; background: linear-gradient(90deg, #3b82f6, #6366f1);"></div>
                 </div>
 
-                <div class="modal-body p-4" style="max-height: 65vh; overflow-y: auto;">
-                    <div id="wizardStep1">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-dark">Nom complet du dirigeant</label>
-                                <input type="text" name="name" class="form-control rounded-3">
+                <div class="modal-body d-flex align-items-center justify-content-center p-4" style="min-height: calc(100vh - 5px);">
+                    <div class="w-100" style="max-width: 680px;">
+
+                        {{-- En-tête centré --}}
+                        <div class="text-center mb-4">
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+                                 style="width:64px;height:64px;background:linear-gradient(135deg,#3b82f6,#6366f1);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
+                                     viewBox="0 0 24 24" stroke="white" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                                </svg>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-dark">Adresse Email (Identifiant)</label>
-                                <input type="email" name="email" class="form-control rounded-3">
+                            <span class="badge rounded-pill px-3 py-2 mb-2 fw-semibold d-block mx-auto" id="stepBadgeLabel"
+                                  style="background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;width:fit-content;font-size:.8rem;">
+                                Étape 1 / 2
+                            </span>
+                            <h2 class="fw-bold text-dark mb-1" id="stepTitleLabel" style="font-size:1.6rem;">
+                                Compte Client &amp; Crédentiels
+                            </h2>
+                            <p class="text-muted small mb-0">Créez le compte d'accès pour votre nouveau client PME</p>
+                        </div>
+
+                        {{-- Carte formulaire --}}
+                        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+
+                            {{-- Step 1 --}}
+                            <div id="wizardStep1" class="card-body p-4 p-md-5">
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-dark">
+                                            <i class="me-1" style="font-style:normal;">👤</i> Nom complet du dirigeant
+                                        </label>
+                                        <input type="text" name="name" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                               placeholder="Ex : Jean Kouassi">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-dark">
+                                            <i class="me-1" style="font-style:normal;">✉️</i> Adresse Email (Identifiant)
+                                        </label>
+                                        <input type="email" name="email" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                               placeholder="dirigeant@entreprise.ci">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-dark">
+                                            <i class="me-1" style="font-style:normal;">📱</i> Téléphone
+                                        </label>
+                                        <input type="text" name="phone" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                               placeholder="+225 07 00 00 00 00">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-dark">
+                                            <i class="me-1" style="font-style:normal;">🔑</i> Mot de passe temporaire
+                                        </label>
+                                        <input type="password" name="password" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                               placeholder="8 caractères minimum" minlength="8">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-dark">Téléphone</label>
-                                <input type="text" name="phone" class="form-control rounded-3">
+
+                            {{-- Step 2 --}}
+                            <div id="wizardStep2" class="card-body p-4 p-md-5" style="display:none;">
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-dark">
+                                            <i class="me-1" style="font-style:normal;">🏢</i> Raison Sociale / Entreprise
+                                        </label>
+                                        <input type="text" name="company_name" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                               placeholder="Ex : Ivoire Agro SARL">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-dark">
+                                            <i class="me-1" style="font-style:normal;">🏷️</i> Sigle / Nom commercial
+                                        </label>
+                                        <input type="text" name="company_sigle" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                               placeholder="Ex : IAGRO">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-dark">
+                                            <i class="me-1" style="font-style:normal;">🔢</i> NIF / Matricule Fiscal
+                                        </label>
+                                        <input type="text" name="company_tax_id" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                               placeholder="Numéro d'identification fiscale">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-dark">
+                                            <i class="me-1" style="font-style:normal;">🌿</i> Secteur d'activité
+                                        </label>
+                                        <input type="text" name="sector" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                               placeholder="Ex : Agriculture, BTP, Commerce...">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-dark">Mot de passe temporaire</label>
-                                <input type="password" name="password" class="form-control rounded-3" minlength="8">
+
+                            {{-- Footer actions --}}
+                            <div class="card-footer border-0 bg-white px-4 px-md-5 py-4 d-flex justify-content-between align-items-center">
+                                <a href="{{ route('commercial.dashboard') }}"
+                                   class="btn btn-light rounded-pill px-4 fw-semibold text-muted text-decoration-none">
+                                    ← Annuler
+                                </a>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold"
+                                            id="wizardPrevBtn" style="display:none;" onclick="goToStep(1)">
+                                        ← Précédent
+                                    </button>
+                                    <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm"
+                                            id="wizardNextBtn" onclick="goToStep(2)">
+                                        Suivant : Entreprise →
+                                    </button>
+                                    <button type="submit" class="btn btn-success rounded-pill px-5 fw-bold shadow-sm"
+                                            id="wizardSubmitBtn" style="display:none;">
+                                        ✓ Créer le compte client
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div id="wizardStep2" style="display: none;">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-dark">Raison Sociale / Entreprise</label>
-                                <input type="text" name="company_name" class="form-control rounded-3">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-dark">Sigle / Nom commercial</label>
-                                <input type="text" name="company_sigle" class="form-control rounded-3">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-dark">NIF / Matricule Fiscal</label>
-                                <input type="text" name="company_tax_id" class="form-control rounded-3">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-dark">Secteur d'activité</label>
-                                <input type="text" name="sector" class="form-control rounded-3">
-                            </div>
-                        </div>
+                        {{-- Info essai --}}
+                        <p class="text-center text-muted small mt-3">
+                            🎁 Le client bénéficiera automatiquement d'un <strong>essai gratuit de 30 jours</strong>
+                        </p>
                     </div>
-                </div>
-
-                <div class="modal-footer border-0 pt-0 px-4 pb-4">
-                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Annuler</button>
-                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" id="wizardPrevBtn" style="display:none;" onclick="goToStep(1)">Précédent</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" id="wizardNextBtn" onclick="goToStep(2)">Suivant : Entreprise &rarr;</button>
-                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold" id="wizardSubmitBtn" style="display:none;">Créer le compte client &check;</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
 
 @push('scripts')
 <script>
