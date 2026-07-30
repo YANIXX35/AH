@@ -115,27 +115,15 @@
                         @error('payer_msisdn')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-12">
-                        <div class="d-grid d-sm-flex gap-2 mb-3">
-                            <button type="submit" class="btn btn-warning text-dark sandbox-pay-btn">
+                        <div class="d-grid d-sm-flex gap-2">
+                            <a href="https://pay.wave.com/m/M_ci_uR8pX7JWZNax/c/ci/?amount=15000" target="_blank" rel="noopener" class="btn btn-warning text-dark sandbox-pay-btn d-inline-flex align-items-center justify-content-center">
                                 Payer {{ number_format((float) $paymentAmount, 0, ',', ' ') }} FCFA
-                            </button>
-                            <a href="https://pay.wave.com/m/M_ci_uR8pX7JWZNax/c/ci/?amount=15000" target="_blank" rel="noopener" class="btn btn-info text-white fw-bold d-inline-flex align-items-center justify-content-center px-3" style="background-color: #00c3e3; border: none; min-height: 48px;">
-                                🌊 Payer directement avec Wave (Chrys-Ivan)
                             </a>
                             <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary align-self-center">Plus tard</a>
                         </div>
                     </div>
                 </form>
 
-                <div class="p-3 bg-light rounded-3 border mt-3">
-                    <p class="small text-muted mb-1 fw-bold">📲 Paiement direct Wave Marchand :</p>
-                    <p class="small mb-0">
-                        Veuillez payer <strong>Chrys-Ivan</strong> avec Wave en cliquant sur ce lien : 
-                        <a href="https://pay.wave.com/m/M_ci_uR8pX7JWZNax/c/ci/?amount=15000" target="_blank" rel="noopener" class="fw-bold text-primary text-break">
-                            https://pay.wave.com/m/M_ci_uR8pX7JWZNax/c/ci/?amount=15000
-                        </a>
-                    </p>
-                </div>
 
                 @if(! ($isFedaPaySandboxEnabled ?? false))
                     <p class="small text-muted mt-3 mb-0">
