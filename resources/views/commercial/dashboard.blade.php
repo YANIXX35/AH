@@ -150,6 +150,82 @@
         font-weight: 700;
         border-radius: 12px;
     }
+
+    /* Portfolio & Retention Stats */
+    .portfolio-kpi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 20px 22px;
+        transition: all 0.22s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .portfolio-kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: 20px 20px 0 0;
+    }
+    .portfolio-kpi-card.kpi-total::before    { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+    .portfolio-kpi-card.kpi-trial::before    { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .portfolio-kpi-card.kpi-converted::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .portfolio-kpi-card.kpi-churned::before  { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .portfolio-kpi-card:hover {
+        box-shadow: 0 12px 28px -4px rgba(15,23,42,0.08);
+        transform: translateY(-2px);
+        border-color: #cbd5e1;
+    }
+    .kpi-number {
+        font-size: 2.2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.5px;
+    }
+    .kpi-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        margin-bottom: 4px;
+    }
+    .kpi-sub {
+        font-size: 0.78rem;
+        color: #64748b;
+        margin-top: 4px;
+    }
+    .retention-bar-outer {
+        background: #f1f5f9;
+        border-radius: 99px;
+        height: 12px;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+    }
+    .retention-bar-converted {
+        background: linear-gradient(90deg, #10b981, #34d399);
+        height: 100%;
+        border-radius: 99px 0 0 99px;
+        transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+    .retention-bar-churned {
+        background: linear-gradient(90deg, #ef4444, #f87171);
+        height: 100%;
+        border-radius: 0 99px 99px 0;
+        transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+    .retention-section-header {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 8px;
+        margin-bottom: 16px;
+    }
 </style>
 @endpush
 
@@ -349,8 +425,105 @@
             </div>
         </div>
 
+        {{-- ============================================================ --}}
+        {{-- SECTION : PORTEFEUILLE KPIs + STOCKE DE RÉTENTION             --}}
+        {{-- ============================================================ --}}
+        <div class="mockup-card p-4 mb-4">
+
+            {{-- En-tête --}}
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                <div>
+                    <div class="retention-section-header">📊 Portefeuille &amp; Rétention Clients</div>
+                    <h2 class="h5 fw-bold text-dark mb-0">Statistiques d'acquisition &amp; de conversion</h2>
+                    <p class="text-muted small mb-0">Clients ajoutés depuis votre inscription &mdash; suivi de la période d'essai 1 mois</p>
+                </div>
+                @if($portfolioTrialExpired > 0)
+                    @php
+                        $badgeBg = $conversionRate >= 60
+                            ? 'linear-gradient(135deg,#10b981,#059669)'
+                            : ($conversionRate >= 30 ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#ef4444,#dc2626)');
+                    @endphp
+                    <span class="badge rounded-pill px-3 py-2 fw-bold"
+                          style="background:{{ $badgeBg }};color:#fff;font-size:.85rem;">
+                        {{ $conversionRate }}% de conversion
+                    </span>
+                @endif
+            </div>
+
+            {{-- 4 KPI Cards --}}
+            <div class="row g-3 mb-4">
+                {{-- Total portefeuille --}}
+                <div class="col-6 col-md-3">
+                    <div class="portfolio-kpi-card kpi-total">
+                        <div class="kpi-label">Portefeuille</div>
+                        <div class="kpi-number text-primary">{{ $totalClients }}</div>
+                        <div class="kpi-sub">clients ajoutés au total</div>
+                    </div>
+                </div>
+                {{-- En essai --}}
+                <div class="col-6 col-md-3">
+                    <div class="portfolio-kpi-card kpi-trial">
+                        <div class="kpi-label">&#9203; En Essai</div>
+                        <div class="kpi-number" style="color:#f59e0b;">{{ $activeTrials }}</div>
+                        <div class="kpi-sub">période d'essai en cours</div>
+                    </div>
+                </div>
+                {{-- Convertis --}}
+                <div class="col-6 col-md-3">
+                    <div class="portfolio-kpi-card kpi-converted">
+                        <div class="kpi-label">&#10003; Abonnés</div>
+                        <div class="kpi-number text-success">{{ $portfolioConverted }}</div>
+                        <div class="kpi-sub">ont souscrit après l'essai</div>
+                    </div>
+                </div>
+                {{-- Partis --}}
+                <div class="col-6 col-md-3">
+                    <div class="portfolio-kpi-card kpi-churned">
+                        <div class="kpi-label">&#10007; Partis</div>
+                        <div class="kpi-number text-danger">{{ $portfolioChurned }}</div>
+                        <div class="kpi-sub">non convertis après essai</div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Barre de rétention visuelle --}}
+            @if($portfolioTrialExpired > 0)
+                @php
+                    $convertedPct = $portfolioTrialExpired > 0 ? round(($portfolioConverted / $portfolioTrialExpired) * 100) : 0;
+                    $churnedPct   = 100 - $convertedPct;
+                @endphp
+                <div class="mb-1">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-semibold text-muted">Rétention après essai ({{ $portfolioTrialExpired }} essais terminés)</span>
+                        <span class="small fw-bold text-success">{{ $portfolioConverted }} convertis</span>
+                    </div>
+                    <div class="retention-bar-outer">
+                        <div class="retention-bar-converted" style="width:{{ $convertedPct }}%;"></div>
+                        <div class="retention-bar-churned" style="width:{{ $churnedPct }}%;"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <span class="small text-muted">
+                            <span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:#10b981;"></span>
+                            Convertis {{ $convertedPct }}%
+                        </span>
+                        <span class="small text-muted">
+                            <span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:#ef4444;"></span>
+                            Partis {{ $churnedPct }}%
+                        </span>
+                    </div>
+                </div>
+            @else
+                <div class="text-center py-3 text-muted small">
+                    <i data-feather="clock" class="me-1" style="width:14px;height:14px;"></i>
+                    Aucune période d'essai encore terminée &mdash; les stats apparaîtront après 1 mois.
+                </div>
+            @endif
+
+        </div>
+
         <!-- BOTTOM ROW (EXACT MOCKUP 3 COLUMNS: FUTURE EVENTS | ONBOARDING LEADS | WELCOME AI COPILOT) -->
         <div class="row g-4">
+
             
             <!-- COLUMN 1 (LEFT ~33%): FUTURE EVENTS / ÉVÉNEMENTS (Matching Mockup Left Card) -->
             <div class="col-lg-4">

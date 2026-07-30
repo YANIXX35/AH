@@ -45,25 +45,68 @@ class CommercialController extends Controller
         }
 
         $totalClients = $clients->count();
-        
+
+        // Clients encore dans leur période d'essai d'1 mois
         $activeTrials = $clients->filter(function ($client) {
-            if (!$client || !isset($client->is_premium) || !$client->is_premium) {
-                return false;
+            if (!$client) return false;
+            // Si un premium_trial_ends_at explicite est défini, on s'y réfère
+            if (!empty($client->premium_trial_ends_at)) {
+                try {
+                    $trialEndsAt = $client->premium_trial_ends_at instanceof \Carbon\Carbon
+                        ? $client->premium_trial_ends_at
+                        : \Carbon\Carbon::parse($client->premium_trial_ends_at);
+                    return $trialEndsAt->isFuture();
+                } catch (\Throwable $e) {
+                    return false;
+                }
             }
-            if (empty($client->premium_ends_at)) {
-                return false;
-            }
+            // Sinon, on considère que l'essai est le premier mois depuis la création du compte
             try {
-                $endsAt = $client->premium_ends_at instanceof \Carbon\Carbon 
-                    ? $client->premium_ends_at 
-                    : \Carbon\Carbon::parse($client->premium_ends_at);
-                return $endsAt->isFuture();
+                $createdAt = $client->created_at instanceof \Carbon\Carbon
+                    ? $client->created_at
+                    : \Carbon\Carbon::parse($client->created_at);
+                return $createdAt->isAfter(now()->subMonth());
             } catch (\Throwable $e) {
                 return false;
             }
         })->count();
 
-        $expiredTrials = max(0, $totalClients - $activeTrials);
+        // Clients dont la période d'essai est terminée
+        $portfolioTrialExpired = max(0, $totalClients - $activeTrials);
+
+        // Clients convertis : essai terminé + premium actif
+        $portfolioConverted = $clients->filter(function ($client) {
+            if (!$client) return false;
+            if (!($client->is_premium ?? false)) return false;
+            // Vérifier que l'essai est bien terminé (compte > 1 mois ou trial_ends_at passé)
+            $trialExpired = false;
+            if (!empty($client->premium_trial_ends_at)) {
+                try {
+                    $trialEndsAt = $client->premium_trial_ends_at instanceof \Carbon\Carbon
+                        ? $client->premium_trial_ends_at
+                        : \Carbon\Carbon::parse($client->premium_trial_ends_at);
+                    $trialExpired = $trialEndsAt->isPast();
+                } catch (\Throwable $e) {}
+            } else {
+                try {
+                    $createdAt = $client->created_at instanceof \Carbon\Carbon
+                        ? $client->created_at
+                        : \Carbon\Carbon::parse($client->created_at);
+                    $trialExpired = $createdAt->isBefore(now()->subMonth());
+                } catch (\Throwable $e) {}
+            }
+            return $trialExpired;
+        })->count();
+
+        // Clients partis : essai terminé + pas premium
+        $portfolioChurned = max(0, $portfolioTrialExpired - $portfolioConverted);
+
+        // Taux de conversion (pourcentage)
+        $conversionRate = $portfolioTrialExpired > 0
+            ? round(($portfolioConverted / $portfolioTrialExpired) * 100)
+            : 0;
+
+        $expiredTrials = $portfolioTrialExpired; // alias pour compat
 
         $totalProspects = $prospects->count();
         $newProspects = $prospects->where('status', 'nouveau')->count();
@@ -76,6 +119,10 @@ class CommercialController extends Controller
             'totalClients',
             'activeTrials',
             'expiredTrials',
+            'portfolioTrialExpired',
+            'portfolioConverted',
+            'portfolioChurned',
+            'conversionRate',
             'totalProspects',
             'newProspects',
             'qualifiedProspects',
