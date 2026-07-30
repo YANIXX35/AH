@@ -805,15 +805,66 @@
                 }
             }
 
-            // Mobile Sidebar Backdrop Toggle Handler
+            // =====================================================
+            // MOBILE SIDEBAR — Drawer complet
+            // =====================================================
             const sidebarBackdrop = document.getElementById('sidebarBackdrop');
             const sidebar = document.getElementById('sidebar');
-            if (sidebarBackdrop && sidebar) {
-                sidebarBackdrop.addEventListener('click', function() {
-                    sidebar.classList.remove('show');
-                    sidebarBackdrop.classList.remove('show');
-                });
+            const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+            const hamburgerToggles = document.querySelectorAll('.js-sidebar-toggle');
+
+            function openSidebar() {
+                if (!sidebar) return;
+                sidebar.classList.add('show');
+                if (sidebarBackdrop) sidebarBackdrop.classList.add('show');
+                document.body.style.overflow = 'hidden';
+                if (sidebarCloseBtn) sidebarCloseBtn.style.display = 'flex';
             }
+
+            function closeSidebar() {
+                if (!sidebar) return;
+                sidebar.classList.remove('show');
+                if (sidebarBackdrop) sidebarBackdrop.classList.remove('show');
+                document.body.style.overflow = '';
+                if (sidebarCloseBtn) sidebarCloseBtn.style.display = 'none';
+            }
+
+            // Hamburger toggle
+            hamburgerToggles.forEach(function(toggle) {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (sidebar && sidebar.classList.contains('show')) {
+                        closeSidebar();
+                    } else {
+                        openSidebar();
+                    }
+                });
+            });
+
+            // Backdrop click → ferme
+            if (sidebarBackdrop) {
+                sidebarBackdrop.addEventListener('click', closeSidebar);
+            }
+
+            // Bouton fermer dédié
+            if (sidebarCloseBtn) {
+                sidebarCloseBtn.addEventListener('click', closeSidebar);
+            }
+
+            // Touche Échap → ferme
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar && sidebar.classList.contains('show')) {
+                    closeSidebar();
+                }
+            });
+
+            // Sur redimensionnement → reset si desktop
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    closeSidebar();
+                }
+            });
+
         });
     </script>
     @stack('scripts')

@@ -205,7 +205,7 @@
 
     <!-- METRICS CARDS GRID (MONDAYS STYLE) -->
     <div class="row g-3 mb-4">
-        <div class="col-xl-3 col-sm-6">
+        <div class="col-12 col-sm-6 col-xl-3">
             <div class="card mondays-card h-100 border-0 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small fw-semibold text-uppercase">Écritures Comptables</span>
@@ -215,7 +215,7 @@
                 <div class="text-muted small">Écritures validées en base.</div>
             </div>
         </div>
-        <div class="col-xl-3 col-sm-6">
+        <div class="col-12 col-sm-6 col-xl-3">
             <div class="card mondays-card h-100 border-0 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small fw-semibold text-uppercase">Volume Mensuel</span>
@@ -225,7 +225,7 @@
                 <div class="text-muted small">Somme des flux du mois.</div>
             </div>
         </div>
-        <div class="col-xl-3 col-sm-6">
+        <div class="col-12 col-sm-6 col-xl-3">
             <div class="card mondays-card h-100 border-0 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small fw-semibold text-uppercase">Pièces & Documents</span>
@@ -235,7 +235,7 @@
                 <div class="text-muted small">Documents numérisés OCR.</div>
             </div>
         </div>
-        <div class="col-xl-3 col-sm-6">
+        <div class="col-12 col-sm-6 col-xl-3">
             <div class="card mondays-card h-100 border-0 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small fw-semibold text-uppercase">Trésorerie Nette</span>

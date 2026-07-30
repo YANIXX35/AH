@@ -1,7 +1,13 @@
-/* Mobile Responsive Utility Styles for Sitiame Capital */
+/* =============================================================
+   SITIAME CAPITAL — Mobile Responsive CSS
+   Centralise toutes les media queries et ajustements mobiles.
+   Inclus dans layouts/app.blade.php après adminkit-app.css
+   ============================================================= */
 
+/* ---------------------------------------------------------------
+   1. SIDEBAR — Drawer Mobile
+--------------------------------------------------------------- */
 @media (max-width: 991.98px) {
-    /* Sidebar Overlay & Offcanvas Drawer */
     .sidebar {
         position: fixed !important;
         top: 0 !important;
@@ -11,6 +17,7 @@
         z-index: 1050 !important;
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.25) !important;
+        overflow-y: auto;
     }
 
     .sidebar.show {
@@ -20,8 +27,9 @@
     .sidebar-backdrop {
         position: fixed;
         inset: 0;
-        background-color: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(4px);
+        background-color: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
         z-index: 1040;
         opacity: 0;
         visibility: hidden;
@@ -33,47 +41,417 @@
         visibility: visible;
     }
 
-    /* Main Container Padding */
+    /* Main container — prend 100% width quand sidebar masquée */
     .main {
         width: 100% !important;
-        min-width: 100% !important;
+        min-width: 0 !important;
         padding-left: 0 !important;
+        margin-left: 0 !important;
     }
 
-    /* Table & Card Utilities */
-    .table-responsive-wrapper {
+    /* Bouton fermer la sidebar sur mobile */
+    .sidebar-close-btn {
+        display: flex !important;
+    }
+}
+
+@media (min-width: 992px) {
+    .sidebar-close-btn {
+        display: none !important;
+    }
+}
+
+/* ---------------------------------------------------------------
+   2. NAVBAR — Header
+--------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .navbar {
+        padding: 0.4rem 0.75rem !important;
+        min-height: 52px;
+    }
+
+    .navbar .navbar-brand,
+    .navbar .sidebar-brand {
+        font-size: 0.95rem;
+    }
+
+    /* Réduire taille des icônes navbar */
+    .navbar .nav-icon svg,
+    .navbar .nav-icon i {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    /* Dropdown menus pleine largeur sur mobile */
+    .navbar .dropdown-menu-lg {
+        width: calc(100vw - 1.5rem) !important;
+        max-width: 360px;
+    }
+}
+
+/* ---------------------------------------------------------------
+   3. CONTENU PRINCIPAL — Container et paddings
+--------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .container-fluid {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .content {
+        padding: 0 !important;
+    }
+
+    /* Réduction du padding global des pages */
+    .mondays-container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /* Hero title taille adaptée */
+    .mondays-hero-title {
+        font-size: 1.35rem !important;
+        margin-bottom: 8px !important;
+    }
+
+    .mondays-hero-date {
+        font-size: 0.78rem !important;
+    }
+}
+
+/* ---------------------------------------------------------------
+   4. KPI CARDS & GRILLES
+--------------------------------------------------------------- */
+@media (max-width: 575.98px) {
+    /* Forcer 1 colonne sur très petits écrans */
+    .row > [class*="col-xl-"],
+    .row > [class*="col-lg-"],
+    .row > [class*="col-sm-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* KPI metric valeur légèrement réduite */
+    .mondays-metric-val {
+        font-size: 1.35rem !important;
+    }
+
+    /* Pill bar adaptée mobile */
+    .mondays-pill-bar {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        border-radius: 12px !important;
+        padding: 10px 14px !important;
         width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    }
+
+    .mondays-pill-item.text-muted {
+        display: none !important; /* Masquer les séparateurs | */
     }
 }
 
 @media (max-width: 767.98px) {
-    /* Navbar Adjustment */
-    .navbar {
-        padding: 0.5rem 1rem !important;
+    /* 2 colonnes sur tablette petite */
+    .col-xl-3.col-sm-6,
+    .col-md-6.col-xl-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
     }
 
-    /* Mobile Headers & Hub Admin */
+    /* Cards : padding réduit */
+    .card.h-100.p-3 {
+        padding: 0.75rem !important;
+    }
+
+    /* Hub admin header responsive */
     .admin-hub-header {
         flex-direction: column !important;
         align-items: stretch !important;
         border-radius: 1rem !important;
-        padding: 1.25rem !important;
+        padding: 1rem !important;
     }
 
     .admin-hub-header .nav-pills {
         flex-wrap: wrap !important;
-        gap: 0.5rem !important;
+        gap: 0.4rem !important;
     }
 
-    /* Grid Force 1 Column on Mobile */
-    .grid-mobile-1 {
-        grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    .admin-hub-header .nav-pills .nav-link {
+        font-size: 0.8rem !important;
+        padding: 0.35rem 0.75rem !important;
     }
 }
 
-/* Sidebar Modern Styling & Hierarchy */
+/* ---------------------------------------------------------------
+   5. BOUTONS — Zone tactile minimum 44px
+--------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .btn {
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-sm {
+        min-height: 36px;
+        font-size: 0.82rem !important;
+    }
+
+    /* Groupes de boutons : empilage vertical */
+    .d-flex.gap-2.flex-wrap .btn,
+    .d-flex.align-items-center.gap-2.flex-wrap .btn {
+        flex-shrink: 0;
+    }
+
+    /* Boutons d'action dans header hero */
+    .d-flex.justify-content-between.align-items-start.flex-wrap {
+        flex-direction: column;
+        gap: 0.75rem !important;
+    }
+
+    .d-flex.justify-content-between.align-items-start.flex-wrap > div:last-child {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+}
+
+/* ---------------------------------------------------------------
+   6. FORMULAIRES — Labels et inputs
+--------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    /* Tous les inputs à 100% */
+    .form-control,
+    .form-select {
+        width: 100%;
+        font-size: 16px !important; /* Empêche le zoom auto iOS */
+        min-height: 44px;
+    }
+
+    /* Réduire les grilles de formulaire en 1 colonne */
+    .row.g-3 > .col-md-6,
+    .row.g-3 > .col-md-7,
+    .row.g-3 > .col-md-5,
+    .row.g-3 > .col-md-4,
+    .row.g-3 > .col-md-8 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Labels au-dessus */
+    .form-label {
+        display: block;
+        margin-bottom: 0.3rem;
+    }
+
+    /* Groupes inline → vertical */
+    .input-group {
+        flex-wrap: wrap;
+    }
+}
+
+/* ---------------------------------------------------------------
+   7. MODALES
+--------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .modal-dialog {
+        margin: 0.5rem auto !important;
+        max-width: 98vw !important;
+        width: 98vw !important;
+    }
+
+    .modal-dialog.modal-lg,
+    .modal-dialog.modal-xl {
+        max-width: 98vw !important;
+        width: 98vw !important;
+    }
+
+    .modal-content {
+        border-radius: 12px !important;
+        max-height: 92vh !important;
+    }
+
+    .modal-body {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        max-height: calc(92vh - 130px) !important;
+    }
+
+    .modal-footer {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .modal-footer .btn {
+        flex: 1 1 auto;
+        min-width: 100px;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .modal-dialog {
+        max-width: 90vw !important;
+        width: 90vw !important;
+    }
+}
+
+/* Modal scrollbar personnalisé */
+.modal-body::-webkit-scrollbar {
+    width: 5px;
+    display: block;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ---------------------------------------------------------------
+   8. TABLEAUX
+--------------------------------------------------------------- */
+
+/* 8a. Tableaux simples → Cartes empilées sur mobile */
+@media (max-width: 767.98px) {
+    .table-mobile-cards thead {
+        display: none !important;
+    }
+
+    .table-mobile-cards tbody tr {
+        display: block !important;
+        margin-bottom: 1rem !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 0.75rem !important;
+        background: #fff;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+
+    .table-mobile-cards tbody td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 0.35rem 0 !important;
+        border: none !important;
+        font-size: 0.88rem;
+    }
+
+    .table-mobile-cards tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #64748b;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-right: 0.5rem;
+        flex-shrink: 0;
+    }
+}
+
+/* 8b. Tableaux comptables → scroll horizontal */
+.table-responsive-wrapper,
+.table-accounting-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+}
+
+@media (max-width: 767.98px) {
+    /* Forcer le scroll sur tous les tableaux dans les cards */
+    .card .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .card .table-responsive table {
+        min-width: 600px;
+    }
+
+    /* Tableaux comptables : conserver la structure */
+    .table-accounting {
+        min-width: 750px;
+        font-size: 0.82rem;
+    }
+}
+
+/* ---------------------------------------------------------------
+   9. FOOTER
+--------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .footer .row {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+
+    .footer .col-md-6 {
+        text-align: center !important;
+    }
+
+    .footer .list-inline {
+        justify-content: center;
+        display: flex;
+        flex-wrap: wrap;
+    }
+}
+
+/* ---------------------------------------------------------------
+   10. CHATBOT IA
+--------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    /* Panel chatbot */
+    #aiChatbotPanel,
+    .ai-chatbot-panel,
+    [id*="chatbot"],
+    [class*="chatbot-panel"] {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        height: 80vh !important;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    /* Zone de saisie du chatbot reste visible */
+    [class*="chatbot"] [class*="input"],
+    [class*="chatbot"] [class*="footer"],
+    [id*="chatbot"] input,
+    [id*="chatbot"] textarea {
+        position: sticky;
+        bottom: 0;
+    }
+}
+
+/* ---------------------------------------------------------------
+   11. GRAPHIQUES (Charts)
+--------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    canvas {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+
+    .chart-container,
+    [class*="chart-wrap"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto;
+    }
+}
+
+/* ---------------------------------------------------------------
+   12. SIDEBAR STYLES — Hiérarchie & Design
+--------------------------------------------------------------- */
 .sidebar-header-title {
     font-size: 0.68rem;
     font-weight: 700;
@@ -96,22 +474,117 @@
     padding: 0.4rem 0.75rem !important;
 }
 
-/* Modal Scrollbar Custom Styling */
-.modal-body::-webkit-scrollbar {
-    width: 6px !important;
-    display: block !important;
+/* Bouton fermer sidebar (visible uniquement en mobile via JS) */
+.sidebar-close-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 10;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease;
 }
 
-.modal-body::-webkit-scrollbar-track {
-    background: #f8fafc !important;
-    border-radius: 4px !important;
+.sidebar-close-btn:hover {
+    background: rgba(255,255,255,0.2);
 }
 
-.modal-body::-webkit-scrollbar-thumb {
-    background: #cbd5e1 !important;
-    border-radius: 4px !important;
+/* ---------------------------------------------------------------
+   13. PAGES SPÉCIFIQUES
+--------------------------------------------------------------- */
+
+/* Dashboard Comptable — Hub outils */
+@media (max-width: 767.98px) {
+    .accountant-compta-hub__header {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+    }
+
+    .accountant-compta-hub__tools {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.5rem !important;
+    }
 }
 
-.modal-body::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8 !important;
+/* Profil & Équipe */
+@media (max-width: 767.98px) {
+    .profile-section .row > .col-md-4,
+    .profile-section .row > .col-md-8 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Formulaires profil pleine largeur */
+    .profile-form .row.g-3 > [class*="col-md"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+/* Workspace Banner */
+@media (max-width: 767.98px) {
+    .alert.d-flex.flex-wrap.justify-content-between {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+}
+
+/* Dropdown menus */
+@media (max-width: 767.98px) {
+    .dropdown-menu {
+        font-size: 0.9rem;
+    }
+
+    .dropdown-item {
+        padding: 0.6rem 1rem;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+    }
+}
+
+/* ---------------------------------------------------------------
+   14. UTILITAIRES GLOBAUX
+--------------------------------------------------------------- */
+
+/* Grid utilitaire 1 colonne forcée */
+.grid-mobile-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+
+/* Texte tronqué sur petits écrans */
+@media (max-width: 767.98px) {
+    .text-truncate-mobile {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+    }
+}
+
+/* Scroll horizontal fluide */
+.overflow-x-auto {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Masquer éléments desktop sur mobile */
+@media (max-width: 767.98px) {
+    .hide-mobile {
+        display: none !important;
+    }
+}
+
+/* Print */
+@media print {
+    .sidebar, .navbar, .footer { display: none !important; }
+    .main { margin: 0 !important; padding: 0 !important; }
 }

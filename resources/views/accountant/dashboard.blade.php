@@ -120,7 +120,7 @@
 
     <!-- METRICS CARDS GRID -->
     <div class="row g-3 mb-4">
-        <div class="col-md-6 col-xl-3">
+        <div class="col-12 col-sm-6 col-xl-3">
             <div class="card mondays-card h-100 border-0 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small fw-semibold text-uppercase">Dossiers Clients</span>
@@ -130,7 +130,7 @@
                 <div class="text-muted small">Comptes entreprise suivis.</div>
             </div>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="col-12 col-sm-6 col-xl-3">
             <div class="card mondays-card h-100 border-0 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small fw-semibold text-uppercase">Écritures Totales</span>
@@ -140,7 +140,7 @@
                 <div class="text-muted small">Volume d'écritures saisies.</div>
             </div>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="col-12 col-sm-6 col-xl-3">
             <div class="card mondays-card h-100 border-0 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small fw-semibold text-uppercase">Documents à Traiter</span>
@@ -150,7 +150,7 @@
                 <div class="text-muted small">Pièces OCR à corriger.</div>
             </div>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="col-12 col-sm-6 col-xl-3">
             <div class="card mondays-card h-100 border-0 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small fw-semibold text-uppercase">Alertes OCR « Stress »</span>
