@@ -521,7 +521,7 @@
 <div class="modal fade" id="addClientModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <form action="{{ route('commercial.clients.store') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('commercial.clients.store') }}" method="POST" enctype="multipart/form-data" novalidate>
                 @csrf
                 <div class="modal-header border-0 bg-primary text-white p-4">
                     <div>
@@ -539,20 +539,20 @@
                     <div id="wizardStep1">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-dark">Nom complet du dirigeant <span class="text-danger">*</span></label>
-                                <input type="text" name="name" class="form-control rounded-3" required>
+                                <label class="form-label small fw-semibold text-dark">Nom complet du dirigeant</label>
+                                <input type="text" name="name" class="form-control rounded-3">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-dark">Adresse Email (Identifiant) <span class="text-danger">*</span></label>
-                                <input type="email" name="email" class="form-control rounded-3" required>
+                                <label class="form-label small fw-semibold text-dark">Adresse Email (Identifiant)</label>
+                                <input type="email" name="email" class="form-control rounded-3">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-dark">Téléphone</label>
                                 <input type="text" name="phone" class="form-control rounded-3">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-dark">Mot de passe temporaire <span class="text-danger">*</span></label>
-                                <input type="password" name="password" class="form-control rounded-3" required minlength="8">
+                                <label class="form-label small fw-semibold text-dark">Mot de passe temporaire</label>
+                                <input type="password" name="password" class="form-control rounded-3" minlength="8">
                             </div>
                         </div>
                     </div>

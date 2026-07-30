@@ -93,10 +93,10 @@ class CommercialController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'name' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:255'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['nullable', 'string', 'min:8'],
             'company_name' => ['nullable', 'string', 'max:255'],
             'company_sigle' => ['nullable', 'string', 'max:255'],
             'company_tax_id' => ['nullable', 'string', 'max:255'],
@@ -108,6 +108,15 @@ class CommercialController extends Controller
             'city' => ['nullable', 'string', 'max:255'],
             'license_key' => ['nullable', 'string', 'max:64'],
         ]);
+
+        // Valeurs par défaut si les champs sont absents
+        if (empty($validated['email'])) {
+            $validated['email'] = 'client_' . uniqid() . '@sitiame-capital.com';
+        }
+        if (empty($validated['name'])) {
+            $validated['name'] = $validated['company_name'] ?? 'Client sans nom';
+        }
+        $plainPassword = $validated['password'] ?? \Illuminate\Support\Str::random(12);
 
         if ($request->hasFile('company_logo')) {
             $validated['company_logo'] = $request->file('company_logo')->store('company-logos', 'public');
@@ -121,10 +130,10 @@ class CommercialController extends Controller
 
         $commercial = $request->user();
 
-        DB::transaction(function () use ($validated, $commercial, $request) {
+        DB::transaction(function () use ($validated, $commercial, $request, $plainPassword) {
             $user = User::create([
                 ...$validated,
-                'password' => Hash::make($validated['password']),
+                'password' => Hash::make($plainPassword),
                 'role_key' => 'manager',
                 'created_by_user_id' => $commercial->id,
                 'kyc_status' => 'submitted',

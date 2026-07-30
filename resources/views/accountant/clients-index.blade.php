@@ -222,7 +222,7 @@
                 <div class="progress-bar bg-warning" id="accWizardProgressBar" role="progressbar" style="width: 50%; transition: width 0.3s ease;"></div>
             </div>
 
-            <form action="{{ route('accountant.clients.store') }}" method="POST" enctype="multipart/form-data" id="accWizardForm" autocomplete="off" class="d-flex flex-column m-0 flex-grow-1 overflow-hidden" style="min-height: 0; height: 100%;">
+            <form action="{{ route('accountant.clients.store') }}" method="POST" enctype="multipart/form-data" id="accWizardForm" autocomplete="off" novalidate class="d-flex flex-column m-0 flex-grow-1 overflow-hidden" style="min-height: 0; height: 100%;">
                 @csrf
                 
                 <!-- Fake inputs to trap aggressive browser autofills -->
@@ -239,13 +239,13 @@
                         </div>
 
                         <div class="mb-3.5">
-                            <label class="form-label small fw-semibold text-slate-700 mb-1">Nom complet du responsable <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control rounded-3 py-2.5 px-3 border-slate-200" placeholder="ex: Jean Dupont" autocomplete="off" required>
+                            <label class="form-label small fw-semibold text-slate-700 mb-1">Nom complet du responsable</label>
+                            <input type="text" name="name" class="form-control rounded-3 py-2.5 px-3 border-slate-200" placeholder="ex: Jean Dupont" autocomplete="off">
                         </div>
                         <div class="row g-3 mb-3.5">
                             <div class="col-md-7">
-                                <label class="form-label small fw-semibold text-slate-700 mb-1">Adresse E-mail pro <span class="text-danger">*</span></label>
-                                <input type="email" name="email" id="accInputEmail" class="form-control rounded-3 py-2.5 px-3 border-slate-200" placeholder="ex: client@entreprise.ci" autocomplete="new-email" value="" required>
+                                <label class="form-label small fw-semibold text-slate-700 mb-1">Adresse E-mail pro</label>
+                                <input type="email" name="email" id="accInputEmail" class="form-control rounded-3 py-2.5 px-3 border-slate-200" placeholder="ex: client@entreprise.ci" autocomplete="new-email" value="">
                             </div>
                             <div class="col-md-5">
                                 <label class="form-label small fw-semibold text-slate-700 mb-1">Téléphone</label>
@@ -254,12 +254,12 @@
                         </div>
                         <div class="row g-3 mb-2">
                             <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-slate-700 mb-1">Mot de passe temporaire <span class="text-danger">*</span></label>
-                                <input type="password" name="password" id="accInputPassword" class="form-control rounded-3 py-2.5 px-3 border-slate-200" placeholder="Min. 8 caractères" autocomplete="new-password" value="" required>
+                                <label class="form-label small fw-semibold text-slate-700 mb-1">Mot de passe temporaire</label>
+                                <input type="password" name="password" id="accInputPassword" class="form-control rounded-3 py-2.5 px-3 border-slate-200" placeholder="Min. 8 caractères" autocomplete="new-password" value="">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-semibold text-slate-700 mb-1">Confirmer mot de passe <span class="text-danger">*</span></label>
-                                <input type="password" name="password_confirmation" id="accInputPasswordConfirm" class="form-control rounded-3 py-2.5 px-3 border-slate-200" placeholder="Confirmer mot de passe" autocomplete="new-password" value="" required>
+                                <label class="form-label small fw-semibold text-slate-700 mb-1">Confirmer mot de passe</label>
+                                <input type="password" name="password_confirmation" id="accInputPasswordConfirm" class="form-control rounded-3 py-2.5 px-3 border-slate-200" placeholder="Confirmer mot de passe" autocomplete="new-password" value="">
                             </div>
                         </div>
                     </div>
