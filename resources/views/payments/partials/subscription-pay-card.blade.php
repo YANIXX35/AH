@@ -116,7 +116,7 @@
                     </div>
                     <div class="col-12">
                         <div class="d-grid d-sm-flex gap-2">
-                            <a href="https://pay.wave.com/m/M_ci_uR8pX7JWZNax/c/ci/?amount=15000" target="_blank" rel="noopener" class="btn btn-warning text-dark sandbox-pay-btn d-inline-flex align-items-center justify-content-center">
+                            <a href="https://pay.wave.com/m/M_ci_uR8pX7JWZNax/c/ci/?amount=100" target="_blank" rel="noopener" class="btn btn-warning text-dark sandbox-pay-btn d-inline-flex align-items-center justify-content-center">
                                 Payer {{ number_format((float) $paymentAmount, 0, ',', ' ') }} FCFA
                             </a>
                             <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary align-self-center">Plus tard</a>
