@@ -251,16 +251,20 @@
     }
     @media (max-width: 992px) {
         .admin-global-chat-window {
-            width: min(430px, calc(100vw - 20px));
+            width: min(400px, calc(100vw - 20px));
             right: 10px;
-            bottom: 84px;
+            bottom: 80px;
+            height: min(60vh, 520px);
         }
         .admin-global-chat-launcher {
             right: 12px;
             bottom: 14px;
+            width: 50px;
+            height: 50px;
         }
     }
     @media (max-width: 576px) {
+        /* Chatbot compact sur mobile — panneau bas */
         body.admin-chat-open {
             overflow: hidden;
         }
@@ -269,7 +273,9 @@
             left: 0;
             bottom: 0;
             width: 100vw;
-            height: 88vh;
+            height: 58vh;          /* Compact : 58% de l'écran max */
+            max-height: 480px;
+            min-height: 320px;
             border-radius: 1rem 1rem 0 0;
             border-left: 0;
             border-right: 0;
@@ -279,23 +285,51 @@
         .admin-global-chat-window.is-hidden {
             transform: translateY(24px) scale(1);
         }
+        /* Launcher plus petit et repositionné */
         .admin-global-chat-launcher {
-            width: 54px;
-            height: 54px;
+            right: 12px;
+            bottom: 12px;
+            width: 46px;
+            height: 46px;
         }
+        /* Body du chat réduit */
         .admin-global-chat-body {
-            height: calc(100% - 184px);
+            height: calc(100% - 160px);
         }
+        /* Chips en scroll horizontal */
         .admin-global-chat-actions {
             overflow-x: auto;
             white-space: nowrap;
             flex-wrap: nowrap;
             scrollbar-width: thin;
+            padding: 0.35rem 0.65rem;
         }
+        /* Bulles plus larges */
         .admin-global-chat-bubble-wrap {
-            max-width: 88%;
+            max-width: 90%;
+        }
+        /* Header compact */
+        .admin-global-chat-head {
+            padding: 0.55rem 0.85rem;
+        }
+        .admin-global-chat-head small {
+            display: none; /* Masquer le sous-titre du modèle IA */
+        }
+        /* Boutons header réduits */
+        .admin-global-chat-head .btn-sm {
+            padding: 0.2rem 0.5rem;
+            font-size: 0.72rem;
+        }
+        /* Zone input compacte */
+        .admin-global-chat-input {
+            padding: 0.4rem 0.5rem;
+        }
+        .admin-global-chat-input textarea {
+            font-size: 15px !important;
+            rows: 1;
         }
     }
+
 </style>
 
 <div id="adminGlobalChatBackdrop" class="admin-global-chat-backdrop is-hidden" aria-hidden="true"></div>
