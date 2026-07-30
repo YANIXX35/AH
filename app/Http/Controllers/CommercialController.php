@@ -21,11 +21,21 @@ class CommercialController extends Controller
     public function index(Request $request): View
     {
         $commercial = $request->user();
-        $clients = $commercial->createdClients()->latest()->get();
+        if (!$commercial) {
+            abort(403);
+        }
+
+        try {
+            $clients = ($commercial->is_platform_admin ?? false)
+                ? User::query()->clients()->latest()->get()
+                : $commercial->createdClients()->latest()->get();
+        } catch (\Throwable $e) {
+            $clients = collect();
+        }
 
         try {
             $prospects = Prospect::query()
-                ->when(! $commercial->is_platform_admin, fn ($q) => $q->where('commercial_user_id', $commercial->id))
+                ->when(! ($commercial->is_platform_admin ?? false), fn ($q) => $q->where('commercial_user_id', $commercial->id))
                 ->latest()
                 ->get();
         } catch (\Throwable $e) {
@@ -35,12 +45,23 @@ class CommercialController extends Controller
         $totalClients = $clients->count();
         
         $activeTrials = $clients->filter(function ($client) {
-            return $client->is_premium && $client->premium_ends_at && $client->premium_ends_at->isFuture();
+            if (!$client || !isset($client->is_premium) || !$client->is_premium) {
+                return false;
+            }
+            if (empty($client->premium_ends_at)) {
+                return false;
+            }
+            try {
+                $endsAt = $client->premium_ends_at instanceof \Carbon\Carbon 
+                    ? $client->premium_ends_at 
+                    : \Carbon\Carbon::parse($client->premium_ends_at);
+                return $endsAt->isFuture();
+            } catch (\Throwable $e) {
+                return false;
+            }
         })->count();
 
-        $expiredTrials = $clients->filter(function ($client) {
-            return !$client->is_premium || ($client->premium_ends_at && $client->premium_ends_at->isPast());
-        })->count();
+        $expiredTrials = max(0, $totalClients - $activeTrials);
 
         $totalProspects = $prospects->count();
         $newProspects = $prospects->where('status', 'nouveau')->count();

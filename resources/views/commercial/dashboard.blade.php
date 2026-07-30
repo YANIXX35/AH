@@ -246,8 +246,20 @@
             <div class="d-flex flex-column gap-3">
                 @forelse($clients as $client)
                     @php
-                        $isTrialActive = $client->is_premium && $client->premium_ends_at && $client->premium_ends_at->isFuture();
-                        $daysLeft = $isTrialActive ? now()->diffInDays($client->premium_ends_at) : 0;
+                        $isTrialActive = false;
+                        $daysLeft = 0;
+                        if ($client && ($client->is_premium ?? false) && !empty($client->premium_ends_at)) {
+                            try {
+                                $endsAt = $client->premium_ends_at instanceof \Carbon\Carbon 
+                                    ? $client->premium_ends_at 
+                                    : \Carbon\Carbon::parse($client->premium_ends_at);
+                                $isTrialActive = $endsAt->isFuture();
+                                $daysLeft = $isTrialActive ? now()->diffInDays($endsAt) : 0;
+                            } catch (\Throwable $e) {
+                                $isTrialActive = false;
+                                $daysLeft = 0;
+                            }
+                        }
                     @endphp
                     <div class="row g-2 align-items-center p-2 rounded-4 hover-bg-light border-bottom border-light">
                         <div class="col-md-3">

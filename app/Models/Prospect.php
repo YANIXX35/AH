@@ -41,18 +41,26 @@ class Prospect extends Model
 
     public function getStatusLabelAttribute(): string
     {
+        if (empty($this->status)) {
+            return 'Nouveau Lead';
+        }
+
         return match ($this->status) {
             'nouveau' => 'Nouveau Lead',
             'contacte' => 'Contacté',
             'qualifie' => 'Qualifié',
             'client' => 'Converti en Client',
             'sans_suite' => 'Sans suite',
-            default => ucfirst($this->status),
+            default => ucfirst((string) $this->status),
         };
     }
 
     public function getStatusBadgeClassAttribute(): string
     {
+        if (empty($this->status)) {
+            return 'bg-info text-white';
+        }
+
         return match ($this->status) {
             'nouveau' => 'bg-info text-white',
             'contacte' => 'bg-warning text-dark',
