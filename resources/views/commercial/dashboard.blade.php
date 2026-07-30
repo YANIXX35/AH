@@ -253,10 +253,10 @@
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:40px; height:40px; font-size:0.85rem;">
-                                    {{ strtoupper(substr($client->name, 0, 2)) }}
+                                    {{ strtoupper(substr($client->name ?? 'PME', 0, 2)) }}
                                 </div>
                                 <div>
-                                    <div class="fw-bold text-dark mb-0">{{ $client->name }}</div>
+                                    <div class="fw-bold text-dark mb-0">{{ $client->name ?? $client->email ?? 'Client PME' }}</div>
                                     <div class="text-muted small" style="font-size:0.78rem;">{{ $client->company_name ?? 'PME Client' }}</div>
                                 </div>
                             </div>
@@ -401,9 +401,9 @@
                             <div class="col-6">
                                 <div class="mini-user-card">
                                     <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center mx-auto mb-2" style="width:44px; height:44px; font-size:0.9rem;">
-                                        {{ strtoupper(substr($prospect->name, 0, 2)) }}
+                                        {{ strtoupper(substr($prospect->name ?? 'PR', 0, 2)) }}
                                     </div>
-                                    <div class="fw-bold text-dark text-truncate small mb-0">{{ $prospect->name }}</div>
+                                    <div class="fw-bold text-dark text-truncate small mb-0">{{ $prospect->name ?? 'Prospect' }}</div>
                                     <div class="text-muted small text-truncate mb-2" style="font-size:0.75rem;">{{ $prospect->company_name ?? 'PME' }}</div>
                                     <span class="badge {{ $prospect->status_badge_class }} rounded-pill px-2 py-1 small">
                                         {{ $prospect->status_label }}
@@ -428,7 +428,7 @@
                         <div class="copilot-orb-3d"></div>
 
                         <!-- Centered Greeting Text (Mockup Style) -->
-                        <h3 class="fw-bold text-dark mb-1">Bonjour, {{ explode(' ', auth()->user()->name)[0] }}</h3>
+                        <h3 class="fw-bold text-dark mb-1">Bonjour, {{ explode(' ', auth()->user()?->name ?? 'Utilisateur')[0] }}</h3>
                         <p class="text-muted small mb-4">Que puis-je analyser ou automatiser pour vous aujourd'hui ?</p>
 
                         <!-- Quick Action Buttons Row (Mockup Style) -->

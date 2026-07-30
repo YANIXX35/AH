@@ -522,7 +522,7 @@
                                 }
                             @endphp
                             <a class="nav-link dropdown-toggle d-inline-block" href="#" data-bs-toggle="dropdown">
-                                <img src="{{ Auth::user()->avatar ? asset('storage/' . Auth::user()->avatar) : asset('images/sitiam.png') }}" class="avatar img-fluid rounded me-1" alt="{{ Auth::user()->name }}" /> <span class="text-dark d-none d-sm-inline-block">{{ explode(' ', Auth::user()->name)[0] }}</span>
+                                <img src="{{ (Auth::user()?->avatar) ? asset('storage/' . Auth::user()->avatar) : asset('images/sitiam.png') }}" class="avatar img-fluid rounded me-1" alt="{{ Auth::user()?->name ?? 'Utilisateur' }}" /> <span class="text-dark d-none d-sm-inline-block">{{ explode(' ', Auth::user()?->name ?? 'Utilisateur')[0] }}</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <div class="dropdown-item-text small text-muted">

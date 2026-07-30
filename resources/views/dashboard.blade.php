@@ -198,7 +198,7 @@
             </div>
             <div class="mondays-pill-item text-muted">|</div>
             <div class="mondays-pill-item">
-                <span class="text-warning">⌛</span> <strong>Traitement OCR :</strong> {{ number_format($pendingDocumentsCount, 0, ',', ' ') }} en attente
+                <span class="text-warning">⌛</span> <strong>Traitement OCR :</strong> {{ number_format($pendingDocumentsCount ?? $documentsPending ?? 0, 0, ',', ' ') }} en attente
             </div>
         </div>
     </div>
@@ -211,7 +211,7 @@
                     <span class="text-muted small fw-semibold text-uppercase">Écritures Comptables</span>
                     <span class="mondays-badge mondays-badge-info">Total</span>
                 </div>
-                <div class="mondays-metric-val text-primary mb-1">{{ number_format($accountingEntriesCount, 0, ',', ' ') }}</div>
+                <div class="mondays-metric-val text-primary mb-1">{{ number_format($accountingEntriesCount ?? 0, 0, ',', ' ') }}</div>
                 <div class="text-muted small">Écritures validées en base.</div>
             </div>
         </div>
@@ -219,9 +219,9 @@
             <div class="card mondays-card h-100 border-0 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small fw-semibold text-uppercase">Volume Mensuel</span>
-                    <span class="mondays-badge mondays-badge-warning">{{ $currentMonthLabel }}</span>
+                    <span class="mondays-badge mondays-badge-warning">{{ $currentMonthLabel ?? 'Ce mois' }}</span>
                 </div>
-                <div class="mondays-metric-val text-warning mb-1">{{ number_format($accountingMonthlyAmount, 0, ',', ' ') }} <small class="fs-6 fw-normal text-muted">FCFA</small></div>
+                <div class="mondays-metric-val text-warning mb-1">{{ number_format($accountingMonthlyAmount ?? $monthlyVolume ?? 0, 0, ',', ' ') }} <small class="fs-6 fw-normal text-muted">FCFA</small></div>
                 <div class="text-muted small">Somme des flux du mois.</div>
             </div>
         </div>
@@ -229,9 +229,9 @@
             <div class="card mondays-card h-100 border-0 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small fw-semibold text-uppercase">Pièces & Documents</span>
-                    <span class="mondays-badge mondays-badge-pending">{{ number_format($pendingDocumentsCount, 0, ',', ' ') }} en attente</span>
+                    <span class="mondays-badge mondays-badge-pending">{{ number_format($pendingDocumentsCount ?? $documentsPending ?? 0, 0, ',', ' ') }} en attente</span>
                 </div>
-                <div class="mondays-metric-val text-dark mb-1">{{ number_format($documentsCount, 0, ',', ' ') }}</div>
+                <div class="mondays-metric-val text-dark mb-1">{{ number_format($documentsCount ?? 0, 0, ',', ' ') }}</div>
                 <div class="text-muted small">Documents numérisés OCR.</div>
             </div>
         </div>
@@ -239,12 +239,13 @@
             <div class="card mondays-card h-100 border-0 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small fw-semibold text-uppercase">Trésorerie Nette</span>
-                    <span class="mondays-badge {{ $soldeActuel >= 0 ? 'mondays-badge-success' : 'mondays-badge-warning' }}">
-                        {{ $soldeActuel >= 0 ? 'Positif' : 'Alerte' }}
+                    @php $netSolde = $soldeActuel ?? $netTreasury ?? 0; @endphp
+                    <span class="mondays-badge {{ $netSolde >= 0 ? 'mondays-badge-success' : 'mondays-badge-warning' }}">
+                        {{ $netSolde >= 0 ? 'Positif' : 'Alerte' }}
                     </span>
                 </div>
-                <div class="mondays-metric-val {{ $soldeActuel >= 0 ? 'text-success' : 'text-danger' }} mb-1">
-                    {{ number_format($soldeActuel, 0, ',', ' ') }} <small class="fs-6 fw-normal text-muted">FCFA</small>
+                <div class="mondays-metric-val {{ $netSolde >= 0 ? 'text-success' : 'text-danger' }} mb-1">
+                    {{ number_format($netSolde, 0, ',', ' ') }} <small class="fs-6 fw-normal text-muted">FCFA</small>
                 </div>
                 <div class="text-muted small">Encaissements − Décaissements.</div>
             </div>
@@ -414,19 +415,20 @@
                     <div class="col-md-4">
                         <div class="border rounded p-3 h-100">
                             <div class="text-muted small">Encaissements</div>
-                            <div class="h4 text-success mb-0">{{ number_format($encaissementsMonth, 0, ',', ' ') }} FCFA</div>
+                            <div class="h4 text-success mb-0">{{ number_format($encaissementsMonth ?? 0, 0, ',', ' ') }} FCFA</div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="border rounded p-3 h-100">
                             <div class="text-muted small">Décaissements</div>
-                            <div class="h4 text-danger mb-0">{{ number_format($decaissementsMonth, 0, ',', ' ') }} FCFA</div>
+                            <div class="h4 text-danger mb-0">{{ number_format($decaissementsMonth ?? 0, 0, ',', ' ') }} FCFA</div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="border rounded p-3 h-100">
                             <div class="text-muted small">Solde projeté</div>
-                            <div class="h4 mb-0 {{ $soldeProjete >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($soldeProjete, 0, ',', ' ') }} FCFA</div>
+                            @php $projSolde = $soldeProjete ?? $netSolde ?? 0; @endphp
+                            <div class="h4 mb-0 {{ $projSolde >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($projSolde, 0, ',', ' ') }} FCFA</div>
                         </div>
                     </div>
                 </div>
@@ -470,7 +472,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @forelse($latestEntries as $entry)
+                    @forelse($latestEntries ?? [] as $entry)
                         @php
                             $entryDate = is_object($entry) ? ($entry->date ?? null) : (is_array($entry) ? ($entry['date'] ?? null) : null);
                             $entryDesc = is_object($entry) ? ($entry->description ?? null) : (is_array($entry) ? ($entry['description'] ?? null) : (is_string($entry) ? $entry : null));
@@ -514,7 +516,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @forelse($latestTransactions as $tx)
+                    @forelse($latestTransactions ?? [] as $tx)
                         @php
                             $txDate = is_object($tx) ? ($tx->transaction_date ?? null) : (is_array($tx) ? ($tx['transaction_date'] ?? null) : null);
                             $txType = is_object($tx) ? ($tx->type ?? 'encaissement') : (is_array($tx) ? ($tx['type'] ?? 'encaissement') : 'encaissement');
@@ -568,7 +570,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @forelse($recentDocuments as $document)
+                    @forelse($recentDocuments ?? [] as $document)
                         @php
                             $docName = is_object($document) ? ($document->original_name ?? 'Document') : (is_array($document) ? ($document['original_name'] ?? 'Document') : (string)$document);
                             $docType = is_object($document) ? ($document->document_type ?? '—') : (is_array($document) ? ($document['document_type'] ?? '—') : '—');
