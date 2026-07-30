@@ -752,9 +752,6 @@ function resetFileRead() {
         } else if (action === 'add-prospect') {
             const modal = new bootstrap.Modal(document.getElementById('addProspectModal'));
             modal.show();
-        } else if (action === 'import-file') {
-            const modal = new bootstrap.Modal(document.getElementById('importFileModal'));
-            modal.show();
         }
     });
 </script>
