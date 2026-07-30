@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CommercialDocument;
 use App\Models\Prospect;
 use App\Models\User;
 use App\Services\UserPremiumService;
@@ -9,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -96,9 +98,81 @@ class CommercialController extends Controller
         return view('commercial.club');
     }
 
-    public function importFile(): View
+    public function importFile(Request $request): View
     {
-        return view('commercial.import');
+        $user = $request->user();
+        try {
+            $savedDocuments = CommercialDocument::query()
+                ->when(! ($user->is_platform_admin ?? false), fn ($q) => $q->where('user_id', $user->id))
+                ->latest()
+                ->get();
+        } catch (\Throwable $e) {
+            $savedDocuments = collect();
+        }
+
+        return view('commercial.import', compact('savedDocuments'));
+    }
+
+    public function storeDocument(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'document_file' => ['required', 'file', 'max:20480'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $user = $request->user();
+        $file = $request->file('document_file');
+        
+        $originalName = $file->getClientOriginalName();
+        $mimeType = $file->getClientMimeType() ?: $file->getClientOriginalExtension();
+        $fileSize = $file->getSize();
+
+        $path = $file->store('commercial_documents', 'public');
+
+        CommercialDocument::create([
+            'user_id' => $user->id,
+            'original_name' => $originalName,
+            'file_path' => $path,
+            'mime_type' => $mimeType,
+            'file_size' => $fileSize,
+            'notes' => $request->input('notes'),
+        ]);
+
+        return redirect()->route('commercial.import')->with('status', 'Fichier "' . $originalName . '" enregistré avec succès dans votre espace et en base de données !');
+    }
+
+    public function downloadDocument(Request $request, $id)
+    {
+        $user = $request->user();
+        $document = CommercialDocument::findOrFail($id);
+
+        if (! ($user->is_platform_admin ?? false) && $document->user_id !== $user->id) {
+            abort(403, 'Accès non autorisé à ce document.');
+        }
+
+        if (! Storage::disk('public')->exists($document->file_path)) {
+            return back()->withErrors(['document' => 'Le fichier physique n\'existe pas sur le serveur.']);
+        }
+
+        return Storage::disk('public')->download($document->file_path, $document->original_name);
+    }
+
+    public function destroyDocument(Request $request, $id): RedirectResponse
+    {
+        $user = $request->user();
+        $document = CommercialDocument::findOrFail($id);
+
+        if (! ($user->is_platform_admin ?? false) && $document->user_id !== $user->id) {
+            abort(403, 'Accès non autorisé à supprimer ce document.');
+        }
+
+        if (Storage::disk('public')->exists($document->file_path)) {
+            Storage::disk('public')->delete($document->file_path);
+        }
+
+        $document->delete();
+
+        return redirect()->route('commercial.import')->with('status', 'Le fichier a été supprimé de votre espace et de la base de données.');
     }
 
 

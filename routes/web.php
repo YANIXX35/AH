@@ -562,6 +562,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/club', [\App\Http\Controllers\CommercialController::class, 'club'])->name('club');
         Route::get('/prospects', [\App\Http\Controllers\CommercialController::class, 'prospects'])->name('prospects');
         Route::get('/import', [\App\Http\Controllers\CommercialController::class, 'importFile'])->name('import');
+        Route::post('/import', [\App\Http\Controllers\CommercialController::class, 'storeDocument'])->name('import.store');
+        Route::get('/import/documents/{document}/download', [\App\Http\Controllers\CommercialController::class, 'downloadDocument'])->name('import.download');
+        Route::delete('/import/documents/{document}', [\App\Http\Controllers\CommercialController::class, 'destroyDocument'])->name('import.destroy');
         Route::post('/clients', [\App\Http\Controllers\CommercialController::class, 'store'])->name('clients.store');
         Route::put('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'update'])->name('clients.update');
         Route::delete('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'destroy'])->name('clients.destroy');
