@@ -230,6 +230,145 @@
 @endpush
 
 @section('content')
+@if(request('action') === 'add-client')
+<div class="soft-dashboard-body animate__animated animate__fadeIn">
+    <div class="soft-dashboard-container" style="background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 50%, #f0f9ff 100%); border-radius: 32px; padding: 40px 20px;">
+        <form action="{{ route('commercial.clients.store') }}" method="POST" enctype="multipart/form-data" novalidate>
+            @csrf
+
+            {{-- Barre de progression pleine largeur --}}
+            <div class="progress rounded-pill mb-4" style="height: 6px; background-color: rgba(99, 102, 241, 0.1);">
+                <div class="progress-bar rounded-pill" role="progressbar" id="wizardProgressBar"
+                     style="width: 50%; background: linear-gradient(90deg, #3b82f6, #6366f1); transition: width 0.4s ease;"></div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-center">
+                <div class="w-100" style="max-width: 680px;">
+
+                    {{-- En-tête centré --}}
+                    <div class="text-center mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+                             style="width:64px;height:64px;background:linear-gradient(135deg,#3b82f6,#6366f1); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
+                                 viewBox="0 0 24 24" stroke="white" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                            </svg>
+                        </div>
+                        <span class="badge rounded-pill px-3 py-2 mb-2 fw-semibold d-block mx-auto" id="stepBadgeLabel"
+                              style="background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;width:fit-content;font-size:.8rem;">
+                            Étape 1 / 2
+                        </span>
+                        <h2 class="fw-bold text-dark mb-1" id="stepTitleLabel" style="font-size:1.6rem; letter-spacing:-0.5px;">
+                            Compte Client &amp; Crédentiels
+                        </h2>
+                        <p class="text-muted small mb-0">Créez le compte d'accès pour votre nouveau client PME</p>
+                    </div>
+
+                    {{-- Carte formulaire --}}
+                    <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white p-4 p-md-5">
+
+                        {{-- Step 1 --}}
+                        <div id="wizardStep1">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        👤 Nom complet du dirigeant
+                                    </label>
+                                    <input type="text" name="name" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="Ex : Jean Kouassi">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        ✉️ Adresse Email (Identifiant)
+                                    </label>
+                                    <input type="email" name="email" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="dirigeant@entreprise.ci">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        📱 Téléphone
+                                    </label>
+                                    <input type="text" name="phone" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="+225 07 00 00 00 00">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        🔑 Mot de passe temporaire
+                                    </label>
+                                    <input type="password" name="password" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="8 caractères minimum" minlength="8">
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Step 2 --}}
+                        <div id="wizardStep2" style="display:none;">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        🏢 Raison Sociale / Entreprise
+                                    </label>
+                                    <input type="text" name="company_name" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="Ex : Ivoire Agro SARL">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        🏷️ Sigle / Nom commercial
+                                    </label>
+                                    <input type="text" name="company_sigle" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="Ex : IAGRO">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        🔢 NIF / Matricule Fiscal
+                                    </label>
+                                    <input type="text" name="company_tax_id" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="Numéro d'identification fiscale">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        🌿 Secteur d'activité
+                                    </label>
+                                    <input type="text" name="sector" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="Ex : Agriculture, BTP, Commerce...">
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Footer actions --}}
+                        <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+                            <a href="{{ route('commercial.dashboard') }}"
+                               class="btn btn-light rounded-pill px-4 fw-semibold text-muted text-decoration-none">
+                                ← Annuler
+                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold"
+                                        id="wizardPrevBtn" style="display:none;" onclick="goToStep(1)">
+                                    ← Précédent
+                                </button>
+                                <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm"
+                                        id="wizardNextBtn" onclick="goToStep(2)">
+                                    Suivant : Entreprise →
+                                </button>
+                                <button type="submit" class="btn btn-success rounded-pill px-5 fw-bold shadow-sm"
+                                        id="wizardSubmitBtn" style="display:none;">
+                                    ✓ Créer le compte client
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Info essai --}}
+                    <p class="text-center text-muted small mt-4 mb-0">
+                        🎁 Le client bénéficiera automatiquement d'un <strong>essai gratuit de 30 jours</strong>
+                    </p>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@else
 <div class="soft-dashboard-body">
     <div class="soft-dashboard-container">
         
@@ -273,7 +412,7 @@
                 <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-bold text-sm" data-bs-toggle="modal" data-bs-target="#addProspectModal">
                     + Lead CRM
                 </button>
-                <a href="{{ route('commercial.clients.create') }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold text-sm shadow-sm text-decoration-none">
+                <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold text-sm shadow-sm text-decoration-none">
                     <i data-feather="user-plus" class="me-1" style="width:14px; height:14px;"></i> + Nouveau Client
                 </a>
             </div>
@@ -702,147 +841,7 @@
         </div>
     </div>
 </div>
-
-<!-- Modal Add Client (2-Step Wizard) - FULLSCREEN -->
-<div class="modal fade" id="addClientModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-fullscreen">
-        <div class="modal-content border-0" style="background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 50%, #f0f9ff 100%);">
-            <form action="{{ route('commercial.clients.store') }}" method="POST" enctype="multipart/form-data" novalidate>
-                @csrf
-
-                {{-- Barre de progression pleine largeur --}}
-                <div class="progress rounded-0" style="height: 5px;">
-                    <div class="progress-bar" role="progressbar" id="wizardProgressBar"
-                         style="width: 50%; background: linear-gradient(90deg, #3b82f6, #6366f1);"></div>
-                </div>
-
-                <div class="modal-body d-flex align-items-center justify-content-center p-4" style="min-height: calc(100vh - 5px);">
-                    <div class="w-100" style="max-width: 680px;">
-
-                        {{-- En-tête centré --}}
-                        <div class="text-center mb-4">
-                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                                 style="width:64px;height:64px;background:linear-gradient(135deg,#3b82f6,#6366f1);">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
-                                     viewBox="0 0 24 24" stroke="white" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                                </svg>
-                            </div>
-                            <span class="badge rounded-pill px-3 py-2 mb-2 fw-semibold d-block mx-auto" id="stepBadgeLabel"
-                                  style="background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;width:fit-content;font-size:.8rem;">
-                                Étape 1 / 2
-                            </span>
-                            <h2 class="fw-bold text-dark mb-1" id="stepTitleLabel" style="font-size:1.6rem;">
-                                Compte Client &amp; Crédentiels
-                            </h2>
-                            <p class="text-muted small mb-0">Créez le compte d'accès pour votre nouveau client PME</p>
-                        </div>
-
-                        {{-- Carte formulaire --}}
-                        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
-
-                            {{-- Step 1 --}}
-                            <div id="wizardStep1" class="card-body p-4 p-md-5">
-                                <div class="row g-4">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold text-dark">
-                                            <i class="me-1" style="font-style:normal;">👤</i> Nom complet du dirigeant
-                                        </label>
-                                        <input type="text" name="name" class="form-control form-control-lg rounded-3 border-0 bg-light"
-                                               placeholder="Ex : Jean Kouassi">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold text-dark">
-                                            <i class="me-1" style="font-style:normal;">✉️</i> Adresse Email (Identifiant)
-                                        </label>
-                                        <input type="email" name="email" class="form-control form-control-lg rounded-3 border-0 bg-light"
-                                               placeholder="dirigeant@entreprise.ci">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold text-dark">
-                                            <i class="me-1" style="font-style:normal;">📱</i> Téléphone
-                                        </label>
-                                        <input type="text" name="phone" class="form-control form-control-lg rounded-3 border-0 bg-light"
-                                               placeholder="+225 07 00 00 00 00">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold text-dark">
-                                            <i class="me-1" style="font-style:normal;">🔑</i> Mot de passe temporaire
-                                        </label>
-                                        <input type="password" name="password" class="form-control form-control-lg rounded-3 border-0 bg-light"
-                                               placeholder="8 caractères minimum" minlength="8">
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Step 2 --}}
-                            <div id="wizardStep2" class="card-body p-4 p-md-5" style="display:none;">
-                                <div class="row g-4">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold text-dark">
-                                            <i class="me-1" style="font-style:normal;">🏢</i> Raison Sociale / Entreprise
-                                        </label>
-                                        <input type="text" name="company_name" class="form-control form-control-lg rounded-3 border-0 bg-light"
-                                               placeholder="Ex : Ivoire Agro SARL">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold text-dark">
-                                            <i class="me-1" style="font-style:normal;">🏷️</i> Sigle / Nom commercial
-                                        </label>
-                                        <input type="text" name="company_sigle" class="form-control form-control-lg rounded-3 border-0 bg-light"
-                                               placeholder="Ex : IAGRO">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold text-dark">
-                                            <i class="me-1" style="font-style:normal;">🔢</i> NIF / Matricule Fiscal
-                                        </label>
-                                        <input type="text" name="company_tax_id" class="form-control form-control-lg rounded-3 border-0 bg-light"
-                                               placeholder="Numéro d'identification fiscale">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold text-dark">
-                                            <i class="me-1" style="font-style:normal;">🌿</i> Secteur d'activité
-                                        </label>
-                                        <input type="text" name="sector" class="form-control form-control-lg rounded-3 border-0 bg-light"
-                                               placeholder="Ex : Agriculture, BTP, Commerce...">
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Footer actions --}}
-                            <div class="card-footer border-0 bg-white px-4 px-md-5 py-4 d-flex justify-content-between align-items-center">
-                                <a href="{{ route('commercial.dashboard') }}"
-                                   class="btn btn-light rounded-pill px-4 fw-semibold text-muted text-decoration-none">
-                                    ← Annuler
-                                </a>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold"
-                                            id="wizardPrevBtn" style="display:none;" onclick="goToStep(1)">
-                                        ← Précédent
-                                    </button>
-                                    <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm"
-                                            id="wizardNextBtn" onclick="goToStep(2)">
-                                        Suivant : Entreprise →
-                                    </button>
-                                    <button type="submit" class="btn btn-success rounded-pill px-5 fw-bold shadow-sm"
-                                            id="wizardSubmitBtn" style="display:none;">
-                                        ✓ Créer le compte client
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Info essai --}}
-                        <p class="text-center text-muted small mt-3">
-                            🎁 Le client bénéficiera automatiquement d'un <strong>essai gratuit de 30 jours</strong>
-                        </p>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+@endif
 
 
 @push('scripts')
@@ -872,10 +871,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const urlParams = new URLSearchParams(window.location.search);
         const action = urlParams.get('action');
-        // action=add-client redirige maintenant vers la page dédiée
-        if (action === 'add-client') {
-            window.location.replace('{{ route("commercial.clients.create") }}');
-        } else if (action === 'add-prospect') {
+        if (action === 'add-prospect') {
             const modal = new bootstrap.Modal(document.getElementById('addProspectModal'));
             modal.show();
         }
