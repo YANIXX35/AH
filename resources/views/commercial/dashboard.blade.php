@@ -233,7 +233,7 @@
 @if(request('action') === 'add-client')
 <div class="soft-dashboard-body animate__animated animate__fadeIn">
     <div class="soft-dashboard-container" style="background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 50%, #f0f9ff 100%); border-radius: 32px; padding: 40px 20px;">
-        <form action="{{ route('commercial.clients.store') }}" method="POST" enctype="multipart/form-data" novalidate>
+        <form id="addClientWizardForm" action="{{ route('commercial.clients.store') }}" method="POST" enctype="multipart/form-data" novalidate>
             @csrf
 
             {{-- Barre de progression pleine largeur --}}
@@ -267,6 +267,27 @@
 
                     {{-- Carte formulaire --}}
                     <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white p-4 p-md-5">
+
+                        {{-- Zone d'importation intelligente de fichier --}}
+                        <div class="mb-4 p-3 bg-light rounded-4 border border-dashed border-primary text-center">
+                            <div class="d-flex align-items-center justify-content-center gap-2 mb-1 text-primary fw-bold">
+                                <i data-feather="file-text" style="width:18px; height:18px;"></i>
+                                <span>Import &amp; Lecture Automatique de Fiche Entreprise</span>
+                            </div>
+                            <p class="text-muted small mb-2">
+                                Importez un document (Word <code>.docx</code>, Excel <code>.xlsx</code>, <code>.pdf</code>, <code>.csv</code>, <code>.txt</code>). Les données reconnues pré-rempliront automatiquement les champs du formulaire ci-dessous. Les champs absents restent inchangés.
+                            </p>
+                            <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
+                                <input type="file" id="wizardDocInput" class="d-none" accept=".docx,.doc,.xlsx,.xls,.csv,.pdf,.txt" onchange="uploadAndParseDocument(this, 'addClientWizardForm')">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-4 fw-semibold" onclick="document.getElementById('wizardDocInput').click()">
+                                    <i data-feather="upload" class="me-1" style="width:14px; height:14px;"></i> Parcourir et Importer Fichier...
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" onclick="resetClientForm('addClientWizardForm')">
+                                    <i data-feather="trash-2" class="me-1" style="width:14px; height:14px;"></i> Effacer le formulaire
+                                </button>
+                            </div>
+                            <div id="parseStatusAlert" class="mt-2 d-none"></div>
+                        </div>
 
                         {{-- Step 1 --}}
                         <div id="wizardStep1">
@@ -465,9 +486,9 @@
                     <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem;">+{{ $totalClients }}</div>
                 </div>
 
-                <a href="{{ route('commercial.import') }}" class="btn btn-outline-success rounded-pill px-3 py-2 fw-bold text-sm text-decoration-none">
-                    <i data-feather="upload-cloud" class="me-1" style="width:14px; height:14px;"></i> Importer & Lire Fichier
-                </a>
+                <button type="button" class="btn btn-outline-success rounded-pill px-3 py-2 fw-bold text-sm" data-bs-toggle="modal" data-bs-target="#smartImportClientModal">
+                    <i data-feather="upload-cloud" class="me-1" style="width:14px; height:14px;"></i> Importer &amp; Lire Fichier
+                </button>
                 <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-bold text-sm" data-bs-toggle="modal" data-bs-target="#addProspectModal">
                     + Lead CRM
                 </button>
@@ -732,9 +753,215 @@
 @endif
 
 
+<!-- Modal Smart Import & Inscription Client -->
+<div class="modal fade" id="smartImportClientModal" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <form id="smartClientModalForm" action="{{ route('commercial.clients.store') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-header border-0 bg-dark text-white p-4">
+                    <div>
+                        <span class="badge bg-success text-white rounded-pill px-3 py-1 mb-2 fw-semibold">LECTURE ET EXTRACTION IA</span>
+                        <h4 class="modal-title fw-bold text-white mb-0">📂 Importer &amp; Inscrire un Client PME</h4>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
+                    {{-- Zone Dropzone d'importation --}}
+                    <div class="p-4 bg-light rounded-4 border border-dashed border-success text-center mb-4">
+                        <div class="d-flex align-items-center justify-content-center gap-2 mb-2 text-success fw-bold">
+                            <i data-feather="file-text" style="width:24px; height:24px;"></i>
+                            <span class="fs-6">Sélectionnez un document d'entreprise (Word, Excel, PDF, Text, CSV)</span>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            L'outil lit le document et remplit automatiquement les champs ci-dessous (Nom, Email, Téléphone, NIF, RCCM, Secteur...). Les champs non trouvés restent vierges.
+                        </p>
+                        <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
+                            <input type="file" id="modalDocInput" class="d-none" accept=".docx,.doc,.xlsx,.xls,.csv,.pdf,.txt" onchange="uploadAndParseDocument(this, 'smartClientModalForm')">
+                            <button type="button" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" onclick="document.getElementById('modalDocInput').click()">
+                                <i data-feather="upload-cloud" class="me-1" style="width:16px; height:16px;"></i> Choisir et analyser un fichier
+                            </button>
+                            <button type="button" class="btn btn-outline-danger rounded-pill px-3 fw-semibold" onclick="resetClientForm('smartClientModalForm')">
+                                <i data-feather="trash-2" class="me-1" style="width:14px; height:14px;"></i> Supprimer / Effacer tout
+                            </button>
+                        </div>
+                        <div id="parseStatusAlertModal" class="mt-3 d-none"></div>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">👤 Informations du Dirigeant</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Nom complet du dirigeant <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control rounded-3" placeholder="Ex: Jean Kouassi" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Adresse Email (Identifiant) <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control rounded-3" placeholder="dirigeant@entreprise.ci" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Numéro de Téléphone</label>
+                            <input type="text" name="phone" class="form-control rounded-3" placeholder="+225 07 00 00 00 00">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Mot de passe temporaire <span class="text-danger">*</span></label>
+                            <input type="password" name="password" class="form-control rounded-3" placeholder="8 caractères minimum" minlength="8" required>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">🏢 Informations de l'Entreprise</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Raison Sociale / Entreprise <span class="text-danger">*</span></label>
+                            <input type="text" name="company_name" class="form-control rounded-3" placeholder="Ex: Ivoire Agro SARL" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Sigle / Nom commercial</label>
+                            <input type="text" name="company_sigle" class="form-control rounded-3" placeholder="Ex: IAGRO">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">NIF / Matricule Fiscal</label>
+                            <input type="text" name="company_tax_id" class="form-control rounded-3" placeholder="Numéro d'identification fiscale">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Numéro RCCM / SIRET</label>
+                            <input type="text" name="rccm" class="form-control rounded-3" placeholder="Ex : CI-ABJ-2026-B-1234">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Secteur d'activité</label>
+                            <select name="sector" class="form-select rounded-3">
+                                <option value="">Choisir un secteur...</option>
+                                <option value="Agroalimentaire">Agroalimentaire</option>
+                                <option value="Commerce & Distribution">Commerce &amp; Distribution</option>
+                                <option value="BTP & Construction">BTP &amp; Construction</option>
+                                <option value="Services aux entreprises">Services aux entreprises</option>
+                                <option value="Technologies / IT">Technologies / IT</option>
+                                <option value="Transport & Logistique">Transport &amp; Logistique</option>
+                                <option value="Santé">Santé</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Ville</label>
+                            <input type="text" name="city" class="form-control rounded-3" placeholder="Ex: Abidjan">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small fw-semibold text-dark">Adresse complète</label>
+                            <input type="text" name="address" class="form-control rounded-3" placeholder="Ex: Plateau Rue du Commerce">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-outline-danger rounded-pill px-4" onclick="resetClientForm('smartClientModalForm')">
+                        <i data-feather="trash-2" class="me-1" style="width:14px; height:14px;"></i> Supprimer la saisie
+                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">✓ Enregistrer le Client</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    async function uploadAndParseDocument(inputElement, targetFormId = 'smartClientModalForm') {
+        const file = inputElement.files[0];
+        if (!file) return;
+
+        const alertBox = targetFormId === 'addClientWizardForm'
+            ? document.getElementById('parseStatusAlert')
+            : document.getElementById('parseStatusAlertModal');
+
+        if (alertBox) {
+            alertBox.className = 'alert alert-info py-2 px-3 rounded-3 small mb-3 align-items-center d-flex justify-content-center gap-2';
+            alertBox.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Analyse et lecture automatique du document en cours...';
+            alertBox.classList.remove('d-none');
+        }
+
+        const formData = new FormData();
+        formData.append('document', file);
+
+        try {
+            const response = await fetch('{{ route("commercial.parseCompanyDocument") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const json = await response.json();
+
+            if (!response.ok || !json.ok) {
+                throw new Error(json.message || 'Erreur lors de l’analyse du fichier.');
+            }
+
+            const data = json.extracted || {};
+            let filledCount = 0;
+
+            const targetForm = document.getElementById(targetFormId) || document.forms[0];
+
+            const fieldMapping = {
+                'name': 'name',
+                'email': 'email',
+                'phone': 'phone',
+                'company_name': 'company_name',
+                'company_sigle': 'company_sigle',
+                'company_tax_id': 'company_tax_id',
+                'rccm': 'rccm',
+                'sector': 'sector',
+                'city': 'city',
+                'address': 'address'
+            };
+
+            for (const [key, fieldName] of Object.entries(fieldMapping)) {
+                if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+                    const el = targetForm ? targetForm.querySelector(`[name="${fieldName}"]`) : null;
+                    if (el) {
+                        el.value = data[key];
+                        el.classList.add('is-valid');
+                        filledCount++;
+                    }
+                }
+            }
+
+            if (alertBox) {
+                if (filledCount > 0) {
+                    alertBox.className = 'alert alert-success py-2 px-3 rounded-3 small mb-3';
+                    alertBox.innerHTML = `<strong>✓ ${filledCount} champ(s) identifié(s) et pré-rempli(s) !</strong> (${json.filename})`;
+                } else {
+                    alertBox.className = 'alert alert-warning py-2 px-3 rounded-3 small mb-3';
+                    alertBox.innerHTML = `Aucun champ d'entreprise n'a été automatiquement reconnu dans <em>${json.filename}</em>. Vous pouvez remplir les champs manuellement.`;
+                }
+            }
+        } catch (error) {
+            if (alertBox) {
+                alertBox.className = 'alert alert-danger py-2 px-3 rounded-3 small mb-3';
+                alertBox.innerHTML = `<strong>⚠️ Erreur :</strong> ${error.message}`;
+            }
+        }
+    }
+
+    function resetClientForm(targetFormId = 'smartClientModalForm') {
+        const form = document.getElementById(targetFormId);
+        if (form) {
+            form.reset();
+            form.querySelectorAll('.is-valid').forEach(el => el.classList.remove('is-valid'));
+        }
+        const alertBox = targetFormId === 'addClientWizardForm'
+            ? document.getElementById('parseStatusAlert')
+            : document.getElementById('parseStatusAlertModal');
+        if (alertBox) {
+            alertBox.classList.add('d-none');
+        }
+    }
+
     function goToStep(step) {
         if (step === 2) {
             document.getElementById('wizardStep1').style.display = 'none';
@@ -762,6 +989,9 @@
         const action = urlParams.get('action');
         if (action === 'add-prospect') {
             const modal = new bootstrap.Modal(document.getElementById('addProspectModal'));
+            modal.show();
+        } else if (action === 'import-client') {
+            const modal = new bootstrap.Modal(document.getElementById('smartImportClientModal'));
             modal.show();
         }
 

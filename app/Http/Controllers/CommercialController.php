@@ -579,4 +579,24 @@ class CommercialController extends Controller
 
         return back()->with('status', 'Prospect supprimé avec succès.');
     }
+
+    public function parseCompanyDocument(Request $request, \App\Services\CompanyDocumentParserService $parser): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'document' => ['required', 'file', 'max:10240', 'mimes:docx,doc,xlsx,xls,csv,pdf,txt'],
+        ]);
+
+        $file = $request->file('document');
+        $extracted = $parser->parse($file);
+
+        return response()->json([
+            'ok' => true,
+            'filename' => $file->getClientOriginalName(),
+            'fields_found_count' => count($extracted),
+            'extracted' => $extracted,
+            'message' => count($extracted) > 0
+                ? count($extracted) . ' champ(s) identifié(s) et pré-rempli(s) automatiquement.'
+                : 'Aucun champ reconnu automatiquement. Vous pouvez remplir les informations manuellement.',
+        ]);
+    }
 }

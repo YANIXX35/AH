@@ -176,4 +176,29 @@ class CommercialPortalTest extends TestCase
         $response->assertSee('Jean-Pierre Client');
         $response->assertDontSee('Marc Dupont');
     }
+
+    public function test_commercial_can_parse_company_document_and_extract_fields(): void
+    {
+        $commercial = User::factory()->create(['role_key' => 'commercial']);
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent(
+            'fiche_entreprise.txt',
+            "Raison Sociale: Ivoire Agro SARL\nDirigeant: Jean Kouassi\nEmail: contact@iagro.ci\nTelephone: +2250700001122\nNIF: 1234567A\nVille: Abidjan"
+        );
+
+        $response = $this->actingAs($commercial)->postJson('/commercial/parse-company-document', [
+            'document' => $file,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'ok' => true,
+            'filename' => 'fiche_entreprise.txt',
+            'extracted' => [
+                'name' => 'Jean Kouassi',
+                'email' => 'contact@iagro.ci',
+                'company_name' => 'Ivoire Agro SARL',
+                'city' => 'Abidjan',
+            ],
+        ]);
+    }
 }

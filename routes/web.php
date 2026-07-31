@@ -566,6 +566,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/import', [\App\Http\Controllers\CommercialController::class, 'storeDocument'])->name('import.store');
         Route::get('/import/documents/{document}/download', [\App\Http\Controllers\CommercialController::class, 'downloadDocument'])->name('import.download');
         Route::delete('/import/documents/{document}', [\App\Http\Controllers\CommercialController::class, 'destroyDocument'])->name('import.destroy');
+        Route::post('/parse-company-document', [\App\Http\Controllers\CommercialController::class, 'parseCompanyDocument'])->name('parseCompanyDocument');
         Route::post('/clients', [\App\Http\Controllers\CommercialController::class, 'store'])->name('clients.store');
         Route::put('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'update'])->name('clients.update');
 
