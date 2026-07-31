@@ -32,51 +32,72 @@
         justify-content: center;
     }
     .admin-users-shell {
-        border: 0;
+        border: 1px solid #e2e8f0;
         border-radius: 1rem;
-        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.09);
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
         overflow: hidden;
+        background: #ffffff;
     }
     .admin-users-shell .card-header {
         border-bottom: 1px solid #e9edf5;
         background: #fff;
     }
+    .admin-enterprise-accordion {
+        padding: 12px;
+    }
     .admin-enterprise-accordion .accordion-item {
-        border: 0;
-        border-bottom: 1px solid #ecf1f8;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        overflow: hidden;
+        margin-bottom: 12px;
+        background: #ffffff;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+        outline: none !important;
     }
     .admin-enterprise-accordion .accordion-button {
         box-shadow: none !important;
         background: #ffffff;
-        padding-top: 0.9rem;
-        padding-bottom: 0.9rem;
+        padding: 1rem 1.25rem;
+        border: none !important;
+        outline: none !important;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100% !important;
     }
     .admin-enterprise-accordion .accordion-button:not(.collapsed) {
-        background: #f7faff;
-        color: #1f3c88;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+    .admin-enterprise-accordion .accordion-button::after {
+        margin-left: 1rem;
+        flex-shrink: 0;
     }
     .enterprise-meta {
-        font-size: 0.78rem;
-        color: #6b7280;
+        font-size: 0.8rem;
+        color: #64748b;
     }
     .enterprise-chip {
-        background: #eef4ff;
-        color: #335ea8;
-        border: 1px solid #d8e5ff;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
         border-radius: 999px;
-        padding: 0.15rem 0.55rem;
-        font-size: 0.72rem;
+        padding: 0.2rem 0.65rem;
+        font-size: 0.75rem;
         font-weight: 600;
         display: inline-flex;
         align-items: center;
-        gap: 0.2rem;
+        gap: 0.25rem;
     }
     .admin-user-table thead th {
-        font-size: 0.72rem;
+        font-size: 0.75rem;
         text-transform: uppercase;
-        letter-spacing: 0.02em;
-        color: #5b6472;
-        background: #f8fafd;
+        letter-spacing: 0.03em;
+        color: #475569;
+        background: #f8fafc;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
     }
 </style>
 @endpush
@@ -94,7 +115,7 @@
             <h1 class="h3 mb-1 text-white"><strong>Entreprises</strong> inscrites</h1>
             <p class="hero-sub">Gestion des comptes, abonnements Premium et suspensions dans un espace consolidé.</p>
         </div>
-        <a href="{{ route('register') }}" class="btn btn-light text-primary fw-semibold">Nouvel utilisateur</a>
+        <a href="{{ route('register') }}" class="btn btn-light text-primary fw-semibold rounded-pill px-4">Nouvel utilisateur</a>
     </div>
 </div>
 
@@ -105,7 +126,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted small mb-0">Total</p>
-                        <p class="h4 mb-0 text-primary">{{ $totalUsers }}</p>
+                        <p class="h4 mb-0 text-primary fw-bold">{{ $totalUsers }}</p>
                     </div>
                     <span class="admin-stat-icon bg-primary-subtle text-primary"><i data-feather="users" style="width:16px;height:16px;"></i></span>
                 </div>
@@ -118,7 +139,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted small mb-0">Suspendus</p>
-                        <p class="h4 mb-0 text-danger">{{ $suspendedCount }}</p>
+                        <p class="h4 mb-0 text-danger fw-bold">{{ $suspendedCount }}</p>
                     </div>
                     <span class="admin-stat-icon bg-danger-subtle text-danger"><i data-feather="slash" style="width:16px;height:16px;"></i></span>
                 </div>
@@ -131,7 +152,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted small mb-0">Premium actifs</p>
-                        <p class="h4 mb-0 text-warning">{{ $premiumActiveCount }}</p>
+                        <p class="h4 mb-0 text-warning fw-bold">{{ $premiumActiveCount }}</p>
                         <p class="text-muted small mb-0 mt-1">Échéance &lt; 7 j. : <strong>{{ $premiumExpiringSoon }}</strong></p>
                     </div>
                     <span class="admin-stat-icon bg-warning-subtle text-warning"><i data-feather="star" style="width:16px;height:16px;"></i></span>
@@ -145,7 +166,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted small mb-0">Avec registre</p>
-                        <p class="h4 mb-0 text-success">{{ $withFiles }}</p>
+                        <p class="h4 mb-0 text-success fw-bold">{{ $withFiles }}</p>
                     </div>
                     <span class="admin-stat-icon bg-success-subtle text-success"><i data-feather="file-text" style="width:16px;height:16px;"></i></span>
                 </div>
@@ -158,7 +179,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted small mb-0">Sans registre</p>
-                        <p class="h4 mb-0 text-secondary">{{ $withoutFiles }}</p>
+                        <p class="h4 mb-0 text-secondary fw-bold">{{ $withoutFiles }}</p>
                     </div>
                     <span class="admin-stat-icon bg-secondary-subtle text-secondary"><i data-feather="folder-minus" style="width:16px;height:16px;"></i></span>
                 </div>
@@ -180,14 +201,9 @@
     </div>
 @endif
 
-<p class="text-muted small mb-4">
-    <strong>Premium actifs</strong> : abonnement Premium encore valide (sans date de fin ou échéance future).
-    <strong>Échéance &lt; 7 j.</strong> : clients dont la fin de période tombe dans les 7 prochains jours (hors administrateurs plateforme).
-</p>
-
 <div class="card admin-users-shell mb-4">
     <div class="card-header py-3 bg-white">
-        <h5 class="card-title mb-0">Créer un utilisateur et l’attribuer à une entreprise</h5>
+        <h5 class="card-title mb-0 fw-bold">Créer un utilisateur et l’attribuer à une entreprise</h5>
     </div>
     <div class="card-body">
         <form method="post" action="{{ route('admin.users.store') }}" class="row g-3 align-items-end">
@@ -221,19 +237,24 @@
                 <input type="password" name="password_confirmation" required class="form-control">
             </div>
             <div class="col-lg-2">
-                <button type="submit" class="btn btn-primary w-100">Créer</button>
+                <button type="submit" class="btn btn-primary w-100 rounded-pill">Créer</button>
             </div>
         </form>
     </div>
 </div>
 
 <div class="card admin-users-shell">
-    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 py-3">
-        <h5 class="card-title mb-0">Entreprises regroupées</h5>
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3 py-3 bg-white">
         <div class="d-flex align-items-center gap-2">
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-collapse="all-open">Tout ouvrir</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-collapse="all-close">Tout fermer</button>
-            <span class="badge bg-secondary">{{ $enterpriseGroups->count() }} groupe(s)</span>
+            <h5 class="card-title mb-0 fw-bold">Entreprises regroupées</h5>
+            <span class="badge bg-primary rounded-pill">{{ $enterpriseGroups->count() }} groupe(s)</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 380px;">
+            <input type="text" id="enterpriseSearchInput" class="form-control form-control-sm rounded-pill px-3" placeholder="🔍 Rechercher entreprise, NIF, e-mail..." onkeyup="filterEnterprises(this.value)">
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-collapse="all-open">Tout ouvrir</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-collapse="all-close">Tout fermer</button>
         </div>
     </div>
     <div class="card-body p-0">
@@ -249,46 +270,53 @@
                         $activePremium = collect($group['users'])->filter(fn ($u) => $u->hasActivePremiumPeriod())->count();
                         $suspended = collect($group['users'])->filter(fn ($u) => (bool) $u->account_suspended)->count();
                     @endphp
-                    <div class="accordion-item">
+                    <div class="accordion-item search-target-item">
                         <h2 class="accordion-header" id="{{ $headingId }}">
                             <button class="accordion-button {{ $show ? '' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#{{ $collapseId }}" aria-expanded="{{ $show ? 'true' : 'false' }}" aria-controls="{{ $collapseId }}">
-                                <div class="w-100 pe-2">
-                                    <div class="fw-semibold d-flex flex-wrap align-items-center gap-2">
-                                        <span>{{ $group['company_name'] }}</span>
-                                        <span class="enterprise-chip">{{ $group['users_count'] }} utilisateur(s)</span>
+                                <div class="d-flex flex-wrap align-items-center justify-content-between w-100 me-2 gap-2">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <span class="fw-bold text-dark fs-5 search-company-title">{{ $group['company_name'] }}</span>
+                                            <span class="enterprise-chip"><i data-feather="users" style="width:12px;height:12px;"></i> {{ $group['users_count'] }} utilisateur(s)</span>
+                                        </div>
+                                        <div class="enterprise-meta mt-1 d-flex flex-wrap gap-2 align-items-center">
+                                            @if(!empty($group['company_tax_id']))
+                                                <span class="badge bg-info-subtle text-info border">NIF: {{ $group['company_tax_id'] }}</span>
+                                            @endif
+                                            @if(!empty($group['enterprise_license_id']))
+                                                <span class="badge bg-primary-subtle text-primary border">Licence #{{ $group['enterprise_license_id'] }}</span>
+                                            @endif
+                                            <span class="search-members-text ms-1">
+                                                <i class="align-middle me-1" data-feather="user" style="width:12px;height:12px;"></i>
+                                                <strong>Membres :</strong> {{ collect($group['users'])->pluck('name')->join(', ') }} 
+                                                <span class="text-muted">({{ collect($group['users'])->pluck('email')->join(', ') }})</span>
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div class="enterprise-meta mt-1 d-flex flex-wrap gap-1 align-items-center">
-                                        @if(!empty($group['company_tax_id']))
-                                            <span class="enterprise-chip">NIF: {{ $group['company_tax_id'] }}</span>
-                                        @endif
-                                        @if(!empty($group['enterprise_license_id']))
-                                            <span class="enterprise-chip">Licence #{{ $group['enterprise_license_id'] }}</span>
-                                        @endif
-                                        <span class="text-secondary small ms-1">
-                                            <i class="align-middle me-1" data-feather="user"></i>
-                                            <strong>Membres :</strong> {{ collect($group['users'])->pluck('name')->join(', ') }} ({{ collect($group['users'])->pluck('email')->join(', ') }})
+                                    <div class="d-none d-md-flex align-items-center gap-2">
+                                        <span class="badge bg-success-subtle text-success border rounded-pill px-3 py-1.5 fw-semibold">
+                                            🟢 Premium {{ $activePremium }}
+                                        </span>
+                                        <span class="badge bg-danger-subtle text-danger border rounded-pill px-3 py-1.5 fw-semibold">
+                                            🔴 Suspendus {{ $suspended }}
                                         </span>
                                     </div>
-                                </div>
-                                <div class="d-none d-md-flex flex-wrap gap-1 me-3">
-                                    <span class="badge bg-success-subtle text-success-emphasis border">Premium {{ $activePremium }}</span>
-                                    <span class="badge bg-danger-subtle text-danger-emphasis border">Suspendus {{ $suspended }}</span>
                                 </div>
                             </button>
                         </h2>
                         <div id="{{ $collapseId }}" class="accordion-collapse collapse {{ $show ? 'show' : '' }}" aria-labelledby="{{ $headingId }}" data-bs-parent="#enterpriseUsersAccordion">
                             <div class="accordion-body p-0">
                                 <div class="table-responsive">
-                                    <table class="table table-sm table-hover mb-0 align-middle admin-user-table">
-                                        <thead class="table-light">
-                                        <tr>
-                                            <th>Utilisateur</th>
-                                            <th class="d-none d-lg-table-cell">E-mail</th>
-                                            <th>Abonnement</th>
-                                            <th class="d-none d-md-table-cell">Échéance</th>
-                                            <th>Alerte</th>
-                                            <th class="text-center">Actions</th>
-                                        </tr>
+                                    <table class="table table-hover mb-0 align-middle admin-user-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="ps-4">Utilisateur</th>
+                                                <th class="d-none d-lg-table-cell">E-mail</th>
+                                                <th>Abonnement</th>
+                                                <th class="d-none d-md-table-cell">Échéance</th>
+                                                <th>Alerte</th>
+                                                <th class="text-center pe-4">Actions</th>
+                                            </tr>
                                         </thead>
                                         <tbody>
                                         @foreach($group['users'] as $user)
@@ -298,69 +326,71 @@
                                                 $past = $user->is_premium && $user->premium_ends_at && $user->premium_ends_at->isPast();
                                             @endphp
                                             <tr class="{{ $user->account_suspended ? 'table-danger' : '' }}">
-                                                <td>
-                                                    <div class="fw-medium">{{ $user->name }}</div>
-                                                    <small class="text-muted d-block">ID {{ $user->id }}</small>
+                                                <td class="ps-4">
+                                                    <div class="fw-bold text-dark">{{ $user->name }}</div>
+                                                    <small class="text-muted d-block" style="font-size:11px;">ID #{{ $user->id }}</small>
                                                     <small class="text-muted d-lg-none">{{ $user->email }}</small>
                                                 </td>
                                                 <td class="small d-none d-lg-table-cell">{{ $user->email }}</td>
                                                 <td>
                                                     @if($user->is_platform_admin)
                                                         @if($user->hasActivePremiumPeriod())
-                                                            <span class="badge bg-warning text-dark">Premium admin</span>
+                                                            <span class="badge bg-warning text-dark rounded-pill px-2.5">Premium Admin</span>
                                                         @else
-                                                            <span class="badge bg-primary">Admin</span>
+                                                            <span class="badge bg-primary rounded-pill px-2.5">Admin</span>
                                                         @endif
                                                     @elseif($user->is_accountant ?? false)
-                                                        <span class="badge bg-info text-dark">Cabinet</span>
+                                                        <span class="badge bg-info text-dark rounded-pill px-2.5">Cabinet</span>
+                                                    @elseif($user->role_key === 'commercial')
+                                                        <span class="badge bg-primary text-white rounded-pill px-2.5">Commercial</span>
                                                     @elseif($premiumOk)
-                                                        <span class="badge bg-warning text-dark">Premium</span>
+                                                        <span class="badge bg-warning text-dark rounded-pill px-2.5">Premium</span>
                                                     @elseif($user->is_premium)
-                                                        <span class="badge bg-secondary">Premium exp.</span>
+                                                        <span class="badge bg-secondary rounded-pill px-2.5">Premium Exp.</span>
                                                     @else
-                                                        <span class="badge bg-light text-dark border">Gratuit</span>
+                                                        <span class="badge bg-light text-dark border rounded-pill px-2.5">Gratuit</span>
                                                     @endif
                                                 </td>
                                                 <td class="d-none d-md-table-cell">
                                                     @if($user->premium_ends_at)
-                                                        <small>{{ $user->premium_ends_at->format('d/m/Y H:i') }}</small>
+                                                        <small class="fw-semibold">{{ $user->premium_ends_at->format('d/m/Y H:i') }}</small>
                                                     @else
                                                         <span class="text-muted">—</span>
                                                     @endif
                                                 </td>
                                                 <td>
                                                     @if($user->account_suspended)
-                                                        <span class="badge bg-danger">Bloqué</span>
+                                                        <span class="badge bg-danger rounded-pill">Bloqué</span>
                                                         @if($user->auto_suspended_for_payment)
-                                                            <span class="badge bg-dark">Auto</span>
+                                                            <span class="badge bg-dark rounded-pill ms-1">Auto</span>
                                                         @endif
                                                     @elseif($past)
-                                                        <span class="badge bg-danger">Échéance dépassée</span>
+                                                        <span class="badge bg-danger rounded-pill">Échéance dépassée</span>
                                                     @elseif($soon && $premiumOk)
-                                                        <span class="badge bg-warning text-dark">&lt; 7 j.</span>
+                                                        <span class="badge bg-warning text-dark rounded-pill">&lt; 7 j.</span>
                                                     @else
                                                         <span class="text-muted">—</span>
                                                     @endif
                                                 </td>
-                                                <td class="text-center">
+                                                <td class="text-center pe-4">
                                                     <div class="d-inline-flex flex-wrap gap-1 justify-content-center align-items-center">
-                                                        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-primary">Gérer</a>
+                                                        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-primary rounded-pill px-3">Gérer</a>
                                                         @if(! $user->is_platform_admin && ! ($user->is_accountant ?? false))
                                                             @if($premiumOk)
                                                                 <form method="POST" action="{{ route('admin.users.premium.deactivate', $user) }}" class="d-inline" onsubmit="return confirm('Repasser ce compte en Gratuit ?');">
                                                                     @csrf
-                                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Fin d’essai Premium">Gratuit</button>
+                                                                    <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5" title="Fin d’essai Premium">Gratuit</button>
                                                                 </form>
                                                             @else
                                                                 <form method="POST" action="{{ route('admin.users.premium.activate', $user) }}" class="d-inline">
                                                                     @csrf
                                                                     <input type="hidden" name="days" value="30">
-                                                                    <button type="submit" class="btn btn-sm btn-warning text-dark" title="Essai Premium 30 jours">Premium 30j</button>
+                                                                    <button type="submit" class="btn btn-sm btn-warning text-dark rounded-pill px-2.5 fw-semibold" title="Essai Premium 30 jours">Premium 30j</button>
                                                                 </form>
                                                                 <form method="POST" action="{{ route('admin.users.premium.activate', $user) }}" class="d-inline">
                                                                     @csrf
                                                                     <input type="hidden" name="days" value="90">
-                                                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Essai Premium 90 jours">90j</button>
+                                                                    <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-2.5" title="Essai Premium 90 jours">90j</button>
                                                                 </form>
                                                             @endif
                                                         @endif
@@ -404,5 +434,19 @@
             });
         });
     })();
+
+    function filterEnterprises(query) {
+        const q = query.toLowerCase().trim();
+        const items = document.querySelectorAll('.search-target-item');
+        items.forEach(item => {
+            const title = item.querySelector('.search-company-title')?.textContent.toLowerCase() || '';
+            const members = item.querySelector('.search-members-text')?.textContent.toLowerCase() || '';
+            if (title.includes(q) || members.includes(q)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
 </script>
 @endpush
