@@ -208,4 +208,12 @@ class AdminPaymentController extends Controller
             'user' => $paymentTransaction->user,
         ]);
     }
+
+    public function destroy(PaymentTransaction $paymentTransaction): RedirectResponse
+    {
+        $ref = $paymentTransaction->provider_reference ?: 'TX-'.$paymentTransaction->id;
+        $paymentTransaction->delete();
+
+        return back()->with('status', "La transaction {$ref} a été supprimée avec succès.");
+    }
 }

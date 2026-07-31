@@ -204,6 +204,14 @@
                                             <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-2" title="Ajouter +30j Premium">+30j</button>
                                         </form>
                                     @endif
+
+                                    <form method="POST" action="{{ route('admin.payments.destroy', $payment) }}" class="d-inline" onsubmit="return confirm('Voulez-vous vraiment supprimer cette transaction {{ addslashes($payment->provider_reference ?: $payment->id) }} ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Supprimer cette transaction">
+                                            🗑️
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

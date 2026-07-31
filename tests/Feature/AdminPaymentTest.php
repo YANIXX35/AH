@@ -55,4 +55,26 @@ class AdminPaymentTest extends TestCase
         $receiptResponse->assertSee('BERAKHA SERVICES INTELLECT SARL');
         $receiptResponse->assertSee('25 000 XOF');
     }
+
+    public function test_admin_can_delete_payment_transaction(): void
+    {
+        $admin = User::factory()->create(['is_platform_admin' => true]);
+        $transaction = PaymentTransaction::create([
+            'user_id' => $admin->id,
+            'amount' => 15000,
+            'currency' => 'XOF',
+            'status' => 'COMPLETED',
+            'country' => 'CI',
+            'correspondent' => 'ORANGE_MONEY',
+            'payer_msisdn' => '+2250700000000',
+            'provider' => 'SIMULATOR',
+            'provider_reference' => 'TX-SIM-TESTDELETE',
+        ]);
+
+        $response = $this->actingAs($admin)->delete("/admin/payments/{$transaction->id}");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('status');
+        $this->assertDatabaseMissing('payment_transactions', ['id' => $transaction->id]);
+    }
 }
