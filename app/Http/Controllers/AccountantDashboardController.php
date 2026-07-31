@@ -119,6 +119,54 @@ class AccountantDashboardController extends Controller
     }
 
     /**
+     * Suivi transversal des portefeuilles commerciaux pour le cabinet comptable.
+     */
+    public function commercialsTracking(Request $request): View
+    {
+        $commercials = User::query()
+            ->where('role_key', 'commercial')
+            ->with(['createdClients' => function ($q) {
+                $q->latest();
+            }])
+            ->get();
+
+        $referredClients = User::query()
+            ->whereNotNull('created_by_user_id')
+            ->whereHas('creator', function ($q) {
+                $q->where('role_key', 'commercial');
+            })
+            ->with('creator')
+            ->latest()
+            ->get();
+
+        $totalCommercials = $commercials->count();
+        $totalClientsReferred = $referredClients->count();
+
+        $activeTrials = $referredClients->filter(function ($client) {
+            return $client->is_premium && $client->premium_ends_at && $client->premium_ends_at->isFuture();
+        })->count();
+
+        $expiredTrials = $referredClients->filter(function ($client) {
+            return !$client->is_premium || ($client->premium_ends_at && $client->premium_ends_at->isPast());
+        })->count();
+
+        $selectedCommercialId = $request->query('commercial_id');
+        $selectedCommercial = $selectedCommercialId
+            ? $commercials->firstWhere('id', (int) $selectedCommercialId)
+            : null;
+
+        return view('accountant.commercials-tracking', [
+            'commercials' => $commercials,
+            'referredClients' => $referredClients,
+            'totalCommercials' => $totalCommercials,
+            'totalClientsReferred' => $totalClientsReferred,
+            'activeTrials' => $activeTrials,
+            'expiredTrials' => $expiredTrials,
+            'selectedCommercial' => $selectedCommercial,
+        ]);
+    }
+
+    /**
      * @param array<int, int> $clientIds
      * @return array<int, array<string, string>>
      */

@@ -120,6 +120,11 @@
                                 <a class="sidebar-link {{ request()->routeIs('accountant.clients.*') && empty(request()->get('action')) ? 'active' : '' }}" href="{{ route('accountant.clients.index') }}">Dossiers clients</a>
                             </li>
                             <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('accountant.commercials.*') ? 'active' : '' }}" href="{{ route('accountant.commercials.index') }}">
+                                    <i class="align-middle" data-feather="users" style="width:14px;height:14px;"></i> <span class="align-middle">Suivi Commerciaux</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('accountant.clients.*') && request()->get('action') === 'add-client' ? 'active' : '' }}" href="{{ route('accountant.clients.index', ['action' => 'add-client']) }}">
                                     <i class="align-middle" data-feather="plus-circle" style="width:14px;height:14px;"></i> <span class="align-middle">Ajouter Client / Entreprise</span>
                                 </a>

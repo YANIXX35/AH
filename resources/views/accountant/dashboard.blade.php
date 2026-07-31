@@ -93,6 +93,9 @@
                 <button type="button" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#smartImportAccountantClientModal">
                     <i data-feather="upload-cloud" class="me-1" style="width:14px; height:14px;"></i> Importer &amp; Lire Fichier
                 </button>
+                <a href="{{ route('accountant.commercials.index') }}" class="btn btn-sm btn-info text-white rounded-pill px-3 fw-semibold shadow-sm">
+                    <i data-feather="bar-chart-2" class="me-1" style="width:14px; height:14px;"></i> Suivi Commerciaux
+                </a>
                 <a href="{{ route('accountant.clients.index', ['action' => 'add-client']) }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
                     <i data-feather="plus-circle" class="me-1" style="width:14px; height:14px;"></i> Ajouter Client / Entreprise
                 </a>

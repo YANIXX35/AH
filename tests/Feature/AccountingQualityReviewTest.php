@@ -133,4 +133,26 @@ class AccountingQualityReviewTest extends TestCase
             ],
         ]);
     }
+
+    public function test_accountant_can_view_commercials_tracking_and_timestamps(): void
+    {
+        $accountant = User::factory()->create(['role_key' => 'accountant', 'is_accountant' => true]);
+        $commercial = User::factory()->create([
+            'name' => 'Mian Diallo Commercial',
+            'email' => 'mdiandiallo@sitiame-capital.com',
+            'role_key' => 'commercial',
+        ]);
+        $client = User::factory()->create([
+            'name' => 'Client Parraine',
+            'company_name' => 'Entreprise Test Diallo',
+            'created_by_user_id' => $commercial->id,
+        ]);
+
+        $response = $this->actingAs($accountant)->get('/accountant/commercials-tracking');
+
+        $response->assertStatus(200);
+        $response->assertSee('Mian Diallo Commercial');
+        $response->assertSee('Entreprise Test Diallo');
+        $response->assertSee('Suivi des Portefeuilles Commerciaux');
+    }
 }
