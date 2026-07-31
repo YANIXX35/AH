@@ -113,6 +113,38 @@ class CommercialController extends Controller
         $qualifiedProspects = $prospects->where('status', 'qualifie')->count();
         $convertedProspects = $prospects->where('status', 'client')->count();
 
+        // Évolution cumulée du portefeuille sur les 6 derniers mois
+        $clientsByMonth = $clients->groupBy(function ($client) {
+            try {
+                $createdAt = $client->created_at instanceof \Carbon\Carbon
+                    ? $client->created_at
+                    : \Carbon\Carbon::parse($client->created_at);
+                return $createdAt->format('Y-m');
+            } catch (\Throwable $e) {
+                return 'inconnu';
+            }
+        });
+        $growthWindowStart = now()->subMonths(5)->startOfMonth();
+        $cumulative = $clients->filter(function ($client) use ($growthWindowStart) {
+            try {
+                $createdAt = $client->created_at instanceof \Carbon\Carbon
+                    ? $client->created_at
+                    : \Carbon\Carbon::parse($client->created_at);
+                return $createdAt->lt($growthWindowStart);
+            } catch (\Throwable $e) {
+                return false;
+            }
+        })->count();
+        $growthLabels = [];
+        $growthData = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $monthDate = now()->subMonths($i);
+            $key = $monthDate->format('Y-m');
+            $cumulative += $clientsByMonth->get($key, collect())->count();
+            $growthLabels[] = $monthDate->format('m/Y');
+            $growthData[] = $cumulative;
+        }
+
         return view('commercial.dashboard', compact(
             'clients',
             'prospects',
@@ -122,6 +154,8 @@ class CommercialController extends Controller
             'portfolioTrialExpired',
             'portfolioConverted',
             'portfolioChurned',
+            'growthLabels',
+            'growthData',
             'conversionRate',
             'totalProspects',
             'newProspects',

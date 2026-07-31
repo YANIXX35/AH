@@ -483,46 +483,38 @@
             </div>
         @endif
 
-        <!-- TOP MAIN SECTION: SCHEDULE & CLIENTS TIMELINE GRID (Exact Mockup Layout) -->
+        <!-- SECTION : LISTE DES CLIENTS / ENTREPRISES AJOUTÉS -->
         <div class="mockup-card p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
                 <div>
-                    <h2 class="h4 fw-bold text-dark mb-1">Portefeuille Clients & Planning d'Essai 1 Mois</h2>
-                    <p class="text-muted small mb-0">Suivi des activations d'essai gratuit SYSCOHADA et des conversions PME.</p>
+                    <h2 class="h4 fw-bold text-dark mb-1">Mes Clients &amp; Entreprises</h2>
+                    <p class="text-muted small mb-0">Liste des clients PME que vous avez ajoutés et suivi de leur essai gratuit.</p>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="btn btn-sm btn-light rounded-pill border px-3 text-muted fw-semibold">
-                        <i data-feather="calendar" class="me-1" style="width:14px; height:14px;"></i> {{ now()->format('d F Y') }}
-                    </span>
-                    <button class="btn btn-sm btn-light rounded-pill border px-3 text-muted fw-semibold">
-                        <i data-feather="filter" class="me-1" style="width:14px; height:14px;"></i> Filtrer
-                    </button>
-                </div>
+                <span class="btn btn-sm btn-light rounded-pill border px-3 text-muted fw-semibold">
+                    <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i> {{ $totalClients }} client(s)
+                </span>
             </div>
 
-            <!-- Calendar Days Header Row (Mockup Style) -->
-            <div class="row g-2 text-center text-muted small fw-semibold mb-3">
-                <div class="col-md-3 text-start ps-3">Client PME / Représentant</div>
-                <div class="col"><div class="calendar-grid-cell">Lun 1</div></div>
-                <div class="col"><div class="calendar-grid-cell">Mar 2</div></div>
-                <div class="col"><div class="calendar-grid-cell">Mer 3</div></div>
-                <div class="col"><div class="calendar-grid-cell">Jeu 4</div></div>
-                <div class="col"><div class="calendar-grid-cell">Ven 5</div></div>
-                <div class="col"><div class="calendar-grid-cell calendar-grid-cell-active">Sam 6</div></div>
-                <div class="col"><div class="calendar-grid-cell">Dim 7</div></div>
-                <div class="col"><div class="calendar-grid-cell">Lun 8</div></div>
-            </div>
-
-            <!-- Client Rows with Status Floating Pills (Mockup Style) -->
-            <div class="d-flex flex-column gap-3">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr class="text-muted small text-uppercase" style="font-size:0.75rem;">
+                            <th class="border-0">Client</th>
+                            <th class="border-0">Entreprise</th>
+                            <th class="border-0">Contact</th>
+                            <th class="border-0">Statut</th>
+                            <th class="border-0 text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                 @forelse($clients as $client)
                     @php
                         $isTrialActive = false;
                         $daysLeft = 0;
                         if ($client && ($client->is_premium ?? false) && !empty($client->premium_ends_at)) {
                             try {
-                                $endsAt = $client->premium_ends_at instanceof \Carbon\Carbon 
-                                    ? $client->premium_ends_at 
+                                $endsAt = $client->premium_ends_at instanceof \Carbon\Carbon
+                                    ? $client->premium_ends_at
                                     : \Carbon\Carbon::parse($client->premium_ends_at);
                                 $isTrialActive = $endsAt->isFuture();
                                 $daysLeft = $isTrialActive ? now()->diffInDays($endsAt) : 0;
@@ -532,31 +524,33 @@
                             }
                         }
                     @endphp
-                    <div class="row g-2 align-items-center p-2 rounded-4 hover-bg-light border-bottom border-light">
-                        <div class="col-md-3">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:40px; height:40px; font-size:0.85rem;">
-                                    {{ strtoupper(substr($client->name ?? 'PME', 0, 2)) }}
+                        <tr class="border-bottom border-light">
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center flex-shrink-0" style="width:40px; height:40px; font-size:0.85rem;">
+                                        {{ strtoupper(substr($client->name ?? 'PME', 0, 2)) }}
+                                    </div>
+                                    <div class="fw-bold text-dark mb-0">{{ $client->name ?? 'Client PME' }}</div>
                                 </div>
-                                <div>
-                                    <div class="fw-bold text-dark mb-0">{{ $client->name ?? $client->email ?? 'Client PME' }}</div>
-                                    <div class="text-muted small" style="font-size:0.78rem;">{{ $client->company_name ?? 'PME Client' }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-9">
-                            <div class="d-flex align-items-center justify-content-between">
+                            </td>
+                            <td class="text-dark">{{ $client->company_name ?? '—' }}</td>
+                            <td>
+                                <div class="text-dark small">{{ $client->email ?? '—' }}</div>
+                                <div class="text-muted small" style="font-size:0.78rem;">{{ $client->phone ?? '—' }}</div>
+                            </td>
+                            <td>
                                 @if($isTrialActive)
                                     <span class="status-pill status-pill-green">
-                                        <i data-feather="check-circle" style="width:14px; height:14px;"></i> Essai Gratuit Actif ({{ $daysLeft }} jours restants)
+                                        <i data-feather="check-circle" style="width:14px; height:14px;"></i> Essai Actif ({{ $daysLeft }}j)
                                     </span>
                                 @else
                                     <span class="status-pill status-pill-purple">
-                                        <i data-feather="alert-circle" style="width:14px; height:14px;"></i> Essai Expiré / À Relancer
+                                        <i data-feather="alert-circle" style="width:14px; height:14px;"></i> Essai Expiré
                                     </span>
                                 @endif
-
-                                <div class="d-flex gap-2">
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex gap-2 justify-content-end">
                                     <button type="button" class="btn btn-sm btn-light rounded-pill border px-3" data-bs-toggle="modal" data-bs-target="#editClientModal{{ $client->id }}">
                                         Modifier
                                     </button>
@@ -568,9 +562,8 @@
                                         </button>
                                     </form>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
+                            </td>
+                        </tr>
 
                     <!-- Edit Client Modal -->
                     <div class="modal fade" id="editClientModal{{ $client->id }}" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
@@ -612,11 +605,15 @@
                         </div>
                     </div>
                 @empty
-                    <div class="text-center text-muted py-4">
-                        <i data-feather="users" class="mb-2" style="width:36px; height:36px; opacity:0.3;"></i>
-                        <div>Aucun client parrainé enregistré dans votre portefeuille.</div>
-                    </div>
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <i data-feather="users" class="mb-2" style="width:36px; height:36px; opacity:0.3;"></i>
+                                <div>Aucun client ajouté dans votre portefeuille pour l'instant.</div>
+                            </td>
+                        </tr>
                 @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -713,6 +710,12 @@
                     Aucune période d'essai encore terminée &mdash; les stats apparaîtront après 1 mois.
                 </div>
             @endif
+
+            {{-- Courbe d'évolution du portefeuille (6 derniers mois) --}}
+            <div class="mt-4 pt-4 border-top">
+                <span class="small fw-semibold text-muted d-block mb-2">Évolution du portefeuille (6 derniers mois)</span>
+                <canvas id="clientGrowthChart" height="80"></canvas>
+            </div>
 
         </div>
 
@@ -901,6 +904,7 @@
 
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     function goToStep(step) {
         if (step === 2) {
@@ -930,6 +934,30 @@
         if (action === 'add-prospect') {
             const modal = new bootstrap.Modal(document.getElementById('addProspectModal'));
             modal.show();
+        }
+
+        const growthCanvas = document.getElementById('clientGrowthChart');
+        if (growthCanvas && window.Chart) {
+            new Chart(growthCanvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: @json($growthLabels ?? []),
+                    datasets: [{
+                        label: 'Clients cumulés',
+                        data: @json($growthData ?? []),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                        tension: 0.35,
+                        fill: true,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#3b82f6',
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
         }
     });
 </script>
