@@ -299,6 +299,13 @@
                                     <input type="password" name="password" class="form-control form-control-lg rounded-3 border-0 bg-light"
                                            placeholder="8 caractères minimum" minlength="8">
                                 </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        🔑 Confirmer le mot de passe
+                                    </label>
+                                    <input type="password" name="password_confirmation" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="Confirmer le mot de passe">
+                                </div>
                             </div>
                         </div>
 
@@ -330,8 +337,57 @@
                                     <label class="form-label fw-semibold text-dark">
                                         🌿 Secteur d'activité
                                     </label>
-                                    <input type="text" name="sector" class="form-control form-control-lg rounded-3 border-0 bg-light"
-                                           placeholder="Ex : Agriculture, BTP, Commerce...">
+                                    <select name="sector" class="form-select form-select-lg rounded-3 border-0 bg-light">
+                                        <option value="">Choisir un secteur...</option>
+                                        <option value="Agroalimentaire">Agroalimentaire</option>
+                                        <option value="Commerce & Distribution">Commerce & Distribution</option>
+                                        <option value="BTP & Construction">BTP & Construction</option>
+                                        <option value="Services aux entreprises">Services aux entreprises</option>
+                                        <option value="Technologies / IT">Technologies / IT</option>
+                                        <option value="Transport & Logistique">Transport & Logistique</option>
+                                        <option value="Santé">Santé</option>
+                                        <option value="Autre">Autre</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        🔢 Numéro RCCM / SIRET
+                                    </label>
+                                    <input type="text" name="rccm" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="Ex : CI-ABJ-2026-B-1234">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        📍 Ville
+                                    </label>
+                                    <input type="text" name="city" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="Ex : Abidjan">
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold text-dark">
+                                        📍 Adresse complète
+                                    </label>
+                                    <input type="text" name="address" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="Ex : Plateau Rue du Commerce">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        📎 Attestation DFE / NIF (Fichier)
+                                    </label>
+                                    <input type="file" name="company_logo" class="form-control form-control-lg rounded-3 border-0 bg-light" accept="image/*,.pdf">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">
+                                        📎 Registre de commerce (Fichier)
+                                    </label>
+                                    <input type="file" name="trade_register" class="form-control form-control-lg rounded-3 border-0 bg-light" accept="image/*,.pdf">
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold text-dark">
+                                        🔑 Clé de licence (optionnel)
+                                    </label>
+                                    <input type="text" name="license_key" class="form-control form-control-lg rounded-3 border-0 bg-light"
+                                           placeholder="Fournie par l'administrateur">
                                 </div>
                             </div>
                         </div>
@@ -531,11 +587,11 @@
                                         <div class="row g-3">
                                             <div class="col-md-6">
                                                 <label class="form-label small fw-semibold">Nom complet</label>
-                                                <input type="text" name="name" class="form-control rounded-3" value="{{ old('name', $client->name) }}" required>
+                                                <input type="text" name="name" class="form-control rounded-3" value="{{ old('name', $client->name) }}">
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label small fw-semibold">Adresse Email</label>
-                                                <input type="email" name="email" class="form-control rounded-3" value="{{ old('email', $client->email) }}" required>
+                                                <input type="email" name="email" class="form-control rounded-3" value="{{ old('email', $client->email) }}">
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label small fw-semibold">Téléphone</label>

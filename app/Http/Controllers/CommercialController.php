@@ -312,8 +312,8 @@ class CommercialController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'name' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'phone' => ['nullable', 'string', 'max:255'],
             'company_name' => ['nullable', 'string', 'max:255'],
             'company_sigle' => ['nullable', 'string', 'max:255'],
@@ -326,6 +326,8 @@ class CommercialController extends Controller
             'city' => ['nullable', 'string', 'max:255'],
             'password' => ['nullable', 'string', 'min:8'],
         ]);
+
+        $validated = array_filter($validated, fn ($value) => $value !== null && $value !== '');
 
         if ($request->hasFile('company_logo')) {
             $validated['company_logo'] = $request->file('company_logo')->store('company-logos', 'public');
