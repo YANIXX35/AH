@@ -1,0 +1,27 @@
+name: Déploiement Automatique LWS
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Connexion SSH et déploiement sur LWS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.LWS_SSH_HOST }}
+          username: ${{ secrets.LWS_SSH_USER }}
+          password: ${{ secrets.LWS_SSH_PASSWORD }}
+          port: ${{ secrets.LWS_SSH_PORT }}
+          script: |
+            cd ~/htdocs || cd ~/public_html || cd ~/site
+            git pull origin master
+            composer install --no-dev --optimize-autoloader --no-interaction
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
