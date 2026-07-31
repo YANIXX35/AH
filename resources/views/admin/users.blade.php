@@ -374,7 +374,17 @@
                                                 </td>
                                                 <td class="text-center pe-4">
                                                     <div class="d-inline-flex flex-wrap gap-1 justify-content-center align-items-center">
-                                                        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-primary rounded-pill px-3">Gérer</a>
+                                                        <!-- Modifier -->
+                                                        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-outline-primary rounded-pill px-2.5" title="Modifier cet utilisateur">
+                                                            ✏️ Éditer
+                                                        </a>
+
+                                                        <!-- Réinitialiser Mot de Passe -->
+                                                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-2.5" data-bs-toggle="modal" data-bs-target="#resetPasswordModal{{ $user->id }}" title="Réinitialiser le mot de passe">
+                                                            🔑 Mdp
+                                                        </button>
+
+                                                        <!-- Activer / Désactiver Premium -->
                                                         @if(! $user->is_platform_admin && ! ($user->is_accountant ?? false))
                                                             @if($premiumOk)
                                                                 <form method="POST" action="{{ route('admin.users.premium.deactivate', $user) }}" class="d-inline" onsubmit="return confirm('Repasser ce compte en Gratuit ?');">
@@ -385,7 +395,7 @@
                                                                 <form method="POST" action="{{ route('admin.users.premium.activate', $user) }}" class="d-inline">
                                                                     @csrf
                                                                     <input type="hidden" name="days" value="30">
-                                                                    <button type="submit" class="btn btn-sm btn-warning text-dark rounded-pill px-2.5 fw-semibold" title="Essai Premium 30 jours">Premium 30j</button>
+                                                                    <button type="submit" class="btn btn-sm btn-warning text-dark rounded-pill px-2.5 fw-semibold" title="Essai Premium 30 jours">30j</button>
                                                                 </form>
                                                                 <form method="POST" action="{{ route('admin.users.premium.activate', $user) }}" class="d-inline">
                                                                     @csrf
@@ -394,7 +404,52 @@
                                                                 </form>
                                                             @endif
                                                         @endif
+
+                                                        <!-- Supprimer Utilisateur -->
+                                                        @if($user->id !== auth()->id())
+                                                            <form method="POST" action="{{ route('admin.users.destroy', $user) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer définitivement {{ addslashes($user->name) }} ({{ $user->email }}) ?');">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Supprimer cet utilisateur">
+                                                                    🗑️
+                                                                </button>
+                                                            </form>
+                                                        @endif
                                                     </div>
+
+                                                    <!-- MODAL REINITIALISATION MOT DE PASSE -->
+                                                    <div class="modal fade text-start" id="resetPasswordModal{{ $user->id }}" tabindex="-1" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content rounded-4 border-0 shadow">
+                                                                <form method="POST" action="{{ route('admin.users.reset-password', $user) }}">
+                                                                    @csrf
+                                                                    <div class="modal-header border-0 pb-0">
+                                                                        <h5 class="modal-title fw-bold">🔑 Réinitialiser le mot de passe</h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                                                                    </div>
+                                                                    <div class="modal-body py-3">
+                                                                        <p class="text-muted small mb-3">
+                                                                            Utilisateur : <strong>{{ $user->name }}</strong> (<code>{{ $user->email }}</code>)
+                                                                        </p>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label fw-semibold">Nouveau mot de passe</label>
+                                                                            <input type="text" name="password" id="pwdInput{{ $user->id }}" class="form-control rounded-3" placeholder="Saisissez ou générez un mot de passe" required minlength="6" value="12345678">
+                                                                        </div>
+                                                                        <div class="d-flex gap-2">
+                                                                            <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" onclick="document.getElementById('pwdInput{{ $user->id }}').value='12345678';">
+                                                                                Mot de passe par défaut (12345678)
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="modal-footer border-0 pt-0">
+                                                                        <button type="button" class="btn btn-sm btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Annuler</button>
+                                                                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 fw-semibold">Enregistrer le nouveau mot de passe</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
                                                 </td>
                                             </tr>
                                         @endforeach

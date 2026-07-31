@@ -955,6 +955,71 @@ class AdminController extends Controller
         return back()->with('status', "Le compte {$user->email} est repassé en mode Gratuit.");
     }
 
+    public function resetPassword(Request $request, User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'password' => ['required', 'string', 'min:6'],
+        ]);
+
+        $user->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        $this->auditTrail->log(
+            'user.password_reset',
+            User::class,
+            $user->id,
+            $request->user()?->id,
+            [],
+            ['email' => $user->email],
+            ['route' => 'admin.users.reset-password'],
+            $request
+        );
+
+        return back()->with('status', "Le mot de passe de {$user->name} ({$user->email}) a été réinitialisé avec succès.");
+    }
+
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        $actor = $request->user();
+
+        if ($actor && $actor->id === $user->id) {
+            return back()->withErrors([
+                'user' => 'Vous ne pouvez pas supprimer votre propre compte administrateur.',
+            ]);
+        }
+
+        if ($user->is_platform_admin) {
+            $otherAdminsExist = User::query()
+                ->where('is_platform_admin', true)
+                ->where('id', '!=', $user->id)
+                ->exists();
+            if (!$otherAdminsExist) {
+                return back()->withErrors([
+                    'user' => 'Impossible de supprimer le dernier administrateur de la plateforme.',
+                ]);
+            }
+        }
+
+        $userName = $user->name;
+        $userEmail = $user->email;
+
+        $user->delete();
+
+        $this->auditTrail->log(
+            'user.deleted',
+            User::class,
+            $user->id,
+            $actor?->id,
+            ['name' => $userName, 'email' => $userEmail],
+            [],
+            ['route' => 'admin.users.destroy'],
+            $request
+        );
+
+        return back()->with('status', "L'utilisateur {$userName} ({$userEmail}) a été supprimé avec succès.");
+    }
+
     /**
      * Regroupe les comptes par entreprise (licence, NIF puis nom) pour la gestion admin.
      *
