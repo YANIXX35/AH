@@ -397,6 +397,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/payments/{paymentTransaction}/activate-premium', [AdminPaymentController::class, 'activatePremium'])->name('payments.activate-premium');
         Route::post('/payments/{paymentTransaction}/set-free', [AdminPaymentController::class, 'setFree'])->name('payments.set-free');
         Route::get('/platform-logs', [AdminPlatformLogController::class, 'index'])->name('logs.index');
+        Route::get('/signalements', [\App\Http\Controllers\AdminBugReportController::class, 'index'])->name('signalements.index');
+        Route::post('/signalements/{bugReport}/resolve', [\App\Http\Controllers\AdminBugReportController::class, 'resolve'])->name('signalements.resolve');
+        Route::delete('/signalements/{bugReport}', [\App\Http\Controllers\AdminBugReportController::class, 'destroy'])->name('signalements.destroy');
+        Route::post('/signalements/clear-logs', [\App\Http\Controllers\AdminBugReportController::class, 'clearLogs'])->name('signalements.clear-logs');
         Route::get('/ops-center', [AdminOpsCenterController::class, 'index'])->name('ops.index');
         Route::post('/ops-center/feature-flags', [AdminOpsCenterController::class, 'updateFeatureFlags'])->name('ops.feature-flags.update');
         Route::post('/ops-center/health-checks/run', [AdminOpsCenterController::class, 'runHealthChecksNow'])->name('ops.health-checks.run');

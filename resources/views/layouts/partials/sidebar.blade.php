@@ -188,6 +188,17 @@
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.support.tickets.*') ? 'active' : '' }}" href="{{ route('admin.support.tickets.index') }}">File support clients</a>
                             </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.signalements.*') ? 'active' : '' }}" href="{{ route('admin.signalements.index') }}">
+                                    <span>🚨 Signalements &amp; Bugs</span>
+                                    @php
+                                        $openBugCount = \App\Models\SystemBugReport::where('status', 'OPEN')->count();
+                                    @endphp
+                                    @if($openBugCount > 0)
+                                        <span class="badge bg-danger rounded-pill ms-1" style="font-size:10px;">{{ $openBugCount }}</span>
+                                    @endif
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </li>
