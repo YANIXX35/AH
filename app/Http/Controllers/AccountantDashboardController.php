@@ -279,4 +279,24 @@ class AccountantDashboardController extends Controller
         $answer = trim((string) ($result['answer'] ?? ''));
         return $answer !== '' ? $answer : $fallback;
     }
+
+    public function parseCompanyDocument(Request $request, \App\Services\CompanyDocumentParserService $parser): JsonResponse
+    {
+        $request->validate([
+            'document' => ['required', 'file', 'max:10240', 'mimes:docx,doc,xlsx,xls,csv,pdf,txt'],
+        ]);
+
+        $file = $request->file('document');
+        $extracted = $parser->parse($file);
+
+        return response()->json([
+            'ok' => true,
+            'filename' => $file->getClientOriginalName(),
+            'fields_found_count' => count($extracted),
+            'extracted' => $extracted,
+            'message' => count($extracted) > 0
+                ? count($extracted) . ' champ(s) identifié(s) et pré-rempli(s) automatiquement.'
+                : 'Aucun champ reconnu automatiquement. Vous pouvez remplir les informations manuellement.',
+        ]);
+    }
 }

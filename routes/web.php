@@ -357,6 +357,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('accountant')->prefix('accountant')->name('accountant.')->group(function () {
         Route::get('/', [AccountantDashboardController::class, 'index'])->name('dashboard');
         Route::get('/ai/live', [AccountantDashboardController::class, 'liveInsights'])->name('dashboard.ai.live');
+        Route::post('/parse-company-document', [AccountantDashboardController::class, 'parseCompanyDocument'])->name('parseCompanyDocument');
         Route::get('/clients', [AccountantClientController::class, 'index'])->name('clients.index');
         Route::post('/clients', [AccountantClientController::class, 'store'])->name('clients.store');
         Route::get('/clients/{user}', [AccountantClientController::class, 'show'])->name('clients.show');

@@ -232,6 +232,27 @@
                 <!-- 2. Corps Scrollable uniquement (flex: 1 1 auto; overflow-y: auto) -->
                 <div class="modal-body p-4 bg-white flex-grow-1" id="accWizardModalBody" style="min-height: 0; overflow-y: auto !important; scroll-behavior: smooth;">
 
+                    {{-- Zone d'importation intelligente de fichier --}}
+                    <div class="mb-4 p-3 bg-light rounded-4 border border-dashed border-success text-center">
+                        <div class="d-flex align-items-center justify-content-center gap-2 mb-1 text-success fw-bold">
+                            <i data-feather="file-text" style="width:18px; height:18px;"></i>
+                            <span>Import &amp; Lecture Automatique de Fiche Entreprise (Word, Excel, PDF, Text)</span>
+                        </div>
+                        <p class="text-muted small mb-2">
+                            Importez la fiche PME. L'IA extrait automatiquement les informations et complète le dossier. Les champs absents restent vierges.
+                        </p>
+                        <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
+                            <input type="file" id="accWizardDocInput" class="d-none" accept=".docx,.doc,.xlsx,.xls,.csv,.pdf,.txt" onchange="uploadAndParseAccountantIndexDocument(this)">
+                            <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-4 fw-semibold" onclick="document.getElementById('accWizardDocInput').click()">
+                                <i data-feather="upload" class="me-1" style="width:14px; height:14px;"></i> Parcourir et Importer Fichier...
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" onclick="clearAccModalFields()">
+                                <i data-feather="trash-2" class="me-1" style="width:14px; height:14px;"></i> Effacer le formulaire
+                            </button>
+                        </div>
+                        <div id="parseStatusAlertAccIndex" class="mt-2 d-none"></div>
+                    </div>
+
                     <!-- STEP 1 : COMPTE RESPONSABLE -->
                     <div id="accWizardStep1">
                         <div class="alert alert-light border rounded-3 mb-4 text-muted small py-2.5 px-3">
@@ -390,6 +411,88 @@
             if (emailInput) emailInput.value = '';
             if (passInput) passInput.value = '';
             if (confirmInput) confirmInput.value = '';
+        }
+        const alertBox = document.getElementById('parseStatusAlertAccIndex');
+        if (alertBox) {
+            alertBox.classList.add('d-none');
+        }
+    }
+
+    async function uploadAndParseAccountantIndexDocument(inputElement) {
+        const file = inputElement.files[0];
+        if (!file) return;
+
+        const alertBox = document.getElementById('parseStatusAlertAccIndex');
+
+        if (alertBox) {
+            alertBox.className = 'alert alert-info py-2 px-3 rounded-3 small mb-3 align-items-center d-flex justify-content-center gap-2';
+            alertBox.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Extraction et lecture automatique du document en cours...';
+            alertBox.classList.remove('d-none');
+        }
+
+        const formData = new FormData();
+        formData.append('document', file);
+
+        try {
+            const response = await fetch('{{ route("accountant.parseCompanyDocument") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const json = await response.json();
+
+            if (!response.ok || !json.ok) {
+                throw new Error(json.message || 'Erreur lors de l’analyse du fichier.');
+            }
+
+            const data = json.extracted || {};
+            let filledCount = 0;
+
+            const targetForm = document.getElementById('accWizardForm');
+
+            const fieldMapping = {
+                'name': 'name',
+                'email': 'email',
+                'phone': 'phone',
+                'password': 'password',
+                'company_name': 'company_name',
+                'company_sigle': 'company_sigle',
+                'company_tax_id': 'company_tax_id',
+                'rccm': 'rccm',
+                'sector': 'sector',
+                'city': 'city',
+                'address': 'address'
+            };
+
+            for (const [key, fieldName] of Object.entries(fieldMapping)) {
+                if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+                    const el = targetForm ? targetForm.querySelector(`[name="${fieldName}"]`) : null;
+                    if (el) {
+                        el.value = data[key];
+                        el.classList.add('is-valid');
+                        filledCount++;
+                    }
+                }
+            }
+
+            if (alertBox) {
+                if (filledCount > 0) {
+                    alertBox.className = 'alert alert-success py-2 px-3 rounded-3 small mb-3';
+                    alertBox.innerHTML = `<strong>✓ ${filledCount} champ(s) identifié(s) et pré-rempli(s) !</strong> (${json.filename})`;
+                } else {
+                    alertBox.className = 'alert alert-warning py-2 px-3 rounded-3 small mb-3';
+                    alertBox.innerHTML = `Aucun champ d'entreprise n'a été reconnu dans <em>${json.filename}</em>. Vous pouvez remplir les champs manuellement.`;
+                }
+            }
+        } catch (error) {
+            if (alertBox) {
+                alertBox.className = 'alert alert-danger py-2 px-3 rounded-3 small mb-3';
+                alertBox.innerHTML = `<strong>⚠️ Erreur :</strong> ${error.message}`;
+            }
         }
     }
 

@@ -90,6 +90,9 @@
                 </h1>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="button" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#smartImportAccountantClientModal">
+                    <i data-feather="upload-cloud" class="me-1" style="width:14px; height:14px;"></i> Importer &amp; Lire Fichier
+                </button>
                 <a href="{{ route('accountant.clients.index', ['action' => 'add-client']) }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
                     <i data-feather="plus-circle" class="me-1" style="width:14px; height:14px;"></i> Ajouter Client / Entreprise
                 </a>
@@ -535,4 +538,210 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 </div>
+
+<!-- Modal Smart Import Client (Cabinet Comptable) -->
+<div class="modal fade" id="smartImportAccountantClientModal" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <form id="smartAccountantClientForm" action="{{ route('accountant.clients.store') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-header border-0 bg-dark text-white p-4">
+                    <div>
+                        <span class="badge bg-success text-white rounded-pill px-3 py-1 mb-2 fw-semibold">CABINET COMPTABLE — EXTRACTION IA</span>
+                        <h4 class="modal-title fw-bold text-white mb-0">📂 Importer &amp; Créer un Dossier Client</h4>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
+                    {{-- Zone Dropzone d'importation --}}
+                    <div class="p-4 bg-light rounded-4 border border-dashed border-success text-center mb-4">
+                        <div class="d-flex align-items-center justify-content-center gap-2 mb-2 text-success fw-bold">
+                            <i data-feather="file-text" style="width:24px; height:24px;"></i>
+                            <span class="fs-6">Sélectionnez la fiche d'entreprise (Word, Excel, PDF, Text, CSV)</span>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            L'IA comptable analyse le fichier et complète automatiquement les informations du dossier (Nom, Email, Téléphone, NIF, RCCM, Secteur...). Les champs non trouvés restent vierges.
+                        </p>
+                        <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
+                            <input type="file" id="accModalDocInput" class="d-none" accept=".docx,.doc,.xlsx,.xls,.csv,.pdf,.txt" onchange="uploadAndParseAccountantDocument(this)">
+                            <button type="button" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" onclick="document.getElementById('accModalDocInput').click()">
+                                <i data-feather="upload-cloud" class="me-1" style="width:16px; height:16px;"></i> Choisir et analyser un fichier
+                            </button>
+                            <button type="button" class="btn btn-outline-danger rounded-pill px-3 fw-semibold" onclick="resetAccountantClientForm()">
+                                <i data-feather="trash-2" class="me-1" style="width:14px; height:14px;"></i> Supprimer / Effacer tout
+                            </button>
+                        </div>
+                        <div id="parseStatusAlertAccModal" class="mt-3 d-none"></div>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">👤 Responsable Client</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Nom complet du dirigeant <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control rounded-3" placeholder="Ex: Jean Kouassi" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Adresse Email (Identifiant) <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control rounded-3" placeholder="dirigeant@entreprise.ci" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Numéro de Téléphone</label>
+                            <input type="text" name="phone" class="form-control rounded-3" placeholder="+225 07 00 00 00 00">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Mot de passe temporaire <span class="text-danger">*</span></label>
+                            <input type="password" name="password" class="form-control rounded-3" placeholder="8 caractères minimum" minlength="8" required>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">🏢 Informations Dossier PME</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Raison Sociale / Entreprise <span class="text-danger">*</span></label>
+                            <input type="text" name="company_name" class="form-control rounded-3" placeholder="Ex: Ivoire Agro SARL" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Sigle usuel</label>
+                            <input type="text" name="company_sigle" class="form-control rounded-3" placeholder="Ex: IAGRO">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">NIF / Matricule Fiscal</label>
+                            <input type="text" name="company_tax_id" class="form-control rounded-3" placeholder="Numéro d'identification fiscale">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Numéro RCCM / SIRET</label>
+                            <input type="text" name="rccm" class="form-control rounded-3" placeholder="Ex : CI-ABJ-2026-B-1234">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Secteur d'activité</label>
+                            <select name="sector" class="form-select rounded-3">
+                                <option value="">Choisir un secteur...</option>
+                                <option value="Agroalimentaire">Agroalimentaire</option>
+                                <option value="Commerce & Distribution">Commerce &amp; Distribution</option>
+                                <option value="BTP & Construction">BTP &amp; Construction</option>
+                                <option value="Services aux entreprises">Services aux entreprises</option>
+                                <option value="Technologies / IT">Technologies / IT</option>
+                                <option value="Transport & Logistique">Transport &amp; Logistique</option>
+                                <option value="Santé">Santé</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Ville</label>
+                            <input type="text" name="city" class="form-control rounded-3" placeholder="Ex: Abidjan">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small fw-semibold text-dark">Adresse complète</label>
+                            <input type="text" name="address" class="form-control rounded-3" placeholder="Ex: Plateau Rue du Commerce">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-outline-danger rounded-pill px-4" onclick="resetAccountantClientForm()">
+                        <i data-feather="trash-2" class="me-1" style="width:14px; height:14px;"></i> Supprimer la saisie
+                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">✓ Créer le dossier client</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    async function uploadAndParseAccountantDocument(inputElement) {
+        const file = inputElement.files[0];
+        if (!file) return;
+
+        const alertBox = document.getElementById('parseStatusAlertAccModal');
+
+        if (alertBox) {
+            alertBox.className = 'alert alert-info py-2 px-3 rounded-3 small mb-3 align-items-center d-flex justify-content-center gap-2';
+            alertBox.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Extraction et lecture automatique du document en cours...';
+            alertBox.classList.remove('d-none');
+        }
+
+        const formData = new FormData();
+        formData.append('document', file);
+
+        try {
+            const response = await fetch('{{ route("accountant.parseCompanyDocument") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const json = await response.json();
+
+            if (!response.ok || !json.ok) {
+                throw new Error(json.message || 'Erreur lors de l’analyse du fichier.');
+            }
+
+            const data = json.extracted || {};
+            let filledCount = 0;
+
+            const targetForm = document.getElementById('smartAccountantClientForm');
+
+            const fieldMapping = {
+                'name': 'name',
+                'email': 'email',
+                'phone': 'phone',
+                'company_name': 'company_name',
+                'company_sigle': 'company_sigle',
+                'company_tax_id': 'company_tax_id',
+                'rccm': 'rccm',
+                'sector': 'sector',
+                'city': 'city',
+                'address': 'address'
+            };
+
+            for (const [key, fieldName] of Object.entries(fieldMapping)) {
+                if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+                    const el = targetForm ? targetForm.querySelector(`[name="${fieldName}"]`) : null;
+                    if (el) {
+                        el.value = data[key];
+                        el.classList.add('is-valid');
+                        filledCount++;
+                    }
+                }
+            }
+
+            if (alertBox) {
+                if (filledCount > 0) {
+                    alertBox.className = 'alert alert-success py-2 px-3 rounded-3 small mb-3';
+                    alertBox.innerHTML = `<strong>✓ ${filledCount} champ(s) identifié(s) et pré-rempli(s) !</strong> (${json.filename})`;
+                } else {
+                    alertBox.className = 'alert alert-warning py-2 px-3 rounded-3 small mb-3';
+                    alertBox.innerHTML = `Aucun champ d'entreprise n'a été reconnu dans <em>${json.filename}</em>. Vous pouvez remplir les champs manuellement.`;
+                }
+            }
+        } catch (error) {
+            if (alertBox) {
+                alertBox.className = 'alert alert-danger py-2 px-3 rounded-3 small mb-3';
+                alertBox.innerHTML = `<strong>⚠️ Erreur :</strong> ${error.message}`;
+            }
+        }
+    }
+
+    function resetAccountantClientForm() {
+        const form = document.getElementById('smartAccountantClientForm');
+        if (form) {
+            form.reset();
+            form.querySelectorAll('.is-valid').forEach(el => el.classList.remove('is-valid'));
+        }
+        const alertBox = document.getElementById('parseStatusAlertAccModal');
+        if (alertBox) {
+            alertBox.classList.add('d-none');
+        }
+    }
+</script>
+@endpush
 @endsection

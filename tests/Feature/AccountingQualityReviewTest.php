@@ -108,4 +108,29 @@ class AccountingQualityReviewTest extends TestCase
         $stored = AccountingQualityReview::where('user_id', $sme->id)->first();
         $this->assertSame('provisional-reliability-v1', $stored->method_version);
     }
+
+    public function test_accountant_can_parse_company_document_and_extract_fields(): void
+    {
+        $accountant = User::factory()->create(['role_key' => 'accountant', 'is_accountant' => true]);
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent(
+            'fiche_entreprise_cabinet.txt',
+            "Raison Sociale: Cabinet Conseil SARL\nDirigeant: Marc Amon\nEmail: contact@conseil.ci\nTelephone: +2250102030405\nNIF: 9988776C\nVille: Yamoussoukro"
+        );
+
+        $response = $this->actingAs($accountant)->postJson('/accountant/parse-company-document', [
+            'document' => $file,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'ok' => true,
+            'filename' => 'fiche_entreprise_cabinet.txt',
+            'extracted' => [
+                'name' => 'Marc Amon',
+                'email' => 'contact@conseil.ci',
+                'company_name' => 'Cabinet Conseil SARL',
+                'city' => 'Yamoussoukro',
+            ],
+        ]);
+    }
 }
