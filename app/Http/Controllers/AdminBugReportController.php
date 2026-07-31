@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SystemBugReport;
+use App\Models\UserLoginLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -55,6 +56,21 @@ class AdminBugReportController extends Controller
         // JOURNAL LARAVEL.LOG
         $logFileContent = $this->getLaravelLogLines(120);
 
+        // HISTORIQUE DE CONNEXIONS/DÉCONNEXIONS
+        $loginSearch = trim((string) $request->query('lq', ''));
+        $loginEvent  = (string) $request->query('levent', '');
+        $loginQuery  = UserLoginLog::query()->with('user:id,name,email,is_platform_admin,is_accountant')->latest();
+        if ($loginSearch !== '') {
+            $loginQuery->whereHas('user', fn ($q) => $q->where('name', 'like', '%'.$loginSearch.'%')->orWhere('email', 'like', '%'.$loginSearch.'%'));
+        }
+        if ($loginEvent !== '') {
+            $loginQuery->where('event', $loginEvent);
+        }
+        $loginLogs      = $loginQuery->paginate(30, ['*'], 'login_page')->withQueryString();
+        $totalLogins    = UserLoginLog::where('event', 'login')->count();
+        $totalLogouts   = UserLoginLog::where('event', 'logout')->count();
+        $uniqueUsers    = UserLoginLog::distinct('user_id')->count('user_id');
+
         return view('admin.signalements', [
             'bugReports' => $bugReports,
             'openCount' => $openCount,
@@ -64,6 +80,12 @@ class AdminBugReportController extends Controller
             'dbHealth' => $dbHealth,
             'lwsHealth' => $lwsHealth,
             'logFileContent' => $logFileContent,
+            'loginLogs' => $loginLogs,
+            'totalLogins' => $totalLogins,
+            'totalLogouts' => $totalLogouts,
+            'uniqueUsers' => $uniqueUsers,
+            'loginSearch' => $loginSearch,
+            'loginEvent' => $loginEvent,
             'filters' => [
                 'status' => $status,
                 'dashboard' => $dashboard,

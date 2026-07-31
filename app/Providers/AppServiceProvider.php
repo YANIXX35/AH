@@ -7,11 +7,15 @@ use App\Contracts\FinancialRatioServiceContract;
 use App\Mail\AppNotificationMail;
 use App\Models\AppNotification;
 use App\Models\SupportTicket;
+use App\Models\UserLoginLog;
 use App\Services\SmeFinancialRatioService;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Console\ServeCommand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -106,6 +110,39 @@ class AppServiceProvider extends ServiceProvider
                     ->limit(5)
                     ->get(),
             ]);
+        });
+
+        // Enregistrement des événements de connexion et déconnexion
+        Event::listen(Login::class, function (Login $event): void {
+            try {
+                $request = app(Request::class);
+                UserLoginLog::create([
+                    'user_id' => $event->user->id,
+                    'event' => 'login',
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'session_id' => session()->getId(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning('login_log_failed: '.$e->getMessage());
+            }
+        });
+
+        Event::listen(Logout::class, function (Logout $event): void {
+            try {
+                if ($event->user) {
+                    $request = app(Request::class);
+                    UserLoginLog::create([
+                        'user_id' => $event->user->id,
+                        'event' => 'logout',
+                        'ip_address' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                        'session_id' => session()->getId(),
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('logout_log_failed: '.$e->getMessage());
+            }
         });
     }
 }

@@ -128,6 +128,14 @@
             📋 Journal Système (laravel.log)
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link fw-semibold" id="login-tab" data-bs-toggle="tab" href="#tab-logins">
+            🔐 Historique Connexions
+            @if($totalLogins > 0)
+                <span class="badge bg-primary rounded-pill ms-1">{{ $totalLogins + $totalLogouts }}</span>
+            @endif
+        </a>
+    </li>
 </ul>
 
 <div class="tab-content">
@@ -334,6 +342,167 @@
             ⚠️ Les lignes en <strong>rouge</strong> = erreurs critiques · <strong>jaune</strong> = warnings · <strong>blanc</strong> = info.
         </div>
     </div>
+
+    {{-- ========== TAB 3: HISTORIQUE DE CONNEXIONS ========== --}}
+    <div class="tab-pane fade" id="tab-logins">
+
+        {{-- Stat cards connexions --}}
+        <div class="row g-3 mb-4">
+            <div class="col-sm-4">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <div class="h3 fw-bold text-primary mb-0">{{ number_format($totalLogins) }}</div>
+                    <div class="small text-muted mt-1">🟢 Connexions totales</div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <div class="h3 fw-bold text-warning mb-0">{{ number_format($totalLogouts) }}</div>
+                    <div class="small text-muted mt-1">🔴 Déconnexions totales</div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <div class="h3 fw-bold text-success mb-0">{{ number_format($uniqueUsers) }}</div>
+                    <div class="small text-muted mt-1">👤 Utilisateurs distincts</div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Filtres connexions --}}
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body py-3">
+                <form method="GET" class="row g-2 align-items-end">
+                    {{-- Préserver les filtres bugs --}}
+                    @foreach($filters as $k => $v)
+                        @if($v)<input type="hidden" name="{{ $k }}" value="{{ $v }}">@endif
+                    @endforeach
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Recherche utilisateur</label>
+                        <input type="text" name="lq" value="{{ $loginSearch }}" class="form-control form-control-sm" placeholder="Nom, e-mail...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Événement</label>
+                        <select name="levent" class="form-select form-select-sm">
+                            <option value="">Tous</option>
+                            <option value="login" @selected($loginEvent === 'login')>🟢 Connexion</option>
+                            <option value="logout" @selected($loginEvent === 'logout')>🔴 Déconnexion</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button type="submit" class="btn btn-sm btn-primary rounded-pill">Filtrer</button>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <a href="{{ route('admin.signalements.index') }}#tab-logins" class="btn btn-sm btn-outline-secondary rounded-pill">Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- Tableau Historique --}}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="card-title mb-0 fw-bold">🔐 Historique de Connexions</h5>
+                <span class="badge bg-primary rounded-pill">{{ $loginLogs->total() }} entrée(s)</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3" style="min-width:150px;">Date &amp; Heure</th>
+                                <th>Événement</th>
+                                <th>Utilisateur</th>
+                                <th>Rôle</th>
+                                <th>Adresse IP</th>
+                                <th>ID Session</th>
+                                <th>Navigateur / OS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($loginLogs as $log)
+                                @php
+                                    $ua = $log->user_agent ?? '';
+                                    // Détection simplifiée navigateur
+                                    $browser = 'Inconnu';
+                                    if (str_contains($ua, 'Chrome') && !str_contains($ua, 'Edg')) $browser = 'Chrome';
+                                    elseif (str_contains($ua, 'Firefox')) $browser = 'Firefox';
+                                    elseif (str_contains($ua, 'Safari') && !str_contains($ua, 'Chrome')) $browser = 'Safari';
+                                    elseif (str_contains($ua, 'Edg')) $browser = 'Edge';
+                                    elseif (str_contains($ua, 'Opera') || str_contains($ua, 'OPR')) $browser = 'Opera';
+                                    // Détection OS
+                                    $os = 'Inconnu';
+                                    if (str_contains($ua, 'Windows')) $os = 'Windows';
+                                    elseif (str_contains($ua, 'Mac OS')) $os = 'macOS';
+                                    elseif (str_contains($ua, 'Linux')) $os = 'Linux';
+                                    elseif (str_contains($ua, 'Android')) $os = 'Android';
+                                    elseif (str_contains($ua, 'iPhone') || str_contains($ua, 'iPad')) $os = 'iOS';
+                                @endphp
+                                <tr>
+                                    <td class="ps-3">
+                                        <div class="fw-semibold small">{{ $log->created_at->format('d/m/Y') }}</div>
+                                        <span class="badge bg-dark font-monospace" style="font-size:10px;">
+                                            ⏰ {{ $log->created_at->format('H:i:s') }}
+                                        </span>
+                                        <div class="text-muted" style="font-size:10px;">{{ $log->created_at->diffForHumans() }}</div>
+                                    </td>
+                                    <td>
+                                        @if($log->event === 'login')
+                                            <span class="badge rounded-pill" style="background:#10b981;font-size:11px;">🟢 CONNEXION</span>
+                                        @else
+                                            <span class="badge rounded-pill" style="background:#ef4444;font-size:11px;">🔴 DÉCONNEXION</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($log->user)
+                                            <div class="fw-semibold small">{{ $log->user->name }}</div>
+                                            <div class="text-muted" style="font-size:10px;">{{ $log->user->email }}</div>
+                                        @else
+                                            <span class="text-muted small">Utilisateur supprimé</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($log->user)
+                                            @if($log->user->is_platform_admin)
+                                                <span class="badge bg-danger rounded-pill" style="font-size:10px;">🔷 Admin</span>
+                                            @elseif($log->user->is_accountant ?? false)
+                                                <span class="badge bg-info rounded-pill" style="font-size:10px;">📊 Comptable</span>
+                                            @else
+                                                <span class="badge bg-secondary rounded-pill" style="font-size:10px;">👤 Utilisateur</span>
+                                            @endif
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <code class="small">{{ $log->ip_address ?? '—' }}</code>
+                                    </td>
+                                    <td>
+                                        <code class="small text-muted">{{ $log->session_id ? Str::limit($log->session_id, 16) : '—' }}</code>
+                                    </td>
+                                    <td class="small">
+                                        <div class="fw-semibold">{{ $browser }}</div>
+                                        <div class="text-muted" style="font-size:10px;">{{ $os }}</div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-5">
+                                        <div style="font-size:2rem;">🔐</div>
+                                        <div class="fw-semibold mt-2">Aucune connexion enregistrée</div>
+                                        <div class="small text-muted mt-1">Les connexions et déconnexions apparaîtront ici automatiquement.</div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @if($loginLogs->hasPages())
+                <div class="card-footer bg-white">{{ $loginLogs->links() }}</div>
+            @endif
+        </div>
+    </div>
+
 </div>
 
 {{-- ======================== MODALS STACK TRACE & RÉSOLUTION ======================== --}}
