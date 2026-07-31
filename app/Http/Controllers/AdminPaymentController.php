@@ -158,4 +158,54 @@ class AdminPaymentController extends Controller
 
         return back()->with('status', 'Le compte '.$user->email.' est repassé en mode Gratuit.');
     }
+
+    public function simulate(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+            'amount' => ['required', 'numeric', 'min:1000'],
+            'correspondent' => ['required', 'string'],
+            'country' => ['required', 'string', 'max:5'],
+            'payer_msisdn' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $user = User::findOrFail($validated['user_id']);
+        $ref = 'TX-SIM-' . strtoupper(\Illuminate\Support\Str::random(10));
+
+        $transaction = PaymentTransaction::create([
+            'user_id' => $user->id,
+            'amount' => $validated['amount'],
+            'currency' => 'XOF',
+            'status' => 'COMPLETED',
+            'country' => $validated['country'],
+            'correspondent' => $validated['correspondent'],
+            'payer_msisdn' => $validated['payer_msisdn'] ?: '+2250700000000',
+            'provider' => 'SIMULATOR',
+            'provider_reference' => $ref,
+        ]);
+
+        if ($this->userPremium->canManageEnterprisePremium($user)) {
+            $this->userPremium->activateForDays(
+                $user,
+                30,
+                'simulated_payment',
+                "Paiement de test simulé ({$validated['amount']} XOF via {$validated['correspondent']}).",
+                $request->user(),
+                ['payment_transaction_id' => $transaction->id],
+                $request
+            );
+        }
+
+        return back()->with('status', "Paiement de test de " . number_format($validated['amount'], 0, ',', ' ') . " XOF simulé avec succès pour {$user->name} ({$user->email}). Réf: {$ref}.");
+    }
+
+    public function receipt(PaymentTransaction $paymentTransaction): View
+    {
+        $paymentTransaction->load('user');
+
+        return view('admin.payment-receipt', [
+            'payment' => $paymentTransaction,
+            'user' => $paymentTransaction->user,
+        ]);
+    }
 }

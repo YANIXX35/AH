@@ -391,6 +391,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/licenses/{enterprise_license}', [AdminEnterpriseLicenseController::class, 'update'])->name('licenses.update');
         Route::post('/licenses/{enterprise_license}/revoke', [AdminEnterpriseLicenseController::class, 'revoke'])->name('licenses.revoke');
         Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments.index');
+        Route::post('/payments/simulate', [AdminPaymentController::class, 'simulate'])->name('payments.simulate');
+        Route::get('/payments/{paymentTransaction}/receipt', [AdminPaymentController::class, 'receipt'])->name('payments.receipt');
         Route::post('/payments/{paymentTransaction}/activate-premium', [AdminPaymentController::class, 'activatePremium'])->name('payments.activate-premium');
         Route::post('/payments/{paymentTransaction}/set-free', [AdminPaymentController::class, 'setFree'])->name('payments.set-free');
         Route::get('/platform-logs', [AdminPlatformLogController::class, 'index'])->name('logs.index');
