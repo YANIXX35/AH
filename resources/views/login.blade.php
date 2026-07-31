@@ -67,37 +67,48 @@
                         </div>
                     @endif
                     
-                    <!-- Email Field -->
+                     <!-- Email Field -->
                     <div>
-                        <input id="email" name="email" type="email" value="{{ old('email') }}" required placeholder="Email ou pseudo" class="w-full rounded-xl border border-orange-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200 transition" />
+                        <label for="email" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Adresse E-mail</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <input id="email" name="email" type="email" value="{{ old('email') }}" required placeholder="Ex: contact@entreprise.com" class="w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-100 transition duration-200" style="-webkit-box-shadow: 0 0 0 30px white inset !important;" />
+                        </div>
                     </div>
 
                     <!-- Password Field -->
                     <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="password" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Mot de passe</label>
+                            <a href="{{ route('password.request') }}" class="text-xs font-semibold text-orange-600 hover:text-orange-700 transition">Mot de passe oublié ?</a>
+                        </div>
                         <div class="relative">
-                            <input id="password" name="password" type="password" required placeholder="Mot de passe" class="w-full rounded-xl border border-orange-300 bg-white px-4 py-3 pr-12 text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200 transition" />
-                            <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 px-4 text-slate-500 hover:text-slate-700" aria-label="Afficher/masquer le mot de passe">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <input id="password" name="password" type="password" required placeholder="Saisir votre mot de passe" class="w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 py-3 text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-100 transition duration-200" style="-webkit-box-shadow: 0 0 0 30px white inset !important;" />
+                            <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 px-4 text-slate-400 hover:text-slate-600 transition" aria-label="Afficher/masquer le mot de passe">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
-                        <p id="passwordStrengthText" class="mt-1 text-xs text-slate-500">Force du mot de passe: —</p>
                     </div>
 
-                    <!-- Remember & Forgot Password -->
-                    <div class="flex items-center justify-between gap-4">
-                        <label class="flex items-start gap-2 text-sm text-slate-600">
-                            <input type="checkbox" name="remember" value="1" @checked(old('remember')) class="mt-0.5 rounded border-orange-300 text-orange-500 focus:ring-orange-500" />
+                    <!-- Remember Me -->
+                    <div class="flex items-start">
+                        <label class="flex items-start gap-3 cursor-pointer select-none">
+                            <input type="checkbox" name="remember" value="1" @checked(old('remember')) class="mt-1 h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500 focus:ring-offset-0 transition cursor-pointer" />
                             <span>
-                                <span class="block font-medium text-slate-700">Se souvenir de moi (30 jours)</span>
-                                <span class="block text-xs text-amber-700">A utiliser uniquement sur un appareil personnel.</span>
+                                <span class="block text-sm font-semibold text-slate-700">Se souvenir de moi (30 jours)</span>
+                                <span class="block text-xs text-slate-500">À utiliser uniquement sur un appareil personnel.</span>
                             </span>
                         </label>
-                        <a href="{{ route('password.request') }}" class="text-sm font-medium text-orange-600 hover:text-orange-700 transition">Mot de passe oublié ?</a>
                     </div>
 
                     <!-- Error Messages -->
                     @if ($errors->login->any())
-                        <div class="rounded-lg border border-red-200 bg-red-50 p-4">
+                        <div class="rounded-xl border border-red-200 bg-red-50 p-4">
                             <ul class="space-y-2 text-sm text-red-700">
                                 @foreach ($errors->login->all() as $error)
                                     <li class="flex items-start gap-2">
@@ -110,7 +121,7 @@
                     @endif
 
                     <!-- Submit Button -->
-                    <button type="submit" class="w-full rounded-xl bg-orange-500 px-4 py-3 font-semibold text-white shadow-md hover:bg-orange-600 transition">
+                    <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 px-4 py-3.5 font-bold text-white shadow-md hover:from-orange-600 hover:to-amber-700 hover:shadow-lg transform active:scale-[0.98] transition-all duration-200">
                         Se connecter
                     </button>
                 </form>
@@ -142,41 +153,12 @@
         (function () {
             const password = document.getElementById('password');
             const toggle = document.getElementById('togglePassword');
-            const strength = document.getElementById('passwordStrengthText');
-            if (!password || !toggle || !strength) return;
+            if (!password || !toggle) return;
 
             toggle.addEventListener('click', function () {
                 const asText = password.type === 'password';
                 password.type = asText ? 'text' : 'password';
                 this.innerHTML = asText ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
-            });
-
-            const scorePassword = function (value) {
-                let score = 0;
-                if (value.length >= 8) score++;
-                if (/[A-Z]/.test(value)) score++;
-                if (/[a-z]/.test(value)) score++;
-                if (/[0-9]/.test(value)) score++;
-                if (/[^A-Za-z0-9]/.test(value)) score++;
-                return score;
-            };
-
-            password.addEventListener('input', function () {
-                const value = this.value || '';
-                const score = scorePassword(value);
-                if (value.length === 0) {
-                    strength.textContent = 'Force du mot de passe: —';
-                    strength.className = 'mt-1 text-xs text-slate-500';
-                } else if (score <= 2) {
-                    strength.textContent = 'Force du mot de passe: Faible';
-                    strength.className = 'mt-1 text-xs text-red-600';
-                } else if (score === 3 || score === 4) {
-                    strength.textContent = 'Force du mot de passe: Moyenne';
-                    strength.className = 'mt-1 text-xs text-amber-600';
-                } else {
-                    strength.textContent = 'Force du mot de passe: Forte';
-                    strength.className = 'mt-1 text-xs text-green-600';
-                }
             });
         })();
     </script>
