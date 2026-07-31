@@ -145,6 +145,23 @@ class CommercialController extends Controller
             $growthData[] = $cumulative;
         }
 
+        // Recent activity feed
+        $recentClients = $clients->sortByDesc('created_at')->take(5);
+        $recentProspects = $prospects->sortByDesc('created_at')->take(5);
+        $recentActivities = $recentClients->map(function ($c) {
+            return [
+                'type' => 'client',
+                'name' => $c->name ?? $c->company_name ?? 'Client',
+                'date' => $c->created_at,
+            ];
+        })->merge($recentProspects->map(function ($p) {
+            return [
+                'type' => 'prospect',
+                'name' => $p->name,
+                'date' => $p->created_at,
+            ];
+        }))->sortByDesc('date')->take(10);
+
         return view('commercial.dashboard', compact(
             'clients',
             'prospects',
@@ -160,7 +177,8 @@ class CommercialController extends Controller
             'totalProspects',
             'newProspects',
             'qualifiedProspects',
-            'convertedProspects'
+            'convertedProspects',
+            'recentActivities'
         ));
     }
 

@@ -510,34 +510,10 @@
             </div>
 
             <div class="row g-3 mb-4">
-                <div class="col-6 col-md-3">
-                    <div class="portfolio-kpi-card kpi-total">
-                        <div class="kpi-label">Portefeuille</div>
-                        <div class="kpi-number text-primary">{{ $totalClients }}</div>
-                        <div class="kpi-sub">clients ajoutés au total</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="portfolio-kpi-card kpi-trial">
-                        <div class="kpi-label">⌛ En Essai</div>
-                        <div class="kpi-number" style="color:#f59e0b;">{{ $activeTrials }}</div>
-                        <div class="kpi-sub">période d'essai en cours</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="portfolio-kpi-card kpi-converted">
-                        <div class="kpi-label">✓ Abonnés</div>
-                        <div class="kpi-number text-success">{{ $portfolioConverted }}</div>
-                        <div class="kpi-sub">ont souscrit après l'essai</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="portfolio-kpi-card kpi-churned">
-                        <div class="kpi-label">✗ Partis</div>
-                        <div class="kpi-number text-danger">{{ $portfolioChurned }}</div>
-                        <div class="kpi-sub">non convertis après essai</div>
-                    </div>
-                </div>
+                <x-kpi-card label="Portefeuille" value="{{ $totalClients }}" sub="clients ajoutés au total" colorClass="kpi-total" />
+                <x-kpi-card label="⌛ En Essai" value="{{ $activeTrials }}" sub="période d'essai en cours" colorClass="kpi-trial" />
+                <x-kpi-card label="✓ Abonnés" value="{{ $portfolioConverted }}" sub="ont souscrit après l'essai" colorClass="kpi-converted" />
+                <x-kpi-card label="✗ Partis" value="{{ $portfolioChurned }}" sub="non convertis après essai" colorClass="kpi-churned" />
             </div>
 
             @if($portfolioTrialExpired > 0)
@@ -576,6 +552,59 @@
                 <span class="small fw-semibold text-muted d-block mb-2">Évolution du portefeuille (6 derniers mois)</span>
                 <canvas id="clientGrowthChart" height="80"></canvas>
             </div>
+
+            {{-- Recent Activity Section --}}
+            <div class="mt-5 pt-4 border-top">
+                <span class="small fw-semibold text-muted d-block mb-3">Activité récente</span>
+                @foreach($recentActivities as $activity)
+                    <div class="d-flex align-items-start mb-2">
+                        <div class="flex-shrink-0 me-2" style="width: 60px;">
+                            <small class="text-muted">{{ $activity['date']->format('d M Y') }}</small>
+                        </div>
+                        <div class="flex-grow-1">
+                            @if($activity['type'] === 'client')
+                                <div class="fw-bold">Client : {{ $activity['name'] }}</div>
+                            @elseif($activity['type'] === 'prospect')
+                                <div class="fw-bold">Prospect : {{ $activity['name'] }}</div>
+                            @endif
+                            @if(isset($activity->status))
+                                <div class="text-muted small">Statut : {{ $activity->status }}</div>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+                @if($recentActivities->isEmpty())
+                    <div class="text-muted text-center py-3">Aucune activité récente.</div>
+                @endif
+            </div>
+
+            @push('scripts')
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+                const ctx = document.getElementById('clientGrowthChart').getContext('2d');
+                const clientGrowthChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: @json($growthLabels),
+                        datasets: [{
+                            label: 'Clients cumulés',
+                            data: @json($growthData),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.3,
+                            fill: true,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            </script>
+            @endpush
         </div>
 
         {{-- ============================================================ --}}
