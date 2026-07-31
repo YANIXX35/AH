@@ -17,22 +17,72 @@
         border-radius: 24px;
         box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.03);
     }
+    /* Exact Layout & Styling Replica of the User's Mockup */
+    .mockup-header-bar {
+        background: #ffffff;
+        border-radius: 9999px;
+        padding: 8px 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+    }
+
+    .pill-tab-btn {
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 8px 22px;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    .pill-tab-btn-active {
+        background: #ffffff;
+        color: #0f172a !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
+    }
+    .pill-tab-btn-inactive {
+        background: transparent;
+        color: #64748b;
+    }
+    .pill-tab-btn-inactive:hover {
+        color: #0f172a;
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="prospects-bg">
+<div class="prospects-bg animate__animated animate__fadeIn">
     <div class="container-fluid max-w-7xl mx-auto">
         
-        <!-- Header Bar -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-            <div>
-                <h1 class="h3 fw-bold text-dark mb-1">Pipeline des Prospects Inbound CRM 🎯</h1>
-                <p class="text-muted small mb-0">Gestion, suivi et qualification des opportunités d'affaires Sitiame Capital.</p>
+        <!-- TOP HEADER BAR (Matching Mockup Navigation Bar) -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 mockup-header-bar">
+            <!-- Left: Logo & Pill Navigation Tabs -->
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                    <i data-feather="grid" style="width:20px; height:20px;"></i>
+                </div>
+                <div class="d-flex align-items-center gap-1 bg-light rounded-pill p-1 border">
+                    <a href="{{ route('commercial.dashboard') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none">
+                        <i data-feather="layout" class="me-1" style="width:14px; height:14px;"></i> Tableau de bord
+                    </a>
+                    <a href="{{ route('commercial.portefeuille') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none">
+                        <i data-feather="briefcase" class="me-1" style="width:14px; height:14px;"></i> Mon Portefeuille
+                    </a>
+                    <a href="{{ route('commercial.prospects') }}" class="pill-tab-btn pill-tab-btn-active text-decoration-none">
+                        <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i> Leads CRM ({{ $prospects->count() }})
+                    </a>
+                    <a href="{{ route('commercial.showcase') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none">
+                        <i data-feather="book-open" class="me-1" style="width:14px; height:14px;"></i> Kit Marketing
+                    </a>
+                </div>
             </div>
-            <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addProspectModal">
-                + Nouveau Lead CRM
-            </button>
+
+            <!-- Right: Action Button -->
+            <div class="d-flex align-items-center gap-3">
+                <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold text-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                    + Nouveau Lead CRM
+                </button>
+            </div>
         </div>
 
         <!-- Notification Status -->

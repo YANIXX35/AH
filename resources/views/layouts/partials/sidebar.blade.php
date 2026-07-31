@@ -63,7 +63,12 @@
                 <li class="sidebar-header">Espace Commercial</li>
                 <li class="sidebar-item {{ request()->routeIs('commercial.dashboard') && !request()->has('action') ? 'active' : '' }}">
                     <a class="sidebar-link" href="{{ route('commercial.dashboard') }}">
-                        <i class="align-middle" data-feather="layout"></i> <span class="align-middle">Dashboard & Portefeuille</span>
+                        <i class="align-middle" data-feather="layout"></i> <span class="align-middle">Tableau de bord</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {{ request()->routeIs('commercial.portefeuille') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial.portefeuille') }}">
+                        <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Mon Portefeuille</span>
                     </a>
                 </li>
                 <li class="sidebar-item {{ request()->routeIs('commercial.showcase') ? 'active' : '' }}">

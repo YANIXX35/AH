@@ -557,6 +557,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('commercial')->prefix('commercial')->name('commercial.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\CommercialController::class, 'index'])->name('dashboard');
+        Route::get('/portefeuille', [\App\Http\Controllers\CommercialController::class, 'portefeuille'])->name('portefeuille');
         Route::get('/offres', [\App\Http\Controllers\CommercialController::class, 'showcase'])->name('showcase');
         Route::get('/guides', [\App\Http\Controllers\CommercialController::class, 'guides'])->name('guides');
         Route::get('/club', [\App\Http\Controllers\CommercialController::class, 'club'])->name('club');

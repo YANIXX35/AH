@@ -436,12 +436,15 @@
                     <i data-feather="grid" style="width:20px; height:20px;"></i>
                 </div>
                 <div class="d-flex align-items-center gap-1 bg-light rounded-pill p-1 border">
-                    <button class="pill-tab-btn pill-tab-btn-active">
+                    <a href="{{ route('commercial.dashboard') }}" class="pill-tab-btn pill-tab-btn-active text-decoration-none">
                         <i data-feather="layout" class="me-1" style="width:14px; height:14px;"></i> Tableau de bord
-                    </button>
-                    <button class="pill-tab-btn pill-tab-btn-inactive" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                    </a>
+                    <a href="{{ route('commercial.portefeuille') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none">
+                        <i data-feather="briefcase" class="me-1" style="width:14px; height:14px;"></i> Mon Portefeuille
+                    </a>
+                    <a href="{{ route('commercial.prospects') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none">
                         <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i> Leads CRM ({{ $totalProspects }})
-                    </button>
+                    </a>
                     <a href="{{ route('commercial.showcase') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none">
                         <i data-feather="book-open" class="me-1" style="width:14px; height:14px;"></i> Kit Marketing
                     </a>
@@ -483,150 +486,14 @@
             </div>
         @endif
 
-        <!-- SECTION : LISTE DES CLIENTS / ENTREPRISES AJOUTÉS -->
-        <div class="mockup-card p-4 mb-4">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-                <div>
-                    <h2 class="h4 fw-bold text-dark mb-1">Mes Clients &amp; Entreprises</h2>
-                    <p class="text-muted small mb-0">Liste des clients PME que vous avez ajoutés et suivi de leur essai gratuit.</p>
-                </div>
-                <span class="btn btn-sm btn-light rounded-pill border px-3 text-muted fw-semibold">
-                    <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i> {{ $totalClients }} client(s)
-                </span>
-            </div>
-
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead>
-                        <tr class="text-muted small text-uppercase" style="font-size:0.75rem;">
-                            <th class="border-0">Client</th>
-                            <th class="border-0">Entreprise</th>
-                            <th class="border-0">Contact</th>
-                            <th class="border-0">Statut</th>
-                            <th class="border-0 text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                @forelse($clients as $client)
-                    @php
-                        $isTrialActive = false;
-                        $daysLeft = 0;
-                        if ($client && ($client->is_premium ?? false) && !empty($client->premium_ends_at)) {
-                            try {
-                                $endsAt = $client->premium_ends_at instanceof \Carbon\Carbon
-                                    ? $client->premium_ends_at
-                                    : \Carbon\Carbon::parse($client->premium_ends_at);
-                                $isTrialActive = $endsAt->isFuture();
-                                $daysLeft = $isTrialActive ? now()->diffInDays($endsAt) : 0;
-                            } catch (\Throwable $e) {
-                                $isTrialActive = false;
-                                $daysLeft = 0;
-                            }
-                        }
-                    @endphp
-                        <tr class="border-bottom border-light">
-                            <td>
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center flex-shrink-0" style="width:40px; height:40px; font-size:0.85rem;">
-                                        {{ strtoupper(substr($client->name ?? 'PME', 0, 2)) }}
-                                    </div>
-                                    <div class="fw-bold text-dark mb-0">{{ $client->name ?? 'Client PME' }}</div>
-                                </div>
-                            </td>
-                            <td class="text-dark">{{ $client->company_name ?? '—' }}</td>
-                            <td>
-                                <div class="text-dark small">{{ $client->email ?? '—' }}</div>
-                                <div class="text-muted small" style="font-size:0.78rem;">{{ $client->phone ?? '—' }}</div>
-                            </td>
-                            <td>
-                                @if($isTrialActive)
-                                    <span class="status-pill status-pill-green">
-                                        <i data-feather="check-circle" style="width:14px; height:14px;"></i> Essai Actif ({{ $daysLeft }}j)
-                                    </span>
-                                @else
-                                    <span class="status-pill status-pill-purple">
-                                        <i data-feather="alert-circle" style="width:14px; height:14px;"></i> Essai Expiré
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="text-end">
-                                <div class="d-flex gap-2 justify-content-end">
-                                    <button type="button" class="btn btn-sm btn-light rounded-pill border px-3" data-bs-toggle="modal" data-bs-target="#editClientModal{{ $client->id }}">
-                                        Modifier
-                                    </button>
-                                    <form action="{{ route('commercial.clients.destroy', $client->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Supprimer ce client ?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-light text-danger rounded-pill border px-2">
-                                            <i data-feather="trash-2" style="width:14px; height:14px;"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-
-                    <!-- Edit Client Modal -->
-                    <div class="modal fade" id="editClientModal{{ $client->id }}" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered modal-lg">
-                            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                                <form action="{{ route('commercial.clients.update', $client->id) }}" method="POST">
-                                    @csrf
-                                    @method('PUT')
-                                    <div class="modal-header border-0 bg-dark text-white p-4">
-                                        <h5 class="modal-title fw-bold">Modifier la Fiche Client — {{ $client->name }}</h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body p-4">
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label small fw-semibold">Nom complet</label>
-                                                <input type="text" name="name" class="form-control rounded-3" value="{{ old('name', $client->name) }}">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label small fw-semibold">Adresse Email</label>
-                                                <input type="email" name="email" class="form-control rounded-3" value="{{ old('email', $client->email) }}">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label small fw-semibold">Téléphone</label>
-                                                <input type="text" name="phone" class="form-control rounded-3" value="{{ old('phone', $client->phone) }}">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label small fw-semibold">Raison Sociale / Entreprise</label>
-                                                <input type="text" name="company_name" class="form-control rounded-3" value="{{ old('company_name', $client->company_name) }}">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer border-0 p-4 pt-0">
-                                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuler</button>
-                                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Enregistrer</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                        <tr>
-                            <td colspan="5" class="text-center text-muted py-4">
-                                <i data-feather="users" class="mb-2" style="width:36px; height:36px; opacity:0.3;"></i>
-                                <div>Aucun client ajouté dans votre portefeuille pour l'instant.</div>
-                            </td>
-                        </tr>
-                @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
         {{-- ============================================================ --}}
-        {{-- SECTION : PORTEFEUILLE KPIs + STOCKE DE RÉTENTION             --}}
+        {{-- SECTION 1 : PORTEFEUILLE KPIs + STOCKE DE RÉTENTION          --}}
         {{-- ============================================================ --}}
-        <div class="mockup-card p-4 mb-4">
-
-            {{-- En-tête --}}
+        <div class="mockup-card p-4 mb-5 shadow-sm border border-light">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
                 <div>
                     <div class="retention-section-header">📊 Portefeuille &amp; Rétention Clients</div>
-                    <h2 class="h5 fw-bold text-dark mb-0">Statistiques d'acquisition &amp; de conversion</h2>
+                    <h2 class="h4 fw-bold text-dark mb-0">Statistiques d'acquisition &amp; de conversion</h2>
                     <p class="text-muted small mb-0">Clients ajoutés depuis votre inscription &mdash; suivi de la période d'essai 1 mois</p>
                 </div>
                 @if($portfolioTrialExpired > 0)
@@ -642,9 +509,7 @@
                 @endif
             </div>
 
-            {{-- 4 KPI Cards --}}
             <div class="row g-3 mb-4">
-                {{-- Total portefeuille --}}
                 <div class="col-6 col-md-3">
                     <div class="portfolio-kpi-card kpi-total">
                         <div class="kpi-label">Portefeuille</div>
@@ -652,33 +517,29 @@
                         <div class="kpi-sub">clients ajoutés au total</div>
                     </div>
                 </div>
-                {{-- En essai --}}
                 <div class="col-6 col-md-3">
                     <div class="portfolio-kpi-card kpi-trial">
-                        <div class="kpi-label">&#9203; En Essai</div>
+                        <div class="kpi-label">⌛ En Essai</div>
                         <div class="kpi-number" style="color:#f59e0b;">{{ $activeTrials }}</div>
                         <div class="kpi-sub">période d'essai en cours</div>
                     </div>
                 </div>
-                {{-- Convertis --}}
                 <div class="col-6 col-md-3">
                     <div class="portfolio-kpi-card kpi-converted">
-                        <div class="kpi-label">&#10003; Abonnés</div>
+                        <div class="kpi-label">✓ Abonnés</div>
                         <div class="kpi-number text-success">{{ $portfolioConverted }}</div>
                         <div class="kpi-sub">ont souscrit après l'essai</div>
                     </div>
                 </div>
-                {{-- Partis --}}
                 <div class="col-6 col-md-3">
                     <div class="portfolio-kpi-card kpi-churned">
-                        <div class="kpi-label">&#10007; Partis</div>
+                        <div class="kpi-label">✗ Partis</div>
                         <div class="kpi-number text-danger">{{ $portfolioChurned }}</div>
                         <div class="kpi-sub">non convertis après essai</div>
                     </div>
                 </div>
             </div>
 
-            {{-- Barre de rétention visuelle --}}
             @if($portfolioTrialExpired > 0)
                 @php
                     $convertedPct = $portfolioTrialExpired > 0 ? round(($portfolioConverted / $portfolioTrialExpired) * 100) : 0;
@@ -711,13 +572,91 @@
                 </div>
             @endif
 
-            {{-- Courbe d'évolution du portefeuille (6 derniers mois) --}}
             <div class="mt-4 pt-4 border-top">
                 <span class="small fw-semibold text-muted d-block mb-2">Évolution du portefeuille (6 derniers mois)</span>
                 <canvas id="clientGrowthChart" height="80"></canvas>
             </div>
-
         </div>
+
+        {{-- ============================================================ --}}
+        {{-- SECTION 2 : PLANNING D'ESSAI 1 MOIS (Calendrier visuel)     --}}
+        {{-- ============================================================ --}}
+        <div class="mockup-card p-4 mb-5 shadow-sm border border-light">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                <div>
+                    <h2 class="h4 fw-bold text-dark mb-1">📅 Planning d'Essai 1 Mois</h2>
+                    <p class="text-muted small mb-0">Suivi visuel chronologique des activations d'essai gratuit SYSCOHADA.</p>
+                </div>
+                <span class="btn btn-sm btn-light rounded-pill border px-3 text-muted fw-semibold">
+                    <i data-feather="calendar" class="me-1" style="width:14px; height:14px;"></i> {{ now()->format('d F Y') }}
+                </span>
+            </div>
+
+            <!-- Calendar Days Header Row -->
+            <div class="row g-2 text-center text-muted small fw-semibold mb-3">
+                <div class="col-md-3 text-start ps-3">Client PME / Représentant</div>
+                <div class="col"><div class="calendar-grid-cell">Lun 1</div></div>
+                <div class="col"><div class="calendar-grid-cell">Mar 2</div></div>
+                <div class="col"><div class="calendar-grid-cell">Mer 3</div></div>
+                <div class="col"><div class="calendar-grid-cell">Jeu 4</div></div>
+                <div class="col"><div class="calendar-grid-cell">Ven 5</div></div>
+                <div class="col"><div class="calendar-grid-cell calendar-grid-cell-active">Sam 6</div></div>
+                <div class="col"><div class="calendar-grid-cell">Dim 7</div></div>
+                <div class="col"><div class="calendar-grid-cell">Lun 8</div></div>
+            </div>
+
+            <!-- Client Rows with Status Floating Pills -->
+            <div class="d-flex flex-column gap-3">
+                @forelse($clients as $client)
+                    @php
+                        $isTrialActive = false;
+                        $daysLeft = 0;
+                        if ($client && ($client->is_premium ?? false) && !empty($client->premium_ends_at)) {
+                            try {
+                                $endsAt = $client->premium_ends_at instanceof \Carbon\Carbon 
+                                    ? $client->premium_ends_at 
+                                    : \Carbon\Carbon::parse($client->premium_ends_at);
+                                $isTrialActive = $endsAt->isFuture();
+                                $daysLeft = $isTrialActive ? now()->diffInDays($endsAt) : 0;
+                            } catch (\Throwable $e) {
+                                $isTrialActive = false;
+                                $daysLeft = 0;
+                            }
+                        }
+                    @endphp
+                    <div class="row g-2 align-items-center p-2 rounded-4 hover-bg-light border-bottom border-light">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:40px; height:40px; font-size:0.85rem;">
+                                    {{ strtoupper(substr($client->name ?? 'PME', 0, 2)) }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark mb-0">{{ $client->name ?? $client->email ?? 'Client PME' }}</div>
+                                    <div class="text-muted small" style="font-size:0.78rem;">{{ $client->company_name ?? 'PME Client' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="d-flex align-items-center justify-content-between">
+                                @if($isTrialActive)
+                                    <span class="status-pill status-pill-green">
+                                        <i data-feather="check-circle" style="width:14px; height:14px;"></i> Essai Gratuit Actif ({{ $daysLeft }} jours restants)
+                                    </span>
+                                @else
+                                    <span class="status-pill status-pill-purple">
+                                        <i data-feather="alert-circle" style="width:14px; height:14px;"></i> Essai Expiré / À Relancer
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center text-muted py-4">
+                        <i data-feather="users" class="mb-2" style="width:36px; height:36px; opacity:0.3;"></i>
+                        <div>Aucun client parrainé enregistré dans votre portefeuille.</div>
+                    </div>
+                @endforelse
+            </div>
 
         <!-- BOTTOM ROW (EXACT MOCKUP 3 COLUMNS: FUTURE EVENTS | ONBOARDING LEADS | WELCOME AI COPILOT) -->
         <div class="row g-4">

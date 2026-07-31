@@ -126,4 +126,54 @@ class CommercialPortalTest extends TestCase
         $response->assertSee('Sales Guy');
         $response->assertSee('Acheté par Sales Guy');
     }
+
+    public function test_guests_and_non_commercials_cannot_access_commercial_portefeuille(): void
+    {
+        // Invités bloqués
+        $response = $this->get('/commercial/portefeuille');
+        $response->assertRedirect('/login');
+
+        // Utilisateurs ordinaires (sans role commercial) bloqués
+        $user = User::factory()->create(['role_key' => 'manager']);
+        $response = $this->actingAs($user)->get('/commercial/portefeuille');
+        $response->assertStatus(403);
+    }
+
+    public function test_commercial_can_access_portefeuille_and_see_clients(): void
+    {
+        $commercial = User::factory()->create(['role_key' => 'commercial']);
+        $client = User::factory()->create([
+            'created_by_user_id' => $commercial->id,
+            'name' => 'Client de Test Portefeuille',
+            'company_name' => 'Test Entreprise'
+        ]);
+
+        $response = $this->actingAs($commercial)->get('/commercial/portefeuille');
+        
+        $response->assertStatus(200);
+        $response->assertSee('Client de Test Portefeuille');
+        $response->assertSee('Test Entreprise');
+    }
+
+    public function test_commercial_can_search_clients_in_portefeuille(): void
+    {
+        $commercial = User::factory()->create(['role_key' => 'commercial']);
+        $clientMatch = User::factory()->create([
+            'created_by_user_id' => $commercial->id,
+            'name' => 'Jean-Pierre Client',
+            'company_name' => 'JP Comp'
+        ]);
+        $clientNoMatch = User::factory()->create([
+            'created_by_user_id' => $commercial->id,
+            'name' => 'Marc Dupont',
+            'company_name' => 'MD Inc'
+        ]);
+
+        // Recherche d'un mot-clé correspondant au premier client
+        $response = $this->actingAs($commercial)->get('/commercial/portefeuille?search=Jean-Pierre');
+        
+        $response->assertStatus(200);
+        $response->assertSee('Jean-Pierre Client');
+        $response->assertDontSee('Marc Dupont');
+    }
 }

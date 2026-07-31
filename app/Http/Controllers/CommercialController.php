@@ -164,6 +164,119 @@ class CommercialController extends Controller
         ));
     }
 
+    public function portefeuille(Request $request): View
+    {
+        $commercial = $request->user();
+        if (!$commercial) {
+            abort(403);
+        }
+
+        $search = $request->query('search');
+
+        try {
+            $query = ($commercial->is_platform_admin ?? false)
+                ? User::query()->clients()
+                : $commercial->createdClients();
+
+            if (!empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('company_name', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%");
+                });
+            }
+
+            $clients = $query->latest()->get();
+        } catch (\Throwable $e) {
+            $clients = collect();
+        }
+
+        // For KPI stats, let's load all clients (unfiltered by search) to calculate KPIs accurately
+        try {
+            $allClients = ($commercial->is_platform_admin ?? false)
+                ? User::query()->clients()->get()
+                : $commercial->createdClients()->get();
+        } catch (\Throwable $e) {
+            $allClients = collect();
+        }
+
+        $totalClients = $allClients->count();
+
+        // Clients encore dans leur période d'essai d'1 mois
+        $activeTrials = $allClients->filter(function ($client) {
+            if (!$client) return false;
+            if (!empty($client->premium_trial_ends_at)) {
+                try {
+                    $trialEndsAt = $client->premium_trial_ends_at instanceof \Carbon\Carbon
+                        ? $client->premium_trial_ends_at
+                        : \Carbon\Carbon::parse($client->premium_trial_ends_at);
+                    return $trialEndsAt->isFuture();
+                } catch (\Throwable $e) {
+                    return false;
+                }
+            }
+            try {
+                $createdAt = $client->created_at instanceof \Carbon\Carbon
+                    ? $client->created_at
+                    : \Carbon\Carbon::parse($client->created_at);
+                return $createdAt->isAfter(now()->subMonth());
+            } catch (\Throwable $e) {
+                return false;
+            }
+        })->count();
+
+        // Clients dont la période d'essai est terminée
+        $portfolioTrialExpired = max(0, $totalClients - $activeTrials);
+
+        // Clients convertis : essai terminé + premium actif
+        $portfolioConverted = $allClients->filter(function ($client) {
+            if (!$client) return false;
+            if (!($client->is_premium ?? false)) return false;
+            $trialExpired = false;
+            if (!empty($client->premium_trial_ends_at)) {
+                try {
+                    $trialEndsAt = $client->premium_trial_ends_at instanceof \Carbon\Carbon
+                        ? $client->premium_trial_ends_at
+                        : \Carbon\Carbon::parse($client->premium_trial_ends_at);
+                    $trialExpired = $trialEndsAt->isPast();
+                } catch (\Throwable $e) {}
+            } else {
+                try {
+                    $createdAt = $client->created_at instanceof \Carbon\Carbon
+                        ? $client->created_at
+                        : \Carbon\Carbon::parse($client->created_at);
+                    $trialExpired = $createdAt->isBefore(now()->subMonth());
+                } catch (\Throwable $e) {}
+            }
+            return $trialExpired;
+        })->count();
+
+        // Clients partis : essai terminé + pas premium
+        $portfolioChurned = max(0, $portfolioTrialExpired - $portfolioConverted);
+
+        // Taux de conversion (pourcentage)
+        $conversionRate = $portfolioTrialExpired > 0
+            ? round(($portfolioConverted / $portfolioTrialExpired) * 100)
+            : 0;
+
+        $totalProspects = Prospect::query()
+            ->when(! ($commercial->is_platform_admin ?? false), fn ($q) => $q->where('commercial_user_id', $commercial->id))
+            ->count();
+
+        return view('commercial.portefeuille', compact(
+            'clients',
+            'totalClients',
+            'activeTrials',
+            'portfolioTrialExpired',
+            'portfolioConverted',
+            'portfolioChurned',
+            'conversionRate',
+            'totalProspects',
+            'search'
+        ));
+    }
+
     public function showcase(): View
     {
         return view('commercial.showcase');
