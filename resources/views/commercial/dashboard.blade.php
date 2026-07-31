@@ -452,49 +452,51 @@
         <!-- TOP HEADER BAR (Matching Mockup Navigation Bar) -->
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 mockup-header-bar">
             <!-- Left: Logo & Pill Navigation Tabs -->
-            <div class="d-flex align-items-center gap-3">
-                <div class="bg-primary text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+            <div class="d-flex align-items-center gap-2 flex-grow-1 flex-lg-grow-0 w-100 w-lg-auto">
+                <div class="bg-primary text-white rounded-circle p-2 d-none d-sm-flex align-items-center justify-content-center flex-shrink-0" style="width:40px; height:40px;">
                     <i data-feather="grid" style="width:20px; height:20px;"></i>
                 </div>
-                <div class="d-flex align-items-center gap-1 bg-light rounded-pill p-1 border">
-                    <a href="{{ route('commercial.dashboard') }}" class="pill-tab-btn pill-tab-btn-active text-decoration-none">
+                <div class="d-flex align-items-center gap-1 bg-light rounded-pill p-1 border overflow-auto scrollbar-none flex-nowrap w-100">
+                    <a href="{{ route('commercial.dashboard') }}" class="pill-tab-btn pill-tab-btn-active text-decoration-none text-nowrap flex-shrink-0">
                         <i data-feather="layout" class="me-1" style="width:14px; height:14px;"></i> Tableau de bord
                     </a>
-                    <a href="{{ route('commercial.portefeuille') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none">
+                    <a href="{{ route('commercial.portefeuille') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none text-nowrap flex-shrink-0">
                         <i data-feather="briefcase" class="me-1" style="width:14px; height:14px;"></i> Mon Portefeuille
                     </a>
-                    <a href="{{ route('commercial.prospects') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none">
+                    <a href="{{ route('commercial.prospects') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none text-nowrap flex-shrink-0">
                         <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i> Leads CRM ({{ $totalProspects }})
                     </a>
-                    <a href="{{ route('commercial.showcase') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none">
+                    <a href="{{ route('commercial.showcase') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none text-nowrap flex-shrink-0">
                         <i data-feather="book-open" class="me-1" style="width:14px; height:14px;"></i> Kit Marketing
                     </a>
                 </div>
             </div>
 
             <!-- Right: Search, Avatar Group, and CTA Action Button -->
-            <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-between justify-content-lg-end gap-2 flex-grow-1 w-100 w-lg-auto">
                 <div class="position-relative d-none d-md-block">
                     <i data-feather="search" class="position-absolute text-muted" style="left:14px; top:11px; width:15px; height:15px;"></i>
-                    <input type="text" class="form-control rounded-pill border-0 bg-light ps-5 pe-4" placeholder="Rechercher client, PME..." style="width:200px; font-size:0.85rem;">
+                    <input type="text" class="form-control rounded-pill border-0 bg-light ps-5 pe-4" placeholder="Rechercher..." style="width:150px; font-size:0.85rem;">
                 </div>
                 
                 <!-- Avatar Stack (Mockup Style) -->
-                <div class="d-none d-lg-flex align-items-center me-1">
+                <div class="d-none d-lg-flex align-items-center me-1 flex-shrink-0">
                     <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">EK</div>
                     <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">JK</div>
                     <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem;">+{{ $totalClients }}</div>
                 </div>
 
-                <button type="button" class="btn btn-outline-success rounded-pill px-3 py-2 fw-bold text-sm" data-bs-toggle="modal" data-bs-target="#smartImportClientModal">
-                    <i data-feather="upload-cloud" class="me-1" style="width:14px; height:14px;"></i> Importer &amp; Lire Fichier
-                </button>
-                <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-bold text-sm" data-bs-toggle="modal" data-bs-target="#addProspectModal">
-                    + Lead CRM
-                </button>
-                <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold text-sm shadow-sm text-decoration-none">
-                    <i data-feather="user-plus" class="me-1" style="width:14px; height:14px;"></i> + Nouveau Client
-                </a>
+                <div class="d-flex align-items-center gap-1.5 overflow-auto scrollbar-none flex-nowrap w-100 justify-content-start justify-content-lg-end">
+                    <button type="button" class="btn btn-outline-success rounded-pill px-3 py-2 fw-bold text-xs text-nowrap flex-shrink-0" data-bs-toggle="modal" data-bs-target="#smartImportClientModal">
+                        <i data-feather="upload-cloud" class="me-1" style="width:12px; height:12px;"></i> Importer
+                    </button>
+                    <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-bold text-xs text-nowrap flex-shrink-0" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                        + Lead
+                    </button>
+                    <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-primary rounded-pill px-3.5 py-2 fw-bold text-xs text-nowrap flex-shrink-0 shadow-sm text-decoration-none">
+                        <i data-feather="user-plus" class="me-1" style="width:12px; height:12px;"></i> + Client
+                    </a>
+                </div>
             </div>
         </div>
 

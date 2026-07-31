@@ -14,8 +14,8 @@ class BceaoLiasseServiceTest extends TestCase
 
         // Écritures de test
         $entry1 = new AccountingEntry([
-            'debit_account' => '7011000',
-            'credit_account' => '4111000',
+            'debit_account' => '4111000',
+            'credit_account' => '7011000',
             'amount' => 5000000,
         ]);
 

@@ -351,8 +351,9 @@ class AdminController extends Controller
             ->limit(6)
             ->get()
             ->map(function (SupportTicket $ticket) {
+                $date = $ticket->updated_at ?? $ticket->created_at;
                 return [
-                    'at' => $ticket->updated_at ?? $ticket->created_at,
+                    'at' => $date ? $date->toIso8601String() : null,
                     'module' => 'support',
                     'severity' => $ticket->status === SupportTicket::STATUS_OPEN ? 'warning' : 'info',
                     'title' => 'Ticket support '.$ticket->status,
@@ -368,8 +369,9 @@ class AdminController extends Controller
             ->limit(6)
             ->get()
             ->map(function (InvestmentRequest $request) {
+                $date = $request->updated_at ?? $request->created_at;
                 return [
-                    'at' => $request->updated_at ?? $request->created_at,
+                    'at' => $date ? $date->toIso8601String() : null,
                     'module' => 'investment',
                     'severity' => 'warning',
                     'title' => 'Demande investissement en attente',
@@ -385,7 +387,7 @@ class AdminController extends Controller
             ->get()
             ->map(function (MenuActionLog $log) {
                 return [
-                    'at' => $log->created_at,
+                    'at' => $log->created_at ? $log->created_at->toIso8601String() : null,
                     'module' => 'http',
                     'severity' => 'danger',
                     'title' => 'Erreur HTTP '.$log->status_code,
@@ -401,7 +403,7 @@ class AdminController extends Controller
             ->map(function (TreasuryAuditLog $log) {
                 $severity = str_contains((string) $log->action, 'unlock') ? 'warning' : 'info';
                 return [
-                    'at' => $log->created_at,
+                    'at' => $log->created_at ? $log->created_at->toIso8601String() : null,
                     'module' => 'treasury',
                     'severity' => $severity,
                     'title' => 'Événement trésorerie',
@@ -414,7 +416,7 @@ class AdminController extends Controller
             ->concat($investmentIncidents)
             ->concat($errorIncidents)
             ->concat($treasurySignals)
-            ->sortByDesc(fn (array $row) => $row['at'] instanceof Carbon ? $row['at']->getTimestamp() : 0)
+            ->sortByDesc(fn (array $row) => $row['at'] ?? '')
             ->take(14)
             ->values()
             ->all();

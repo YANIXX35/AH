@@ -17,6 +17,7 @@ class GeminiOpsAssistantServiceTest extends TestCase
         
         // Configurer des valeurs prévisibles pour les tests
         Config::set('gemini.key', 'fake-gemini-key');
+        Config::set('gemini.extra_keys', []);
         Config::set('gemini.default_model', 'gemini-2.0-flash');
         Config::set('gemini.fallback_models', ['gemini-2.5-flash-lite', 'gemini-2.5-flash']);
         Config::set('gemini.timeout', 2);
@@ -152,16 +153,13 @@ class GeminiOpsAssistantServiceTest extends TestCase
      */
     public function test_circuit_breaker_lockout(): void
     {
-        Http::fake(function ($request) {
-            $url = $request->url();
-            if (str_contains($url, 'models/gemini-2.0-flash:generateContent')) {
-                return Http::response([
-                    'error' => [
-                        'message' => 'Quota ou surcharge'
-                    ]
-                ], 503);
-            }
-            return Http::response([
+        Http::fake([
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent*' => Http::response([
+                'error' => [
+                    'message' => 'Quota ou surcharge'
+                ]
+            ], 503),
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent*' => Http::response([
                 'candidates' => [
                     [
                         'content' => [
@@ -171,8 +169,8 @@ class GeminiOpsAssistantServiceTest extends TestCase
                         ]
                     ]
                 ]
-            ], 200);
-        });
+            ], 200),
+        ]);
 
         $service = new GeminiOpsAssistantService();
 
@@ -186,7 +184,12 @@ class GeminiOpsAssistantServiceTest extends TestCase
 
         // Réinitialiser les mocks HTTP pour renvoyer un succès
         Http::fake([
-            'https://generativelanguage.googleapis.com/*' => Http::response([
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent*' => Http::response([
+                'error' => [
+                    'message' => 'Quota ou surcharge'
+                ]
+            ], 503),
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent*' => Http::response([
                 'candidates' => [
                     [
                         'content' => [
@@ -196,7 +199,7 @@ class GeminiOpsAssistantServiceTest extends TestCase
                         ]
                     ]
                 ]
-            ], 200)
+            ], 200),
         ]);
 
         // Lancer un deuxième appel différent pour contourner le cache de requêtes

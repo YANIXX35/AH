@@ -588,3 +588,159 @@
     .sidebar, .navbar, .footer { display: none !important; }
     .main { margin: 0 !important; padding: 0 !important; }
 }
+
+/* ---------------------------------------------------------------
+   15. PORTAIL COMMERCIAL & SOFT-UI DASHBOARDS
+   --------------------------------------------------------------- */
+
+/* Masquer la barre de défilement horizontal */
+.scrollbar-none {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+.scrollbar-none::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+@media (max-width: 991.98px) {
+    /* Enveloppe globale et containers */
+    .soft-dashboard-body {
+        padding: 12px 6px !important;
+    }
+    .soft-dashboard-container {
+        padding: 12px 10px !important;
+        border-radius: 20px !important;
+    }
+
+    /* En-tête Mockup */
+    .mockup-header-bar {
+        border-radius: 18px !important;
+        padding: 10px !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    /* Conteneur d'onglets de navigation */
+    .mockup-header-bar > div:first-child {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+
+    .mockup-header-bar .pill-tab-btn {
+        padding: 6px 14px !important;
+        font-size: 0.78rem !important;
+    }
+
+    /* Conteneur de boutons d'actions */
+    .mockup-header-bar > div:last-child {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        padding-bottom: 2px !important;
+    }
+
+    /* KPI Cards */
+    .portfolio-kpi-card {
+        padding: 12px 14px !important;
+        border-radius: 16px !important;
+    }
+    .kpi-number {
+        font-size: 1.6rem !important;
+    }
+    .kpi-label {
+        font-size: 0.68rem !important;
+    }
+    .kpi-sub {
+        font-size: 0.7rem !important;
+    }
+
+    /* Risques et Heatmap */
+    .risk-cell {
+        min-width: 32px !important;
+        font-size: 0.75rem !important;
+        padding: 0.2rem 0.3rem !important;
+    }
+
+    /* Orb AI */
+    .copilot-orb-3d {
+        width: 64px !important;
+        height: 64px !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    /* Pour les très petits écrans */
+    .mockup-header-bar .pill-tab-btn {
+        padding: 5px 10px !important;
+        font-size: 0.72rem !important;
+    }
+}
+
+/* ---------------------------------------------------------------
+   16. PORTAIL COMMERCIAL SHOWCASE (OFFRES & SERVICES)
+   --------------------------------------------------------------- */
+@media (max-width: 991.98px) {
+    .sc-topbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 12px !important;
+        gap: 12px !important;
+    }
+    
+    .sc-topbar > div:last-child {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        gap: 10px !important;
+    }
+
+    .sc-tabnav {
+        width: 100% !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        scrollbar-width: none !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+    }
+
+    .sc-tabnav::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .sc-tabnav button {
+        flex-shrink: 0 !important;
+        padding: 6px 14px !important;
+    }
+
+    /* Grilles et sections */
+    .sc-why-row,
+    .sc-expertise-grid,
+    .sc-eng-grid,
+    .sc-assist-row {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    
+    .sc-comm-layout,
+    .sc-space-layout {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+
+    /* Paddings et Wrapper */
+    #sc-marketing,
+    #sc-community,
+    #sc-service {
+        padding: 24px 14px !important;
+    }
+    
+    .sc-cta-row {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+}
+
+
