@@ -16,10 +16,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Clé API & Timeouts
+    | Clés API avec Rotation automatique (quota exhausted fallback)
     |--------------------------------------------------------------------------
+    | La clé primaire est GEMINI_API_KEY. Si son quota (HTTP 429) est épuisé,
+    | le service bascule automatiquement sur GEMINI_API_KEY_2, puis _3, puis _4.
+    | Le basculement est mémorisé en cache pour éviter de re-tenter une clé
+    | épuisée pendant GEMINI_KEY_LOCKOUT_MINUTES minutes (défaut : 60 min).
     */
     'key' => env('GEMINI_API_KEY'),
+
+    'extra_keys' => array_values(array_filter([
+        env('GEMINI_API_KEY_2'),
+        env('GEMINI_API_KEY_3'),
+        env('GEMINI_API_KEY_4'),
+    ])),
+
+    'key_lockout_minutes' => (int) env('GEMINI_KEY_LOCKOUT_MINUTES', 60),
 
     'timeout' => (int) env('GEMINI_TIMEOUT', 30),
 
@@ -31,7 +43,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'retry' => [
-        'max_attempts' => 4,
+        'max_attempts' => 3,
         'base_delay_seconds' => 1,
     ],
 
@@ -39,7 +51,6 @@ return [
     |--------------------------------------------------------------------------
     | Mise en cache des requêtes identiques
     |--------------------------------------------------------------------------
-    | Pour éviter de sur-solliciter l'API pour les mêmes questions récurrentes.
     */
     'cache' => [
         'enabled' => true,
@@ -50,8 +61,6 @@ return [
     |--------------------------------------------------------------------------
     | Circuit Breaker
     |--------------------------------------------------------------------------
-    | Si un modèle échoue trop souvent dans un court laps de temps, il est mis 
-    | hors service temporairement.
     */
     'circuit_breaker' => [
         'enabled' => true,
