@@ -493,7 +493,7 @@
 </div>
 
 <!-- Diagnostic Modal -->
-<div class="modal fade" id="diagnosticModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="diagnosticModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg rounded-4">
       <div class="modal-header border-0 pb-0">

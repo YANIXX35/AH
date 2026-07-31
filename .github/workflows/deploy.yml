@@ -16,6 +16,7 @@ jobs:
           host: ${{ secrets.LWS_SSH_HOST }}
           username: ${{ secrets.LWS_SSH_USER }}
           key: ${{ secrets.LWS_SSH_KEY }}
+          password: ${{ secrets.LWS_SSH_PASSWORD }}
           port: ${{ secrets.LWS_SSH_PORT }}
           script: |
             cd ~/htdocs || cd ~/public_html || cd ~/site

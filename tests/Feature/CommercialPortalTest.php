@@ -57,7 +57,7 @@ class CommercialPortalTest extends TestCase
         $this->assertTrue($client->is_premium);
         $this->assertTrue($client->premium_ends_at->isFuture());
         // Vérifier que la date de fin est à environ 30 jours
-        $this->assertSame(30, now()->diffInDays($client->premium_ends_at));
+        $this->assertEquals(30, round(now()->diffInDays($client->premium_ends_at)));
     }
 
     public function test_commercial_can_update_their_client(): void

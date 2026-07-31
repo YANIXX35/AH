@@ -487,205 +487,66 @@
         @endif
 
         {{-- ============================================================ --}}
-        {{-- SECTION 1 : PORTEFEUILLE KPIs + STOCKE DE RÉTENTION          --}}
+        {{-- SECTION 1 : VUE D'ENSEMBLE TABLEAU DE BORD COMMERCIAL         --}}
         {{-- ============================================================ --}}
-        <div class="mockup-card p-4 mb-5 shadow-sm border border-light">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-                <div>
-                    <div class="retention-section-header">📊 Portefeuille &amp; Rétention Clients</div>
-                    <h2 class="h4 fw-bold text-dark mb-0">Statistiques d'acquisition &amp; de conversion</h2>
-                    <p class="text-muted small mb-0">Clients ajoutés depuis votre inscription &mdash; suivi de la période d'essai 1 mois</p>
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <a href="{{ route('commercial.portefeuille') }}" class="text-decoration-none">
+                    <x-kpi-card label="Portefeuille Clients" value="{{ $totalClients }}" sub="Voir mon portefeuille →" colorClass="kpi-total" />
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ route('commercial.portefeuille') }}" class="text-decoration-none">
+                    <x-kpi-card label="⌛ Essais en cours" value="{{ $activeTrials }}" sub="Période d'essai 30j" colorClass="kpi-trial" />
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ route('commercial.prospects') }}" class="text-decoration-none">
+                    <x-kpi-card label="🎯 Leads CRM" value="{{ $totalProspects }}" sub="{{ $newProspects }} nouveaux leads" colorClass="kpi-converted" />
+                </a>
+            </div>
+            <div class="col-md-3">
+                <div class="portfolio-kpi-card kpi-total">
+                    <div class="kpi-label">Taux de conversion</div>
+                    <div class="kpi-number text-primary">{{ $conversionRate }}%</div>
+                    <div class="kpi-sub">{{ $portfolioConverted }} convertis sur {{ $portfolioTrialExpired }} essais</div>
                 </div>
-                @if($portfolioTrialExpired > 0)
-                    @php
-                        $badgeBg = $conversionRate >= 60
-                            ? 'linear-gradient(135deg,#10b981,#059669)'
-                            : ($conversionRate >= 30 ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#ef4444,#dc2626)');
-                    @endphp
-                    <span class="badge rounded-pill px-3 py-2 fw-bold"
-                          style="background:{{ $badgeBg }};color:#fff;font-size:.85rem;">
-                        {{ $conversionRate }}% de conversion
-                    </span>
-                @endif
             </div>
-
-            <div class="row g-3 mb-4">
-                <x-kpi-card label="Portefeuille" value="{{ $totalClients }}" sub="clients ajoutés au total" colorClass="kpi-total" />
-                <x-kpi-card label="⌛ En Essai" value="{{ $activeTrials }}" sub="période d'essai en cours" colorClass="kpi-trial" />
-                <x-kpi-card label="✓ Abonnés" value="{{ $portfolioConverted }}" sub="ont souscrit après l'essai" colorClass="kpi-converted" />
-                <x-kpi-card label="✗ Partis" value="{{ $portfolioChurned }}" sub="non convertis après essai" colorClass="kpi-churned" />
-            </div>
-
-            @if($portfolioTrialExpired > 0)
-                @php
-                    $convertedPct = $portfolioTrialExpired > 0 ? round(($portfolioConverted / $portfolioTrialExpired) * 100) : 0;
-                    $churnedPct   = 100 - $convertedPct;
-                @endphp
-                <div class="mb-1">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="small fw-semibold text-muted">Rétention après essai ({{ $portfolioTrialExpired }} essais terminés)</span>
-                        <span class="small fw-bold text-success">{{ $portfolioConverted }} convertis</span>
-                    </div>
-                    <div class="retention-bar-outer">
-                        <div class="retention-bar-converted" style="width:{{ $convertedPct }}%;"></div>
-                        <div class="retention-bar-churned" style="width:{{ $churnedPct }}%;"></div>
-                    </div>
-                    <div class="d-flex justify-content-between mt-2">
-                        <span class="small text-muted">
-                            <span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:#10b981;"></span>
-                            Convertis {{ $convertedPct }}%
-                        </span>
-                        <span class="small text-muted">
-                            <span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:#ef4444;"></span>
-                            Partis {{ $churnedPct }}%
-                        </span>
-                    </div>
-                </div>
-            @else
-                <div class="text-center py-3 text-muted small">
-                    <i data-feather="clock" class="me-1" style="width:14px;height:14px;"></i>
-                    Aucune période d'essai encore terminée &mdash; les stats apparaîtront après 1 mois.
-                </div>
-            @endif
-
-            <div class="mt-4 pt-4 border-top">
-                <span class="small fw-semibold text-muted d-block mb-2">Évolution du portefeuille (6 derniers mois)</span>
-                <canvas id="clientGrowthChart" height="80"></canvas>
-            </div>
-
-            {{-- Recent Activity Section --}}
-            <div class="mt-5 pt-4 border-top">
-                <span class="small fw-semibold text-muted d-block mb-3">Activité récente</span>
-                @foreach($recentActivities as $activity)
-                    <div class="d-flex align-items-start mb-2">
-                        <div class="flex-shrink-0 me-2" style="width: 60px;">
-                            <small class="text-muted">{{ $activity['date']->format('d M Y') }}</small>
-                        </div>
-                        <div class="flex-grow-1">
-                            @if($activity['type'] === 'client')
-                                <div class="fw-bold">Client : {{ $activity['name'] }}</div>
-                            @elseif($activity['type'] === 'prospect')
-                                <div class="fw-bold">Prospect : {{ $activity['name'] }}</div>
-                            @endif
-                            @if(isset($activity->status))
-                                <div class="text-muted small">Statut : {{ $activity->status }}</div>
-                            @endif
-                        </div>
-                    </div>
-                @endforeach
-                @if($recentActivities->isEmpty())
-                    <div class="text-muted text-center py-3">Aucune activité récente.</div>
-                @endif
-            </div>
-
-            @push('scripts')
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-            <script>
-                const ctx = document.getElementById('clientGrowthChart').getContext('2d');
-                const clientGrowthChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: @json($growthLabels),
-                        datasets: [{
-                            label: 'Clients cumulés',
-                            data: @json($growthData),
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            tension: 0.3,
-                            fill: true,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: { beginAtZero: true }
-                        }
-                    }
-                });
-            </script>
-            @endpush
         </div>
 
-        {{-- ============================================================ --}}
-        {{-- SECTION 2 : PLANNING D'ESSAI 1 MOIS (Calendrier visuel)     --}}
-        {{-- ============================================================ --}}
-        <div class="mockup-card p-4 mb-5 shadow-sm border border-light">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-                <div>
-                    <h2 class="h4 fw-bold text-dark mb-1">📅 Planning d'Essai 1 Mois</h2>
-                    <p class="text-muted small mb-0">Suivi visuel chronologique des activations d'essai gratuit SYSCOHADA.</p>
-                </div>
-                <span class="btn btn-sm btn-light rounded-pill border px-3 text-muted fw-semibold">
-                    <i data-feather="calendar" class="me-1" style="width:14px; height:14px;"></i> {{ now()->format('d F Y') }}
-                </span>
+        {{-- SECTION ACTIVITÉ RÉCENTE COMMERCIAL --}}
+        <div class="mockup-card p-4 mb-4 shadow-sm border border-light">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="h5 fw-bold text-dark mb-0">⚡ Activité Récente &amp; Inscriptions</h3>
+                <a href="{{ route('commercial.portefeuille') }}" class="text-decoration-none small text-primary fw-semibold">Voir tout le portefeuille &rarr;</a>
             </div>
-
-            <!-- Calendar Days Header Row -->
-            <div class="row g-2 text-center text-muted small fw-semibold mb-3">
-                <div class="col-md-3 text-start ps-3">Client PME / Représentant</div>
-                <div class="col"><div class="calendar-grid-cell">Lun 1</div></div>
-                <div class="col"><div class="calendar-grid-cell">Mar 2</div></div>
-                <div class="col"><div class="calendar-grid-cell">Mer 3</div></div>
-                <div class="col"><div class="calendar-grid-cell">Jeu 4</div></div>
-                <div class="col"><div class="calendar-grid-cell">Ven 5</div></div>
-                <div class="col"><div class="calendar-grid-cell calendar-grid-cell-active">Sam 6</div></div>
-                <div class="col"><div class="calendar-grid-cell">Dim 7</div></div>
-                <div class="col"><div class="calendar-grid-cell">Lun 8</div></div>
-            </div>
-
-            <!-- Client Rows with Status Floating Pills -->
-            <div class="d-flex flex-column gap-3">
-                @forelse($clients as $client)
-                    @php
-                        $isTrialActive = false;
-                        $daysLeft = 0;
-                        if ($client && ($client->is_premium ?? false) && !empty($client->premium_ends_at)) {
-                            try {
-                                $endsAt = $client->premium_ends_at instanceof \Carbon\Carbon 
-                                    ? $client->premium_ends_at 
-                                    : \Carbon\Carbon::parse($client->premium_ends_at);
-                                $isTrialActive = $endsAt->isFuture();
-                                $daysLeft = $isTrialActive ? now()->diffInDays($endsAt) : 0;
-                            } catch (\Throwable $e) {
-                                $isTrialActive = false;
-                                $daysLeft = 0;
-                            }
-                        }
-                    @endphp
-                    <div class="row g-2 align-items-center p-2 rounded-4 hover-bg-light border-bottom border-light">
-                        <div class="col-md-3">
+            <div class="row g-3">
+                @forelse($recentActivities as $activity)
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-4 border d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:40px; height:40px; font-size:0.85rem;">
-                                    {{ strtoupper(substr($client->name ?? 'PME', 0, 2)) }}
+                                <div class="bg-{{ $activity['type'] === 'client' ? 'primary' : 'success' }} text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:36px; height:36px; font-size:0.8rem;">
+                                    {{ strtoupper(substr($activity['name'], 0, 2)) }}
                                 </div>
                                 <div>
-                                    <div class="fw-bold text-dark mb-0">{{ $client->name ?? $client->email ?? 'Client PME' }}</div>
-                                    <div class="text-muted small" style="font-size:0.78rem;">{{ $client->company_name ?? 'PME Client' }}</div>
+                                    <div class="fw-bold text-dark small">{{ $activity['name'] }}</div>
+                                    <div class="text-muted small" style="font-size:0.75rem;">
+                                        {{ $activity['type'] === 'client' ? 'Client PME inscrit' : 'Prospect CRM ajouté' }}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-9">
-                            <div class="d-flex align-items-center justify-content-between">
-                                @if($isTrialActive)
-                                    <span class="status-pill status-pill-green">
-                                        <i data-feather="check-circle" style="width:14px; height:14px;"></i> Essai Gratuit Actif ({{ $daysLeft }} jours restants)
-                                    </span>
-                                @else
-                                    <span class="status-pill status-pill-purple">
-                                        <i data-feather="alert-circle" style="width:14px; height:14px;"></i> Essai Expiré / À Relancer
-                                    </span>
-                                @endif
-                            </div>
+                            <span class="badge bg-white text-muted border rounded-pill small">
+                                {{ $activity['date']->format('d M Y') }}
+                            </span>
                         </div>
                     </div>
                 @empty
-                    <div class="text-center text-muted py-4">
-                        <i data-feather="users" class="mb-2" style="width:36px; height:36px; opacity:0.3;"></i>
-                        <div>Aucun client parrainé enregistré dans votre portefeuille.</div>
+                    <div class="col-12 text-center text-muted py-3">
+                        Aucune activité récente.
                     </div>
                 @endforelse
             </div>
+        </div>
 
         <!-- BOTTOM ROW (EXACT MOCKUP 3 COLUMNS: FUTURE EVENTS | ONBOARDING LEADS | WELCOME AI COPILOT) -->
         <div class="row g-4">
@@ -812,7 +673,7 @@
 </div>
 
 <!-- Modal Add Prospect -->
-<div class="modal fade" id="addProspectModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="addProspectModal" data-bs-backdrop="static" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <form action="{{ route('commercial.prospects.store') }}" method="POST">

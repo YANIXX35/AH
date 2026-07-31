@@ -374,7 +374,7 @@
                         </tr>
 
                         <!-- Edit Client Modal -->
-                        <div class="modal fade" id="editClientModal{{ $client->id }}" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+                        <div class="modal fade" id="editClientModal{{ $client->id }}" data-bs-backdrop="static" tabindex="-1">
                             <div class="modal-dialog modal-dialog-centered modal-lg">
                                 <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
                                     <form action="{{ route('commercial.clients.update', $client->id) }}" method="POST">
@@ -457,7 +457,7 @@
 </div>
 
 <!-- Modal Add Prospect -->
-<div class="modal fade" id="addProspectModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="addProspectModal" data-bs-backdrop="static" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <form action="{{ route('commercial.prospects.store') }}" method="POST">

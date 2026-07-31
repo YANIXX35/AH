@@ -151,13 +151,15 @@ class CommercialController extends Controller
         $recentActivities = $recentClients->map(function ($c) {
             return [
                 'type' => 'client',
-                'name' => $c->name ?? $c->company_name ?? 'Client',
+                'name' => $c->company_name ?: ($c->name ?? 'Client'),
+                'company_name' => $c->company_name,
                 'date' => $c->created_at,
             ];
         })->merge($recentProspects->map(function ($p) {
             return [
                 'type' => 'prospect',
-                'name' => $p->name,
+                'name' => $p->company_name ?: ($p->name ?? 'Prospect'),
+                'company_name' => $p->company_name,
                 'date' => $p->created_at,
             ];
         }))->sortByDesc('date')->take(10);
