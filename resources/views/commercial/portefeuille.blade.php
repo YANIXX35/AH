@@ -302,7 +302,7 @@
                 </form>
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive d-none d-md-block">
                 <table class="table align-middle">
                     <thead>
                         <tr class="text-muted small text-uppercase" style="font-size:0.75rem;">
@@ -452,6 +452,71 @@
                 @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile View: Cards Layout -->
+            <div class="d-block d-md-none">
+                @forelse($clients as $client)
+                    @php
+                        $isTrialActive = false;
+                        $daysLeft = 0;
+                        if ($client && ($client->is_premium ?? false) && !empty($client->premium_ends_at)) {
+                            try {
+                                $endsAt = $client->premium_ends_at instanceof \Carbon\Carbon
+                                    ? $client->premium_ends_at
+                                    : \Carbon\Carbon::parse($client->premium_ends_at);
+                                $isTrialActive = $endsAt->isFuture();
+                                $daysLeft = $isTrialActive ? now()->diffInDays($endsAt) : 0;
+                            } catch (\Throwable $e) {
+                                $isTrialActive = false;
+                                $daysLeft = 0;
+                            }
+                        }
+                    @endphp
+                    <div class="p-3 bg-light rounded-3 border d-flex flex-column gap-2 mb-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:32px; height:32px; font-size:0.75rem;">
+                                    {{ strtoupper(substr($client->name ?? 'PME', 0, 2)) }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark small">{{ $client->name }}</div>
+                                    <div class="text-muted small" style="font-size:0.7rem;">{{ $client->company_name ?? '—' }}</div>
+                                </div>
+                            </div>
+                            <div>
+                                @if($isTrialActive)
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1" style="font-size: 0.65rem;">
+                                        Essai ({{ $daysLeft }}j)
+                                    </span>
+                                @else
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1" style="font-size: 0.65rem;">
+                                        Expiré
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-1">
+                            <span class="text-muted" style="font-size:0.7rem;">Créé le {{ $client->created_at->format('d/m/Y') }}</span>
+                            <div class="d-flex gap-1.5">
+                                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 text-xs" data-bs-toggle="modal" data-bs-target="#editClientModal{{ $client->id }}">
+                                    Modifier
+                                </button>
+                                <form action="{{ route('commercial.clients.destroy', $client->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Supprimer ce client ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-1 text-xs ms-1">
+                                        Supprimer
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center text-muted small py-3 bg-light rounded-3 border">
+                        Aucun client trouvé dans votre portefeuille.
+                    </div>
+                @endforelse
             </div>
         </div>
 

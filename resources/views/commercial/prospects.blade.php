@@ -98,7 +98,7 @@
 
         <!-- Prospects Pipeline Table Card -->
         <div class="prospect-card p-4 mb-4">
-            <div class="table-responsive">
+            <div class="table-responsive d-none d-md-block">
                 <table class="table table-hover align-middle border-0 mb-0">
                     <thead>
                         <tr class="text-muted text-uppercase small" style="font-size:0.75rem;">
@@ -165,14 +165,72 @@
                                 <td colspan="6" class="text-center text-muted py-5">
                                     <i data-feather="target" class="mb-2" style="width:40px; height:40px; opacity:0.3;"></i>
                                     <div>Aucun prospect enregistré pour le moment.</div>
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-2" data-bs-toggle="modal" data-bs-target="#addProspectModal">
-                                        + Ajouter le premier prospect
-                                    </button>
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile View: Cards Layout -->
+            <div class="d-block d-md-none">
+                @forelse($prospects as $prospect)
+                    <div class="p-3 bg-light rounded-3 border d-flex flex-column gap-2 mb-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:32px; height:32px; font-size:0.75rem;">
+                                    {{ strtoupper(substr($prospect->name, 0, 2)) }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark small">{{ $prospect->name }}</div>
+                                    <div class="text-muted small" style="font-size:0.7rem;">{{ $prospect->email }}</div>
+                                </div>
+                            </div>
+                            <span class="badge {{ $prospect->status_badge_class }} rounded-pill px-2.5 py-1" style="font-size: 0.65rem;">
+                                {{ $prospect->status_label }}
+                            </span>
+                        </div>
+                        <div class="py-2 border-top border-bottom my-2">
+                            <div class="fw-semibold text-dark small">{{ $prospect->company_name ?? 'PME non renseignée' }}</div>
+                            <div class="text-muted small" style="font-size: 0.75rem;">{{ $prospect->job_title ?? 'Dirigeant / RAF' }}</div>
+                            <div class="mt-2">
+                                <span class="badge bg-primary text-white rounded-pill px-2 py-0.5" style="font-size: 0.68rem;">
+                                    {{ $prospect->need_label }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex justify-content-between align-items-center text-muted small" style="font-size: 0.7rem;">
+                                <span>Créé le {{ $prospect->created_at->format('d/m/Y') }}</span>
+                                <form action="{{ route('commercial.prospects.destroy', $prospect->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Supprimer ce prospect ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-xs btn-outline-danger rounded-pill px-2">
+                                        <i data-feather="trash-2" style="width:14px; height:14px;"></i>
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="mt-1">
+                                <form action="{{ route('commercial.prospects.updateStatus', $prospect->id) }}" method="POST" class="w-100">
+                                    @csrf
+                                    @method('PUT')
+                                    <label class="form-label small fw-semibold text-dark mb-1" style="font-size: 0.75rem;">Changer le statut :</label>
+                                    <select name="status" class="form-select form-select-sm rounded-3 border fw-semibold" style="min-height: 38px;" onchange="this.form.submit()">
+                                        <option value="nouveau" {{ $prospect->status === 'nouveau' ? 'selected' : '' }}>Nouveau</option>
+                                        <option value="contacte" {{ $prospect->status === 'contacte' ? 'selected' : '' }}>Contacté</option>
+                                        <option value="qualifie" {{ $prospect->status === 'qualifie' ? 'selected' : '' }}>Qualifié</option>
+                                        <option value="client" {{ $prospect->status === 'client' ? 'selected' : '' }}>Converti Client</option>
+                                        <option value="sans_suite" {{ $prospect->status === 'sans_suite' ? 'selected' : '' }}>Sans suite</option>
+                                    </select>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center text-muted small py-3 bg-light rounded-3 border">
+                        Aucun prospect disponible.
+                    </div>
+                @endforelse
             </div>
         </div>
 

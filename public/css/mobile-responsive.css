@@ -743,4 +743,150 @@
     }
 }
 
+/* ---------------------------------------------------------------
+   17. REGLES GLOBALES MOBILE FIRST & AMELIORATION FORMULAIRES / MODALES
+   --------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    /* Typographie */
+    h1, .h1 { font-size: 20px !important; }
+    h2, .h2 { font-size: 18px !important; }
+    h3, .h3 { font-size: 16px !important; }
+    p, body, td, th, span, div { font-size: 14px !important; }
+    .btn, button, a.btn, .sc-btn { 
+        font-size: 14px !important; 
+        min-height: 48px !important;
+        border-radius: 12px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-weight: 600 !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+        transition: all 0.15s ease-in-out !important;
+    }
+    
+    .btn:active, button:active, a.btn:active, .sc-btn:active {
+        transform: scale(0.98) !important;
+        opacity: 0.9 !important;
+    }
+
+    /* Conteneurs et enveloppes - Suppression des grands espaces vides */
+    .soft-dashboard-body, .club-bg, .guides-bg, .sc-wrapper {
+        padding: 8px 6px !important;
+        min-height: auto !important;
+        background-color: #f8fafc !important;
+        border-radius: 0 !important;
+    }
+    
+    #sc-marketing, #sc-community, #sc-service {
+        padding: 24px 12px !important;
+    }
+    
+    .soft-dashboard-container {
+        padding: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Uniformisation absolue des cartes */
+    .card, .mockup-card, .prospect-card, .club-card, .guide-card, .sc-why-card, .sc-exp-card, .sc-pillar, .sc-calendar-card, .sc-eng-card, .sc-assist-card, .sc-sat-card, .sc-crm-card {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        border-radius: 12px !important;
+        padding: 12px 14px !important;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+        border: 1px solid #e2e8f0 !important;
+        margin-bottom: 12px !important;
+        background-color: #ffffff !important;
+    }
+
+    /* Supprimer les marges & paddings excessifs pour éviter le vide */
+    .mt-4, .my-4, .mt-5, .my-5 { margin-top: 10px !important; }
+    .mb-4, .mb-5, .my-4, .my-5 { margin-bottom: 12px !important; }
+    .p-4, .p-5, .pt-4, .pt-5, .pb-4, .pb-5, .p-md-5 { padding: 12px 10px !important; }
+    
+    /* Grille Mobile - col-6 ou col-12 sur smartphone */
+    .row > [class*="col-"] {
+        padding-right: 6px !important;
+        padding-left: 6px !important;
+    }
+    .row {
+        margin-right: -6px !important;
+        margin-left: -6px !important;
+    }
+    
+    .col-6 {
+        width: 50% !important;
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    
+    .col-12 {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Forcer les formulaires à une seule colonne */
+    form .row > [class*="col-"], .modal-body .row > [class*="col-"] {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 12px !important;
+    }
+    
+    /* Forcer les inputs à prendre 100% de largeur */
+    form input, form select, form textarea, form button,
+    .modal-body input, .modal-body select, .modal-body textarea, .modal-body button {
+        width: 100% !important;
+        min-height: 48px !important;
+        border-radius: 10px !important;
+        border: 1px solid #cbd5e1 !important;
+        font-size: 14px !important;
+    }
+
+    
+    /* Alignement des labels de formulaires */
+    form label, .modal-body label {
+        text-align: left !important;
+        display: block !important;
+        margin-bottom: 4px !important;
+    }
+
+    /* Modales adaptatives 95% avec scroll interne */
+    .modal-dialog {
+        margin: 0.5rem auto !important;
+        max-width: 95% !important;
+        width: 95% !important;
+    }
+    .modal-content {
+        border-radius: 18px !important;
+    }
+    .modal-body {
+        max-height: 70vh !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .modal-footer {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    .modal-footer .btn {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    /* Images */
+    img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+}
+
+
+
 

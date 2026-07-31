@@ -151,7 +151,7 @@
                 </span>
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive d-none d-md-block">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
@@ -205,12 +205,60 @@
                                 <td colspan="5" class="text-center text-muted py-5">
                                     <i data-feather="folder-minus" class="mb-2 text-muted" style="width:42px; height:42px; opacity:0.4;"></i>
                                     <div class="fw-semibold">Aucun document enregistré pour le moment.</div>
-                                    <div class="small">Utilisez l'importateur ci-dessus pour importer et sauvegarder vos premiers fichiers.</div>
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile View: Cards Layout -->
+            <div class="d-block d-md-none">
+                @forelse($savedDocuments as $doc)
+                    <div class="card p-3 mb-3">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <div class="bg-light text-primary rounded-3 p-2 d-flex align-items-center justify-content-center" style="width:36px; height:36px;">
+                                <i data-feather="file-text" style="width:18px; height:18px;"></i>
+                            </div>
+                            <div class="min-w-0 flex-grow-1">
+                                <div class="fw-bold text-dark text-truncate small" style="font-size: 0.9rem;">{{ $doc->original_name }}</div>
+                                <span class="badge bg-secondary text-white rounded-pill px-2 py-0.5 mt-1" style="font-size: 0.65rem;">
+                                    {{ $doc->mime_type ?? 'Document' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        @if($doc->notes)
+                            <div class="p-2 bg-light rounded-3 my-2 text-muted small" style="font-size: 0.75rem;">
+                                {{ $doc->notes }}
+                            </div>
+                        @endif
+
+                        <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2">
+                            <div class="text-muted small" style="font-size: 0.7rem;">
+                                <div>Taille : <strong>{{ $doc->formatted_size }}</strong></div>
+                                <div>Importé le {{ $doc->created_at->format('d/m/Y') }}</div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{{ route('commercial.import.download', $doc->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-2.5">
+                                    <i data-feather="download" style="width:14px; height:14px;"></i>
+                                </a>
+                                <form action="{{ route('commercial.import.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer ce document ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2">
+                                        <i data-feather="trash-2" style="width:14px; height:14px;"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center text-muted py-4 bg-light rounded-3 border">
+                        <i data-feather="folder-minus" class="mb-2" style="width:40px; height:40px; opacity:0.3;"></i>
+                        <div>Aucun document enregistré pour le moment.</div>
+                    </div>
+                @endforelse
             </div>
         </div>
 

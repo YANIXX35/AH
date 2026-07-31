@@ -80,7 +80,7 @@
         <!-- Monthly Webinars Schedule -->
         <div class="club-card p-4 mb-4">
             <h3 class="h5 fw-bold text-dark mb-3">📅 Programme des Webinaires à venir</h3>
-            <div class="table-responsive">
+            <div class="table-responsive d-none d-md-block">
                 <table class="table table-hover align-middle border-0 mb-0">
                     <thead>
                         <tr class="text-muted text-uppercase small" style="font-size:0.75rem;">
@@ -98,13 +98,34 @@
                             <td class="text-end"><span class="badge bg-success rounded-pill px-3 py-1">Inscriptions Ouvertes</span></td>
                         </tr>
                         <tr>
-                            <td class="fw-bold text-dark">Rapprochement Mobile Money & Gestion des Flux de Caisse</td>
-                            <td>Spécialiste Trésorerie</td>
-                            <td><span class="badge bg-light text-dark border">10 Janvier · 10:00 - 11:30</span></td>
-                            <td class="text-end"><span class="badge bg-primary rounded-pill px-3 py-1">À Venir</span></td>
+                            <td class="fw-bold text-dark">Digitalisation de la Trésorerie avec les APIs Mobile Money</td>
+                            <td>Tech Lead SITIAME</td>
+                            <td><span class="badge bg-light text-dark border">22 Décembre · 10:00 - 11:30</span></td>
+                            <td class="text-end"><span class="badge bg-success rounded-pill px-3 py-1">Inscriptions Ouvertes</span></td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile View: Cards Layout -->
+            <div class="d-block d-md-none">
+                <div class="p-3 bg-white border rounded-4 shadow-sm mb-3">
+                    <div class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">Réussir la Clôture de l'Exercice Comptable SYSCOHADA</div>
+                    <div class="text-muted small mb-2">Par Expert Sitiame Capital</div>
+                    <div class="d-flex justify-content-between align-items-center border-top pt-2">
+                        <span class="badge bg-light text-dark border rounded-pill px-2 py-1" style="font-size: 0.68rem;">15 Décembre · 14:00</span>
+                        <span class="badge bg-success rounded-pill px-2 py-1" style="font-size: 0.68rem;">Inscriptions Ouvertes</span>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-white border rounded-4 shadow-sm mb-3">
+                    <div class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">Digitalisation de la Trésorerie avec les APIs Mobile Money</div>
+                    <div class="text-muted small mb-2">Par Tech Lead SITIAME</div>
+                    <div class="d-flex justify-content-between align-items-center border-top pt-2">
+                        <span class="badge bg-light text-dark border rounded-pill px-2 py-1" style="font-size: 0.68rem;">22 Décembre · 10:00</span>
+                        <span class="badge bg-success rounded-pill px-2 py-1" style="font-size: 0.68rem;">Inscriptions Ouvertes</span>
+                    </div>
+                </div>
             </div>
         </div>
 

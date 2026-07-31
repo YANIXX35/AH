@@ -449,250 +449,470 @@
 <div class="soft-dashboard-body">
     <div class="soft-dashboard-container">
         
-        <!-- TOP HEADER BAR (Matching Mockup Navigation Bar) -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 mockup-header-bar">
-            <!-- Left: Logo & Pill Navigation Tabs -->
-            <div class="d-flex align-items-center gap-2 flex-grow-1 flex-lg-grow-0 w-100 w-lg-auto">
-                <div class="bg-primary text-white rounded-circle p-2 d-none d-sm-flex align-items-center justify-content-center flex-shrink-0" style="width:40px; height:40px;">
-                    <i data-feather="grid" style="width:20px; height:20px;"></i>
-                </div>
-                <div class="d-flex align-items-center gap-1 bg-light rounded-pill p-1 border overflow-auto scrollbar-none flex-nowrap w-100">
-                    <a href="{{ route('commercial.dashboard') }}" class="pill-tab-btn pill-tab-btn-active text-decoration-none text-nowrap flex-shrink-0">
-                        <i data-feather="layout" class="me-1" style="width:14px; height:14px;"></i> Tableau de bord
-                    </a>
-                    <a href="{{ route('commercial.portefeuille') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none text-nowrap flex-shrink-0">
-                        <i data-feather="briefcase" class="me-1" style="width:14px; height:14px;"></i> Mon Portefeuille
-                    </a>
-                    <a href="{{ route('commercial.prospects') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none text-nowrap flex-shrink-0">
-                        <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i> Leads CRM ({{ $totalProspects }})
-                    </a>
-                    <a href="{{ route('commercial.showcase') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none text-nowrap flex-shrink-0">
-                        <i data-feather="book-open" class="me-1" style="width:14px; height:14px;"></i> Kit Marketing
-                    </a>
-                </div>
-            </div>
-
-            <!-- Right: Search, Avatar Group, and CTA Action Button -->
-            <div class="d-flex align-items-center justify-content-between justify-content-lg-end gap-2 flex-grow-1 w-100 w-lg-auto">
-                <div class="position-relative d-none d-md-block">
-                    <i data-feather="search" class="position-absolute text-muted" style="left:14px; top:11px; width:15px; height:15px;"></i>
-                    <input type="text" class="form-control rounded-pill border-0 bg-light ps-5 pe-4" placeholder="Rechercher..." style="width:150px; font-size:0.85rem;">
-                </div>
-                
-                <!-- Avatar Stack (Mockup Style) -->
-                <div class="d-none d-lg-flex align-items-center me-1 flex-shrink-0">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">EK</div>
-                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">JK</div>
-                    <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem;">+{{ $totalClients }}</div>
-                </div>
-
-                <div class="d-flex align-items-center gap-1.5 overflow-auto scrollbar-none flex-nowrap w-100 justify-content-start justify-content-lg-end">
-                    <button type="button" class="btn btn-outline-success rounded-pill px-3 py-2 fw-bold text-xs text-nowrap flex-shrink-0" data-bs-toggle="modal" data-bs-target="#smartImportClientModal">
-                        <i data-feather="upload-cloud" class="me-1" style="width:12px; height:12px;"></i> Importer
-                    </button>
-                    <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-bold text-xs text-nowrap flex-shrink-0" data-bs-toggle="modal" data-bs-target="#addProspectModal">
-                        + Lead
-                    </button>
-                    <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-primary rounded-pill px-3.5 py-2 fw-bold text-xs text-nowrap flex-shrink-0 shadow-sm text-decoration-none">
-                        <i data-feather="user-plus" class="me-1" style="width:12px; height:12px;"></i> + Client
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Alert Status -->
-        @if(session('status'))
-            <div class="alert alert-success alert-dismissible fade show rounded-4 mb-4 border-0 shadow-sm" role="alert">
-                <i data-feather="check-circle" class="me-2 text-success"></i>
-                {{ session('status') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
         {{-- ============================================================ --}}
-        {{-- SECTION 1 : VUE D'ENSEMBLE TABLEAU DE BORD COMMERCIAL         --}}
+        {{-- 💻 VERSION DESKTOP DU DASHBOARD                              --}}
         {{-- ============================================================ --}}
-        <div class="row g-3 mb-4">
-            <div class="col-md-3">
-                <a href="{{ route('commercial.portefeuille') }}" class="text-decoration-none">
-                    <x-kpi-card label="Portefeuille Clients" value="{{ $totalClients }}" sub="Voir mon portefeuille →" colorClass="kpi-total" />
-                </a>
-            </div>
-            <div class="col-md-3">
-                <a href="{{ route('commercial.portefeuille') }}" class="text-decoration-none">
-                    <x-kpi-card label="⌛ Essais en cours" value="{{ $activeTrials }}" sub="Période d'essai 30j" colorClass="kpi-trial" />
-                </a>
-            </div>
-            <div class="col-md-3">
-                <a href="{{ route('commercial.prospects') }}" class="text-decoration-none">
-                    <x-kpi-card label="🎯 Leads CRM" value="{{ $totalProspects }}" sub="{{ $newProspects }} nouveaux leads" colorClass="kpi-converted" />
-                </a>
-            </div>
-            <div class="col-md-3">
-                <div class="portfolio-kpi-card kpi-total">
-                    <div class="kpi-label">Taux de conversion</div>
-                    <div class="kpi-number text-primary">{{ $conversionRate }}%</div>
-                    <div class="kpi-sub">{{ $portfolioConverted }} convertis sur {{ $portfolioTrialExpired }} essais</div>
-                </div>
-            </div>
-        </div>
-
-        {{-- SECTION ACTIVITÉ RÉCENTE COMMERCIAL --}}
-        <div class="mockup-card p-4 mb-4 shadow-sm border border-light">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3 class="h5 fw-bold text-dark mb-0">⚡ Activité Récente &amp; Inscriptions</h3>
-                <a href="{{ route('commercial.portefeuille') }}" class="text-decoration-none small text-primary fw-semibold">Voir tout le portefeuille &rarr;</a>
-            </div>
-            <div class="row g-3">
-                @forelse($recentActivities as $activity)
-                    <div class="col-md-6">
-                        <div class="p-3 bg-light rounded-4 border d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="bg-{{ $activity['type'] === 'client' ? 'primary' : 'success' }} text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:36px; height:36px; font-size:0.8rem;">
-                                    {{ strtoupper(substr($activity['name'], 0, 2)) }}
-                                </div>
-                                <div>
-                                    <div class="fw-bold text-dark small">{{ $activity['name'] }}</div>
-                                    <div class="text-muted small" style="font-size:0.75rem;">
-                                        {{ $activity['type'] === 'client' ? 'Client PME inscrit' : 'Prospect CRM ajouté' }}
-                                    </div>
-                                </div>
-                            </div>
-                            <span class="badge bg-white text-muted border rounded-pill small">
-                                {{ $activity['date']->format('d M Y') }}
-                            </span>
-                        </div>
+        <div class="d-none d-md-block">
+            <!-- TOP HEADER BAR (Matching Mockup Navigation Bar) -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 mockup-header-bar">
+                <!-- Left: Logo & Pill Navigation Tabs -->
+                <div class="d-flex align-items-center gap-2 flex-grow-1 flex-lg-grow-0 w-100 w-lg-auto">
+                    <div class="bg-primary text-white rounded-circle p-2 d-none d-sm-flex align-items-center justify-content-center flex-shrink-0" style="width:40px; height:40px;">
+                        <i data-feather="grid" style="width:20px; height:20px;"></i>
                     </div>
-                @empty
-                    <div class="col-12 text-center text-muted py-3">
-                        Aucune activité récente.
-                    </div>
-                @endforelse
-            </div>
-        </div>
-
-        <!-- BOTTOM ROW (EXACT MOCKUP 3 COLUMNS: FUTURE EVENTS | ONBOARDING LEADS | WELCOME AI COPILOT) -->
-        <div class="row g-4">
-
-            
-            <!-- COLUMN 1 (LEFT ~33%): FUTURE EVENTS / ÉVÉNEMENTS (Matching Mockup Left Card) -->
-            <div class="col-lg-4">
-                <div class="mockup-card p-4 h-100">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h3 class="h5 fw-bold text-dark mb-0">Événements & Relances</h3>
-                        <a href="{{ route('commercial.showcase') }}" class="text-decoration-none small text-muted fw-semibold">Voir tout &rarr;</a>
-                    </div>
-
-                    <!-- Highlighted Yellow/Amber Top Event Card (Mockup Style) -->
-                    <div class="amber-event-card mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-bold fs-6">Webinaire Sitiame Capital</span>
-                            <span class="badge bg-dark text-white rounded-pill px-2 py-1 small">Dans 15 min</span>
-                        </div>
-                        <p class="small text-dark mb-3">Présentation du logiciel comptable SYSCOHADA & Trésorerie Mobile Money.</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-semibold">
-                                <i data-feather="clock" class="me-1" style="width:12px; height:12px;"></i> 14:00 - 15:30
-                            </span>
-                            <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-semibold">
-                                <i data-feather="calendar" class="me-1" style="width:12px; height:12px;"></i> 15 Déc.
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Second Event Item -->
-                    <div class="p-3 bg-light rounded-4 border mb-2 d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="fw-bold text-dark small">Relances Essais Expirés</div>
-                            <div class="text-muted small" style="font-size:0.75rem;">Session de conversion téléphonique</div>
-                        </div>
-                        <span class="badge bg-white text-dark border rounded-pill">09:00 - 12:00</span>
-                    </div>
-
-                    <!-- Third Event Item -->
-                    <div class="p-3 bg-light rounded-4 border d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="fw-bold text-dark small">Atelier Sitiame Finance Club</div>
-                            <div class="text-muted small" style="font-size:0.75rem;">Rencontre Dirigeants PME</div>
-                        </div>
-                        <span class="badge bg-white text-dark border rounded-pill">Jeudi</span>
+                    <div class="d-flex align-items-center gap-1 bg-light rounded-pill p-1 border overflow-auto scrollbar-none flex-nowrap w-100">
+                        <a href="{{ route('commercial.dashboard') }}" class="pill-tab-btn pill-tab-btn-active text-decoration-none text-nowrap flex-shrink-0">
+                            <i data-feather="layout" class="me-1" style="width:14px; height:14px;"></i> Tableau de bord
+                        </a>
+                        <a href="{{ route('commercial.portefeuille') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none text-nowrap flex-shrink-0">
+                            <i data-feather="briefcase" class="me-1" style="width:14px; height:14px;"></i> Mon Portefeuille
+                        </a>
+                        <a href="{{ route('commercial.prospects') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none text-nowrap flex-shrink-0">
+                            <i data-feather="users" class="me-1" style="width:14px; height:14px;"></i> Leads CRM ({{ $totalProspects }})
+                        </a>
+                        <a href="{{ route('commercial.showcase') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none text-nowrap flex-shrink-0">
+                            <i data-feather="book-open" class="me-1" style="width:14px; height:14px;"></i> Kit Marketing
+                        </a>
                     </div>
                 </div>
-            </div>
 
-            <!-- COLUMN 2 (MIDDLE ~33%): ONBOARDING / LEADS CRM 2x2 MINI GRID (Matching Mockup Middle Card) -->
-            <div class="col-lg-4">
-                <div class="mockup-card p-4 h-100">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h3 class="h5 fw-bold text-dark mb-0">Leads CRM Inbound</h3>
-                        <button type="button" class="btn btn-link text-decoration-none p-0 border-0 small text-muted fw-semibold" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                <!-- Right: Search, Avatar Group, and CTA Action Button -->
+                <div class="d-flex align-items-center justify-content-between justify-content-lg-end gap-2 flex-grow-1 w-100 w-lg-auto">
+                    <div class="position-relative d-none d-md-block">
+                        <i data-feather="search" class="position-absolute text-muted" style="left:14px; top:11px; width:15px; height:15px;"></i>
+                        <input type="text" class="form-control rounded-pill border-0 bg-light ps-5 pe-4" placeholder="Rechercher..." style="width:150px; font-size:0.85rem;">
+                    </div>
+                    
+                    <!-- Avatar Stack (Mockup Style) -->
+                    <div class="d-none d-lg-flex align-items-center me-1 flex-shrink-0">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">EK</div>
+                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">JK</div>
+                        <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem;">+{{ $totalClients }}</div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-1.5 overflow-auto scrollbar-none flex-nowrap w-100 justify-content-start justify-content-lg-end">
+                        <button type="button" class="btn btn-outline-success rounded-pill px-3 py-2 fw-bold text-xs text-nowrap flex-shrink-0" data-bs-toggle="modal" data-bs-target="#smartImportClientModal">
+                            <i data-feather="upload-cloud" class="me-1" style="width:12px; height:12px;"></i> Importer
+                        </button>
+                        <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-bold text-xs text-nowrap flex-shrink-0" data-bs-toggle="modal" data-bs-target="#addProspectModal">
                             + Lead
                         </button>
-                    </div>
-
-                    <!-- 2x2 Grid Layout (Mockup Style) -->
-                    <div class="row g-3">
-                        @forelse($prospects->take(4) as $prospect)
-                            <div class="col-6">
-                                <div class="mini-user-card">
-                                    <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center mx-auto mb-2" style="width:44px; height:44px; font-size:0.9rem;">
-                                        {{ strtoupper(substr($prospect->name ?? 'PR', 0, 2)) }}
-                                    </div>
-                                    <div class="fw-bold text-dark text-truncate small mb-0">{{ $prospect->name ?? 'Prospect' }}</div>
-                                    <div class="text-muted small text-truncate mb-2" style="font-size:0.75rem;">{{ $prospect->company_name ?? 'PME' }}</div>
-                                    <span class="badge {{ $prospect->status_badge_class }} rounded-pill px-2 py-1 small">
-                                        {{ $prospect->status_label }}
-                                    </span>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="col-12 text-center text-muted py-4">
-                                <i data-feather="target" class="mb-2" style="width:32px; height:32px; opacity:0.3;"></i>
-                                <div class="small">Aucun prospect disponible.</div>
-                            </div>
-                        @endforelse
+                        <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-primary rounded-pill px-3.5 py-2 fw-bold text-xs text-nowrap flex-shrink-0 shadow-sm text-decoration-none">
+                            <i data-feather="user-plus" class="me-1" style="width:12px; height:12px;"></i> + Client
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <!-- COLUMN 3 (RIGHT ~33%): WELCOME AI ASSISTANT CARD (Exact Mockup Right Card with Glowing 3D Orb) -->
-            <div class="col-lg-4">
-                <div class="copilot-card h-100 d-flex flex-column justify-content-between">
-                    <div>
-                        <!-- Glowing 3D Orb (Mockup Sphere Style) -->
-                        <div class="copilot-orb-3d"></div>
+            {{-- ============================================================ --}}
+            {{-- VUE D'ENSEMBLE TABLEAU DE BORD COMMERCIAL (DESKTOP)          --}}
+            {{-- ============================================================ --}}
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <a href="{{ route('commercial.portefeuille') }}" class="text-decoration-none">
+                        <x-kpi-card label="Portefeuille Clients" value="{{ $totalClients }}" sub="Voir mon portefeuille →" colorClass="kpi-total" />
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{{ route('commercial.portefeuille') }}" class="text-decoration-none">
+                        <x-kpi-card label="⌛ Essais en cours" value="{{ $activeTrials }}" sub="Période d'essai 30j" colorClass="kpi-trial" />
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{{ route('commercial.prospects') }}" class="text-decoration-none">
+                        <x-kpi-card label="🎯 Leads CRM" value="{{ $totalProspects }}" sub="{{ $newProspects }} nouveaux leads" colorClass="kpi-converted" />
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <div class="portfolio-kpi-card kpi-total">
+                        <div class="kpi-label">Taux de conversion</div>
+                        <div class="kpi-number text-primary">{{ $conversionRate }}%</div>
+                        <div class="kpi-sub">{{ $portfolioConverted }} convertis sur {{ $portfolioTrialExpired }} essais</div>
+                    </div>
+                </div>
+            </div>
 
-                        <!-- Centered Greeting Text (Mockup Style) -->
-                        <h3 class="fw-bold text-dark mb-1">Bonjour, {{ explode(' ', auth()->user()?->name ?? 'Utilisateur')[0] }}</h3>
-                        <p class="text-muted small mb-4">Que puis-je analyser ou automatiser pour vous aujourd'hui ?</p>
+            {{-- SECTION ACTIVITÉ RÉCENTE COMMERCIAL --}}
+            <div class="mockup-card p-4 mb-4 shadow-sm border border-light">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="h5 fw-bold text-dark mb-0">⚡ Activité Récente &amp; Inscriptions</h3>
+                    <a href="{{ route('commercial.portefeuille') }}" class="text-decoration-none small text-primary fw-semibold">Voir tout le portefeuille &rarr;</a>
+                </div>
+                <div class="row g-3">
+                    @forelse($recentActivities as $activity)
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-4 border d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-{{ $activity['type'] === 'client' ? 'primary' : 'success' }} text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:36px; height:36px; font-size:0.8rem;">
+                                        {{ strtoupper(substr($activity['name'], 0, 2)) }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark small">{{ $activity['name'] }}</div>
+                                        <div class="text-muted small" style="font-size:0.75rem;">
+                                            {{ $activity['type'] === 'client' ? 'Client PME inscrit' : 'Prospect CRM ajouté' }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="badge bg-white text-muted border rounded-pill small">
+                                    {{ $activity['date']->format('d M Y') }}
+                                </span>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-12 text-center text-muted py-3">
+                            Aucune activité récente.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
 
-                        <!-- Quick Action Buttons Row (Mockup Style) -->
-                        <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
-                            <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 text-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addProspectModal">
-                                <i data-feather="user-plus" class="me-1" style="width:12px; height:12px;"></i> + Lead CRM
-                            </button>
-                            <a href="{{ route('commercial.showcase') }}" class="btn btn-sm btn-light border rounded-pill px-3 text-sm fw-semibold">
-                                <i data-feather="file-text" class="me-1" style="width:12px; height:12px;"></i> Guides Inbound
-                            </a>
+            <!-- BOTTOM ROW (EXACT MOCKUP 3 COLUMNS: FUTURE EVENTS | ONBOARDING LEADS | WELCOME AI COPILOT) -->
+            <div class="row g-4">
+                <!-- COLUMN 1 (LEFT ~33%): FUTURE EVENTS / ÉVÉNEMENTS (Matching Mockup Left Card) -->
+                <div class="col-lg-4">
+                    <div class="mockup-card p-4 h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="h5 fw-bold text-dark mb-0">Événements & Relances</h3>
+                            <a href="{{ route('commercial.showcase') }}" class="text-decoration-none small text-muted fw-semibold">Voir tout &rarr;</a>
+                        </div>
+
+                        <!-- Highlighted Yellow/Amber Top Event Card (Mockup Style) -->
+                        <div class="amber-event-card mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold fs-6">Webinaire Sitiame Capital</span>
+                                <span class="badge bg-dark text-white rounded-pill px-2 py-1 small">Dans 15 min</span>
+                            </div>
+                            <p class="small text-dark mb-3">Présentation du logiciel comptable SYSCOHADA & Trésorerie Mobile Money.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-semibold">
+                                    <i data-feather="clock" class="me-1" style="width:12px; height:12px;"></i> 14:00 - 15:30
+                                </span>
+                                <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-semibold">
+                                    <i data-feather="calendar" class="me-1" style="width:12px; height:12px;"></i> 15 Déc.
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Second Event Item -->
+                        <div class="p-3 bg-light rounded-4 border mb-2 d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold text-dark small">Relances Essais Expirés</div>
+                                <div class="text-muted small" style="font-size:0.75rem;">Session de conversion téléphonique</div>
+                            </div>
+                            <span class="badge bg-white text-dark border rounded-pill">09:00 - 12:00</span>
+                        </div>
+
+                        <!-- Third Event Item -->
+                        <div class="p-3 bg-light rounded-4 border d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold text-dark small">Atelier Sitiame Finance Club</div>
+                                <div class="text-muted small" style="font-size:0.75rem;">Rencontre Dirigeants PME</div>
+                            </div>
+                            <span class="badge bg-white text-dark border rounded-pill">Jeudi</span>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Bottom Search Input Box ("Ask me anything" - Mockup Style) -->
-                    <div class="bg-light p-2 rounded-4 border">
-                        <input type="text" class="form-control border-0 bg-transparent text-sm text-center mb-2" placeholder="Posez votre question à l'IA...">
-                        <div class="d-flex justify-content-between align-items-center px-2">
-                            <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-2 py-1 text-muted small">
+                <!-- COLUMN 2 (MIDDLE ~33%): ONBOARDING / LEADS CRM 2x2 MINI GRID (Matching Mockup Middle Card) -->
+                <div class="col-lg-4">
+                    <div class="mockup-card p-4 h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="h5 fw-bold text-dark mb-0">Leads CRM Inbound</h3>
+                            <button type="button" class="btn btn-link text-decoration-none p-0 border-0 small text-muted fw-semibold" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                                + Lead
+                            </button>
+                        </div>
+
+                        <!-- 2x2 Grid Layout (Mockup Style) -->
+                        <div class="row g-3">
+                            @forelse($prospects->take(4) as $prospect)
+                                <div class="col-6">
+                                    <div class="mini-user-card">
+                                        <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center mx-auto mb-2" style="width:44px; height:44px; font-size:0.9rem;">
+                                            {{ strtoupper(substr($prospect->name ?? 'PR', 0, 2)) }}
+                                        </div>
+                                        <div class="fw-bold text-dark text-truncate small mb-0">{{ $prospect->name ?? 'Prospect' }}</div>
+                                        <div class="text-muted small text-truncate mb-2" style="font-size:0.75rem;">{{ $prospect->company_name ?? 'PME' }}</div>
+                                        <span class="badge {{ $prospect->status_badge_class }} rounded-pill px-2 py-1 small">
+                                            {{ $prospect->status_label }}
+                                        </span>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="col-12 text-center text-muted py-4">
+                                    <i data-feather="target" class="mb-2" style="width:32px; height:32px; opacity:0.3;"></i>
+                                    <div class="small">Aucun prospect disponible.</div>
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUMN 3 (RIGHT ~33%): WELCOME AI ASSISTANT CARD (Exact Mockup Right Card with Glowing 3D Orb) -->
+                <div class="col-lg-4">
+                    <div class="copilot-card h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <!-- Glowing 3D Orb (Mockup Sphere Style) -->
+                            <div class="copilot-orb-3d"></div>
+
+                            <!-- Centered Greeting Text (Mockup Style) -->
+                            <h3 class="fw-bold text-dark mb-1">Bonjour, {{ explode(' ', auth()->user()?->name ?? 'Utilisateur')[0] }}</h3>
+                            <p class="text-muted small mb-4">Que puis-je analyser ou automatiser pour vous aujourd'hui ?</p>
+
+                            <!-- Quick Action Buttons Row (Mockup Style) -->
+                            <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+                                <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 text-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                                    <i data-feather="user-plus" class="me-1" style="width:12px; height:12px;"></i> + Lead CRM
+                                </button>
+                                <a href="{{ route('commercial.showcase') }}" class="btn btn-sm btn-light border rounded-pill px-3 text-sm fw-semibold">
+                                    <i data-feather="file-text" class="me-1" style="width:12px; height:12px;"></i> Guides Inbound
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Search Input Box ("Ask me anything" - Mockup Style) -->
+                        <div class="bg-light p-2 rounded-4 border">
+                            <input type="text" class="form-control border-0 bg-transparent text-sm text-center mb-2" placeholder="Posez votre question à l'IA...">
+                            <div class="d-flex justify-content-between align-items-center px-2">
+                                <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-2 py-1 text-muted small">
+                                    <i data-feather="paperclip" style="width:12px; height:12px;"></i> Joindre
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-bold">
+                                    Créer &rarr;
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ============================================================ --}}
+        {{-- 📱 VERSION MOBILE-FIRST DU DASHBOARD (OPTIMISÉE SMARTPHONE) --}}
+        {{-- ============================================================ --}}
+        <div class="d-block d-md-none">
+            <!-- HEADER MOBILE -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="h5 fw-bold text-dark mb-0">Bonjour {{ explode(' ', auth()->user()?->name ?? 'Commercial')[0] }} 👋</h2>
+                    <p class="text-muted small mb-0">Portail Commercial & Marketing</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ route('notifications.index') }}" class="btn btn-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width:36px; height:36px; border: 1px solid #e2e8f0;">
+                        <i data-feather="bell" style="width:16px; height:16px;"></i>
+                    </a>
+                    <a href="{{ route('profile') }}" class="d-block">
+                        <img src="{{ (Auth::user()?->avatar) ? asset('storage/' . Auth::user()->avatar) : asset('images/sitiam.png') }}" class="rounded-circle border" style="width:36px; height:36px; object-fit: cover;" alt="Profil" />
+                    </a>
+                </div>
+            </div>
+
+            <!-- BOUTONS D'ACTIONS RAPIDES -->
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <button type="button" class="btn btn-outline-success rounded-pill px-3 d-flex align-items-center justify-content-center gap-2 flex-fill" style="height:48px; font-size:0.85rem;" data-bs-toggle="modal" data-bs-target="#smartImportClientModal">
+                    <i data-feather="upload-cloud" style="width:16px; height:16px;"></i>
+                    <span>Importer</span>
+                </button>
+                <button type="button" class="btn btn-outline-primary rounded-pill px-3 d-flex align-items-center justify-content-center gap-2 flex-fill" style="height:48px; font-size:0.85rem;" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                    <i data-feather="plus" style="width:16px; height:16px;"></i>
+                    <span>Lead CRM</span>
+                </button>
+                <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-primary rounded-pill px-3 d-flex align-items-center justify-content-center gap-2 flex-fill text-decoration-none" style="height:48px; font-size:0.85rem;">
+                    <i data-feather="user-plus" style="width:16px; height:16px;"></i>
+                    <span>Nouveau Client</span>
+                </a>
+            </div>
+
+            <!-- STATISTIQUES (2 PAR LIGNE) -->
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <div class="p-3 bg-white border rounded-4 shadow-sm text-center h-100">
+                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em;">Portefeuille</div>
+                        <div class="fs-3 fw-extrabold text-primary my-1">{{ $totalClients }}</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">Clients parrainés</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 bg-white border rounded-4 shadow-sm text-center h-100">
+                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em;">Essais actifs</div>
+                        <div class="fs-3 fw-extrabold text-warning my-1">{{ $activeTrials }}</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">Essais en cours</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 bg-white border rounded-4 shadow-sm text-center h-100">
+                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em;">Leads CRM</div>
+                        <div class="fs-3 fw-extrabold text-success my-1">{{ $totalProspects }}</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">Leads CRM</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 bg-white border rounded-4 shadow-sm text-center h-100">
+                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em;">Conversion</div>
+                        <div class="fs-3 fw-extrabold text-info my-1">{{ $conversionRate }}%</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">Taux Conversion</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PORTEFEUILLE CLIENTS (AFFICHAGE DIRECT CARTES) -->
+            <div class="card p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="h6 fw-bold text-dark mb-0">🏢 Mon Portefeuille</h3>
+                    <a href="{{ route('commercial.portefeuille') }}" class="text-decoration-none small text-primary fw-semibold">Voir tout &rarr;</a>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    @forelse($clients->take(3) as $client)
+                        @php
+                            $isTrialActive = false;
+                            $daysLeft = 0;
+                            if ($client && ($client->is_premium ?? false) && !empty($client->premium_ends_at)) {
+                                try {
+                                    $endsAt = $client->premium_ends_at instanceof \Carbon\Carbon
+                                        ? $client->premium_ends_at
+                                        : \Carbon\Carbon::parse($client->premium_ends_at);
+                                    $isTrialActive = $endsAt->isFuture();
+                                    $daysLeft = $isTrialActive ? now()->diffInDays($endsAt) : 0;
+                                } catch (\Throwable $e) {
+                                    $isTrialActive = false;
+                                    $daysLeft = 0;
+                                }
+                            }
+                        @endphp
+                        <div class="p-3 bg-light rounded-3 border d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:32px; height:32px; font-size:0.75rem;">
+                                        {{ strtoupper(substr($client->name ?? 'PME', 0, 2)) }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark small">{{ $client->name }}</div>
+                                        <div class="text-muted small" style="font-size:0.7rem;">{{ $client->company_name ?? '—' }}</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    @if($isTrialActive)
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1" style="font-size: 0.65rem;">
+                                            Essai ({{ $daysLeft }}j)
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1" style="font-size: 0.65rem;">
+                                            Expiré
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-1">
+                                <span class="text-muted" style="font-size:0.7rem;">Créé le {{ $client->created_at->format('d/m/Y') }}</span>
+                                <div class="d-flex gap-1.5">
+                                    <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 text-xs" data-bs-toggle="modal" data-bs-target="#editClientModalMobile{{ $client->id }}">
+                                        Modifier
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Edit Client Modal -->
+                        <div class="modal fade" id="editClientModalMobile{{ $client->id }}" data-bs-backdrop="static" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <form action="{{ route('commercial.clients.update', $client->id) }}" method="POST">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="modal-header border-0 bg-dark text-white p-3">
+                                            <h5 class="modal-title fw-bold text-white fs-6">Modifier — {{ $client->name }}</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body p-3">
+                                            <div class="d-flex flex-column gap-3">
+                                                <div>
+                                                    <label class="form-label small fw-semibold text-dark mb-1">Nom complet</label>
+                                                    <input type="text" name="name" class="form-control rounded-3" value="{{ old('name', $client->name) }}">
+                                                </div>
+                                                <div>
+                                                    <label class="form-label small fw-semibold text-dark mb-1">Adresse Email</label>
+                                                    <input type="email" name="email" class="form-control rounded-3" value="{{ old('email', $client->email) }}">
+                                                </div>
+                                                <div>
+                                                    <label class="form-label small fw-semibold text-dark mb-1">Téléphone</label>
+                                                    <input type="text" name="phone" class="form-control rounded-3" value="{{ old('phone', $client->phone) }}">
+                                                </div>
+                                                <div>
+                                                    <label class="form-label small fw-semibold text-dark mb-1">Raison Sociale</label>
+                                                    <input type="text" name="company_name" class="form-control rounded-3" value="{{ old('company_name', $client->company_name) }}">
+                                                </div>
+                                                <div>
+                                                    <label class="form-label small fw-semibold text-dark mb-1">Secteur</label>
+                                                    <input type="text" name="sector" class="form-control rounded-3" value="{{ old('sector', $client->sector) }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 p-3 pt-0">
+                                            <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Annuler</button>
+                                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Enregistrer</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center text-muted small py-3 bg-light rounded-3 border">
+                            Aucun client parrainé.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- DERNIERS LEADS CRM -->
+            <div class="card p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="h6 fw-bold text-dark mb-0">🎯 Derniers Leads CRM</h3>
+                    <a href="{{ route('commercial.prospects') }}" class="text-decoration-none small text-primary fw-semibold">Voir tout &rarr;</a>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    @forelse($prospects->take(3) as $prospect)
+                        <div class="p-3 bg-light rounded-3 border d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="fw-bold text-dark small">{{ $prospect->name }}</div>
+                                    <div class="text-muted small" style="font-size:0.7rem;">{{ $prospect->company_name ?? '—' }}</div>
+                                </div>
+                                <span class="badge {{ $prospect->status_badge_class }} rounded-pill px-2 py-1" style="font-size: 0.65rem;">
+                                    {{ $prospect->status_label }}
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-1">
+                                <span class="badge bg-primary text-white rounded-pill px-2 py-0.5" style="font-size: 0.65rem;">{{ $prospect->need_label }}</span>
+                                <span class="text-muted" style="font-size:0.7rem;">{{ $prospect->created_at->format('d/m/Y') }}</span>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center text-muted small py-3 bg-light rounded-3 border">
+                            Aucun lead CRM disponible.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- ASSISTANT IA MOBILE -->
+            <div class="card p-3 mb-3">
+                <h3 class="h6 fw-bold text-dark mb-1">🤖 Assistant IA</h3>
+                <p class="text-muted small mb-3">Bonjour {{ explode(' ', auth()->user()?->name ?? 'Commercial')[0] }}. Que puis-je analyser pour vous ?</p>
+                <form action="{{ route('commercial.dashboard') }}" method="GET" class="m-0" onsubmit="event.preventDefault(); alert('Lancement du conseiller IA...');">
+                    <div class="bg-light p-2 rounded-3 border">
+                        <input type="text" class="form-control border-0 bg-transparent p-0 text-sm mb-2" placeholder="Posez votre question à l'IA..." style="box-shadow: none; font-size: 0.85rem;">
+                        <div class="d-flex justify-content-between align-items-center pt-1">
+                            <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-2.5 py-1 text-muted text-xs d-flex align-items-center gap-1">
                                 <i data-feather="paperclip" style="width:12px; height:12px;"></i> Joindre
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-bold">
+                            <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-bold text-xs">
                                 Créer &rarr;
                             </button>
                         </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
-    </div>
 </div>
 
 <!-- Modal Add Prospect -->
