@@ -1,10 +1,12 @@
 /*
- * Correctif : le bundle adminkit-app.css ne contient pas les règles de base
- * du composant Modal de Bootstrap 5 (.modal { display:none } etc.).
- * Sans ce fichier, chaque <div class="modal fade"> s'affiche en flux normal
- * au lieu de rester masqué, créant des blocs vides géants sur toutes les
- * pages qui utilisent une modale (édition client, ajout de prospect, etc.).
- * Chargé après adminkit-app.css dans layouts/app.blade.php.
+ * public/css/adminkit-app.css (238 Ko, vendorisé, jamais reconstruit depuis
+ * le commit initial du projet) est incomplet par endroits : des règles ou
+ * des propriétés entières manquent (composant Modal, .min-w-0, une partie
+ * du hamburger...), probablement suite à un outil de purge/minification
+ * exécuté une fois sur ce fichier avant son ajout au dépôt.
+ * Plutôt que de retoucher ce gros fichier à l'aveugle, ce fichier regroupe
+ * les correctifs ponctuels au fur et à mesure qu'on les découvre. Chargé
+ * juste après adminkit-app.css dans layouts/app.blade.php.
  */
 
 .modal {
@@ -178,4 +180,48 @@ body.modal-open {
  */
 .min-w-0 {
     min-width: 0 !important;
+}
+
+/*
+ * Barre de navigation top (hamburger + icônes + logo) : le bundle vendor a
+ * une règle .hamburger:after incomplète (il manque content/background/height,
+ * donc la 2e barre de l'icône ne s'affiche jamais), et aucune règle ne force
+ * l'alignement vertical des icônes/liens/logo entre eux, d'où le décalage
+ * visible dans la barre mobile.
+ */
+.hamburger:after {
+    content: "";
+    display: block;
+    height: 3px;
+    background: #495057;
+    border-radius: 1px;
+    transition: background 0.1s ease-in-out, color 0.1s ease-in-out;
+}
+
+.navbar-nav {
+    align-items: center;
+}
+
+.navbar-nav .nav-item {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-nav .nav-icon,
+.navbar-nav .nav-link {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.navbar .avatar {
+    margin: 0 !important;
+    height: 32px;
+    width: 32px;
+    object-fit: cover;
+}
+
+.sidebar-toggle {
+    align-items: center;
+    justify-content: center;
 }
