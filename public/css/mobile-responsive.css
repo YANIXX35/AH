@@ -752,8 +752,8 @@
     h2, .h2 { font-size: 18px !important; }
     h3, .h3 { font-size: 16px !important; }
     p, body, td, th, span, div { font-size: 14px !important; }
-    .btn, button, a.btn, .sc-btn { 
-        font-size: 14px !important; 
+    .btn, button, a.btn, .sc-btn {
+        font-size: 14px !important;
         min-height: 48px !important;
         border-radius: 12px !important;
         display: inline-flex !important;
@@ -763,7 +763,16 @@
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
         transition: all 0.15s ease-in-out !important;
     }
-    
+
+    /* Boutons d'action compacts dans les cartes (Modifier/Supprimer, etc.) :
+       pas besoin de la zone tactile 48px, ça écrase la mise en page des cartes */
+    .btn-xs, .btn-sm {
+        min-height: 32px !important;
+        padding: 0.3rem 0.75rem !important;
+        font-size: 0.78rem !important;
+        border-radius: 999px !important;
+    }
+
     .btn:active, button:active, a.btn:active, .sc-btn:active {
         transform: scale(0.98) !important;
         opacity: 0.9 !important;
