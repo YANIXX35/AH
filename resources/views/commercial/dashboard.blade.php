@@ -226,6 +226,56 @@
         padding-bottom: 8px;
         margin-bottom: 16px;
     }
+
+    /* ============================================================ */
+    /* MOBILE — surcharge locale garantie (indépendante du cache CSS externe) */
+    /* ============================================================ */
+    @media (max-width: 767.98px) {
+        .soft-dashboard-body {
+            min-height: auto;
+            padding: 10px 8px;
+        }
+        .soft-dashboard-container {
+            padding: 0;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+            background: transparent;
+        }
+
+        /* Grille d'actions rapides : 3 colonnes icône + libellé, compacte */
+        .mobile-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .mobile-quick-actions .btn {
+            flex-direction: column;
+            gap: 4px;
+            height: 64px;
+            padding: 6px 4px;
+            font-size: 0.72rem;
+            line-height: 1.1;
+            white-space: normal;
+        }
+        .mobile-quick-actions .btn i,
+        .mobile-quick-actions .btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .mobile-stat-card {
+            padding: 12px 10px;
+        }
+        .mobile-stat-card .fs-3 {
+            font-size: 1.5rem !important;
+        }
+
+        .mobile-section-card {
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+    }
 </style>
 @endpush
 
@@ -708,46 +758,46 @@
             </div>
 
             <!-- BOUTONS D'ACTIONS RAPIDES -->
-            <div class="d-flex flex-wrap gap-2 mb-3">
-                <button type="button" class="btn btn-outline-success rounded-pill px-3 d-flex align-items-center justify-content-center gap-2 flex-fill" style="height:48px; font-size:0.85rem;" data-bs-toggle="modal" data-bs-target="#smartImportClientModal">
-                    <i data-feather="upload-cloud" style="width:16px; height:16px;"></i>
+            <div class="mobile-quick-actions mb-3">
+                <button type="button" class="btn btn-outline-success rounded-4" data-bs-toggle="modal" data-bs-target="#smartImportClientModal">
+                    <i data-feather="upload-cloud"></i>
                     <span>Importer</span>
                 </button>
-                <button type="button" class="btn btn-outline-primary rounded-pill px-3 d-flex align-items-center justify-content-center gap-2 flex-fill" style="height:48px; font-size:0.85rem;" data-bs-toggle="modal" data-bs-target="#addProspectModal">
-                    <i data-feather="plus" style="width:16px; height:16px;"></i>
+                <button type="button" class="btn btn-outline-primary rounded-4" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                    <i data-feather="plus"></i>
                     <span>Lead CRM</span>
                 </button>
-                <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-primary rounded-pill px-3 d-flex align-items-center justify-content-center gap-2 flex-fill text-decoration-none" style="height:48px; font-size:0.85rem;">
-                    <i data-feather="user-plus" style="width:16px; height:16px;"></i>
-                    <span>Nouveau Client</span>
+                <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-primary rounded-4 text-decoration-none">
+                    <i data-feather="user-plus"></i>
+                    <span>Client</span>
                 </a>
             </div>
 
             <!-- STATISTIQUES (2 PAR LIGNE) -->
             <div class="row g-2 mb-3">
                 <div class="col-6">
-                    <div class="p-3 bg-white border rounded-4 shadow-sm text-center h-100">
+                    <div class="mobile-stat-card p-3 bg-white border rounded-4 shadow-sm text-center h-100">
                         <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em;">Portefeuille</div>
                         <div class="fs-3 fw-extrabold text-primary my-1">{{ $totalClients }}</div>
                         <div class="text-muted" style="font-size: 0.7rem;">Clients parrainés</div>
                     </div>
                 </div>
                 <div class="col-6">
-                    <div class="p-3 bg-white border rounded-4 shadow-sm text-center h-100">
+                    <div class="mobile-stat-card p-3 bg-white border rounded-4 shadow-sm text-center h-100">
                         <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em;">Essais actifs</div>
                         <div class="fs-3 fw-extrabold text-warning my-1">{{ $activeTrials }}</div>
                         <div class="text-muted" style="font-size: 0.7rem;">Essais en cours</div>
                     </div>
                 </div>
                 <div class="col-6">
-                    <div class="p-3 bg-white border rounded-4 shadow-sm text-center h-100">
+                    <div class="mobile-stat-card p-3 bg-white border rounded-4 shadow-sm text-center h-100">
                         <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em;">Leads CRM</div>
                         <div class="fs-3 fw-extrabold text-success my-1">{{ $totalProspects }}</div>
                         <div class="text-muted" style="font-size: 0.7rem;">Leads CRM</div>
                     </div>
                 </div>
                 <div class="col-6">
-                    <div class="p-3 bg-white border rounded-4 shadow-sm text-center h-100">
+                    <div class="mobile-stat-card p-3 bg-white border rounded-4 shadow-sm text-center h-100">
                         <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em;">Conversion</div>
                         <div class="fs-3 fw-extrabold text-info my-1">{{ $conversionRate }}%</div>
                         <div class="text-muted" style="font-size: 0.7rem;">Taux Conversion</div>
@@ -756,7 +806,7 @@
             </div>
 
             <!-- PORTEFEUILLE CLIENTS (AFFICHAGE DIRECT CARTES) -->
-            <div class="card p-3 mb-3">
+            <div class="mobile-section-card card p-3 mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="h6 fw-bold text-dark mb-0">🏢 Mon Portefeuille</h3>
                     <a href="{{ route('commercial.portefeuille') }}" class="text-decoration-none small text-primary fw-semibold">Voir tout &rarr;</a>
@@ -864,7 +914,7 @@
             </div>
 
             <!-- DERNIERS LEADS CRM -->
-            <div class="card p-3 mb-3">
+            <div class="mobile-section-card card p-3 mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="h6 fw-bold text-dark mb-0">🎯 Derniers Leads CRM</h3>
                     <a href="{{ route('commercial.prospects') }}" class="text-decoration-none small text-primary fw-semibold">Voir tout &rarr;</a>
@@ -895,7 +945,7 @@
             </div>
 
             <!-- ASSISTANT IA MOBILE -->
-            <div class="card p-3 mb-3">
+            <div class="mobile-section-card card p-3 mb-3">
                 <h3 class="h6 fw-bold text-dark mb-1">🤖 Assistant IA</h3>
                 <p class="text-muted small mb-3">Bonjour {{ explode(' ', auth()->user()?->name ?? 'Commercial')[0] }}. Que puis-je analyser pour vous ?</p>
                 <form action="{{ route('commercial.dashboard') }}" method="GET" class="m-0" onsubmit="event.preventDefault(); alert('Lancement du conseiller IA...');">
