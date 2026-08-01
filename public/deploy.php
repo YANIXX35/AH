@@ -172,10 +172,10 @@ if ($envExists) {
     $dbHost = ''; $dbName = ''; $dbUser = ''; $dbPass = '';
     foreach (explode("\n", $envContent) as $line) {
         $line = trim($line);
-        if (str_starts_with($line, 'DB_HOST=')) $dbHost = substr($line, 8);
-        if (str_starts_with($line, 'DB_DATABASE=')) $dbName = substr($line, 12);
-        if (str_starts_with($line, 'DB_USERNAME=')) $dbUser = substr($line, 12);
-        if (str_starts_with($line, 'DB_PASSWORD=')) $dbPass = substr($line, 12);
+        if (strpos($line, 'DB_HOST=') === 0) $dbHost = substr($line, 8);
+        if (strpos($line, 'DB_DATABASE=') === 0) $dbName = substr($line, 12);
+        if (strpos($line, 'DB_USERNAME=') === 0) $dbUser = substr($line, 12);
+        if (strpos($line, 'DB_PASSWORD=') === 0) $dbPass = substr($line, 12);
     }
     // Nettoyer les quotes
     $dbHost = trim($dbHost, '"\' ');
