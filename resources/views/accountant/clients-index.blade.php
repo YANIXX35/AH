@@ -9,11 +9,11 @@
         <h1 class="h3 mb-1"><strong>Dossiers</strong> clients</h1>
         <p class="text-muted mb-0">Recherchez une entreprise et ouvrez sa fiche pour accéder aux outils.</p>
     </div>
-    <div class="d-flex gap-2">
-        <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addAccountantClientModal">
+    <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-primary btn-sm fw-semibold flex-fill flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#addAccountantClientModal">
             <i data-feather="plus-circle" class="me-1" style="width:16px; height:16px;"></i> Ajouter Client / Entreprise
         </button>
-        <a href="{{ route('accountant.dashboard') }}" class="btn btn-outline-secondary btn-sm">Tableau de bord cabinet</a>
+        <a href="{{ route('accountant.dashboard') }}" class="btn btn-outline-secondary btn-sm flex-fill flex-md-grow-0 text-center">Tableau de bord cabinet</a>
     </div>
 </div>
 
@@ -36,7 +36,7 @@
 
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4" @if(request('action') === 'add-client') style="display: none !important;" @endif>
     <div class="card-body p-0">
-        <div class="table-responsive">
+        <div class="table-responsive d-none d-md-block">
             <table class="table table-hover align-middle mb-0" style="min-width: 750px;">
                 <thead class="bg-light text-slate-700 text-uppercase fs-8 fw-bold border-bottom">
                     <tr>
@@ -103,6 +103,58 @@
                 @endforelse
                 </tbody>
             </table>
+        </div>
+
+        {{-- Vue mobile : cartes empilées plutôt qu'un tableau de 750px forcé en scroll --}}
+        <div class="d-block d-md-none p-3">
+            @php $mobileIndex = 1; @endphp
+            @forelse($enterpriseGroups as $group)
+                @foreach($group['users'] as $u)
+                    <div class="p-3 bg-light rounded-3 border d-flex flex-column gap-2 mb-3">
+                        <div class="d-flex align-items-start gap-2">
+                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:36px; height:36px; font-size:0.75rem;">
+                                {{ strtoupper(substr($group['company_name'] ?? 'E', 0, 2)) }}
+                            </div>
+                            <div class="min-w-0 flex-grow-1">
+                                <div class="fw-bold text-dark small text-truncate">{{ $group['company_name'] }}</div>
+                                @if(!empty($group['company_tax_id']))
+                                    <span class="badge bg-secondary-subtle text-secondary border" style="font-size:10px;">NIF: {{ $group['company_tax_id'] }}</span>
+                                @endif
+                            </div>
+                            <span class="text-muted flex-shrink-0" style="font-size:0.7rem;">#{{ $mobileIndex++ }}</span>
+                        </div>
+
+                        <div class="border-top pt-2">
+                            <div class="fw-semibold text-dark small">{{ $u->name }}</div>
+                            <span class="badge bg-primary-subtle text-primary" style="font-size: 10px;">Responsable Client</span>
+                            <div class="text-muted small text-truncate mt-1">{{ $u->email }}</div>
+                            <div class="text-muted small">Inscrit le {{ $u->created_at?->format('d/m/Y') }}</div>
+                        </div>
+
+                        <div class="d-flex gap-2 pt-1">
+                            <a href="{{ route('accountant.clients.show', $u) }}" class="btn btn-xs btn-primary rounded-pill flex-fill">
+                                <i data-feather="folder" class="me-1" style="width:12px; height:12px;"></i> Accéder au dossier
+                            </a>
+                            <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editAccountantClientModal{{ $u->id }}" title="Modifier">
+                                <i data-feather="edit-2" style="width:12px; height:12px;"></i>
+                            </button>
+                            <form action="{{ route('accountant.clients.destroy', $u->id) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce compte dossier client ? Cette action sera irréversible.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-xs btn-outline-danger rounded-pill px-3" title="Supprimer">
+                                    <i data-feather="trash-2" style="width:12px; height:12px;"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endforeach
+            @empty
+                <div class="text-center text-muted py-4">
+                    <i data-feather="inbox" class="mb-2 text-slate-300" style="width: 36px; height: 36px;"></i>
+                    <div class="fw-semibold small">Aucun dossier client trouvé.</div>
+                    <p class="small text-muted mb-0">Cliquez sur "Ajouter Client / Entreprise" pour créer un nouveau dossier.</p>
+                </div>
+            @endforelse
         </div>
     </div>
 </div>
