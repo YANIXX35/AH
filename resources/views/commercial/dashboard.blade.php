@@ -275,6 +275,22 @@
             padding: 14px;
             margin-bottom: 12px;
         }
+
+        /* Barre d'actions du formulaire "Nouveau Client" : empilée en pleine largeur,
+           bouton principal en premier, plutôt qu'une ligne qui déborde de l'écran */
+        .wizard-footer-actions {
+            flex-direction: column-reverse;
+            align-items: stretch;
+            gap: 10px;
+        }
+        .wizard-footer-actions > .wizard-footer-btn-group {
+            flex-direction: column;
+            width: 100%;
+            gap: 10px;
+        }
+        .wizard-footer-actions .btn {
+            width: 100%;
+        }
     }
 </style>
 @endpush
@@ -464,12 +480,12 @@
                         </div>
 
                         {{-- Footer actions --}}
-                        <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+                        <div class="wizard-footer-actions d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
                             <a href="{{ route('commercial.dashboard') }}"
                                class="btn btn-light rounded-pill px-4 fw-semibold text-muted text-decoration-none">
                                 ← Annuler
                             </a>
-                            <div class="d-flex gap-2">
+                            <div class="wizard-footer-btn-group d-flex gap-2">
                                 <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold"
                                         id="wizardPrevBtn" style="display:none;" onclick="goToStep(1)">
                                     ← Précédent
