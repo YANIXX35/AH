@@ -44,6 +44,17 @@ class AdminController extends Controller
         // chaque chargement, sans jamais devenir plus rapide).
         $data = Cache::remember('admin.dashboard.aggregates', now()->addMinutes(3), fn () => $this->buildDashboardData());
 
+        // Recalculé à chaque requête plutôt que mis en cache avec le reste : la
+        // requête est légère (8 lignes max), et la mise en cache d'une Collection
+        // Eloquent complète via le driver "file" a déjà produit une collection
+        // corrompue lors d'un rafraîchissement concurrent du cache (deux requêtes
+        // réécrivant le fichier en même temps), causant un "Attempt to read
+        // property on string" aléatoire sur cette page.
+        $data['recentUsers'] = User::query()
+            ->latest()
+            ->limit(8)
+            ->get(['id', 'name', 'email', 'company_name', 'created_at', 'is_premium', 'is_platform_admin']);
+
         // La recommandation IA est chargée en tâche de fond par le JS de la vue
         // (route admin.dashboard.ai.live) : la calculer ici aussi bloquerait
         // l'affichage de la page pendant jusqu'à 45s (timeout de l'appel HuggingFace).
@@ -89,11 +100,6 @@ class AdminController extends Controller
         $platformAdminCount = User::query()->where('is_platform_admin', true)->count();
         $pctTradeRegister = $userCount > 0 ? (int) round(100 * $withTradeRegister / $userCount) : 0;
         $pctPremium = $userCount > 0 ? (int) round(100 * $premiumCount / $userCount) : 0;
-
-        $recentUsers = User::query()
-            ->latest()
-            ->limit(8)
-            ->get(['id', 'name', 'email', 'company_name', 'created_at', 'is_premium', 'is_platform_admin']);
 
         $now = now();
         $licensesBase = EnterpriseLicense::query();
@@ -195,7 +201,6 @@ class AdminController extends Controller
             'platformAdminCount' => $platformAdminCount,
             'pctTradeRegister' => $pctTradeRegister,
             'pctPremium' => $pctPremium,
-            'recentUsers' => $recentUsers,
             'riskHeatmap' => $riskHeatmap,
             'incidentTimeline' => $incidentTimeline,
             'actionsOfDay' => $actionsOfDay,
