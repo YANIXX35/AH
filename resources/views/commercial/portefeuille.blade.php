@@ -324,7 +324,7 @@
                                     ? $client->premium_ends_at
                                     : \Carbon\Carbon::parse($client->premium_ends_at);
                                 $isTrialActive = $endsAt->isFuture();
-                                $daysLeft = $isTrialActive ? now()->diffInDays($endsAt) : 0;
+                                $daysLeft = $isTrialActive ? (int) floor(now()->diffInDays($endsAt)) : 0;
                             } catch (\Throwable $e) {
                                 $isTrialActive = false;
                                 $daysLeft = 0;
@@ -466,7 +466,7 @@
                                     ? $client->premium_ends_at
                                     : \Carbon\Carbon::parse($client->premium_ends_at);
                                 $isTrialActive = $endsAt->isFuture();
-                                $daysLeft = $isTrialActive ? now()->diffInDays($endsAt) : 0;
+                                $daysLeft = $isTrialActive ? (int) floor(now()->diffInDays($endsAt)) : 0;
                             } catch (\Throwable $e) {
                                 $isTrialActive = false;
                                 $daysLeft = 0;
@@ -474,23 +474,21 @@
                         }
                     @endphp
                     <div class="p-3 bg-light rounded-3 border d-flex flex-column gap-2 mb-3">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:32px; height:32px; font-size:0.75rem;">
-                                    {{ strtoupper(substr($client->name ?? 'PME', 0, 2)) }}
-                                </div>
-                                <div>
-                                    <div class="fw-bold text-dark small">{{ $client->name }}</div>
-                                    <div class="text-muted small" style="font-size:0.7rem;">{{ $client->company_name ?? '—' }}</div>
-                                </div>
+                        <div class="d-flex align-items-start gap-2">
+                            <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px; height:36px; font-size:0.75rem;">
+                                {{ strtoupper(substr($client->name ?? 'PME', 0, 2)) }}
                             </div>
-                            <div>
+                            <div class="min-w-0 flex-grow-1">
+                                <div class="fw-bold text-dark small text-truncate">{{ $client->name }}</div>
+                                <div class="text-muted small text-truncate" style="font-size:0.7rem;">{{ $client->company_name ?? '—' }}</div>
+                            </div>
+                            <div class="flex-shrink-0">
                                 @if($isTrialActive)
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1" style="font-size: 0.65rem;">
-                                        Essai ({{ $daysLeft }}j)
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 text-nowrap" style="font-size: 0.65rem;">
+                                        {{ $daysLeft }}j
                                     </span>
                                 @else
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1" style="font-size: 0.65rem;">
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 text-nowrap" style="font-size: 0.65rem;">
                                         Expiré
                                     </span>
                                 @endif
