@@ -27,8 +27,47 @@
         border-radius: 24px;
         box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.03);
     }
+
+    /* Sécurité anti-débordement : peu importe le texte, le badge de type ne peut pas dépasser sa carte */
+    .file-type-badge {
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    @media (max-width: 767.98px) {
+        .soft-dashboard-body { min-height: auto; padding: 10px 8px; }
+        .soft-dashboard-container { padding: 10px; border-radius: 20px; }
+    }
 </style>
 @endpush
+
+@php
+    $fileTypeLabel = function (?string $mime, string $filename): string {
+        $map = [
+            'application/pdf' => 'PDF',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'Word',
+            'application/msword' => 'Word',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'Excel',
+            'application/vnd.ms-excel' => 'Excel',
+            'text/csv' => 'CSV',
+            'application/json' => 'JSON',
+            'text/plain' => 'Texte',
+            'application/xml' => 'XML',
+            'text/xml' => 'XML',
+            'image/png' => 'Image PNG',
+            'image/jpeg' => 'Image JPEG',
+        ];
+        if ($mime && isset($map[$mime])) {
+            return $map[$mime];
+        }
+        $ext = strtoupper(pathinfo($filename, PATHINFO_EXTENSION));
+        return $ext ?: 'Document';
+    };
+@endphp
 
 @section('content')
 <div class="soft-dashboard-body">
@@ -93,7 +132,7 @@
                     <div class="card border rounded-4 p-4 bg-white shadow-sm">
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 pb-3 border-bottom">
                             <div class="d-flex align-items-center gap-3">
-                                <span class="badge bg-success text-white rounded-pill px-3 py-2 fs-6" id="fileReadTypeBadge">Fichier</span>
+                                <span class="badge bg-success text-white rounded-pill px-3 py-2 fs-6 file-type-badge" style="max-width: 160px;" id="fileReadTypeBadge">Fichier</span>
                                 <div>
                                     <h3 class="h5 fw-bold text-dark mb-0" id="fileReadName">—</h3>
                                     <span class="text-muted small" id="fileReadSize">(0 KB)</span>
@@ -179,8 +218,8 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge bg-secondary text-white rounded-pill px-3 py-1 small">
-                                        {{ $doc->mime_type ?? 'Document' }}
+                                    <span class="badge bg-secondary text-white rounded-pill px-3 py-1 small file-type-badge" title="{{ $doc->mime_type }}">
+                                        {{ $fileTypeLabel($doc->mime_type, $doc->original_name) }}
                                     </span>
                                 </td>
                                 <td class="fw-semibold text-muted">{{ $doc->formatted_size }}</td>
@@ -222,8 +261,8 @@
                             </div>
                             <div class="min-w-0 flex-grow-1">
                                 <div class="fw-bold text-dark text-truncate small" style="font-size: 0.9rem;">{{ $doc->original_name }}</div>
-                                <span class="badge bg-secondary text-white rounded-pill px-2 py-0.5 mt-1" style="font-size: 0.65rem;">
-                                    {{ $doc->mime_type ?? 'Document' }}
+                                <span class="badge bg-secondary text-white rounded-pill px-2 py-0.5 mt-1 file-type-badge" style="font-size: 0.65rem; max-width: 140px;" title="{{ $doc->mime_type }}">
+                                    {{ $fileTypeLabel($doc->mime_type, $doc->original_name) }}
                                 </span>
                             </div>
                         </div>
@@ -267,6 +306,29 @@
 
 @push('scripts')
 <script>
+const FILE_TYPE_LABELS = {
+    'application/pdf': 'PDF',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word',
+    'application/msword': 'Word',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'Excel',
+    'application/vnd.ms-excel': 'Excel',
+    'text/csv': 'CSV',
+    'application/json': 'JSON',
+    'text/plain': 'Texte',
+    'application/xml': 'XML',
+    'text/xml': 'XML',
+    'image/png': 'Image PNG',
+    'image/jpeg': 'Image JPEG',
+};
+
+function shortFileTypeLabel(file) {
+    if (file.type && FILE_TYPE_LABELS[file.type]) {
+        return FILE_TYPE_LABELS[file.type];
+    }
+    const ext = file.name.split('.').pop();
+    return ext ? ext.toUpperCase() : 'Document';
+}
+
 function handleDedicatedFileRead(file) {
     if (!file) return;
 
@@ -280,7 +342,8 @@ function handleDedicatedFileRead(file) {
     outputDiv.style.display = 'block';
     nameEl.innerText = file.name;
     sizeEl.innerText = '(' + (file.size / 1024).toFixed(2) + ' KB)';
-    typeBadge.innerText = file.type || file.name.split('.').pop().toUpperCase();
+    typeBadge.innerText = shortFileTypeLabel(file);
+    typeBadge.title = file.type || '';
 
     const lastMod = new Date(file.lastModified).toLocaleString('fr-FR');
     metaContainer.innerHTML = `
