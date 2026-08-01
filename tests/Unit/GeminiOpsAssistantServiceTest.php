@@ -153,24 +153,33 @@ class GeminiOpsAssistantServiceTest extends TestCase
      */
     public function test_circuit_breaker_lockout(): void
     {
-        Http::fake([
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent*' => Http::response([
-                'error' => [
-                    'message' => 'Quota ou surcharge'
-                ]
-            ], 503),
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent*' => Http::response([
-                'candidates' => [
-                    [
-                        'content' => [
-                            'parts' => [
-                                ['text' => 'Succès secours pendant CB']
+        $liteCallCount = 0;
+        Http::fake(function ($request) use (&$liteCallCount) {
+            $url = $request->url();
+            if (str_contains($url, 'models/gemini-2.0-flash:generateContent')) {
+                return Http::response([
+                    'error' => [
+                        'message' => 'Quota ou surcharge'
+                    ]
+                ], 503);
+            }
+            if (str_contains($url, 'models/gemini-2.5-flash-lite:generateContent')) {
+                $text = ($liteCallCount < 3) ? 'Succès secours pendant CB' : 'Succès après CB';
+                $liteCallCount++;
+                return Http::response([
+                    'candidates' => [
+                        [
+                            'content' => [
+                                'parts' => [
+                                    ['text' => $text]
+                                ]
                             ]
                         ]
                     ]
-                ]
-            ], 200),
-        ]);
+                ], 200);
+            }
+            return Http::response([], 500);
+        });
 
         $service = new GeminiOpsAssistantService();
 
@@ -181,26 +190,6 @@ class GeminiOpsAssistantServiceTest extends TestCase
 
         // Vérifier que le modèle par défaut a été verrouillé suite aux 3 échecs (max_failures=3)
         $this->assertTrue(Cache::get('gemini:cb:locked:gemini-2.0-flash', false));
-
-        // Réinitialiser les mocks HTTP pour renvoyer un succès
-        Http::fake([
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent*' => Http::response([
-                'error' => [
-                    'message' => 'Quota ou surcharge'
-                ]
-            ], 503),
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent*' => Http::response([
-                'candidates' => [
-                    [
-                        'content' => [
-                            'parts' => [
-                                ['text' => 'Succès après CB']
-                            ]
-                        ]
-                    ]
-                ]
-            ], 200),
-        ]);
 
         // Lancer un deuxième appel différent pour contourner le cache de requêtes
         $result = $service->chat([['role' => 'user', 'content' => 'Autre question post CB']]);
