@@ -8,6 +8,7 @@
     <title>@yield('title', config('app.name'))</title>
     <link rel="icon" type="image/png" href="{{ asset('images/sitiam.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/sitiam.png') }}">
+    <link rel="manifest" href="/manifest.webmanifest">
 
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -866,6 +867,76 @@
             });
 
         });
+    </script>
+
+    <!-- BANNIÈRE D'INSTALLATION PWA -->
+    <div id="pwaInstallBanner" class="position-fixed bottom-0 start-50 translate-middle-x mb-3 p-3 bg-dark text-white rounded-4 shadow-lg d-none align-items-center justify-content-between gap-3 border border-secondary" style="z-index: 9999; max-width: 90vw; width: 440px;">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ asset('images/icons/icon-72x72.png') }}" class="rounded-3" style="width: 42px; height: 42px;" alt="SITIAME PWA">
+            <div>
+                <div class="fw-bold text-white small">Installer SITIAME CAPITAL</div>
+                <div class="text-muted small" style="font-size: 0.75rem;">Accédez à l'application directement depuis votre écran d'accueil.</div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-2" id="pwaDismissBtn">Plus tard</button>
+            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" id="pwaInstallBtn">Installer</button>
+        </div>
+    </div>
+
+    <!-- SCRIPT ENREGISTREMENT SERVICE WORKER PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(function(registration) {
+                        console.log('[PWA] Service Worker enregistré avec succès sur le scope:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.error('[PWA] Échec d\'enregistrement du Service Worker:', error);
+                    });
+            });
+        }
+
+        // Gestion de l'installation PWA
+        let deferredPrompt;
+        const installBanner = document.getElementById('pwaInstallBanner');
+        const installBtn = document.getElementById('pwaInstallBtn');
+        const dismissBtn = document.getElementById('pwaDismissBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installBanner && !localStorage.getItem('pwa_banner_dismissed')) {
+                installBanner.classList.remove('d-none');
+                installBanner.classList.add('d-flex');
+            }
+        });
+
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`[PWA] Choix de l'utilisateur: ${outcome}`);
+                    deferredPrompt = null;
+                }
+                if (installBanner) {
+                    installBanner.classList.remove('d-flex');
+                    installBanner.classList.add('d-none');
+                }
+            });
+        }
+
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', () => {
+                if (installBanner) {
+                    installBanner.classList.remove('d-flex');
+                    installBanner.classList.add('d-none');
+                }
+                localStorage.setItem('pwa_banner_dismissed', 'true');
+            });
+        }
     </script>
     @stack('scripts')
 </body>
