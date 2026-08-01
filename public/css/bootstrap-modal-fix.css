@@ -169,3 +169,13 @@
 body.modal-open {
     overflow: hidden;
 }
+
+/*
+ * Autres utilitaires Bootstrap manquants du même bundle adminkit-app.css.
+ * .min-w-0 est indispensable pour que .text-truncate fonctionne dans un
+ * enfant flex (sans lui, l'élément ne peut jamais rétrécir sous sa largeur
+ * de contenu, donc l'ellipse ne se déclenche jamais et le texte déborde).
+ */
+.min-w-0 {
+    min-width: 0 !important;
+}
