@@ -87,6 +87,20 @@
         width: calc(100vw - 1.5rem) !important;
         max-width: 360px;
     }
+
+    /* "Espace métier" (admins plateforme) : sur sa propre ligne pleine largeur
+       plutôt que de flotter à côté du hamburger */
+    .navbar-nav:has(.admin-app-metier-nav) {
+        width: 100%;
+        margin: 8px 0 0 !important;
+    }
+    .admin-app-metier-nav {
+        width: 100%;
+    }
+    .admin-app-metier-nav .nav-link {
+        width: 100%;
+        text-align: center;
+    }
 }
 
 /* ---------------------------------------------------------------
@@ -675,6 +689,50 @@
     .mockup-header-bar .pill-tab-btn {
         padding: 5px 10px !important;
         font-size: 0.72rem !important;
+    }
+}
+
+/* ---------------------------------------------------------------
+   16b. DASHBOARD ADMIN — barre d'en-tête en pilule
+   Même bug que .mockup-header-bar (commercial) : border-radius:9999px
+   pensé pour une barre fine et large devient une forme ovale déformée
+   dès que le contenu passe à la ligne sur mobile.
+   --------------------------------------------------------------- */
+@media (max-width: 991.98px) {
+    .pill-header-bar {
+        border-radius: 18px !important;
+        padding: 12px !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    .pill-header-bar > div {
+        width: 100% !important;
+    }
+
+    .pill-header-bar .nav.nav-pills {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+
+    .pill-header-bar .soft-pill-btn {
+        padding: 6px 14px !important;
+        font-size: 0.78rem !important;
+    }
+
+    .pill-header-bar > div:last-child {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    .pill-header-bar > div:last-child .badge {
+        width: 100%;
+        text-align: center;
+    }
+
+    .pill-header-bar > div:last-child .btn {
+        width: 100%;
     }
 }
 
