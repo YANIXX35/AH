@@ -312,9 +312,9 @@
                                             <tr>
                                                 <th class="ps-3">Utilisateur</th>
                                                 <th class="d-none d-lg-table-cell">E-mail</th>
-                                                <th>Abonnement</th>
+                                                <th class="d-none d-md-table-cell">Abonnement</th>
                                                 <th class="d-none d-md-table-cell">Échéance</th>
-                                                <th>Alerte</th>
+                                                <th class="d-none d-md-table-cell">Alerte</th>
                                                 <th class="text-center pe-3">Actions</th>
                                             </tr>
                                         </thead>
@@ -329,9 +329,36 @@
                                                 <td class="ps-3">
                                                     <div class="fw-bold text-dark small">{{ $user->name }}</div>
                                                     <small class="text-muted d-block" style="font-size:10px;">ID #{{ $user->id }}</small>
+                                                    {{-- Résumé abonnement + alerte affiché uniquement sur mobile, colonnes dédiées masquées en dessous de md --}}
+                                                    <div class="d-md-none d-flex flex-wrap gap-1 mt-1">
+                                                        @if($user->is_platform_admin)
+                                                            @if($user->hasActivePremiumPeriod())
+                                                                <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5" style="font-size:10px;">Premium Admin</span>
+                                                            @else
+                                                                <span class="badge bg-primary rounded-pill px-2 py-0.5" style="font-size:10px;">Admin</span>
+                                                            @endif
+                                                        @elseif($user->is_accountant ?? false)
+                                                            <span class="badge bg-info text-dark rounded-pill px-2 py-0.5" style="font-size:10px;">Cabinet</span>
+                                                        @elseif($user->role_key === 'commercial')
+                                                            <span class="badge bg-primary text-white rounded-pill px-2 py-0.5" style="font-size:10px;">Commercial</span>
+                                                        @elseif($premiumOk)
+                                                            <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5" style="font-size:10px;">Premium</span>
+                                                        @elseif($user->is_premium)
+                                                            <span class="badge bg-secondary rounded-pill px-2 py-0.5" style="font-size:10px;">Premium Exp.</span>
+                                                        @else
+                                                            <span class="badge bg-light text-dark border rounded-pill px-2 py-0.5" style="font-size:10px;">Gratuit</span>
+                                                        @endif
+                                                        @if($user->account_suspended)
+                                                            <span class="badge bg-danger rounded-pill px-2 py-0.5" style="font-size:10px;">Bloqué</span>
+                                                        @elseif($past)
+                                                            <span class="badge bg-danger rounded-pill px-2 py-0.5" style="font-size:10px;">Échéance dépassée</span>
+                                                        @elseif($soon && $premiumOk)
+                                                            <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5" style="font-size:10px;">&lt; 7 j.</span>
+                                                        @endif
+                                                    </div>
                                                 </td>
                                                 <td class="small d-none d-lg-table-cell">{{ $user->email }}</td>
-                                                <td>
+                                                <td class="d-none d-md-table-cell">
                                                     @if($user->is_platform_admin)
                                                         @if($user->hasActivePremiumPeriod())
                                                             <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5" style="font-size:10px;">Premium Admin</span>
@@ -357,7 +384,7 @@
                                                         <span class="text-muted small">—</span>
                                                     @endif
                                                 </td>
-                                                <td>
+                                                <td class="d-none d-md-table-cell">
                                                     @if($user->account_suspended)
                                                         <span class="badge bg-danger rounded-pill px-2 py-0.5" style="font-size:10px;">Bloqué</span>
                                                     @elseif($past)
@@ -369,7 +396,7 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-center pe-3">
-                                                    <div class="d-inline-flex gap-1 justify-content-center align-items-center">
+                                                    <div class="d-flex flex-wrap gap-1 justify-content-center align-items-center">
                                                         <!-- Modifier -->
                                                         <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0.5" style="font-size:11px;" title="Modifier cet utilisateur">
                                                             ✏️ Éditer
