@@ -204,7 +204,7 @@ $vendorExists = file_exists($baseDir . '/vendor/autoload.php');
 
 $laravelTestBoot = false;
 $laravelBootError = '';
-if ($vendorExists && file_exists($baseDir . '/bootstrap/app.php')) {
+if ($phpCompat && $vendorExists && file_exists($baseDir . '/bootstrap/app.php')) {
     try {
         // Test de chargement sécurisé (sans l'exécuter complètement)
         require_once $baseDir . '/vendor/autoload.php';
