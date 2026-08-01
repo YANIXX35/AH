@@ -1,8 +1,0 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.sitiame_capital.twa",
-        "sha256_cert_fingerprints": ["B7:F7:5F:B9:61:D5:FD:4A:33:8E:A1:10:42:4C:87:60:0E:69:A8:15:E9:6C:42:F3:F2:B5:14:4A:66:46:3E:D4"]
-      }
-    }]

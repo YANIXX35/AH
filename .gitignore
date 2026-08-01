@@ -23,3 +23,8 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Ne jamais committer les packages Google Play / clés de signature
+/google/
+signing.keystore
+signing-key-info.txt
