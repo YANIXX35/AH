@@ -112,7 +112,7 @@
                 <div class="p-3 bg-white border rounded-4 shadow-sm mb-3">
                     <div class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">Réussir la Clôture de l'Exercice Comptable SYSCOHADA</div>
                     <div class="text-muted small mb-2">Par Expert Sitiame Capital</div>
-                    <div class="d-flex justify-content-between align-items-center border-top pt-2">
+                    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between border-top pt-2">
                         <span class="badge bg-light text-dark border rounded-pill px-2 py-1" style="font-size: 0.68rem;">15 Décembre · 14:00</span>
                         <span class="badge bg-success rounded-pill px-2 py-1" style="font-size: 0.68rem;">Inscriptions Ouvertes</span>
                     </div>
@@ -121,7 +121,7 @@
                 <div class="p-3 bg-white border rounded-4 shadow-sm mb-3">
                     <div class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">Digitalisation de la Trésorerie avec les APIs Mobile Money</div>
                     <div class="text-muted small mb-2">Par Tech Lead SITIAME</div>
-                    <div class="d-flex justify-content-between align-items-center border-top pt-2">
+                    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between border-top pt-2">
                         <span class="badge bg-light text-dark border rounded-pill px-2 py-1" style="font-size: 0.68rem;">22 Décembre · 10:00</span>
                         <span class="badge bg-success rounded-pill px-2 py-1" style="font-size: 0.68rem;">Inscriptions Ouvertes</span>
                     </div>

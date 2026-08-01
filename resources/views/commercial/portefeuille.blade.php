@@ -494,16 +494,16 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-1">
-                            <span class="text-muted" style="font-size:0.7rem;">Créé le {{ $client->created_at->format('d/m/Y') }}</span>
-                            <div class="d-flex gap-1.5">
-                                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2.5 py-1 text-xs" data-bs-toggle="modal" data-bs-target="#editClientModal{{ $client->id }}">
+                        <div class="border-top pt-2 mt-1">
+                            <span class="text-muted d-block mb-2" style="font-size:0.7rem;">Créé le {{ $client->created_at->format('d/m/Y') }}</span>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill flex-fill" data-bs-toggle="modal" data-bs-target="#editClientModal{{ $client->id }}">
                                     Modifier
                                 </button>
-                                <form action="{{ route('commercial.clients.destroy', $client->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Supprimer ce client ?');">
+                                <form action="{{ route('commercial.clients.destroy', $client->id) }}" method="POST" class="flex-fill" onsubmit="return confirm('Supprimer ce client ?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-xs btn-outline-danger rounded-pill px-2.5 py-1 text-xs ms-1">
+                                    <button type="submit" class="btn btn-xs btn-outline-danger rounded-pill w-100">
                                         Supprimer
                                     </button>
                                 </form>
