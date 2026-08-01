@@ -341,12 +341,12 @@
 
 <div id="adminGlobalChatWindow" class="admin-global-chat-window is-hidden" aria-live="polite" aria-label="{{ $assistantTitle }}">
     <div class="admin-global-chat-head d-flex justify-content-between align-items-center">
-        <div>
-            <div class="admin-global-chat-title">
+        <div class="min-w-0" style="overflow: hidden;">
+            <div class="admin-global-chat-title text-truncate">
                 <span class="admin-global-chat-online-dot"></span>
                 <span>{{ $assistantTitle }}</span>
             </div>
-            <small class="text-muted">
+            <small class="text-muted text-truncate d-block">
                 @if($hfAssistantEnabled)
                     {{ $hfModel }}
                 @else
@@ -354,10 +354,16 @@
                 @endif
             </small>
         </div>
-        <div class="d-flex gap-1">
-            <button id="adminGlobalChatClearBtn" type="button" class="btn btn-sm btn-light border">Vider</button>
-            <button id="adminGlobalChatMinimizeBtn" type="button" class="btn btn-sm btn-light border">Minimiser</button>
-            <button id="adminGlobalChatCloseBtn" type="button" class="btn btn-sm btn-light border">Fermer</button>
+        <div class="d-flex gap-1 flex-shrink-0 ms-2">
+            <button id="adminGlobalChatClearBtn" type="button" class="btn btn-sm btn-light border" title="Vider la conversation">
+                <i data-feather="trash-2" style="width:14px;height:14px;"></i>
+            </button>
+            <button id="adminGlobalChatMinimizeBtn" type="button" class="btn btn-sm btn-light border" title="Minimiser">
+                <i data-feather="minus" style="width:14px;height:14px;"></i>
+            </button>
+            <button id="adminGlobalChatCloseBtn" type="button" class="btn btn-sm btn-light border" title="Fermer">
+                <i data-feather="x" style="width:14px;height:14px;"></i>
+            </button>
         </div>
     </div>
     <div id="adminGlobalChatMessages" class="admin-global-chat-body"></div>
