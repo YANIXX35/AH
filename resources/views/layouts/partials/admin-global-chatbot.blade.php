@@ -51,6 +51,9 @@
         transform: translateY(-2px);
         box-shadow: 0 .7rem 1.4rem rgba(59, 125, 221, .4);
     }
+    .admin-global-chat-launcher.is-hidden {
+        display: none;
+    }
     .admin-global-chat-window {
         position: fixed;
         right: 22px;
@@ -273,9 +276,10 @@
             left: 0;
             bottom: 0;
             width: 100vw;
-            height: 58vh;          /* Compact : 58% de l'écran max */
-            max-height: 480px;
-            min-height: 320px;
+            height: 50vh;          /* Compact sur mobile ; dvh ci-dessous prend le relais si le clavier est ouvert */
+            height: 50dvh;
+            max-height: 420px;
+            min-height: 280px;
             border-radius: 1rem 1rem 0 0;
             border-left: 0;
             border-right: 0;
@@ -544,6 +548,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!chatWindow) return;
         chatWindow.classList.remove('is-hidden');
         if (backdrop) backdrop.classList.remove('is-hidden');
+        if (launcher) launcher.classList.add('is-hidden');
         document.body.classList.add('admin-chat-open');
         renderHistory();
         if (badge) badge.style.display = 'none';
@@ -554,6 +559,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!chatWindow) return;
         chatWindow.classList.add('is-hidden');
         if (backdrop) backdrop.classList.add('is-hidden');
+        if (launcher) launcher.classList.remove('is-hidden');
         document.body.classList.remove('admin-chat-open');
     };
 
