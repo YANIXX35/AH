@@ -18,7 +18,7 @@ jobs:
         with:
           php-version: "8.3"
           coverage: none
-          extensions: mbstring, dom, pdo_sqlite
+          extensions: mbstring, dom, pdo_sqlite, ctype, curl, fileinfo, gd, zip
 
       - name: Install composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
@@ -42,5 +42,5 @@ jobs:
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
-        run: php artisan test --parallel
+        run: php artisan test
 
