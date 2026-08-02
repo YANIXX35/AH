@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -55,10 +57,10 @@ class TreasuryTransaction extends Model
     /**
      * Garantit que transaction_date retourne toujours un objet Carbon ou null
      */
-    protected function transactionDate(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function transactionDate(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn ($value) => $value ? \Carbon\Carbon::parse($value) : null,
+        return Attribute::make(
+            get: fn ($value) => $value ? Carbon::parse($value) : null,
         );
     }
 

@@ -55,7 +55,7 @@ class PayrollController extends Controller
             'payment_method' => ['required', 'string', 'in:bank_transfer,wave,orange_money,mtn,check,cash'],
             'payment_account' => ['nullable', 'string', 'max:255'],
             'file' => ['nullable', 'file', 'mimes:pdf,xls,xlsx,csv,jpg,png', 'max:10240'],
-            
+
             // Salariés
             'employees' => ['required', 'array', 'min:1'],
             'employees.*.name' => ['required', 'string', 'max:255'],
@@ -133,6 +133,7 @@ class PayrollController extends Controller
     public function show(PayrollRun $payroll): View
     {
         $payroll->load('items');
+
         return view('payroll.show', compact('payroll'));
     }
 
@@ -150,8 +151,8 @@ class PayrollController extends Controller
                 $entry = AccountingEntry::create([
                     'user_id' => $user->id,
                     'entry_date' => $payroll->payment_date,
-                    'piece_number' => 'PAIE-' . str_pad($payroll->id, 5, '0', STR_PAD_LEFT),
-                    'label' => 'Paie du personnel — ' . $payroll->title,
+                    'piece_number' => 'PAIE-'.str_pad($payroll->id, 5, '0', STR_PAD_LEFT),
+                    'label' => 'Paie du personnel — '.$payroll->title,
                     'debit_account' => '661100', // Rémunérations directes
                     'credit_account' => '421100', // Personnel - Rémunérations dues
                     'amount' => $payroll->total_gross > 0 ? $payroll->total_gross : $payroll->total_net,
@@ -171,8 +172,8 @@ class PayrollController extends Controller
                     'category' => 'salaries',
                     'amount' => $payroll->total_net,
                     'payment_method' => $payroll->payment_method,
-                    'reference' => 'PAYROLL-' . $payroll->id,
-                    'description' => 'Virement Salaires — ' . $payroll->title,
+                    'reference' => 'PAYROLL-'.$payroll->id,
+                    'description' => 'Virement Salaires — '.$payroll->title,
                     'reconciled' => true,
                 ]);
                 $payroll->treasury_transaction_id = $tx->id;
@@ -191,6 +192,7 @@ class PayrollController extends Controller
     public function destroy(PayrollRun $payroll): RedirectResponse
     {
         $payroll->delete();
+
         return redirect()->route('payroll.index')->with('status', 'Lot de paie supprimé avec succès.');
     }
 }

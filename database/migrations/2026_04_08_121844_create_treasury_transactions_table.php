@@ -24,7 +24,7 @@ return new class extends Migration
             $table->enum('status', ['planifie', 'effectue', 'annule'])->default('planifie');
             $table->text('notes')->nullable();
             $table->timestamps();
-            
+
             $table->index('user_id');
             $table->index('transaction_date');
             $table->index('type');

@@ -6,7 +6,7 @@ use App\Domain\Accounting\QualityControlService;
 use App\Models\AccountingQualityReview;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Carbon;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class AccountingQualityReviewTest extends TestCase
@@ -112,7 +112,7 @@ class AccountingQualityReviewTest extends TestCase
     public function test_accountant_can_parse_company_document_and_extract_fields(): void
     {
         $accountant = User::factory()->create(['role_key' => 'accountant', 'is_accountant' => true]);
-        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent(
+        $file = UploadedFile::fake()->createWithContent(
             'fiche_entreprise_cabinet.txt',
             "Raison Sociale: Cabinet Conseil SARL\nDirigeant: Marc Amon\nEmail: contact@conseil.ci\nTelephone: +2250102030405\nNIF: 9988776C\nVille: Yamoussoukro"
         );

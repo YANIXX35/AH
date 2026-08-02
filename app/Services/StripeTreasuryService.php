@@ -25,7 +25,7 @@ class StripeTreasuryService
                 'transaction_id' => $transaction->id,
                 'user_id' => $user->id,
             ]);
-            
+
             return [
                 'error' => 'Stripe non configuré. Configurez STRIPE_ENABLED=true et STRIPE_SECRET.',
                 'enabled' => false,
@@ -77,7 +77,7 @@ class StripeTreasuryService
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return [
                 'error' => 'Erreur Stripe: '.$e->getMessage(),
                 'enabled' => true,
@@ -91,7 +91,7 @@ class StripeTreasuryService
             \Log::warning('Stripe non configuré - retrieve session impossible', [
                 'session_id' => $sessionId,
             ]);
-            
+
             return [
                 'error' => 'Stripe non configuré',
                 'enabled' => false,
@@ -121,7 +121,7 @@ class StripeTreasuryService
                 'session_id' => $sessionId,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return [
                 'error' => 'Erreur Stripe: '.$e->getMessage(),
                 'enabled' => true,
@@ -135,7 +135,7 @@ class StripeTreasuryService
             \Log::warning('Stripe non configuré - payout impossible', [
                 'transaction_id' => $transaction->id,
             ]);
-            
+
             return [
                 'error' => 'Stripe non configuré',
                 'enabled' => false,
@@ -192,7 +192,7 @@ class StripeTreasuryService
                 'transaction_id' => $transaction->id,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return [
                 'error' => 'Erreur Stripe: '.$e->getMessage(),
                 'enabled' => true,
@@ -233,7 +233,7 @@ class StripeTreasuryService
         if ($secret === '') {
             throw new \RuntimeException('Stripe secret key non configurée');
         }
-        
+
         return new StripeClient($secret);
     }
 

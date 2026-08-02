@@ -23,17 +23,11 @@ use Illuminate\View\View;
  */
 class FedaPaySandboxController extends Controller
 {
-    /**
-     * @param  string|null  $status
-     */
     protected function isApprovedStatus(?string $status): bool
     {
         return in_array(strtoupper((string) $status), ['APPROVED', 'COMPLETED'], true);
     }
 
-    /**
-     * @param  string|null  $status
-     */
     protected function isFailureStatus(?string $status): bool
     {
         return in_array(strtoupper((string) $status), ['FAILED', 'REJECTED', 'CANCELED', 'DECLINED'], true);
@@ -391,4 +385,3 @@ class FedaPaySandboxController extends Controller
             ->with($approved || ! $failed ? 'status' : 'result_error', $message);
     }
 }
-

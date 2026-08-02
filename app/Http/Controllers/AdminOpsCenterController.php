@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\AccountingEntry;
-use App\Models\AiActionTask;
-use App\Models\AdminApprovalRequest;
 use App\Models\AdminApprovalAction;
+use App\Models\AdminApprovalRequest;
 use App\Models\AdminAuditTrail;
-use App\Models\AppNotification;
+use App\Models\AiActionTask;
 use App\Models\InvestmentRequest;
 use App\Models\MenuActionLog;
 use App\Models\PaymentTransaction;
@@ -17,7 +16,7 @@ use App\Models\SupportTicket;
 use App\Models\User;
 use App\Services\AdminAuditTrailService;
 use App\Services\HuggingFaceOpsAssistantService;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -210,14 +209,14 @@ class AdminOpsCenterController extends Controller
             [
                 'role' => 'system',
                 'content' => "Tu es l'assistant IA officiel de l'application Sitiame Capital (spécialisé Ops, Performance et Administration). Réponds en français de manière claire, concise, orientée action et chiffre. Ne donne pas d'actions destructives.\n\n"
-                    . "Voici la structure et les pages clés de l'application :\n"
-                    . "- Tableau de bord : Synthèse de la santé financière, métriques de CA et cashflow, alertes et propositions en temps réel.\n"
-                    . "- Comptabilité : Gestion des écritures, saisie et import de justificatifs avec extraction automatique par OCR, plan comptable OHADA et génération de la liasse fiscale BCEAO.\n"
-                    . "- Trésorerie : Balance, suivi des soldes, encaissements/décaissements et net cashflow.\n"
-                    . "- Diagnostics : readiness investor (éligibilité à l'investissement), heatmap des risques et scoring financier à 360°.\n"
-                    . "- Équipe et Profil : Gestion des collaborateurs de l'entreprise et abonnements (Gratuit, Premium activable via CinetPay/FedaPay).\n"
-                    . "- Factures & Support : Historique des factures de la plateforme et messagerie de tickets support technique.\n\n"
-                    . "Tu possèdes une excellente culture générale pour répondre à toute question générale (histoire, célébrités, science, géographie, etc.). Cependant, si l'utilisateur pose une question offensante, injurieuse, dangereuse, illégale ou d'ordre sexuel, refuse poliment d'y répondre en disant exactement : 'Je suis conçu pour vous assister dans la gestion financière et comptable de votre entreprise sur Sitiame Capital. Je ne peux pas répondre à cette demande.'. Si la demande parle de croissance/chiffre d'affaires, propose un plan sur 30/60/90 jours avec KPI de suivi et impact attendu. Quand tu proposes une priorité, explique systématiquement COMMENT FAIRE sous forme de plan opérationnel: Étapes 1..N, responsable, délai, KPI de contrôle.",
+                    ."Voici la structure et les pages clés de l'application :\n"
+                    ."- Tableau de bord : Synthèse de la santé financière, métriques de CA et cashflow, alertes et propositions en temps réel.\n"
+                    ."- Comptabilité : Gestion des écritures, saisie et import de justificatifs avec extraction automatique par OCR, plan comptable OHADA et génération de la liasse fiscale BCEAO.\n"
+                    ."- Trésorerie : Balance, suivi des soldes, encaissements/décaissements et net cashflow.\n"
+                    ."- Diagnostics : readiness investor (éligibilité à l'investissement), heatmap des risques et scoring financier à 360°.\n"
+                    ."- Équipe et Profil : Gestion des collaborateurs de l'entreprise et abonnements (Gratuit, Premium activable via CinetPay/FedaPay).\n"
+                    ."- Factures & Support : Historique des factures de la plateforme et messagerie de tickets support technique.\n\n"
+                    ."Tu possèdes une excellente culture générale pour répondre à toute question générale (histoire, célébrités, science, géographie, etc.). Cependant, si l'utilisateur pose une question offensante, injurieuse, dangereuse, illégale ou d'ordre sexuel, refuse poliment d'y répondre en disant exactement : 'Je suis conçu pour vous assister dans la gestion financière et comptable de votre entreprise sur Sitiame Capital. Je ne peux pas répondre à cette demande.'. Si la demande parle de croissance/chiffre d'affaires, propose un plan sur 30/60/90 jours avec KPI de suivi et impact attendu. Quand tu proposes une priorité, explique systématiquement COMMENT FAIRE sous forme de plan opérationnel: Étapes 1..N, responsable, délai, KPI de contrôle.",
             ],
             [
                 'role' => 'system',
@@ -432,7 +431,7 @@ class AdminOpsCenterController extends Controller
             $request
         );
 
-        return back()->with('status', "Tâche IA assignée.");
+        return back()->with('status', 'Tâche IA assignée.');
     }
 
     public function completeAiTask(Request $request, int $task): RedirectResponse
@@ -463,7 +462,7 @@ class AdminOpsCenterController extends Controller
             $request
         );
 
-        return back()->with('status', "Tâche IA marquée comme terminée.");
+        return back()->with('status', 'Tâche IA marquée comme terminée.');
     }
 
     /**
@@ -750,7 +749,7 @@ class AdminOpsCenterController extends Controller
             ."4) Vérifier les résultats en fin de journée et ajuster le plan selon les écarts KPI.\n"
             ."**KPI cette semaine :** succès paiement >= 97% ; activation premium >= 10%.\n"
             ."**Impact CA attendu :** hausse de la conversion et meilleure rétention premium.\n"
-            ."Contexte actuel: croissance CA 30j ".number_format($revenueGrowth, 2, ',', ' ')."%, succès paiement ".number_format($paymentSuccess, 2, ',', ' ')."%, premium actif ".number_format($premiumRate, 2, ',', ' ')."%.";
+            .'Contexte actuel: croissance CA 30j '.number_format($revenueGrowth, 2, ',', ' ').'%, succès paiement '.number_format($paymentSuccess, 2, ',', ' ').'%, premium actif '.number_format($premiumRate, 2, ',', ' ').'%.';
     }
 
     public function updateFeatureFlags(Request $request): RedirectResponse
@@ -1013,7 +1012,7 @@ class AdminOpsCenterController extends Controller
      * Moyenne (en heures) entre deux colonnes date, calculée côté PHP plutôt qu'en SQL
      * (TIMESTAMPDIFF est MySQL-only et casse sous PostgreSQL/Neon en production).
      */
-    private function averageHoursBetween(\Illuminate\Database\Eloquent\Builder $query, string $fromColumn, string $toColumn): float
+    private function averageHoursBetween(Builder $query, string $fromColumn, string $toColumn): float
     {
         $rows = $query->whereNotNull($toColumn)->get([$fromColumn, $toColumn]);
         if ($rows->isEmpty()) {
@@ -1182,4 +1181,3 @@ class AdminOpsCenterController extends Controller
         ];
     }
 }
-

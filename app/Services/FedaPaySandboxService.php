@@ -188,7 +188,7 @@ class FedaPaySandboxService
                 'provider_reference' => $providerReference,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
                 'status' => 'EXCEPTION',
@@ -298,7 +298,7 @@ class FedaPaySandboxService
 
         if ($apiKey === '') {
             \Log::warning('FedaPay fetchRecentEvents: API key manquante');
-            
+
             return [
                 'success' => false,
                 'message' => 'Clé API FedaPay sandbox absente.',
@@ -397,4 +397,3 @@ class FedaPaySandboxService
         return $trimmed;
     }
 }
-

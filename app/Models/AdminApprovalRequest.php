@@ -52,4 +52,3 @@ class AdminApprovalRequest extends Model
         return $this->hasMany(AdminApprovalAction::class, 'admin_approval_request_id');
     }
 }
-

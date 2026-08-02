@@ -15,7 +15,6 @@ use App\Models\User;
 use App\Services\AdminAuditTrailService;
 use App\Services\HuggingFaceOpsAssistantService;
 use App\Services\UserPremiumService;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -357,6 +356,7 @@ class AdminController extends Controller
             ->get()
             ->map(function (SupportTicket $ticket) {
                 $date = $ticket->updated_at ?? $ticket->created_at;
+
                 return [
                     'at' => $date ? $date->toIso8601String() : null,
                     'module' => 'support',
@@ -375,6 +375,7 @@ class AdminController extends Controller
             ->get()
             ->map(function (InvestmentRequest $request) {
                 $date = $request->updated_at ?? $request->created_at;
+
                 return [
                     'at' => $date ? $date->toIso8601String() : null,
                     'module' => 'investment',
@@ -407,6 +408,7 @@ class AdminController extends Controller
             ->get()
             ->map(function (TreasuryAuditLog $log) {
                 $severity = str_contains((string) $log->action, 'unlock') ? 'warning' : 'info';
+
                 return [
                     'at' => $log->created_at ? $log->created_at->toIso8601String() : null,
                     'module' => 'treasury',
@@ -525,9 +527,9 @@ class AdminController extends Controller
         if ($entriesMissingAttachment > 0) {
             $items[] = [
                 'severity' => $entriesMissingAttachment >= 10 ? 'danger' : 'warning',
-                'title' => "Écritures sans pièce justificative",
+                'title' => 'Écritures sans pièce justificative',
                 'detail' => "{$entriesMissingAttachment} écriture(s) sur 30 jours sans document associé.",
-                'proposal' => "Imposer un contrôle de complétude documentaire avant validation.",
+                'proposal' => 'Imposer un contrôle de complétude documentaire avant validation.',
             ];
         }
 
@@ -538,9 +540,9 @@ class AdminController extends Controller
         if ($ocrMismatch > 0) {
             $items[] = [
                 'severity' => $ocrMismatch >= 8 ? 'danger' : 'warning',
-                'title' => "Incohérences OCR comptables",
+                'title' => 'Incohérences OCR comptables',
                 'detail' => "{$ocrMismatch} écriture(s) avec mismatch OCR sur 30 jours.",
-                'proposal' => "Lancer une revue comptable ciblée des dossiers OCR incohérents.",
+                'proposal' => 'Lancer une revue comptable ciblée des dossiers OCR incohérents.',
             ];
         }
 
@@ -554,9 +556,9 @@ class AdminController extends Controller
         if ($treasuryNoReference > 0) {
             $items[] = [
                 'severity' => $treasuryNoReference >= 12 ? 'danger' : 'warning',
-                'title' => "Mouvements trésorerie sans référence",
+                'title' => 'Mouvements trésorerie sans référence',
                 'detail' => "{$treasuryNoReference} mouvement(s) effectués sans référence.",
-                'proposal' => "Rendre le champ référence obligatoire pour les flux de trésorerie.",
+                'proposal' => 'Rendre le champ référence obligatoire pour les flux de trésorerie.',
             ];
         }
 
@@ -568,18 +570,18 @@ class AdminController extends Controller
         if ($negativeOrZeroAmount > 0) {
             $items[] = [
                 'severity' => 'danger',
-                'title' => "Montants de trésorerie invalides",
+                'title' => 'Montants de trésorerie invalides',
                 'detail' => "{$negativeOrZeroAmount} mouvement(s) avec montant inférieur ou égal à zéro.",
-                'proposal' => "Bloquer les montants non positifs au niveau formulaire et API.",
+                'proposal' => 'Bloquer les montants non positifs au niveau formulaire et API.',
             ];
         }
 
         if (empty($items)) {
             $items[] = [
                 'severity' => 'success',
-                'title' => "Aucune incohérence majeure détectée",
-                'detail' => "La cohérence comptable et trésorerie est stable sur les périodes analysées.",
-                'proposal' => "Maintenir le rythme de contrôle hebdomadaire.",
+                'title' => 'Aucune incohérence majeure détectée',
+                'detail' => 'La cohérence comptable et trésorerie est stable sur les périodes analysées.',
+                'proposal' => 'Maintenir le rythme de contrôle hebdomadaire.',
             ];
         }
 
@@ -605,7 +607,7 @@ class AdminController extends Controller
             ."2) Assigner un responsable comptable et un responsable trésorerie avec délai de 48h.\n"
             ."3) Contrôler l'impact business sur encaissements, taux premium et backlog support.\n"
             ."**KPI de suivi :** anomalies ouvertes, taux de succès paiement, cashflow net.\n"
-            ."**Impact attendu :** meilleure fiabilité financière et hausse de conversion.";
+            .'**Impact attendu :** meilleure fiabilité financière et hausse de conversion.';
 
         $tokenConfigured = (string) config('services.huggingface.token', '') !== '';
         if (! $tokenConfigured) {
@@ -615,7 +617,7 @@ class AdminController extends Controller
         $messages = [
             [
                 'role' => 'system',
-                'content' => "Tu es un copilote IA live pour dashboard admin. Réponds en français, format compact et actionnable: Priorité immédiate, Comment faire (4 étapes), KPI de suivi, Impact business. Tu dois analyser comptabilité et trésorerie.",
+                'content' => 'Tu es un copilote IA live pour dashboard admin. Réponds en français, format compact et actionnable: Priorité immédiate, Comment faire (4 étapes), KPI de suivi, Impact business. Tu dois analyser comptabilité et trésorerie.',
             ],
             [
                 'role' => 'system',
@@ -636,6 +638,7 @@ class AdminController extends Controller
         }
 
         $answer = trim((string) ($result['answer'] ?? ''));
+
         return $answer !== '' ? $answer : $fallback;
     }
 
@@ -1001,7 +1004,7 @@ class AdminController extends Controller
                 ->where('is_platform_admin', true)
                 ->where('id', '!=', $user->id)
                 ->exists();
-            if (!$otherAdminsExist) {
+            if (! $otherAdminsExist) {
                 return back()->withErrors([
                     'user' => 'Impossible de supprimer le dernier administrateur de la plateforme.',
                 ]);

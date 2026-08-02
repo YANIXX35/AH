@@ -6,6 +6,7 @@ use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
 use App\Models\TreasuryTransaction;
 use App\Models\User;
+use App\Services\CompanyDocumentParserService;
 use App\Services\HuggingFaceOpsAssistantService;
 use App\Support\ClientWorkspace;
 use App\Support\OcrStatus;
@@ -27,7 +28,7 @@ class AccountantDashboardController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $cacheKey = 'accountant.dashboard.aggregates.' . ($user?->id ?? 0);
+        $cacheKey = 'accountant.dashboard.aggregates.'.($user?->id ?? 0);
 
         $aggregates = Cache::remember($cacheKey, now()->addMinutes(3), function () use ($user) {
             $clientQuery = User::query()->clients();
@@ -147,7 +148,7 @@ class AccountantDashboardController extends Controller
         })->count();
 
         $expiredTrials = $referredClients->filter(function ($client) {
-            return !$client->is_premium || ($client->premium_ends_at && $client->premium_ends_at->isPast());
+            return ! $client->is_premium || ($client->premium_ends_at && $client->premium_ends_at->isPast());
         })->count();
 
         $selectedCommercialId = $request->query('commercial_id');
@@ -167,7 +168,7 @@ class AccountantDashboardController extends Controller
     }
 
     /**
-     * @param array<int, int> $clientIds
+     * @param  array<int, int>  $clientIds
      * @return array<int, array<string, string>>
      */
     private function buildFinancialInconsistencies(array $clientIds): array
@@ -266,8 +267,8 @@ class AccountantDashboardController extends Controller
     }
 
     /**
-     * @param array<int, int> $clientIds
-     * @param array<int, array<string, string>> $inconsistencies
+     * @param  array<int, int>  $clientIds
+     * @param  array<int, array<string, string>>  $inconsistencies
      */
     private function buildLiveInsight(array $clientIds, array $inconsistencies): string
     {
@@ -278,7 +279,7 @@ class AccountantDashboardController extends Controller
             ."3) Controler les references de tresorerie et la coherence des montants.\n"
             ."4) Presenter un suivi hebdomadaire avec KPI par portefeuille.\n"
             ."**KPI de suivi :** anomalies ouvertes, delai moyen de correction, flux sans reference, evolution CA clients.\n"
-            ."**Impact attendu :** meilleure fiabilite dossiers et meilleure performance business client.";
+            .'**Impact attendu :** meilleure fiabilite dossiers et meilleure performance business client.';
 
         if (empty($clientIds) || (string) config('services.huggingface.token', '') === '') {
             return $fallback;
@@ -302,7 +303,7 @@ class AccountantDashboardController extends Controller
         $messages = [
             [
                 'role' => 'system',
-                'content' => "Tu es un copilote financier pour cabinet comptable. Reponds en francais, actionnable et concis avec: Priorite immediate, Comment faire (4 etapes), KPI de suivi, Impact attendu.",
+                'content' => 'Tu es un copilote financier pour cabinet comptable. Reponds en francais, actionnable et concis avec: Priorite immediate, Comment faire (4 etapes), KPI de suivi, Impact attendu.',
             ],
             [
                 'role' => 'system',
@@ -325,10 +326,11 @@ class AccountantDashboardController extends Controller
         }
 
         $answer = trim((string) ($result['answer'] ?? ''));
+
         return $answer !== '' ? $answer : $fallback;
     }
 
-    public function parseCompanyDocument(Request $request, \App\Services\CompanyDocumentParserService $parser): JsonResponse
+    public function parseCompanyDocument(Request $request, CompanyDocumentParserService $parser): JsonResponse
     {
         $request->validate([
             'document' => ['required', 'file', 'max:10240', 'mimes:docx,doc,xlsx,xls,csv,pdf,txt'],
@@ -343,7 +345,7 @@ class AccountantDashboardController extends Controller
             'fields_found_count' => count($extracted),
             'extracted' => $extracted,
             'message' => count($extracted) > 0
-                ? count($extracted) . ' champ(s) identifié(s) et pré-rempli(s) automatiquement.'
+                ? count($extracted).' champ(s) identifié(s) et pré-rempli(s) automatiquement.'
                 : 'Aucun champ reconnu automatiquement. Vous pouvez remplir les informations manuellement.',
         ]);
     }

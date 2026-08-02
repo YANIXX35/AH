@@ -7,6 +7,7 @@ use App\Models\MobileMoneyTransaction;
 use App\Models\TreasuryTransaction;
 use App\Services\TreasuryAudit;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
 class MobileMoneyReconciliationService
@@ -17,9 +18,7 @@ class MobileMoneyReconciliationService
      */
     private const MATCH_WINDOW_DAYS = 3;
 
-    public function __construct(private readonly MobileMoneyConnectorResolver $connectorResolver)
-    {
-    }
+    public function __construct(private readonly MobileMoneyConnectorResolver $connectorResolver) {}
 
     public function importStatement(
         UploadedFile $file,
@@ -123,7 +122,7 @@ class MobileMoneyReconciliationService
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, TreasuryTransaction>
+     * @return Collection<int, TreasuryTransaction>
      */
     public function findCandidates(MobileMoneyTransaction $transaction)
     {

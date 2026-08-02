@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Service Gemini avec :
@@ -24,7 +24,7 @@ class GeminiOpsAssistantService
     private function availableKeys(): array
     {
         $primary = (string) config('gemini.key', env('GEMINI_API_KEY', ''));
-        $extras  = (array)  config('gemini.extra_keys', []);
+        $extras = (array) config('gemini.extra_keys', []);
 
         // Toutes les clés dans l'ordre de priorité
         $allKeys = array_values(array_filter(array_merge([$primary], $extras)));
@@ -39,7 +39,7 @@ class GeminiOpsAssistantService
     private function keyLockoutCacheKey(string $apiKey): string
     {
         // On hash la clé pour ne pas l'exposer dans le cache
-        return 'gemini:key:exhausted:' . substr(md5($apiKey), 0, 12);
+        return 'gemini:key:exhausted:'.substr(md5($apiKey), 0, 12);
     }
 
     /**
@@ -51,7 +51,7 @@ class GeminiOpsAssistantService
 
         $logChannel = (string) config('gemini.logging.channel', 'gemini');
         // On ne loggue que les 8 derniers caractères pour la sécurité
-        $maskedKey = '***' . substr($apiKey, -8);
+        $maskedKey = '***'.substr($apiKey, -8);
         Log::channel($logChannel)->warning(
             "Gemini KEY QUOTA EXHAUSTED | Clé [{$maskedKey}] verrouillée pour {$minutes} min. Basculement sur la clé suivante."
         );
@@ -64,24 +64,24 @@ class GeminiOpsAssistantService
      * Circuit Breaker + Retry exponentiel par modèle.
      * Cache des réponses identiques.
      *
-     * @param array<int, array{role: string, content: string}> $messages
+     * @param  array<int, array{role: string, content: string}>  $messages
      * @return array{ok: bool, answer: string, error?: string, enabled: bool}
      */
     public function chat(array $messages): array
     {
-        $startTime  = microtime(true);
+        $startTime = microtime(true);
         $logChannel = (string) config('gemini.logging.channel', 'gemini');
 
-        $defaultModel  = (string) config('gemini.default_model', 'gemini-2.0-flash');
-        $fallbacks     = (array)  config('gemini.fallback_models', []);
-        $timeout       = (int)    config('gemini.timeout', 30);
-        $connectTimeout= (int)    config('gemini.connect_timeout', 10);
-        $maxAttempts   = (int)    config('gemini.retry.max_attempts', 3);
-        $baseDelay     = (int)    config('gemini.retry.base_delay_seconds', 1);
-        $cacheEnabled  = (bool)   config('gemini.cache.enabled', true);
-        $cacheTtl      = (int)    config('gemini.cache.ttl_minutes', 10);
-        $cbEnabled     = (bool)   config('gemini.circuit_breaker.enabled', true);
-        $keyLockout    = (int)    config('gemini.key_lockout_minutes', 60);
+        $defaultModel = (string) config('gemini.default_model', 'gemini-2.0-flash');
+        $fallbacks = (array) config('gemini.fallback_models', []);
+        $timeout = (int) config('gemini.timeout', 30);
+        $connectTimeout = (int) config('gemini.connect_timeout', 10);
+        $maxAttempts = (int) config('gemini.retry.max_attempts', 3);
+        $baseDelay = (int) config('gemini.retry.base_delay_seconds', 1);
+        $cacheEnabled = (bool) config('gemini.cache.enabled', true);
+        $cacheTtl = (int) config('gemini.cache.ttl_minutes', 10);
+        $cbEnabled = (bool) config('gemini.circuit_breaker.enabled', true);
+        $keyLockout = (int) config('gemini.key_lockout_minutes', 60);
 
         // ─── Vérification qu'il existe au moins une clé disponible ──────────
         $availableKeys = $this->availableKeys();
@@ -94,10 +94,11 @@ class GeminiOpsAssistantService
 
             if (empty($allKeys)) {
                 Log::channel($logChannel)->error('Gemini : Aucune clé API configurée.');
+
                 return [
-                    'ok'      => false,
-                    'answer'  => '',
-                    'error'   => 'Aucune clé GEMINI_API_KEY configurée.',
+                    'ok' => false,
+                    'answer' => '',
+                    'error' => 'Aucune clé GEMINI_API_KEY configurée.',
                     'enabled' => false,
                 ];
             }
@@ -113,40 +114,43 @@ class GeminiOpsAssistantService
         // ─── Cache de réponses identiques ───────────────────────────────────
         $cacheKey = null;
         if ($cacheEnabled) {
-            $cacheKey = 'gemini:chat:' . hash('sha256', json_encode($messages));
-            $cached   = Cache::get($cacheKey);
+            $cacheKey = 'gemini:chat:'.hash('sha256', json_encode($messages));
+            $cached = Cache::get($cacheKey);
             if ($cached !== null) {
                 $ms = round((microtime(true) - $startTime) * 1000, 2);
                 Log::channel($logChannel)->info("Cache HIT | {$ms}ms");
+
                 return ['ok' => true, 'answer' => $cached, 'enabled' => true];
             }
         }
 
         // ─── Construction du payload Gemini ─────────────────────────────────
-        $contents              = [];
-        $systemInstructionParts= [];
+        $contents = [];
+        $systemInstructionParts = [];
 
         foreach ($messages as $msg) {
-            $role    = $msg['role']    ?? 'user';
+            $role = $msg['role'] ?? 'user';
             $content = trim($msg['content'] ?? '');
-            if ($content === '') continue;
+            if ($content === '') {
+                continue;
+            }
 
             if ($role === 'system') {
                 $systemInstructionParts[] = ['text' => $content];
             } else {
                 $geminiRole = ($role === 'assistant' || $role === 'model') ? 'model' : 'user';
                 $contents[] = [
-                    'role'  => $geminiRole,
+                    'role' => $geminiRole,
                     'parts' => [['text' => $content]],
                 ];
             }
         }
 
         $payload = [
-            'contents'         => $contents,
+            'contents' => $contents,
             'generationConfig' => [
-                'temperature'    => 0.2,
-                'maxOutputTokens'=> 1200,
+                'temperature' => 0.2,
+                'maxOutputTokens' => 1200,
             ],
         ];
         if (! empty($systemInstructionParts)) {
@@ -155,12 +159,13 @@ class GeminiOpsAssistantService
 
         // ─── Boucle : pour chaque MODÈLE, essayer toutes les CLÉS disponibles ─
         $modelsToTry = array_unique(array_merge([$defaultModel], $fallbacks));
-        $lastError   = '';
+        $lastError = '';
 
         foreach ($modelsToTry as $model) {
             // Circuit Breaker : modèle verrouillé ?
             if ($cbEnabled && $this->isModelLocked($model)) {
                 Log::channel($logChannel)->warning("Circuit Breaker actif pour le modèle [{$model}]. Modèle suivant.");
+
                 continue;
             }
 
@@ -182,18 +187,18 @@ class GeminiOpsAssistantService
                             ->acceptJson()
                             ->post($url, $payload);
 
-                        $reqMs  = round((microtime(true) - $reqStart) * 1000, 2);
-                        $totalMs= round((microtime(true) - $startTime) * 1000, 2);
-                        $masked = '***' . substr($apiKey, -8);
+                        $reqMs = round((microtime(true) - $reqStart) * 1000, 2);
+                        $totalMs = round((microtime(true) - $startTime) * 1000, 2);
+                        $masked = '***'.substr($apiKey, -8);
 
                         if ($response->successful()) {
-                            $json   = $response->json();
+                            $json = $response->json();
                             $answer = (string) data_get($json, 'candidates.0.content.parts.0.text', '');
 
                             if ($answer !== '') {
                                 Log::channel($logChannel)->info(
                                     sprintf(
-                                        "SUCCESS | Model: %s | Key: %s | Resp: %sms | Total: %sms | Retries: %d",
+                                        'SUCCESS | Model: %s | Key: %s | Resp: %sms | Total: %sms | Retries: %d',
                                         $model, $masked, $reqMs, $totalMs, $attempts - 1
                                     )
                                 );
@@ -207,12 +212,12 @@ class GeminiOpsAssistantService
                         }
 
                         $errorDetails = $response->json();
-                        $lastError    = data_get($errorDetails, 'error.message', 'HTTP ' . $response->status());
-                        $httpStatus   = $response->status();
+                        $lastError = data_get($errorDetails, 'error.message', 'HTTP '.$response->status());
+                        $httpStatus = $response->status();
 
                         Log::channel($logChannel)->warning(
                             sprintf(
-                                "FAILURE | Model: %s | Key: %s | HTTP: %d | Error: %s | Attempt: %d/%d",
+                                'FAILURE | Model: %s | Key: %s | HTTP: %d | Error: %s | Attempt: %d/%d',
                                 $model, $masked, $httpStatus, $lastError, $attempts, $maxAttempts
                             )
                         );
@@ -231,17 +236,19 @@ class GeminiOpsAssistantService
                         if ($isTransient && $attempts < $maxAttempts) {
                             sleep($baseDelay * (int) pow(2, $attempts - 1));
                         } else {
-                            if ($cbEnabled) $this->registerFailure($model);
+                            if ($cbEnabled) {
+                                $this->registerFailure($model);
+                            }
                             break; // Clé suivante
                         }
 
                     } catch (\Throwable $e) {
                         $lastError = $e->getMessage();
-                        $masked    = '***' . substr($apiKey, -8);
+                        $masked = '***'.substr($apiKey, -8);
 
                         Log::channel($logChannel)->error(
                             sprintf(
-                                "EXCEPTION | Model: %s | Key: %s | Error: %s | Attempt: %d/%d",
+                                'EXCEPTION | Model: %s | Key: %s | Error: %s | Attempt: %d/%d',
                                 $model, $masked, $lastError, $attempts, $maxAttempts
                             )
                         );
@@ -249,7 +256,9 @@ class GeminiOpsAssistantService
                         if ($attempts < $maxAttempts) {
                             sleep($baseDelay * (int) pow(2, $attempts - 1));
                         } else {
-                            if ($cbEnabled) $this->registerFailure($model);
+                            if ($cbEnabled) {
+                                $this->registerFailure($model);
+                            }
                             break;
                         }
                     }
@@ -261,9 +270,9 @@ class GeminiOpsAssistantService
         Log::channel($logChannel)->error("ALL MODELS/KEYS FAILED | Total: {$totalMs}ms | Last: {$lastError}");
 
         return [
-            'ok'      => false,
-            'answer'  => '',
-            'error'   => "Le service de l'assistant IA est momentanément très sollicité. Veuillez patienter quelques instants puis réessayer.",
+            'ok' => false,
+            'answer' => '',
+            'error' => "Le service de l'assistant IA est momentanément très sollicité. Veuillez patienter quelques instants puis réessayer.",
             'enabled' => true,
         ];
     }
@@ -277,13 +286,13 @@ class GeminiOpsAssistantService
 
     private function registerFailure(string $model): void
     {
-        $maxFailures     = (int) config('gemini.circuit_breaker.max_failures', 5);
-        $timeWindow      = (int) config('gemini.circuit_breaker.time_window_seconds', 120);
+        $maxFailures = (int) config('gemini.circuit_breaker.max_failures', 5);
+        $timeWindow = (int) config('gemini.circuit_breaker.time_window_seconds', 120);
         $lockoutDuration = (int) config('gemini.circuit_breaker.lockout_duration_seconds', 300);
-        $logChannel      = (string) config('gemini.logging.channel', 'gemini');
+        $logChannel = (string) config('gemini.logging.channel', 'gemini');
 
         $failuresKey = "gemini:cb:failures:{$model}";
-        $now         = time();
+        $now = time();
 
         $failures = (array) Cache::get($failuresKey, []);
         $failures = array_values(array_filter($failures, fn ($ts) => ($now - $ts) < $timeWindow));
@@ -294,7 +303,7 @@ class GeminiOpsAssistantService
         if (count($failures) >= $maxFailures) {
             Cache::put("gemini:cb:locked:{$model}", true, now()->addSeconds($lockoutDuration));
             Log::channel($logChannel)->critical(
-                "CIRCUIT BREAKER TRIGGERED | Modèle [{$model}] verrouillé {$lockoutDuration}s après " . count($failures) . " échecs."
+                "CIRCUIT BREAKER TRIGGERED | Modèle [{$model}] verrouillé {$lockoutDuration}s après ".count($failures).' échecs.'
             );
         }
     }

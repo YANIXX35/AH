@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\TreasuryAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -45,7 +46,7 @@ class AdminEnterpriseLicenseController extends Controller
     /**
      * Entreprises clientes distinctes (NIF renseigné) pour attribution de licence.
      *
-     * @return \Illuminate\Support\Collection<int, object{tax_norm: string, company_name: string|null, users_count: int}>
+     * @return Collection<int, object{tax_norm: string, company_name: string|null, users_count: int}>
      */
     protected function enterprisesForAssignSelect()
     {
@@ -58,7 +59,7 @@ class AdminEnterpriseLicenseController extends Controller
         return $rows
             ->groupBy(fn (User $u) => EnterpriseLicense::normalizeCompanyTaxId($u->company_tax_id))
             ->map(function ($group, string $taxNorm) {
-                /** @var \Illuminate\Support\Collection<int, User> $group */
+                /** @var Collection<int, User> $group */
                 $first = $group->first();
 
                 return (object) [

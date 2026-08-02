@@ -34,7 +34,8 @@ class OpsAutonomousApprovalsCommand extends Command
 
         $value = (array) ($config->value ?? []);
         if (! ((bool) ($value['enabled'] ?? false))) {
-            $this->info("Mode autonome IA désactivé.");
+            $this->info('Mode autonome IA désactivé.');
+
             return self::SUCCESS;
         }
 
@@ -51,6 +52,7 @@ class OpsAutonomousApprovalsCommand extends Command
 
         if (! $requesterAdmin) {
             $this->warn('Aucun administrateur plateforme disponible pour porter la demande.');
+
             return self::SUCCESS;
         }
 
@@ -217,4 +219,3 @@ class OpsAutonomousApprovalsCommand extends Command
         return round((($current - $previous) / $previous) * 100, 2);
     }
 }
-

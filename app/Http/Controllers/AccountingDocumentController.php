@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\UsesClientWorkspace;
 use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
 use App\Models\TreasuryTransaction;
-use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Concerns\UsesClientWorkspace;
 
 class AccountingDocumentController extends Controller
 {
@@ -94,7 +94,7 @@ class AccountingDocumentController extends Controller
                 'date' => $data['invoice_date'] ?? now()->toDateString(),
                 'document_type' => $type,
                 'document_reference' => $data['invoice_number'] ?? null,
-                'description' => '[OCR] ' . ($data['partner'] ?? 'Document') . ' - ' . ($data['invoice_number'] ?? 'Sans référence'),
+                'description' => '[OCR] '.($data['partner'] ?? 'Document').' - '.($data['invoice_number'] ?? 'Sans référence'),
                 'debit_account' => $accounts['debit'],
                 'credit_account' => $accounts['credit'],
                 'amount' => $amount,
@@ -108,7 +108,7 @@ class AccountingDocumentController extends Controller
     {
         $debitAccount = trim((string) ($data['debit_account'] ?? ''));
         $creditAccount = trim((string) ($data['credit_account'] ?? ''));
-        $treasuryReference = 'DOC-BANK-' . $document->id;
+        $treasuryReference = 'DOC-BANK-'.$document->id;
 
         $existingMovement = TreasuryTransaction::query()
             ->where('user_id', $this->workspaceUserId())
@@ -127,6 +127,7 @@ class AccountingDocumentController extends Controller
             if ($existingMovement) {
                 $existingMovement->delete();
             }
+
             return;
         }
 
@@ -139,9 +140,9 @@ class AccountingDocumentController extends Controller
 
         $partner = trim((string) ($data['partner'] ?? 'Document'));
         $invoiceNumber = trim((string) ($data['invoice_number'] ?? ''));
-        $description = '[DOC OCR] ' . $partner;
+        $description = '[DOC OCR] '.$partner;
         if ($invoiceNumber !== '') {
-            $description .= ' - ' . $invoiceNumber;
+            $description .= ' - '.$invoiceNumber;
         }
 
         TreasuryTransaction::updateOrCreate(
@@ -161,7 +162,7 @@ class AccountingDocumentController extends Controller
                 'reference' => $invoiceNumber !== '' ? $invoiceNumber : $treasuryReference,
                 'bank_account' => '512 Banque',
                 'status' => 'effectue',
-                'notes' => 'Généré automatiquement depuis la validation OCR du document #' . $document->id,
+                'notes' => 'Généré automatiquement depuis la validation OCR du document #'.$document->id,
             ]
         );
     }
@@ -169,6 +170,7 @@ class AccountingDocumentController extends Controller
     private function isClassFiveAccount(?string $account): bool
     {
         $normalized = ltrim(trim((string) $account), '0');
+
         return $normalized !== '' && str_starts_with($normalized, '5');
     }
 

@@ -42,7 +42,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option defines the minimum log level that should be logged.
-    | Available levels: "emergency", "alert", "critical", "error", 
+    | Available levels: "emergency", "alert", "critical", "error",
     | "warning", "notice", "info", "debug"
     |
     */

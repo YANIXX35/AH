@@ -101,6 +101,7 @@ class CsvMobileMoneyConnector implements MobileMoneyConnector
                 foreach ($candidates as $candidate) {
                     if (str_contains($label, $candidate)) {
                         $columns[$field] = $index;
+
                         continue 3;
                     }
                 }
@@ -171,7 +172,7 @@ class CsvMobileMoneyConnector implements MobileMoneyConnector
 
         $timestamp = strtotime($value);
 
-        return $timestamp !== false ? (new \DateTimeImmutable())->setTimestamp($timestamp) : null;
+        return $timestamp !== false ? (new \DateTimeImmutable)->setTimestamp($timestamp) : null;
     }
 
     private function parseAmount(string $value): ?float

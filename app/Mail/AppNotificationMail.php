@@ -17,8 +17,7 @@ class AppNotificationMail extends Mailable implements ShouldQueue
 
     public function __construct(
         public AppNotification $notification
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

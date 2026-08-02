@@ -19,6 +19,7 @@ class OpsAlertsScanCommand extends Command
         $admins = User::query()->where('is_platform_admin', true)->get(['id']);
         if ($admins->isEmpty()) {
             $this->info('Aucun admin plateforme.');
+
             return self::SUCCESS;
         }
 
@@ -69,4 +70,3 @@ class OpsAlertsScanCommand extends Command
         return self::SUCCESS;
     }
 }
-

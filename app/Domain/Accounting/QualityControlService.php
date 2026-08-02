@@ -16,9 +16,7 @@ use Illuminate\Support\Carbon;
  */
 class QualityControlService
 {
-    public function __construct(private readonly SmeFinancialRatioService $ratioService)
-    {
-    }
+    public function __construct(private readonly SmeFinancialRatioService $ratioService) {}
 
     /**
      * Période "courante" selon la cadence configurée (trimestrielle par défaut).

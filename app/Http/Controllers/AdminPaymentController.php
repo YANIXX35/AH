@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\UserPremiumService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AdminPaymentController extends Controller
@@ -170,7 +171,7 @@ class AdminPaymentController extends Controller
         ]);
 
         $user = User::findOrFail($validated['user_id']);
-        $ref = 'TX-SIM-' . strtoupper(\Illuminate\Support\Str::random(10));
+        $ref = 'TX-SIM-'.strtoupper(Str::random(10));
 
         $transaction = PaymentTransaction::create([
             'user_id' => $user->id,
@@ -196,7 +197,7 @@ class AdminPaymentController extends Controller
             );
         }
 
-        return back()->with('status', "Paiement de test de " . number_format($validated['amount'], 0, ',', ' ') . " XOF simulé avec succès pour {$user->name} ({$user->email}). Réf: {$ref}.");
+        return back()->with('status', 'Paiement de test de '.number_format($validated['amount'], 0, ',', ' ')." XOF simulé avec succès pour {$user->name} ({$user->email}). Réf: {$ref}.");
     }
 
     public function receipt(PaymentTransaction $paymentTransaction): View

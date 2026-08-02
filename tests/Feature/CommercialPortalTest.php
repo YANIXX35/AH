@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class CommercialPortalTest extends TestCase
@@ -27,11 +28,11 @@ class CommercialPortalTest extends TestCase
         $commercial = User::factory()->create(['role_key' => 'commercial']);
         $client1 = User::factory()->create([
             'created_by_user_id' => $commercial->id,
-            'company_name' => 'Client A'
+            'company_name' => 'Client A',
         ]);
 
         $response = $this->actingAs($commercial)->get('/commercial/dashboard');
-        
+
         $response->assertStatus(200);
         $response->assertSee('Client A');
     }
@@ -48,7 +49,7 @@ class CommercialPortalTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        
+
         // Vérification en BDD
         $client = User::where('email', 'client@sitiame.ci')->first();
         $this->assertNotNull($client);
@@ -88,7 +89,7 @@ class CommercialPortalTest extends TestCase
         $commercial2 = User::factory()->create(['role_key' => 'commercial']);
         $clientOfCommercial2 = User::factory()->create([
             'created_by_user_id' => $commercial2->id,
-            'name' => 'Client de Comm2'
+            'name' => 'Client de Comm2',
         ]);
 
         $response = $this->actingAs($commercial1)->put("/commercial/clients/{$clientOfCommercial2->id}", [
@@ -117,7 +118,7 @@ class CommercialPortalTest extends TestCase
         $commercial = User::factory()->create(['role_key' => 'commercial', 'name' => 'Sales Guy']);
         $client = User::factory()->create([
             'created_by_user_id' => $commercial->id,
-            'company_name' => 'Acheté par Sales Guy'
+            'company_name' => 'Acheté par Sales Guy',
         ]);
 
         $response = $this->actingAs($admin)->get('/admin/commerciale');
@@ -145,11 +146,11 @@ class CommercialPortalTest extends TestCase
         $client = User::factory()->create([
             'created_by_user_id' => $commercial->id,
             'name' => 'Client de Test Portefeuille',
-            'company_name' => 'Test Entreprise'
+            'company_name' => 'Test Entreprise',
         ]);
 
         $response = $this->actingAs($commercial)->get('/commercial/portefeuille');
-        
+
         $response->assertStatus(200);
         $response->assertSee('Client de Test Portefeuille');
         $response->assertSee('Test Entreprise');
@@ -161,17 +162,17 @@ class CommercialPortalTest extends TestCase
         $clientMatch = User::factory()->create([
             'created_by_user_id' => $commercial->id,
             'name' => 'Jean-Pierre Client',
-            'company_name' => 'JP Comp'
+            'company_name' => 'JP Comp',
         ]);
         $clientNoMatch = User::factory()->create([
             'created_by_user_id' => $commercial->id,
             'name' => 'Marc Dupont',
-            'company_name' => 'MD Inc'
+            'company_name' => 'MD Inc',
         ]);
 
         // Recherche d'un mot-clé correspondant au premier client
         $response = $this->actingAs($commercial)->get('/commercial/portefeuille?search=Jean-Pierre');
-        
+
         $response->assertStatus(200);
         $response->assertSee('Jean-Pierre Client');
         $response->assertDontSee('Marc Dupont');
@@ -180,7 +181,7 @@ class CommercialPortalTest extends TestCase
     public function test_commercial_can_parse_company_document_and_extract_fields(): void
     {
         $commercial = User::factory()->create(['role_key' => 'commercial']);
-        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent(
+        $file = UploadedFile::fake()->createWithContent(
             'fiche_entreprise.txt',
             "Raison Sociale: Ivoire Agro SARL\nDirigeant: Jean Kouassi\nEmail: contact@iagro.ci\nTelephone: +2250700001122\nNIF: 1234567A\nVille: Abidjan"
         );

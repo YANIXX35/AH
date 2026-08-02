@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Models\User;
 use Illuminate\Console\Command;
 
-
 class PlatformGrantAccountantCommand extends Command
 {
     protected $signature = 'platform:grant-accountant {email : Adresse e-mail du compte utilisateur}';

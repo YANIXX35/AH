@@ -136,4 +136,3 @@ class Scoring360Defaults
         ];
     }
 }
-

@@ -10,9 +10,7 @@ namespace App\Domain\Treasury\MobileMoney;
  */
 class MobileMoneyConnectorResolver
 {
-    public function __construct(private readonly CsvMobileMoneyConnector $csvConnector)
-    {
-    }
+    public function __construct(private readonly CsvMobileMoneyConnector $csvConnector) {}
 
     public function resolve(string $operator): MobileMoneyConnector
     {

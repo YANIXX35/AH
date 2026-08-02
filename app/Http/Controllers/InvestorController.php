@@ -108,8 +108,7 @@ class InvestorController extends Controller
         Request $request,
         InvestorReadinessService $readiness,
         InvestmentDossierChecklistService $checklistService
-    )
-    {
+    ) {
         $userId = $this->workspaceUserId();
         $metrics = $readiness->build($userId);
         $checklist = $checklistService->build($userId, $metrics['breakdown']);
@@ -192,7 +191,7 @@ class InvestorController extends Controller
         $next = (string) $validated['next_status'];
         $allowed = self::ALLOWED_TRANSITIONS[$current] ?? [];
 
-        if (!in_array($next, $allowed, true)) {
+        if (! in_array($next, $allowed, true)) {
             return back()->withErrors([
                 'workflow' => "Transition invalide : {$current} -> {$next}.",
             ]);

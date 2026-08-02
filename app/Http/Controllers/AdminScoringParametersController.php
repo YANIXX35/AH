@@ -8,6 +8,7 @@ use App\Services\Scoring360ExcelImporter;
 use App\Support\Scoring360Defaults;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -162,7 +163,7 @@ class AdminScoringParametersController extends Controller
             'excel' => ['required', 'file', 'mimes:xlsx'],
         ])['excel'];
 
-        /** @var \Illuminate\Http\UploadedFile $file */
+        /** @var UploadedFile $file */
         $config = $this->excelImporter->import($file->getRealPath(), $file->getClientOriginalName());
 
         $setting = PlatformSetting::query()->firstOrCreate(
@@ -218,4 +219,3 @@ class AdminScoringParametersController extends Controller
         }
     }
 }
-

@@ -15,6 +15,7 @@ use App\Services\OcrService;
 use App\Services\TreasuryAudit;
 use App\Support\OcrStatus;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -1005,7 +1006,7 @@ class AccountingController extends Controller
     public function analyzeSyscohadaFile()
     {
         $filePath = base_path('Doc_comptabilite/modele_syscohada_PLAN COMPLET + LIASSE BCEAO_5.xlsx');
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return response()->json(['error' => 'Fichier introuvable', 'path' => $filePath], 404);
         }
 
@@ -1023,8 +1024,8 @@ class AccountingController extends Controller
             for ($row = 1; $row <= min($highestRow, $maxRowsToShow); $row++) {
                 $cells = [];
                 for ($col = 'A'; $col <= $highestCol; $col++) {
-                    $cellValue = $sheet->getCell($col . $row)->getValue();
-                    $cells[] = mb_substr(trim((string)$cellValue), 0, 100);
+                    $cellValue = $sheet->getCell($col.$row)->getValue();
+                    $cells[] = mb_substr(trim((string) $cellValue), 0, 100);
                 }
                 $rows[] = $cells;
             }
@@ -1035,7 +1036,7 @@ class AccountingController extends Controller
                 'dimensions' => "{$highestCol} x {$highestRow}",
                 'rows' => $rows,
                 'total_rows' => $highestRow,
-                'total_cols' => $highestCol
+                'total_cols' => $highestCol,
             ];
         }
 
@@ -1213,7 +1214,7 @@ class AccountingController extends Controller
         }
 
         try {
-            $zip = new \ZipArchive();
+            $zip = new \ZipArchive;
             if ($zip->open($path) === true) {
                 if (($index = $zip->locateName('word/document.xml')) !== false) {
                     $data = $zip->getFromIndex($index);
@@ -1337,7 +1338,7 @@ class AccountingController extends Controller
         foreach ($accounts as $key => $account) {
             $data = [
                 'user_id' => $userId,
-                'prefix' => $account['prefix'] ?? (is_numeric($key) && $key >=1 && $key <=7 ? $key : null),
+                'prefix' => $account['prefix'] ?? (is_numeric($key) && $key >= 1 && $key <= 7 ? $key : null),
                 'label' => $account['label'] ?? $account['libelle_compte'] ?? '',
                 'category' => $account['category'] ?? 'other',
                 'subtype' => $account['subtype'] ?? null,
@@ -1415,16 +1416,17 @@ class AccountingController extends Controller
         $expected = ['1', '2', '3', '4', '5', '6', '7'];
         // Check if it's class-based first
         $keys = array_keys($plan);
-        $isClassBased = count(array_filter($keys, fn($k) => in_array($k, $expected))) === count($keys);
-        
+        $isClassBased = count(array_filter($keys, fn ($k) => in_array($k, $expected))) === count($keys);
+
         if ($isClassBased) {
             $missing = array_values(array_diff($expected, $keys));
+
             return [
                 'missingClasses' => $missing,
                 'isValid' => empty($missing),
             ];
         }
-        
+
         // For detailed accounts, check we have at least one account per class
         $presentClasses = [];
         foreach ($plan as $account) {
@@ -1433,10 +1435,10 @@ class AccountingController extends Controller
                 $presentClasses[] = $classe;
             }
         }
-        
+
         $presentClasses = array_unique($presentClasses);
         $missing = array_values(array_diff($expected, $presentClasses));
-        
+
         return [
             'missingClasses' => $missing,
             'isValid' => empty($missing),
@@ -2049,6 +2051,7 @@ class AccountingController extends Controller
     public function liasseBceao(Request $request, BceaoLiasseService $liasseService)
     {
         $payload = $this->buildLiassePayload($request, $liasseService);
+
         return view('accounting.liasse-bceao', $payload);
     }
 
@@ -2332,7 +2335,7 @@ class AccountingController extends Controller
                 ->orderBy('numero_compte', 'asc')
                 ->orderBy('prefix', 'asc')
                 ->get();
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             // If sort_order or numero_compte columns don't exist yet, fall back to old behavior
             $storedAccounts = PlanComptableAccount::where('user_id', $userId)
                 ->orderBy('prefix', 'asc')
@@ -2341,12 +2344,13 @@ class AccountingController extends Controller
 
         try {
             // Check if we have detailed accounts (with numero_compte set)
-            $hasDetailedAccounts = $storedAccounts->filter(fn($a) => !empty($a->numero_compte))->isNotEmpty();
+            $hasDetailedAccounts = $storedAccounts->filter(fn ($a) => ! empty($a->numero_compte))->isNotEmpty();
 
             if ($storedAccounts->isNotEmpty()) {
                 if ($hasDetailedAccounts) {
                     return $storedAccounts->mapWithKeys(function (PlanComptableAccount $account) {
                         $key = $account->numero_compte ?? $account->prefix;
+
                         return [
                             $key => [
                                 'label' => $account->label,
@@ -2365,6 +2369,7 @@ class AccountingController extends Controller
                         ];
                     })->toArray();
                 }
+
                 // Fallback to old behavior for backward compatibility
                 return $storedAccounts->mapWithKeys(function (PlanComptableAccount $account) {
                     return [

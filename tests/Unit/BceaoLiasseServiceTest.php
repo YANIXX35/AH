@@ -10,7 +10,7 @@ class BceaoLiasseServiceTest extends TestCase
 {
     public function test_it_calculates_bilan_actif_and_passif_and_compte_resultat()
     {
-        $service = new BceaoLiasseService();
+        $service = new BceaoLiasseService;
 
         // Écritures de test
         $entry1 = new AccountingEntry([

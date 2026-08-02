@@ -16,9 +16,7 @@ class MobileMoneyReconciliationController extends Controller
 {
     use UsesClientWorkspace;
 
-    public function __construct(private readonly MobileMoneyReconciliationService $reconciliationService)
-    {
-    }
+    public function __construct(private readonly MobileMoneyReconciliationService $reconciliationService) {}
 
     public function index(): View
     {

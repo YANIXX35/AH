@@ -16,8 +16,7 @@ class PasswordResetOtpMail extends Mailable
         public User $user,
         public string $otp,
         public int $expiresInMinutes
-    ) {
-    }
+    ) {}
 
     public function build(): self
     {
@@ -26,4 +25,3 @@ class PasswordResetOtpMail extends Mailable
             ->view('emails.password-reset-otp');
     }
 }
-

@@ -4,8 +4,8 @@ namespace Tests\Unit;
 
 use App\Http\Controllers\AccountingController;
 use App\Services\OcrService;
-use ReflectionClass;
 use Illuminate\Support\Facades\File;
+use ReflectionClass;
 use Tests\TestCase;
 
 class AccountingOcrExtractionTest extends TestCase
@@ -37,7 +37,7 @@ TVA (18%):                     301500 FCFA
 TOTAL TTC:                     1976500 FCFA
 TEXT;
 
-        $ocrService = new OcrService();
+        $ocrService = new OcrService;
         $richData = $ocrService->extractRichDocumentData($text);
 
         $this->assertSame('FAC-ACHAT-2026-001', $richData['primary']['invoice_number']);
@@ -49,7 +49,7 @@ TEXT;
         $this->assertSame(1976500.0, (float) $richData['primary']['amount_ttc']);
         $this->assertSame(18.0, (float) $richData['primary']['tva_rate']);
 
-        $controller = new AccountingController();
+        $controller = new AccountingController;
         $reflection = new ReflectionClass($controller);
 
         $detectType = $reflection->getMethod('detectDocumentTypeFromOcrText');
@@ -108,11 +108,11 @@ PY
             'services.paddle_ocr.max_file_size_kb' => 20480,
         ]);
 
-        $service = new OcrService();
+        $service = new OcrService;
         $result = $service->extractText($relativePath);
 
         $this->assertTrue($result['success']);
-        $this->assertSame('FACTURE TEST' . "\n" . 'TOTAL TTC: 1200 FCFA', $result['text']);
+        $this->assertSame('FACTURE TEST'."\n".'TOTAL TTC: 1200 FCFA', $result['text']);
         $this->assertSame(88.5, (float) $result['confidence']);
         $this->assertSame('local_paddleocr_runner', $result['endpoint']);
         $this->assertSame('cpu', $result['mode']);
@@ -152,7 +152,7 @@ TOTAL
 619,50 F CFA
 TEXT;
 
-        $ocrService = new OcrService();
+        $ocrService = new OcrService;
         $richData = $ocrService->extractRichDocumentData($text);
 
         $this->assertSame(525.0, (float) $richData['primary']['amount_ht']);
@@ -160,7 +160,7 @@ TEXT;
         $this->assertSame(619.5, (float) $richData['primary']['amount_ttc']);
         $this->assertSame(18.0, (float) $richData['primary']['tva_rate']);
 
-        $controller = new AccountingController();
+        $controller = new AccountingController;
         $reflection = new ReflectionClass($controller);
         $buildValidation = $reflection->getMethod('buildValidationExtractedData');
         $buildValidation->setAccessible(true);
@@ -181,7 +181,7 @@ TEXT;
             'services.paddle_ocr.enabled' => false,
         ]);
 
-        $service = new OcrService();
+        $service = new OcrService;
         $result = $service->extractText($relativePath);
 
         $this->assertFalse($result['success']);
@@ -193,7 +193,7 @@ TEXT;
 
     private function createDummyPdf(string $relativePath): string
     {
-        $absolutePath = storage_path('app/public/' . $relativePath);
+        $absolutePath = storage_path('app/public/'.$relativePath);
         File::ensureDirectoryExists(dirname($absolutePath));
 
         file_put_contents(

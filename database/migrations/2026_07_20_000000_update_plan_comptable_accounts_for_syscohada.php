@@ -31,7 +31,7 @@ return new class extends Migration
             $table->dropUnique('plan_comptable_accounts_user_id_numero_compte_unique');
             $table->dropColumn([
                 'numero_compte', 'libelle_compte', 'type_compte',
-                'sous_type', 'classe', 'observation', 'is_actif', 'sort_order'
+                'sous_type', 'classe', 'observation', 'is_actif', 'sort_order',
             ]);
         });
     }

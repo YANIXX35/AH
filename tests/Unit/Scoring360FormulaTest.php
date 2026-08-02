@@ -91,4 +91,3 @@ class Scoring360FormulaTest extends TestCase
         return $out;
     }
 }
-

@@ -43,11 +43,12 @@ class CompanyDocumentParserService
             foreach ($spreadsheet->getAllSheets() as $sheet) {
                 foreach ($sheet->toArray() as $row) {
                     $cleanRow = array_filter(array_map('trim', $row));
-                    if (!empty($cleanRow)) {
+                    if (! empty($cleanRow)) {
                         $lines[] = implode(' : ', $cleanRow);
                     }
                 }
             }
+
             return implode("\n", $lines);
         } catch (Throwable $e) {
             return '';
@@ -57,17 +58,20 @@ class CompanyDocumentParserService
     private function extractTextFromDocx(string $filePath): string
     {
         try {
-            $zip = new ZipArchive();
+            $zip = new ZipArchive;
             if ($zip->open($filePath) === true) {
                 if (($index = $zip->locateName('word/document.xml')) !== false) {
                     $data = $zip->getFromIndex($index);
                     $zip->close();
                     $data = preg_replace('/<w:p[^>]*>/', "\n", $data);
+
                     return trim(strip_tags($data));
                 }
                 $zip->close();
             }
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
+
         return '';
     }
 
@@ -75,10 +79,12 @@ class CompanyDocumentParserService
     {
         $content = @file_get_contents($filePath) ?: '';
         preg_match_all('/(BT[\s\S]*?ET)/', $content, $matches);
-        if (!empty($matches[0])) {
+        if (! empty($matches[0])) {
             $rawText = implode(' ', $matches[0]);
+
             return preg_replace('/[^\w\s@.+:-]/u', ' ', strip_tags($rawText));
         }
+
         return preg_replace('/[^\w\s@.+:-]/u', ' ', $content);
     }
 
@@ -121,7 +127,9 @@ class CompanyDocumentParserService
 
         // 3. Line-by-line label mapping
         foreach ($lines as $line) {
-            if (empty($line)) continue;
+            if (empty($line)) {
+                continue;
+            }
 
             $parts = preg_split('/[:;\t=]/', $line, 2);
             $label = strtolower(trim($parts[0] ?? ''));
@@ -129,42 +137,58 @@ class CompanyDocumentParserService
 
             // Name (Dirigeant)
             if (is_null($fields['name']) && (str_contains($label, 'dirigeant') || str_contains($label, 'gerant') || str_contains($label, 'gérant') || str_contains($label, 'representant') || str_contains($label, 'nom complet') || $label === 'nom')) {
-                if (!empty($val)) $fields['name'] = $val;
+                if (! empty($val)) {
+                    $fields['name'] = $val;
+                }
             }
 
             // Company Name
             if (is_null($fields['company_name']) && (str_contains($label, 'raison sociale') || str_contains($label, 'entreprise') || str_contains($label, 'societe') || str_contains($label, 'société') || str_contains($label, 'pme') || str_contains($label, 'etablissement') || str_contains($label, 'compagnie'))) {
-                if (!empty($val)) $fields['company_name'] = $val;
+                if (! empty($val)) {
+                    $fields['company_name'] = $val;
+                }
             }
 
             // Sigle
             if (is_null($fields['company_sigle']) && (str_contains($label, 'sigle') || str_contains($label, 'acronyme'))) {
-                if (!empty($val)) $fields['company_sigle'] = strtoupper($val);
+                if (! empty($val)) {
+                    $fields['company_sigle'] = strtoupper($val);
+                }
             }
 
             // NIF / Tax ID
             if (is_null($fields['company_tax_id']) && (str_contains($label, 'nif') || str_contains($label, 'matricule fiscal') || str_contains($label, 'tax id') || str_contains($label, 'ifu') || str_contains($label, 'ncc'))) {
-                if (!empty($val)) $fields['company_tax_id'] = strtoupper($val);
+                if (! empty($val)) {
+                    $fields['company_tax_id'] = strtoupper($val);
+                }
             }
 
             // RCCM / SIRET
             if (is_null($fields['rccm']) && (str_contains($label, 'rccm') || str_contains($label, 'siret') || str_contains($label, 'siren') || str_contains($label, 'registre de commerce'))) {
-                if (!empty($val)) $fields['rccm'] = $val;
+                if (! empty($val)) {
+                    $fields['rccm'] = $val;
+                }
             }
 
             // Sector
             if (is_null($fields['sector']) && (str_contains($label, 'secteur') || str_contains($label, 'activite') || str_contains($label, 'activité') || str_contains($label, 'domaine'))) {
-                if (!empty($val)) $fields['sector'] = $val;
+                if (! empty($val)) {
+                    $fields['sector'] = $val;
+                }
             }
 
             // City
             if (is_null($fields['city']) && (str_contains($label, 'ville') || str_contains($label, 'commune') || str_contains($label, 'localite'))) {
-                if (!empty($val)) $fields['city'] = $val;
+                if (! empty($val)) {
+                    $fields['city'] = $val;
+                }
             }
 
             // Address
             if (is_null($fields['address']) && (str_contains($label, 'adresse') || str_contains($label, 'siege') || str_contains($label, 'siège') || str_contains($label, 'localisation'))) {
-                if (!empty($val)) $fields['address'] = $val;
+                if (! empty($val)) {
+                    $fields['address'] = $val;
+                }
             }
         }
 
@@ -178,6 +202,6 @@ class CompanyDocumentParserService
             }
         }
 
-        return array_filter($fields, fn ($v) => !is_null($v) && trim((string)$v) !== '');
+        return array_filter($fields, fn ($v) => ! is_null($v) && trim((string) $v) !== '');
     }
 }

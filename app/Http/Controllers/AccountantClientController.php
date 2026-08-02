@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -19,6 +20,7 @@ class AccountantClientController extends Controller
     public function __construct(
         private readonly UserPremiumService $userPremium
     ) {}
+
     /**
      * Liste des dossiers clients (entreprises) suivis sur la plateforme.
      */
@@ -76,12 +78,12 @@ class AccountantClientController extends Controller
 
         // Valeurs par défaut si les champs obligatoires sont absents
         if (empty($validated['email'])) {
-            $validated['email'] = 'client_' . uniqid() . '@sitiame-capital.com';
+            $validated['email'] = 'client_'.uniqid().'@sitiame-capital.com';
         }
         if (empty($validated['name'])) {
             $validated['name'] = $validated['company_name'] ?? 'Client sans nom';
         }
-        $plainPassword = $validated['password'] ?? \Illuminate\Support\Str::random(12);
+        $plainPassword = $validated['password'] ?? Str::random(12);
 
         if ($request->hasFile('company_logo')) {
             $validated['company_logo'] = $request->file('company_logo')->store('company-logos', 'public');
@@ -152,7 +154,7 @@ class AccountantClientController extends Controller
 
         unset($validated['trade_register']);
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);

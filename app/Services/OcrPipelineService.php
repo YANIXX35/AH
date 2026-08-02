@@ -9,7 +9,7 @@ class OcrPipelineService
      */
     public function processStoredDocument(string $storedPath): array
     {
-        $ocrService = new OcrService();
+        $ocrService = new OcrService;
         $ocrResult = $ocrService->extractText($storedPath);
 
         if (! ($ocrResult['success'] ?? false)) {
@@ -185,7 +185,7 @@ class OcrPipelineService
      */
     private function scoreNumericField(mixed $value): float
     {
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             return 25.0;
         }
 

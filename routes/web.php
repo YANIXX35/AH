@@ -5,16 +5,18 @@ use App\Http\Controllers\AccountantDashboardController;
 use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\AccountingDocumentController;
 use App\Http\Controllers\AccountingDocumentViewerController;
+use App\Http\Controllers\AdminBillingController;
+use App\Http\Controllers\AdminBugReportController;
+use App\Http\Controllers\AdminCommercialController;
+use App\Http\Controllers\AdminComplianceKycController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminEnterpriseLicenseController;
-use App\Http\Controllers\AdminFinancialAnalysisController;
 use App\Http\Controllers\AdminExecutiveDashboardController;
+use App\Http\Controllers\AdminFinancialAnalysisController;
 use App\Http\Controllers\AdminInvestmentRequestController;
+use App\Http\Controllers\AdminOpsCenterController;
 use App\Http\Controllers\AdminPaymentController;
 use App\Http\Controllers\AdminPlatformLogController;
-use App\Http\Controllers\AdminOpsCenterController;
-use App\Http\Controllers\AdminBillingController;
-use App\Http\Controllers\AdminComplianceKycController;
 use App\Http\Controllers\AdminRbacController;
 use App\Http\Controllers\AdminScoringParametersController;
 use App\Http\Controllers\AdminSupportTicketController;
@@ -22,6 +24,7 @@ use App\Http\Controllers\AiBusinessAdvisorController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CinetPayController;
+use App\Http\Controllers\CommercialController;
 use App\Http\Controllers\CompanyFirdController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentationController;
@@ -32,6 +35,7 @@ use App\Http\Controllers\InvestorController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MenuActivityLogController;
 use App\Http\Controllers\MobileMoneyReconciliationController;
+use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupportController;
@@ -397,10 +401,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/payments/{paymentTransaction}/activate-premium', [AdminPaymentController::class, 'activatePremium'])->name('payments.activate-premium');
         Route::post('/payments/{paymentTransaction}/set-free', [AdminPaymentController::class, 'setFree'])->name('payments.set-free');
         Route::get('/platform-logs', [AdminPlatformLogController::class, 'index'])->name('logs.index');
-        Route::get('/signalements', [\App\Http\Controllers\AdminBugReportController::class, 'index'])->name('signalements.index');
-        Route::post('/signalements/{bugReport}/resolve', [\App\Http\Controllers\AdminBugReportController::class, 'resolve'])->name('signalements.resolve');
-        Route::delete('/signalements/{bugReport}', [\App\Http\Controllers\AdminBugReportController::class, 'destroy'])->name('signalements.destroy');
-        Route::post('/signalements/clear-logs', [\App\Http\Controllers\AdminBugReportController::class, 'clearLogs'])->name('signalements.clear-logs');
+        Route::get('/signalements', [AdminBugReportController::class, 'index'])->name('signalements.index');
+        Route::post('/signalements/{bugReport}/resolve', [AdminBugReportController::class, 'resolve'])->name('signalements.resolve');
+        Route::delete('/signalements/{bugReport}', [AdminBugReportController::class, 'destroy'])->name('signalements.destroy');
+        Route::post('/signalements/clear-logs', [AdminBugReportController::class, 'clearLogs'])->name('signalements.clear-logs');
         Route::get('/ops-center', [AdminOpsCenterController::class, 'index'])->name('ops.index');
         Route::post('/ops-center/feature-flags', [AdminOpsCenterController::class, 'updateFeatureFlags'])->name('ops.feature-flags.update');
         Route::post('/ops-center/health-checks/run', [AdminOpsCenterController::class, 'runHealthChecksNow'])->name('ops.health-checks.run');
@@ -436,7 +440,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/executive-dashboard', [AdminExecutiveDashboardController::class, 'index'])->name('executive.index');
         Route::get('/rbac', [AdminRbacController::class, 'index'])->name('rbac.index');
         Route::post('/rbac/{user}', [AdminRbacController::class, 'update'])->name('rbac.update');
-        Route::get('/commerciale', [\App\Http\Controllers\AdminCommercialController::class, 'index'])->name('commerciale');
+        Route::get('/commerciale', [AdminCommercialController::class, 'index'])->name('commerciale');
     });
 
     Route::middleware(['premium.accounting', 'module.permission:accounting'])->group(function () {
@@ -488,7 +492,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/accounting/liasse-bceao/pdf/download', [AccountingController::class, 'downloadLiasseBceaoPdf'])->name('accounting.liasse-bceao.pdf.download');
         Route::get('/accounting/liasse-bceao/pdf/view', [AccountingController::class, 'viewLiasseBceaoPdf'])->name('accounting.liasse-bceao.pdf.view');
     });
-    
+
     Route::get('/accounting/analyze-syscohada', [AccountingController::class, 'analyzeSyscohadaFile'])->name('accounting.analyze-syscohada');
 
     Route::middleware('module.permission:treasury')->group(function () {
@@ -519,12 +523,12 @@ Route::middleware('auth')->group(function () {
     });
 
     // Module Paie & Paiement des Salaires
-    Route::get('/payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('payroll.index');
-    Route::get('/payroll/create', [\App\Http\Controllers\PayrollController::class, 'create'])->name('payroll.create');
-    Route::post('/payroll', [\App\Http\Controllers\PayrollController::class, 'store'])->name('payroll.store');
-    Route::get('/payroll/{payroll}', [\App\Http\Controllers\PayrollController::class, 'show'])->name('payroll.show');
-    Route::post('/payroll/{payroll}/sync', [\App\Http\Controllers\PayrollController::class, 'sync'])->name('payroll.sync');
-    Route::delete('/payroll/{payroll}', [\App\Http\Controllers\PayrollController::class, 'destroy'])->name('payroll.destroy');
+    Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
+    Route::get('/payroll/create', [PayrollController::class, 'create'])->name('payroll.create');
+    Route::post('/payroll', [PayrollController::class, 'store'])->name('payroll.store');
+    Route::get('/payroll/{payroll}', [PayrollController::class, 'show'])->name('payroll.show');
+    Route::post('/payroll/{payroll}/sync', [PayrollController::class, 'sync'])->name('payroll.sync');
+    Route::delete('/payroll/{payroll}', [PayrollController::class, 'destroy'])->name('payroll.destroy');
 
     Route::middleware('module.permission:invoicing')->group(function () {
         Route::get('/invoicing', [InvoiceController::class, 'index'])->name('invoicing.index');
@@ -567,26 +571,26 @@ Route::middleware('auth')->group(function () {
     })->name('logout');
 
     Route::middleware('commercial')->prefix('commercial')->name('commercial.')->group(function () {
-        Route::get('/dashboard', [\App\Http\Controllers\CommercialController::class, 'index'])->name('dashboard');
-        Route::get('/portefeuille', [\App\Http\Controllers\CommercialController::class, 'portefeuille'])->name('portefeuille');
-        Route::get('/offres', [\App\Http\Controllers\CommercialController::class, 'showcase'])->name('showcase');
-        Route::get('/guides', [\App\Http\Controllers\CommercialController::class, 'guides'])->name('guides');
-        Route::get('/club', [\App\Http\Controllers\CommercialController::class, 'club'])->name('club');
-        Route::get('/prospects', [\App\Http\Controllers\CommercialController::class, 'prospects'])->name('prospects');
-        Route::get('/import', [\App\Http\Controllers\CommercialController::class, 'importFile'])->name('import');
-        Route::post('/import', [\App\Http\Controllers\CommercialController::class, 'storeDocument'])->name('import.store');
-        Route::get('/import/documents/{document}/download', [\App\Http\Controllers\CommercialController::class, 'downloadDocument'])->name('import.download');
-        Route::delete('/import/documents/{document}', [\App\Http\Controllers\CommercialController::class, 'destroyDocument'])->name('import.destroy');
-        Route::post('/parse-company-document', [\App\Http\Controllers\CommercialController::class, 'parseCompanyDocument'])->name('parseCompanyDocument');
-        Route::post('/clients', [\App\Http\Controllers\CommercialController::class, 'store'])->name('clients.store');
-        Route::put('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'update'])->name('clients.update');
+        Route::get('/dashboard', [CommercialController::class, 'index'])->name('dashboard');
+        Route::get('/portefeuille', [CommercialController::class, 'portefeuille'])->name('portefeuille');
+        Route::get('/offres', [CommercialController::class, 'showcase'])->name('showcase');
+        Route::get('/guides', [CommercialController::class, 'guides'])->name('guides');
+        Route::get('/club', [CommercialController::class, 'club'])->name('club');
+        Route::get('/prospects', [CommercialController::class, 'prospects'])->name('prospects');
+        Route::get('/import', [CommercialController::class, 'importFile'])->name('import');
+        Route::post('/import', [CommercialController::class, 'storeDocument'])->name('import.store');
+        Route::get('/import/documents/{document}/download', [CommercialController::class, 'downloadDocument'])->name('import.download');
+        Route::delete('/import/documents/{document}', [CommercialController::class, 'destroyDocument'])->name('import.destroy');
+        Route::post('/parse-company-document', [CommercialController::class, 'parseCompanyDocument'])->name('parseCompanyDocument');
+        Route::post('/clients', [CommercialController::class, 'store'])->name('clients.store');
+        Route::put('/clients/{user}', [CommercialController::class, 'update'])->name('clients.update');
 
-        Route::delete('/clients/{user}', [\App\Http\Controllers\CommercialController::class, 'destroy'])->name('clients.destroy');
+        Route::delete('/clients/{user}', [CommercialController::class, 'destroy'])->name('clients.destroy');
 
-        Route::post('/prospects', [\App\Http\Controllers\CommercialController::class, 'storeProspect'])->name('prospects.store');
-        Route::put('/prospects/{prospect}/status', [\App\Http\Controllers\CommercialController::class, 'updateProspectStatus'])->name('prospects.updateStatus');
-        Route::delete('/prospects/{prospect}', [\App\Http\Controllers\CommercialController::class, 'destroyProspect'])->name('prospects.destroy');
+        Route::post('/prospects', [CommercialController::class, 'storeProspect'])->name('prospects.store');
+        Route::put('/prospects/{prospect}/status', [CommercialController::class, 'updateProspectStatus'])->name('prospects.updateStatus');
+        Route::delete('/prospects/{prospect}', [CommercialController::class, 'destroyProspect'])->name('prospects.destroy');
     });
 
-    Route::middleware('commercial')->get('/dashboard/commercial', [\App\Http\Controllers\CommercialController::class, 'index']);
+    Route::middleware('commercial')->get('/dashboard/commercial', [CommercialController::class, 'index']);
 });

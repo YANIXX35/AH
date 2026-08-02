@@ -16,6 +16,5 @@ final class NormalizedMobileMoneyTransaction
         public readonly ?string $counterpartyName,
         public readonly ?string $counterpartyNumber,
         public readonly string $rawLine,
-    ) {
-    }
+    ) {}
 }

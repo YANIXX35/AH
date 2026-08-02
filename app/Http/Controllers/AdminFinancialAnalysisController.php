@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\FinancialRatioServiceContract;
-use App\Services\Scoring360Service;
 use App\Models\User;
+use App\Services\Scoring360Service;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

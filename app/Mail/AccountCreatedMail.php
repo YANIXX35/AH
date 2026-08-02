@@ -12,9 +12,7 @@ class AccountCreatedMail extends Mailable
     use Queueable;
     use SerializesModels;
 
-    public function __construct(public User $user)
-    {
-    }
+    public function __construct(public User $user) {}
 
     public function build(): self
     {
@@ -23,4 +21,3 @@ class AccountCreatedMail extends Mailable
             ->view('emails.account-created');
     }
 }
-

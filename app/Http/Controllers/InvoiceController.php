@@ -19,9 +19,7 @@ class InvoiceController extends Controller
 {
     use UsesClientWorkspace;
 
-    public function __construct(private readonly InvoiceService $invoiceService)
-    {
-    }
+    public function __construct(private readonly InvoiceService $invoiceService) {}
 
     public function index(Request $request): View
     {

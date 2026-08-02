@@ -108,4 +108,3 @@ class Scoring360ExcelImporter
         return (float) str_replace(',', '.', (string) $value);
     }
 }
-

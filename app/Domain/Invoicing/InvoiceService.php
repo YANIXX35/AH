@@ -8,6 +8,7 @@ use App\Models\InvoiceItem;
 use App\Models\InvoiceNumberCounter;
 use App\Models\InvoicePayment;
 use App\Services\TreasuryAudit;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -302,7 +303,7 @@ class InvoiceService
                 ['user_id' => $userId, 'year' => $year],
                 ['last_number' => 0]
             );
-        } catch (\Illuminate\Database\QueryException) {
+        } catch (QueryException) {
             // Créée entre-temps par une requête concurrente : rien à faire, la lecture verrouillée ci-dessous la trouvera.
         }
 

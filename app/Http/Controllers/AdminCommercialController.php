@@ -33,7 +33,7 @@ class AdminCommercialController extends Controller
         })->count();
 
         $expiredTrials = $referredClients->filter(function ($client) {
-            return !$client->is_premium || ($client->premium_ends_at && $client->premium_ends_at->isPast());
+            return ! $client->is_premium || ($client->premium_ends_at && $client->premium_ends_at->isPast());
         })->count();
 
         return view('admin.commerciale', compact(

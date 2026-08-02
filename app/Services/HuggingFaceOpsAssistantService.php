@@ -13,8 +13,9 @@ class HuggingFaceOpsAssistantService
     public function chat(array $messages): array
     {
         $geminiKey = (string) config('services.gemini.key', env('GEMINI_API_KEY', ''));
-        if (!empty($geminiKey)) {
-            $geminiService = new \App\Services\GeminiOpsAssistantService();
+        if (! empty($geminiKey)) {
+            $geminiService = new GeminiOpsAssistantService;
+
             return $geminiService->chat($messages);
         }
 
@@ -25,7 +26,7 @@ class HuggingFaceOpsAssistantService
 
         if ($token === '') {
             \Log::warning('Ni Gemini API Key ni HuggingFace token ne sont configurés.');
-            
+
             return [
                 'ok' => false,
                 'answer' => '',
@@ -50,7 +51,7 @@ class HuggingFaceOpsAssistantService
                     'status_code' => $response->status(),
                     'model' => $model,
                 ]);
-                
+
                 return [
                     'ok' => false,
                     'answer' => '',
@@ -65,7 +66,7 @@ class HuggingFaceOpsAssistantService
                 \Log::warning('HuggingFace réponse vide', [
                     'model' => $model,
                 ]);
-                
+
                 return [
                     'ok' => false,
                     'answer' => '',
@@ -89,7 +90,7 @@ class HuggingFaceOpsAssistantService
                 'error' => $e->getMessage(),
                 'model' => $model,
             ]);
-            
+
             return [
                 'ok' => false,
                 'answer' => '',
@@ -99,4 +100,3 @@ class HuggingFaceOpsAssistantService
         }
     }
 }
-

@@ -30,18 +30,21 @@ class SendTestNotificationEmailCommand extends Command
 
         if (! $user) {
             $this->error("Aucun utilisateur trouve pour l email: {$email}");
+
             return self::FAILURE;
         }
 
         if (! (bool) ($user->email_notifications ?? false)) {
             $this->warn("Le compte {$email} a email_notifications desactive.");
             $this->line('Activez "Notifications email operationnelles" dans le profil puis retestez.');
+
             return self::FAILURE;
         }
 
         $type = (string) $this->option('type');
         if (! in_array($type, ['info', 'success', 'warning', 'error'], true)) {
             $this->error('Type invalide. Valeurs autorisees: info, success, warning, error.');
+
             return self::FAILURE;
         }
 

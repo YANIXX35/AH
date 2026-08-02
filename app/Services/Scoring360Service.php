@@ -18,6 +18,7 @@ class Scoring360Service
     {
         try {
             $setting = PlatformSetting::query()->where('key', 'scoring_360')->first();
+
             return (array) ($setting?->value ?? Scoring360Defaults::defaults());
         } catch (\Throwable) {
             // Tant que les migrations ne sont pas appliquées, on retombe sur les valeurs par défaut.
@@ -218,7 +219,6 @@ class Scoring360Service
     }
 
     /**
-     * @param  float|null  $value
      * @param  array<string, float>  $coeffs
      * @return array{value: ?float, score: float, level: string}
      */
@@ -422,4 +422,3 @@ class Scoring360Service
         return 0.0;
     }
 }
-

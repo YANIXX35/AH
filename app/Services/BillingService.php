@@ -161,6 +161,7 @@ class BillingService
             $paymentRetries++;
             if ($retryResult['paid'] === true) {
                 $this->activateSubscriptionAfterPayment($subscription, $invoice, $user, $retryResult['provider_reference']);
+
                 continue;
             }
 

@@ -15,8 +15,8 @@ class TreasuryTransactionSeeder extends Seeder
     {
         // Récupérer le premier utilisateur
         $user = User::first();
-        
-        if (!$user) {
+
+        if (! $user) {
             return;
         }
 

@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\AppNotification;
 use App\Models\SupportMessage;
 use App\Models\SupportTicket;
-use Illuminate\Http\Request;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SupportController extends Controller
 {
@@ -69,7 +70,7 @@ class SupportController extends Controller
                 'action_url' => route('support.tickets.show', $ticket),
             ]);
 
-            $admins = \App\Models\User::query()
+            $admins = User::query()
                 ->where('is_platform_admin', true)
                 ->get(['id']);
 
@@ -252,7 +253,7 @@ class SupportController extends Controller
             $targetIds[] = (int) $ticket->assigned_to_user_id;
         }
         if (empty($targetIds)) {
-            $targetIds = \App\Models\User::query()
+            $targetIds = User::query()
                 ->where('is_platform_admin', true)
                 ->pluck('id')
                 ->map(fn ($id) => (int) $id)

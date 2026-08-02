@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\EnterpriseLicense;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -57,7 +58,7 @@ class EnterpriseBackfillLicensesCommand extends Command
         $byNif = $clientsWithNif->groupBy(fn (User $u) => EnterpriseLicense::normalizeCompanyTaxId($u->company_tax_id));
 
         foreach ($byNif as $nifNorm => $group) {
-            /** @var \Illuminate\Support\Collection<int, User> $group */
+            /** @var Collection<int, User> $group */
             if ($nifNorm === '') {
                 continue;
             }

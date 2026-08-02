@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class TreasuryDemoSeeder extends Seeder
 {
@@ -16,14 +16,15 @@ class TreasuryDemoSeeder extends Seeder
     {
         // Récupérer le premier utilisateur existant
         $user = User::first();
-        
-        if (!$user) {
+
+        if (! $user) {
             $this->command->warn('Aucun utilisateur trouvé. Veuillez créer un compte d\'abord.');
+
             return;
         }
 
         $userId = $user->id;
-        
+
         // Supprimer les anciennes données de démo
         DB::table('treasury_transactions')->where('user_id', $userId)->delete();
 
@@ -72,7 +73,7 @@ class TreasuryDemoSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
+
             // === DÉCAISSEMENTS ===
             [
                 'user_id' => $userId,
@@ -144,7 +145,7 @@ class TreasuryDemoSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
+
             // === PRÉVISIONS FUTURES ===
             [
                 'user_id' => $userId,
@@ -177,7 +178,7 @@ class TreasuryDemoSeeder extends Seeder
         ];
 
         DB::table('treasury_transactions')->insert($transactions);
-        
+
         $this->command->info('Données de démonstration de trésorerie insérées avec succès!');
     }
 }

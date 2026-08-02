@@ -86,6 +86,7 @@ class AdminExecutiveDashboardController extends Controller
             ['label' => 'Churn élevé', 'value' => $churn, 'threshold' => 15],
         ])->map(function (array $alert) {
             $status = $alert['value'] >= $alert['threshold'] ? 'danger' : 'success';
+
             return [...$alert, 'status' => $status];
         })->all();
 

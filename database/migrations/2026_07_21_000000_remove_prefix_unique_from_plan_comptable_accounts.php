@@ -12,7 +12,7 @@ return new class extends Migration
             // Supprimer la contrainte d'unicité obsolète sur (user_id, prefix) qui bloquait l'import de plusieurs comptes d'une même classe
             try {
                 $table->dropUnique('plan_comptable_accounts_user_id_prefix_unique');
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Fallback si la contrainte a déjà été supprimée
             }
         });
@@ -23,7 +23,7 @@ return new class extends Migration
         Schema::table('plan_comptable_accounts', function (Blueprint $table) {
             try {
                 $table->unique(['user_id', 'prefix']);
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Ignore
             }
         });

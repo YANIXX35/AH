@@ -122,7 +122,7 @@ class AccountingDocumentViewerController extends Controller
         $safeName = str_replace('"', '', $documentName);
 
         return response()->file($absolutePath, [
-            'Content-Disposition' => 'inline; filename="' . $safeName . '"',
+            'Content-Disposition' => 'inline; filename="'.$safeName.'"',
         ]);
     }
 
@@ -152,7 +152,7 @@ class AccountingDocumentViewerController extends Controller
         $content = (string) $disk->get($storedPath);
 
         if (mb_strlen($content) > 200000) {
-            return mb_substr($content, 0, 200000) . "\n\n[Prévisualisation tronquée]";
+            return mb_substr($content, 0, 200000)."\n\n[Prévisualisation tronquée]";
         }
 
         return $content;
@@ -161,14 +161,14 @@ class AccountingDocumentViewerController extends Controller
     private function formatFileSize(int $bytes): string
     {
         if ($bytes >= 1024 * 1024) {
-            return number_format($bytes / (1024 * 1024), 2, ',', ' ') . ' MB';
+            return number_format($bytes / (1024 * 1024), 2, ',', ' ').' MB';
         }
 
         if ($bytes >= 1024) {
-            return number_format($bytes / 1024, 1, ',', ' ') . ' KB';
+            return number_format($bytes / 1024, 1, ',', ' ').' KB';
         }
 
-        return $bytes . ' octets';
+        return $bytes.' octets';
     }
 
     private function authorizeEntry(AccountingEntry $entry): void

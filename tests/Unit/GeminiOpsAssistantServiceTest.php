@@ -2,11 +2,11 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Services\GeminiOpsAssistantService;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
 
 class GeminiOpsAssistantServiceTest extends TestCase
 {
@@ -14,7 +14,7 @@ class GeminiOpsAssistantServiceTest extends TestCase
     {
         parent::setUp();
         Cache::flush();
-        
+
         // Configurer des valeurs prévisibles pour les tests
         Config::set('gemini.key', 'fake-gemini-key');
         Config::set('gemini.extra_keys', []);
@@ -43,17 +43,17 @@ class GeminiOpsAssistantServiceTest extends TestCase
                     [
                         'content' => [
                             'parts' => [
-                                ['text' => 'Réponse factuelle de test']
-                            ]
-                        ]
-                    ]
-                ]
-            ], 200)
+                                ['text' => 'Réponse factuelle de test'],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
         ]);
 
-        $service = new GeminiOpsAssistantService();
+        $service = new GeminiOpsAssistantService;
         $result = $service->chat([
-            ['role' => 'user', 'content' => 'Bonjour']
+            ['role' => 'user', 'content' => 'Bonjour'],
         ]);
 
         $this->assertTrue($result['ok']);
@@ -68,20 +68,21 @@ class GeminiOpsAssistantServiceTest extends TestCase
         $callCount = 0;
         Http::fake(function () use (&$callCount) {
             $callCount++;
+
             return Http::response([
                 'candidates' => [
                     [
                         'content' => [
                             'parts' => [
-                                ['text' => 'Réponse numéro ' . $callCount]
-                            ]
-                        ]
-                    ]
-                ]
+                                ['text' => 'Réponse numéro '.$callCount],
+                            ],
+                        ],
+                    ],
+                ],
             ], 200);
         });
 
-        $service = new GeminiOpsAssistantService();
+        $service = new GeminiOpsAssistantService;
         $messages = [['role' => 'user', 'content' => 'Bonjour unique']];
 
         // Premier appel (miss cache)
@@ -108,8 +109,8 @@ class GeminiOpsAssistantServiceTest extends TestCase
             if (str_contains($url, 'models/gemini-2.0-flash:generateContent')) {
                 return Http::response([
                     'error' => [
-                        'message' => 'This model is currently experiencing high demand.'
-                    ]
+                        'message' => 'This model is currently experiencing high demand.',
+                    ],
                 ], 503);
             }
 
@@ -120,28 +121,28 @@ class GeminiOpsAssistantServiceTest extends TestCase
                         [
                             'content' => [
                                 'parts' => [
-                                    ['text' => 'Réponse du modèle secours lite']
-                                ]
-                            ]
-                        ]
-                    ]
+                                    ['text' => 'Réponse du modèle secours lite'],
+                                ],
+                            ],
+                        ],
+                    ],
                 ], 200);
             }
 
             return Http::response([], 500);
         });
 
-        $service = new GeminiOpsAssistantService();
+        $service = new GeminiOpsAssistantService;
         $result = $service->chat([
-            ['role' => 'user', 'content' => 'Bonjour avec erreur']
+            ['role' => 'user', 'content' => 'Bonjour avec erreur'],
         ]);
 
         $this->assertTrue($result['ok']);
         $this->assertEquals('Réponse du modèle secours lite', $result['answer']);
 
         // Vérifier que gemini-2.0-flash a été tenté (3 fois configuré dans setUp), puis gemini-2.5-flash-lite
-        $flashAttempts = array_filter($requests, fn($url) => str_contains($url, 'gemini-2.0-flash'));
-        $liteAttempts = array_filter($requests, fn($url) => str_contains($url, 'gemini-2.5-flash-lite'));
+        $flashAttempts = array_filter($requests, fn ($url) => str_contains($url, 'gemini-2.0-flash'));
+        $liteAttempts = array_filter($requests, fn ($url) => str_contains($url, 'gemini-2.5-flash-lite'));
 
         $this->assertEquals(3, count($flashAttempts));
         $this->assertEquals(1, count($liteAttempts));
@@ -159,29 +160,31 @@ class GeminiOpsAssistantServiceTest extends TestCase
             if (str_contains($url, 'models/gemini-2.0-flash:generateContent')) {
                 return Http::response([
                     'error' => [
-                        'message' => 'Quota ou surcharge'
-                    ]
+                        'message' => 'Quota ou surcharge',
+                    ],
                 ], 503);
             }
             if (str_contains($url, 'models/gemini-2.5-flash-lite:generateContent')) {
                 $text = ($liteCallCount < 3) ? 'Succès secours pendant CB' : 'Succès après CB';
                 $liteCallCount++;
+
                 return Http::response([
                     'candidates' => [
                         [
                             'content' => [
                                 'parts' => [
-                                    ['text' => $text]
-                                ]
-                            ]
-                        ]
-                    ]
+                                    ['text' => $text],
+                                ],
+                            ],
+                        ],
+                    ],
                 ], 200);
             }
+
             return Http::response([], 500);
         });
 
-        $service = new GeminiOpsAssistantService();
+        $service = new GeminiOpsAssistantService;
 
         // Lancer 3 appels distincts (max_failures=3) pour bloquer le modèle
         $service->chat([['role' => 'user', 'content' => 'Bloquer CB 1']]);

@@ -308,4 +308,3 @@ class AdminPlatformLogController extends Controller
         return (string) $value;
     }
 }
-

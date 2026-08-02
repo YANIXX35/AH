@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\CommercialDocument;
 use App\Models\Prospect;
 use App\Models\User;
+use App\Services\CompanyDocumentParserService;
 use App\Services\UserPremiumService;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -23,7 +27,7 @@ class CommercialController extends Controller
     public function index(Request $request): View
     {
         $commercial = $request->user();
-        if (!$commercial) {
+        if (! $commercial) {
             abort(403);
         }
 
@@ -48,13 +52,16 @@ class CommercialController extends Controller
 
         // Clients encore dans leur période d'essai d'1 mois
         $activeTrials = $clients->filter(function ($client) {
-            if (!$client) return false;
+            if (! $client) {
+                return false;
+            }
             // Si un premium_trial_ends_at explicite est défini, on s'y réfère
-            if (!empty($client->premium_trial_ends_at)) {
+            if (! empty($client->premium_trial_ends_at)) {
                 try {
-                    $trialEndsAt = $client->premium_trial_ends_at instanceof \Carbon\Carbon
+                    $trialEndsAt = $client->premium_trial_ends_at instanceof Carbon
                         ? $client->premium_trial_ends_at
-                        : \Carbon\Carbon::parse($client->premium_trial_ends_at);
+                        : Carbon::parse($client->premium_trial_ends_at);
+
                     return $trialEndsAt->isFuture();
                 } catch (\Throwable $e) {
                     return false;
@@ -62,9 +69,10 @@ class CommercialController extends Controller
             }
             // Sinon, on considère que l'essai est le premier mois depuis la création du compte
             try {
-                $createdAt = $client->created_at instanceof \Carbon\Carbon
+                $createdAt = $client->created_at instanceof Carbon
                     ? $client->created_at
-                    : \Carbon\Carbon::parse($client->created_at);
+                    : Carbon::parse($client->created_at);
+
                 return $createdAt->isAfter(now()->subMonth());
             } catch (\Throwable $e) {
                 return false;
@@ -76,25 +84,32 @@ class CommercialController extends Controller
 
         // Clients convertis : essai terminé + premium actif
         $portfolioConverted = $clients->filter(function ($client) {
-            if (!$client) return false;
-            if (!($client->is_premium ?? false)) return false;
+            if (! $client) {
+                return false;
+            }
+            if (! ($client->is_premium ?? false)) {
+                return false;
+            }
             // Vérifier que l'essai est bien terminé (compte > 1 mois ou trial_ends_at passé)
             $trialExpired = false;
-            if (!empty($client->premium_trial_ends_at)) {
+            if (! empty($client->premium_trial_ends_at)) {
                 try {
-                    $trialEndsAt = $client->premium_trial_ends_at instanceof \Carbon\Carbon
+                    $trialEndsAt = $client->premium_trial_ends_at instanceof Carbon
                         ? $client->premium_trial_ends_at
-                        : \Carbon\Carbon::parse($client->premium_trial_ends_at);
+                        : Carbon::parse($client->premium_trial_ends_at);
                     $trialExpired = $trialEndsAt->isPast();
-                } catch (\Throwable $e) {}
+                } catch (\Throwable $e) {
+                }
             } else {
                 try {
-                    $createdAt = $client->created_at instanceof \Carbon\Carbon
+                    $createdAt = $client->created_at instanceof Carbon
                         ? $client->created_at
-                        : \Carbon\Carbon::parse($client->created_at);
+                        : Carbon::parse($client->created_at);
                     $trialExpired = $createdAt->isBefore(now()->subMonth());
-                } catch (\Throwable $e) {}
+                } catch (\Throwable $e) {
+                }
             }
+
             return $trialExpired;
         })->count();
 
@@ -116,9 +131,10 @@ class CommercialController extends Controller
         // Évolution cumulée du portefeuille sur les 6 derniers mois
         $clientsByMonth = $clients->groupBy(function ($client) {
             try {
-                $createdAt = $client->created_at instanceof \Carbon\Carbon
+                $createdAt = $client->created_at instanceof Carbon
                     ? $client->created_at
-                    : \Carbon\Carbon::parse($client->created_at);
+                    : Carbon::parse($client->created_at);
+
                 return $createdAt->format('Y-m');
             } catch (\Throwable $e) {
                 return 'inconnu';
@@ -127,9 +143,10 @@ class CommercialController extends Controller
         $growthWindowStart = now()->subMonths(5)->startOfMonth();
         $cumulative = $clients->filter(function ($client) use ($growthWindowStart) {
             try {
-                $createdAt = $client->created_at instanceof \Carbon\Carbon
+                $createdAt = $client->created_at instanceof Carbon
                     ? $client->created_at
-                    : \Carbon\Carbon::parse($client->created_at);
+                    : Carbon::parse($client->created_at);
+
                 return $createdAt->lt($growthWindowStart);
             } catch (\Throwable $e) {
                 return false;
@@ -187,7 +204,7 @@ class CommercialController extends Controller
     public function portefeuille(Request $request): View
     {
         $commercial = $request->user();
-        if (!$commercial) {
+        if (! $commercial) {
             abort(403);
         }
 
@@ -198,12 +215,12 @@ class CommercialController extends Controller
                 ? User::query()->clients()
                 : $commercial->createdClients();
 
-            if (!empty($search)) {
+            if (! empty($search)) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%")
-                      ->orWhere('company_name', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%");
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('company_name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
                 });
             }
 
@@ -225,21 +242,25 @@ class CommercialController extends Controller
 
         // Clients encore dans leur période d'essai d'1 mois
         $activeTrials = $allClients->filter(function ($client) {
-            if (!$client) return false;
-            if (!empty($client->premium_trial_ends_at)) {
+            if (! $client) {
+                return false;
+            }
+            if (! empty($client->premium_trial_ends_at)) {
                 try {
-                    $trialEndsAt = $client->premium_trial_ends_at instanceof \Carbon\Carbon
+                    $trialEndsAt = $client->premium_trial_ends_at instanceof Carbon
                         ? $client->premium_trial_ends_at
-                        : \Carbon\Carbon::parse($client->premium_trial_ends_at);
+                        : Carbon::parse($client->premium_trial_ends_at);
+
                     return $trialEndsAt->isFuture();
                 } catch (\Throwable $e) {
                     return false;
                 }
             }
             try {
-                $createdAt = $client->created_at instanceof \Carbon\Carbon
+                $createdAt = $client->created_at instanceof Carbon
                     ? $client->created_at
-                    : \Carbon\Carbon::parse($client->created_at);
+                    : Carbon::parse($client->created_at);
+
                 return $createdAt->isAfter(now()->subMonth());
             } catch (\Throwable $e) {
                 return false;
@@ -251,24 +272,31 @@ class CommercialController extends Controller
 
         // Clients convertis : essai terminé + premium actif
         $portfolioConverted = $allClients->filter(function ($client) {
-            if (!$client) return false;
-            if (!($client->is_premium ?? false)) return false;
+            if (! $client) {
+                return false;
+            }
+            if (! ($client->is_premium ?? false)) {
+                return false;
+            }
             $trialExpired = false;
-            if (!empty($client->premium_trial_ends_at)) {
+            if (! empty($client->premium_trial_ends_at)) {
                 try {
-                    $trialEndsAt = $client->premium_trial_ends_at instanceof \Carbon\Carbon
+                    $trialEndsAt = $client->premium_trial_ends_at instanceof Carbon
                         ? $client->premium_trial_ends_at
-                        : \Carbon\Carbon::parse($client->premium_trial_ends_at);
+                        : Carbon::parse($client->premium_trial_ends_at);
                     $trialExpired = $trialEndsAt->isPast();
-                } catch (\Throwable $e) {}
+                } catch (\Throwable $e) {
+                }
             } else {
                 try {
-                    $createdAt = $client->created_at instanceof \Carbon\Carbon
+                    $createdAt = $client->created_at instanceof Carbon
                         ? $client->created_at
-                        : \Carbon\Carbon::parse($client->created_at);
+                        : Carbon::parse($client->created_at);
                     $trialExpired = $createdAt->isBefore(now()->subMonth());
-                } catch (\Throwable $e) {}
+                } catch (\Throwable $e) {
+                }
             }
+
             return $trialExpired;
         })->count();
 
@@ -312,7 +340,6 @@ class CommercialController extends Controller
         return view('commercial.club');
     }
 
-
     public function importFile(Request $request): View
     {
         $user = $request->user();
@@ -337,7 +364,7 @@ class CommercialController extends Controller
 
         $user = $request->user();
         $file = $request->file('document_file');
-        
+
         $originalName = $file->getClientOriginalName();
         $mimeType = $file->getClientMimeType() ?: $file->getClientOriginalExtension();
         $fileSize = $file->getSize();
@@ -353,7 +380,7 @@ class CommercialController extends Controller
             'notes' => $request->input('notes'),
         ]);
 
-        return redirect()->route('commercial.import')->with('status', 'Fichier "' . $originalName . '" enregistré avec succès dans votre espace et en base de données !');
+        return redirect()->route('commercial.import')->with('status', 'Fichier "'.$originalName.'" enregistré avec succès dans votre espace et en base de données !');
     }
 
     public function downloadDocument(Request $request, $id)
@@ -389,7 +416,6 @@ class CommercialController extends Controller
 
         return redirect()->route('commercial.import')->with('status', 'Le fichier a été supprimé de votre espace et de la base de données.');
     }
-
 
     public function prospects(Request $request): View
     {
@@ -427,12 +453,12 @@ class CommercialController extends Controller
 
         // Valeurs par défaut si les champs sont absents
         if (empty($validated['email'])) {
-            $validated['email'] = 'client_' . uniqid() . '@sitiame-capital.com';
+            $validated['email'] = 'client_'.uniqid().'@sitiame-capital.com';
         }
         if (empty($validated['name'])) {
             $validated['name'] = $validated['company_name'] ?? 'Client sans nom';
         }
-        $plainPassword = $validated['password'] ?? \Illuminate\Support\Str::random(12);
+        $plainPassword = $validated['password'] ?? Str::random(12);
 
         if ($request->hasFile('company_logo')) {
             $validated['company_logo'] = $request->file('company_logo')->store('company-logos', 'public');
@@ -506,7 +532,7 @@ class CommercialController extends Controller
 
         unset($validated['trade_register']);
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
@@ -554,7 +580,7 @@ class CommercialController extends Controller
     public function updateProspectStatus(Request $request, Prospect $prospect): RedirectResponse
     {
         $commercial = $request->user();
-        if (!$commercial->is_platform_admin && $prospect->commercial_user_id !== $commercial->id) {
+        if (! $commercial->is_platform_admin && $prospect->commercial_user_id !== $commercial->id) {
             abort(403, 'Vous n’êtes pas autorisé à modifier ce prospect.');
         }
 
@@ -571,7 +597,7 @@ class CommercialController extends Controller
     public function destroyProspect(Request $request, Prospect $prospect): RedirectResponse
     {
         $commercial = $request->user();
-        if (!$commercial->is_platform_admin && $prospect->commercial_user_id !== $commercial->id) {
+        if (! $commercial->is_platform_admin && $prospect->commercial_user_id !== $commercial->id) {
             abort(403, 'Vous n’êtes pas autorisé à supprimer ce prospect.');
         }
 
@@ -580,7 +606,7 @@ class CommercialController extends Controller
         return back()->with('status', 'Prospect supprimé avec succès.');
     }
 
-    public function parseCompanyDocument(Request $request, \App\Services\CompanyDocumentParserService $parser): \Illuminate\Http\JsonResponse
+    public function parseCompanyDocument(Request $request, CompanyDocumentParserService $parser): JsonResponse
     {
         $request->validate([
             'document' => ['required', 'file', 'max:10240', 'mimes:docx,doc,xlsx,xls,csv,pdf,txt'],
@@ -595,7 +621,7 @@ class CommercialController extends Controller
             'fields_found_count' => count($extracted),
             'extracted' => $extracted,
             'message' => count($extracted) > 0
-                ? count($extracted) . ' champ(s) identifié(s) et pré-rempli(s) automatiquement.'
+                ? count($extracted).' champ(s) identifié(s) et pré-rempli(s) automatiquement.'
                 : 'Aucun champ reconnu automatiquement. Vous pouvez remplir les informations manuellement.',
         ]);
     }

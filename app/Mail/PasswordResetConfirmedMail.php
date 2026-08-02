@@ -12,9 +12,7 @@ class PasswordResetConfirmedMail extends Mailable
     use Queueable;
     use SerializesModels;
 
-    public function __construct(public User $user)
-    {
-    }
+    public function __construct(public User $user) {}
 
     public function build(): self
     {
@@ -23,4 +21,3 @@ class PasswordResetConfirmedMail extends Mailable
             ->view('emails.password-reset-confirmed');
     }
 }
-

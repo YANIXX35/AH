@@ -15,9 +15,7 @@ class StockController extends Controller
 {
     use UsesClientWorkspace;
 
-    public function __construct(private readonly StockService $stockService)
-    {
-    }
+    public function __construct(private readonly StockService $stockService) {}
 
     public function index(): View
     {

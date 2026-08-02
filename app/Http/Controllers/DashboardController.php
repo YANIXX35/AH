@@ -8,6 +8,7 @@ use App\Services\DashboardMetricsService;
 use App\Services\HuggingFaceOpsAssistantService;
 use App\Support\ClientWorkspace;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
@@ -19,7 +20,7 @@ class DashboardController extends Controller
         private readonly HuggingFaceOpsAssistantService $hfAssistant
     ) {}
 
-    public function index(Request $request): \Illuminate\Http\RedirectResponse|\Illuminate\View\View
+    public function index(Request $request): RedirectResponse|View
     {
         if ($request->user() && in_array($request->user()->role_key, ['commercial', 'commerciale'], true)) {
             return redirect()->route('commercial.dashboard');
@@ -150,8 +151,8 @@ class DashboardController extends Controller
     }
 
     /**
-     * @param array<string, mixed> $metrics
-     * @param array<int, array<string, string>> $inconsistencies
+     * @param  array<string, mixed>  $metrics
+     * @param  array<int, array<string, string>>  $inconsistencies
      */
     private function buildDashboardLiveInsight(array $metrics, array $inconsistencies): string
     {
@@ -171,7 +172,7 @@ class DashboardController extends Controller
         $messages = [
             [
                 'role' => 'system',
-                'content' => "Tu es un assistant financier en direct pour dashboard PME. Reponds en francais, format compact: Priorite immediate, Comment faire (4 etapes), KPI de suivi, Impact attendu.",
+                'content' => 'Tu es un assistant financier en direct pour dashboard PME. Reponds en francais, format compact: Priorite immediate, Comment faire (4 etapes), KPI de suivi, Impact attendu.',
             ],
             [
                 'role' => 'system',

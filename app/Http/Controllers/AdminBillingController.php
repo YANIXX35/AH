@@ -6,8 +6,8 @@ use App\Models\BillingInvoice;
 use App\Models\BillingPlan;
 use App\Models\BillingSubscription;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AdminBillingController extends Controller

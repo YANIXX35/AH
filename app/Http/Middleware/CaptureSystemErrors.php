@@ -19,7 +19,7 @@ class CaptureSystemErrors
                 $this->logReport(
                     $request,
                     'HttpException'.$response->getStatusCode(),
-                    "Erreur HTTP ".$response->getStatusCode()." rencontrée sur la page.",
+                    'Erreur HTTP '.$response->getStatusCode().' rencontrée sur la page.',
                     null,
                     null,
                     null,

@@ -9,13 +9,14 @@ use App\Models\MenuActionLog;
 use App\Models\TreasuryAuditLog;
 use App\Models\User;
 use App\Services\TreasuryAudit;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\View\View;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 /**
  * Création de comptes collègues sous la même licence entreprise (sièges restants).
@@ -361,11 +362,11 @@ class EnterpriseTeamController extends Controller
             $logs = $logs->where('actor_id', $actorId)->values();
         }
         if ($dateFrom !== '') {
-            $from = \Carbon\Carbon::parse($dateFrom)->startOfDay();
+            $from = Carbon::parse($dateFrom)->startOfDay();
             $logs = $logs->filter(fn ($row) => ($row['created_at'] ?? null) && $row['created_at']->gte($from))->values();
         }
         if ($dateTo !== '') {
-            $to = \Carbon\Carbon::parse($dateTo)->endOfDay();
+            $to = Carbon::parse($dateTo)->endOfDay();
             $logs = $logs->filter(fn ($row) => ($row['created_at'] ?? null) && $row['created_at']->lte($to))->values();
         }
         if ($search !== '') {
