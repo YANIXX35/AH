@@ -40,7 +40,7 @@ class AiBusinessAdvisorController extends Controller
         if (in_array($cleanMessage, $greetings)) {
             return response()->json([
                 'ok' => true,
-                'answer' => "Bonjour ! Je suis l'assistant de Sitiame Capital et que puis-je faire pour vous ?",
+                'answer' => "Bonjour ! Je suis l'assistant de Sitiame Capital, expert en comptabilité OHADA et trésorerie. Que puis-je faire pour vous ?",
                 'context' => $financialContext,
             ]);
         }
