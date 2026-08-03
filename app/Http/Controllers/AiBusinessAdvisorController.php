@@ -35,7 +35,7 @@ class AiBusinessAdvisorController extends Controller
 
         // 1. Intercepter les salutations simples pour un accueil personnalisé immédiat
         $userMessage = trim((string) $data['message']);
-        $cleanMessage = preg_replace('/[^\p{L}\s]/u', '', mb_strtolower($userMessage));
+        $cleanMessage = trim(preg_replace('/[^\p{L}\s]/u', '', mb_strtolower($userMessage)));
         $greetings = ['bonjour', 'salut', 'coucou', 'hello', 'hi', 'hey', 'bonsoir', 'yo'];
         if (in_array($cleanMessage, $greetings)) {
             return response()->json([
