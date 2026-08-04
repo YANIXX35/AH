@@ -154,7 +154,7 @@
                 <div class="bg-primary text-white rounded-circle p-2 d-none d-sm-flex align-items-center justify-content-center flex-shrink-0" style="width:40px; height:40px;">
                     <i data-feather="grid" style="width:20px; height:20px;"></i>
                 </div>
-                <div class="d-flex align-items-center gap-1 bg-light rounded-pill p-1 border overflow-auto scrollbar-none flex-nowrap w-100">
+                <div class="d-none d-lg-flex align-items-center gap-1 bg-light rounded-pill p-1 border overflow-auto scrollbar-none flex-nowrap w-100">
                     <a href="{{ route('commercial.dashboard') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none text-nowrap flex-shrink-0">
                         <i data-feather="layout" class="me-1" style="width:14px; height:14px;"></i> Tableau de bord
                     </a>

@@ -10,7 +10,7 @@ class CommercialMobileMenuTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_commercial_sidebar_shows_mobile_header_grouped_items_and_red_logout(): void
+    public function test_commercial_sidebar_shows_mobile_header_and_secondary_items_only(): void
     {
         $commercial = User::factory()->create(['role_key' => 'commercial', 'name' => 'Awa Traoré']);
 
@@ -25,17 +25,18 @@ class CommercialMobileMenuTest extends TestCase
         // Section divider grouping secondary items
         $response->assertSee('AUTRES SERVICES');
 
-        // Primary items appear before the divider, secondary items after
+        // Primary items (already in the bottom nav) are desktop-only in the sidebar
+        $response->assertSee('sidebar-item d-none d-lg-block', false);
+
+        // Secondary items appear after the divider
         $html = $response->getContent();
         $dividerPos = strpos($html, 'AUTRES SERVICES');
         $this->assertNotFalse($dividerPos);
-        $this->assertLessThan($dividerPos, strpos($html, 'Pipeline Leads CRM'));
         $this->assertGreaterThan($dividerPos, strpos($html, 'Offres Marketing & Service'));
         $this->assertGreaterThan($dividerPos, strpos($html, 'Inscrire Client / PME'));
 
-        // Red logout item, mobile-only, distinct from the desktop navbar logout
-        $response->assertSee('sidebar-logout-item', false);
-        $response->assertSee('class="sidebar-link text-danger"', false);
+        // Exactly the 2 pre-existing logout buttons (navbar dropdown + sidebar) — no extra mobile-only duplicate
+        $this->assertSame(2, substr_count($html, 'Déconnexion'));
     }
 
     public function test_non_commercial_dashboard_has_no_commercial_mobile_header(): void
@@ -46,7 +47,6 @@ class CommercialMobileMenuTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertDontSee('commercial-mobile-header', false);
-        $response->assertDontSee('sidebar-logout-item', false);
     }
 
     public function test_commercial_dashboard_body_has_bottom_nav_class(): void

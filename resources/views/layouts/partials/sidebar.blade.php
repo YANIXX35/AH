@@ -68,18 +68,19 @@
                     </div>
                 </li>
 
-                <li class="sidebar-header">Espace Commercial</li>
-                <li class="sidebar-item {{ request()->routeIs('commercial.dashboard') && !request()->has('action') ? 'active' : '' }}">
+                {{-- Desktop only: ces 3 sections sont déjà accessibles via la bottom nav mobile, pas besoin de les répéter ici en dessous de 992px. --}}
+                <li class="sidebar-header d-none d-lg-block">Espace Commercial</li>
+                <li class="sidebar-item d-none d-lg-block {{ request()->routeIs('commercial.dashboard') && !request()->has('action') ? 'active' : '' }}">
                     <a class="sidebar-link" href="{{ route('commercial.dashboard') }}">
                         <i class="align-middle" data-feather="layout"></i> <span class="align-middle">Tableau de bord</span>
                     </a>
                 </li>
-                <li class="sidebar-item {{ request()->routeIs('commercial.portefeuille') ? 'active' : '' }}">
+                <li class="sidebar-item d-none d-lg-block {{ request()->routeIs('commercial.portefeuille') ? 'active' : '' }}">
                     <a class="sidebar-link" href="{{ route('commercial.portefeuille') }}">
                         <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Mon Portefeuille</span>
                     </a>
                 </li>
-                <li class="sidebar-item {{ request()->routeIs('commercial.prospects') ? 'active' : '' }}">
+                <li class="sidebar-item d-none d-lg-block {{ request()->routeIs('commercial.prospects') ? 'active' : '' }}">
                     <a class="sidebar-link" href="{{ route('commercial.prospects') }}">
                         <i class="align-middle" data-feather="target"></i> <span class="align-middle">Pipeline Leads CRM</span>
                     </a>
@@ -110,15 +111,6 @@
                     <a class="sidebar-link" href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}">
                         <i class="align-middle" data-feather="user-plus"></i> <span class="align-middle">Inscrire Client / PME</span>
                     </a>
-                </li>
-
-                <li class="sidebar-item sidebar-logout-item d-lg-none">
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="sidebar-link text-danger">
-                            <i class="align-middle" data-feather="log-out"></i> <span class="align-middle">Déconnexion</span>
-                        </button>
-                    </form>
                 </li>
 
 
