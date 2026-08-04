@@ -284,6 +284,17 @@
                 <!-- 2. Corps Scrollable uniquement (flex: 1 1 auto; overflow-y: auto) -->
                 <div class="modal-body p-4 bg-white flex-grow-1" id="accWizardModalBody" style="min-height: 0; overflow-y: auto !important; scroll-behavior: smooth;">
 
+                    @if($errors->any())
+                        <div class="alert alert-danger rounded-3 mb-4">
+                            <div class="fw-bold mb-1"><i data-feather="alert-triangle" class="me-1" style="width:16px; height:16px;"></i> Le dossier n'a pas pu être enregistré :</div>
+                            <ul class="mb-0 ps-3 small">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     {{-- Zone d'importation intelligente de fichier --}}
                     <div class="mb-4 p-3 bg-light rounded-4 border border-dashed border-success text-center">
                         <div class="d-flex align-items-center justify-content-center gap-2 mb-1 text-success fw-bold">
@@ -550,22 +561,37 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const modalEl = document.getElementById('addAccountantClientModal');
+        const hasValidationErrors = @json($errors->any());
+
+        // Après un échec de validation, on rouvre le modal tel quel (pas de reset,
+        // pas de retour forcé à l'étape 1) pour que l'utilisateur voie le message
+        // d'erreur affiché en haut du formulaire au lieu d'un échec silencieux.
+        let skipResetOnNextShow = hasValidationErrors;
+
         if (modalEl) {
             modalEl.addEventListener('show.bs.modal', function () {
+                if (skipResetOnNextShow) {
+                    skipResetOnNextShow = false;
+                    return;
+                }
                 clearAccModalFields();
                 goToAccStep(1);
             });
             modalEl.addEventListener('shown.bs.modal', function () {
+                if (hasValidationErrors) return;
                 setTimeout(clearAccModalFields, 100);
                 setTimeout(clearAccModalFields, 400);
             });
         }
 
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('action') === 'add-client') {
-            if (modalEl) {
-                const modal = new bootstrap.Modal(modalEl);
-                modal.show();
+        if ((urlParams.get('action') === 'add-client' || hasValidationErrors) && modalEl) {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            // La plupart des champs (dont les fichiers) sont à l'étape 2 : on l'ouvre
+            // directement dessus quand une erreur de validation vient d'avoir lieu.
+            if (hasValidationErrors) {
+                goToAccStep(2);
             }
         }
     });
