@@ -376,7 +376,10 @@
         }
     </style>
 </head>
-<body>
+@php
+    $isCommercialUser = Auth::check() && Auth::user()->role_key === 'commercial';
+@endphp
+<body class="{{ $isCommercialUser ? 'has-bottom-nav' : '' }}">
     <div class="gtranslate_wrapper gtranslate-global-host" aria-hidden="true"></div>
     <div class="wrapper">
         <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
@@ -700,6 +703,10 @@
                     </div>
                 </div>
             </footer>
+
+            @if($isCommercialUser)
+                @include('layouts.partials.bottom-nav-commercial')
+            @endif
         </div>
     </div>
 

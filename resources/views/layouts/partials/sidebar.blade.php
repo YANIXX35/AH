@@ -60,6 +60,14 @@
 
         <ul class="sidebar-nav">
             @if($sidebarIsCommercial)
+                <li class="commercial-mobile-header d-lg-none">
+                    <img src="{{ ($sidebarUser->avatar) ? asset('storage/' . $sidebarUser->avatar) : asset('images/sitiam.png') }}" class="rounded-circle" width="44" height="44" alt="{{ $sidebarUser->name }}">
+                    <div>
+                        <div class="commercial-mobile-header-name">{{ $sidebarUser->name }}</div>
+                        <span class="badge bg-primary text-white">💼 Commercial</span>
+                    </div>
+                </li>
+
                 <li class="sidebar-header">Espace Commercial</li>
                 <li class="sidebar-item {{ request()->routeIs('commercial.dashboard') && !request()->has('action') ? 'active' : '' }}">
                     <a class="sidebar-link" href="{{ route('commercial.dashboard') }}">
@@ -71,6 +79,13 @@
                         <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Mon Portefeuille</span>
                     </a>
                 </li>
+                <li class="sidebar-item {{ request()->routeIs('commercial.prospects') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial.prospects') }}">
+                        <i class="align-middle" data-feather="target"></i> <span class="align-middle">Pipeline Leads CRM</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-header">AUTRES SERVICES</li>
                 <li class="sidebar-item {{ request()->routeIs('commercial.showcase') ? 'active' : '' }}">
                     <a class="sidebar-link" href="{{ route('commercial.showcase') }}">
                         <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Offres Marketing & Service</span>
@@ -86,9 +101,9 @@
                         <i class="align-middle" data-feather="users"></i> <span class="align-middle">Sitiame Finance Club</span>
                     </a>
                 </li>
-                <li class="sidebar-item {{ request()->routeIs('commercial.prospects') ? 'active' : '' }}">
-                    <a class="sidebar-link" href="{{ route('commercial.prospects') }}">
-                        <i class="align-middle" data-feather="target"></i> <span class="align-middle">Pipeline Leads CRM</span>
+                <li class="sidebar-item {{ request()->routeIs('commercial.import') ? 'active' : '' }}">
+                    <a class="sidebar-link text-success fw-bold" href="{{ route('commercial.import') }}">
+                        <i class="align-middle text-success" data-feather="file-text"></i> <span class="align-middle">Importer & Analyser Fichier</span>
                     </a>
                 </li>
                 <li class="sidebar-item {{ request()->get('action') === 'add-client' ? 'active' : '' }}">
@@ -96,10 +111,14 @@
                         <i class="align-middle" data-feather="user-plus"></i> <span class="align-middle">Inscrire Client / PME</span>
                     </a>
                 </li>
-                <li class="sidebar-item {{ request()->routeIs('commercial.import') ? 'active' : '' }}">
-                    <a class="sidebar-link text-success fw-bold" href="{{ route('commercial.import') }}">
-                        <i class="align-middle text-success" data-feather="file-text"></i> <span class="align-middle">Importer & Analyser Fichier</span>
-                    </a>
+
+                <li class="sidebar-item sidebar-logout-item d-lg-none">
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="sidebar-link text-danger">
+                            <i class="align-middle" data-feather="log-out"></i> <span class="align-middle">Déconnexion</span>
+                        </button>
+                    </form>
                 </li>
 
 
