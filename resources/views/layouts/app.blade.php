@@ -16,7 +16,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="{{ asset('css/adminkit-app.css') }}" rel="stylesheet">
     <link href="{{ asset('css/adminkit-css-gaps-fix.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/mobile-responsive.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/mobile-responsive.css') }}?v={{ file_exists(public_path('css/mobile-responsive.css')) ? filemtime(public_path('css/mobile-responsive.css')) : 1 }}" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     @stack('styles')
     <style>

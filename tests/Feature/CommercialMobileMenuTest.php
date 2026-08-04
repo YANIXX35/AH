@@ -112,4 +112,14 @@ class CommercialMobileMenuTest extends TestCase
         $response->assertStatus(200);
         $response->assertDontSee('commercialBottomNav', false);
     }
+
+    public function test_mobile_responsive_css_is_served_with_a_cache_busting_version(): void
+    {
+        $commercial = User::factory()->create(['role_key' => 'commercial']);
+
+        $response = $this->actingAs($commercial)->get('/commercial/dashboard');
+
+        $response->assertStatus(200);
+        $response->assertSee('css/mobile-responsive.css?v=', false);
+    }
 }
