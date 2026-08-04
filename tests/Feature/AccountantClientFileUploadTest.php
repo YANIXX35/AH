@@ -36,6 +36,31 @@ class AccountantClientFileUploadTest extends TestCase
         Storage::disk('public')->assertExists($client->trade_register_file);
     }
 
+    public function test_accountant_client_gets_default_password_when_field_is_left_empty(): void
+    {
+        $accountant = User::factory()->create(['is_accountant' => true]);
+
+        $response = $this->actingAs($accountant)->post('/accountant/clients', [
+            'name' => 'Client Sans Mdp',
+            'email' => 'no-password@iagro.ci',
+            'company_name' => 'Ivoire Agro SARL',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('status', function ($status) {
+            return str_contains($status, 'Sitiame2026');
+        });
+
+        $this->post('/logout');
+        $login = $this->post('/login', [
+            'email' => 'no-password@iagro.ci',
+            'password' => 'Sitiame2026',
+        ]);
+
+        $login->assertRedirect('/dashboard');
+        $this->assertAuthenticated();
+    }
+
     public function test_accountant_sees_the_actual_saved_credentials_and_client_can_login_with_them(): void
     {
         $accountant = User::factory()->create(['is_accountant' => true]);

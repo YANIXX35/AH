@@ -339,11 +339,11 @@
                         <div class="row g-3 mb-2">
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-slate-700 mb-1">Mot de passe temporaire</label>
-                                <input type="password" name="password" id="accInputPassword" class="form-control rounded-3 py-2.5 px-3 border-slate-200" placeholder="Min. 8 caractères" autocomplete="new-password" value="">
+                                <input type="password" name="password" id="accInputPassword" class="form-control rounded-3 py-2.5 px-3 border-slate-200" placeholder="Min. 8 caractères" autocomplete="new-password" value="Sitiame2026">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-slate-700 mb-1">Confirmer mot de passe</label>
-                                <input type="password" name="password_confirmation" id="accInputPasswordConfirm" class="form-control rounded-3 py-2.5 px-3 border-slate-200" placeholder="Confirmer mot de passe" autocomplete="new-password" value="">
+                                <input type="password" name="password_confirmation" id="accInputPasswordConfirm" class="form-control rounded-3 py-2.5 px-3 border-slate-200" placeholder="Confirmer mot de passe" autocomplete="new-password" value="Sitiame2026">
                             </div>
                         </div>
                     </div>
@@ -472,8 +472,8 @@
             const passInput = document.getElementById('accInputPassword');
             const confirmInput = document.getElementById('accInputPasswordConfirm');
             if (emailInput) emailInput.value = '';
-            if (passInput) passInput.value = '';
-            if (confirmInput) confirmInput.value = '';
+            if (passInput) passInput.value = 'Sitiame2026';
+            if (confirmInput) confirmInput.value = 'Sitiame2026';
         }
         const alertBox = document.getElementById('parseStatusAlertAccIndex');
         if (alertBox) {

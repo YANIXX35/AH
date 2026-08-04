@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -83,7 +82,7 @@ class AccountantClientController extends Controller
         if (empty($validated['name'])) {
             $validated['name'] = $validated['company_name'] ?? 'Client sans nom';
         }
-        $plainPassword = $validated['password'] ?? Str::random(12);
+        $plainPassword = empty($validated['password']) ? 'Sitiame2026' : $validated['password'];
 
         if ($request->hasFile('company_logo')) {
             $validated['company_logo'] = $request->file('company_logo')->store('company-logos', 'public');

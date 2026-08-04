@@ -384,14 +384,14 @@
                                         🔑 Mot de passe temporaire
                                     </label>
                                     <input type="password" name="password" class="form-control form-control-lg rounded-3 border-0 bg-light"
-                                           placeholder="8 caractères minimum" minlength="8">
+                                           placeholder="8 caractères minimum" minlength="8" value="Sitiame2026">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold text-dark">
                                         🔑 Confirmer le mot de passe
                                     </label>
                                     <input type="password" name="password_confirmation" class="form-control form-control-lg rounded-3 border-0 bg-light"
-                                           placeholder="Confirmer le mot de passe">
+                                           placeholder="Confirmer le mot de passe" value="Sitiame2026">
                                 </div>
                             </div>
                         </div>
@@ -1091,7 +1091,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold text-dark">Mot de passe temporaire <span class="text-danger">*</span></label>
-                            <input type="password" name="password" class="form-control rounded-3" placeholder="8 caractères minimum" minlength="8" required>
+                            <input type="password" name="password" class="form-control rounded-3" placeholder="8 caractères minimum" minlength="8" value="Sitiame2026" required>
                         </div>
                     </div>
 

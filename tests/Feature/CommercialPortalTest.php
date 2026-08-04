@@ -61,6 +61,31 @@ class CommercialPortalTest extends TestCase
         $this->assertEquals(30, round(now()->diffInDays($client->premium_ends_at)));
     }
 
+    public function test_commercial_client_gets_default_password_when_field_is_left_empty(): void
+    {
+        $commercial = User::factory()->create(['role_key' => 'commercial']);
+
+        $response = $this->actingAs($commercial)->post('/commercial/clients', [
+            'name' => 'Client Sans Mdp',
+            'email' => 'no-password@sitiame.ci',
+            'company_name' => 'Client SAS',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('status', function ($status) {
+            return str_contains($status, 'Sitiame2026');
+        });
+
+        $this->post('/logout');
+        $login = $this->post('/login', [
+            'email' => 'no-password@sitiame.ci',
+            'password' => 'Sitiame2026',
+        ]);
+
+        $login->assertRedirect('/dashboard');
+        $this->assertAuthenticated();
+    }
+
     public function test_commercial_sees_the_actual_saved_credentials_and_client_can_login_with_them(): void
     {
         $commercial = User::factory()->create(['role_key' => 'commercial']);
