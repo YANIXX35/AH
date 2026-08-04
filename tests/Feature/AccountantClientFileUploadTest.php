@@ -36,6 +36,32 @@ class AccountantClientFileUploadTest extends TestCase
         Storage::disk('public')->assertExists($client->trade_register_file);
     }
 
+    public function test_accountant_sees_the_actual_saved_credentials_and_client_can_login_with_them(): void
+    {
+        $accountant = User::factory()->create(['is_accountant' => true]);
+
+        $response = $this->actingAs($accountant)->post('/accountant/clients', [
+            'name' => 'Jean Kouassi',
+            'email' => 'jean.kouassi@iagro.ci',
+            'password' => 'Sitiame2026!',
+            'company_name' => 'Ivoire Agro SARL',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('status', function ($status) {
+            return str_contains($status, 'jean.kouassi@iagro.ci') && str_contains($status, 'Sitiame2026!');
+        });
+
+        $this->post('/logout');
+        $login = $this->post('/login', [
+            'email' => 'jean.kouassi@iagro.ci',
+            'password' => 'Sitiame2026!',
+        ]);
+
+        $login->assertRedirect('/dashboard');
+        $this->assertAuthenticated();
+    }
+
     public function test_accountant_can_update_client_with_pdf_attestation(): void
     {
         Storage::fake('public');

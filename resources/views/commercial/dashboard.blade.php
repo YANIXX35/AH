@@ -461,13 +461,13 @@
                                     <label class="form-label fw-semibold text-dark">
                                         📎 Attestation DFE / NIF (Fichier)
                                     </label>
-                                    <input type="file" name="company_logo" class="form-control form-control-lg rounded-3 border-0 bg-light" accept="image/*,.pdf">
+                                    <input type="file" name="company_logo" class="form-control form-control-lg rounded-3 border-0 bg-light" accept="image/*,.pdf,.doc,.docx">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold text-dark">
                                         📎 Registre de commerce (Fichier)
                                     </label>
-                                    <input type="file" name="trade_register" class="form-control form-control-lg rounded-3 border-0 bg-light" accept="image/*,.pdf">
+                                    <input type="file" name="trade_register" class="form-control form-control-lg rounded-3 border-0 bg-light" accept="image/*,.pdf,.doc,.docx">
                                 </div>
                                 <div class="col-md-12">
                                     <label class="form-label fw-semibold text-dark">

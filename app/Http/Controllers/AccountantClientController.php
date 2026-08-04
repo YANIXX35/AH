@@ -118,7 +118,7 @@ class AccountantClientController extends Controller
             );
         });
 
-        return back()->with('status', 'Dossier client enregistré avec succès. Son compte a été initialisé avec 1 mois d’accès gratuit.');
+        return back()->with('status', "Dossier client enregistré avec succès. Son compte a été initialisé avec 1 mois d’accès gratuit. Identifiants de connexion — E-mail : {$validated['email']} / Mot de passe : {$plainPassword}");
     }
 
     public function update(Request $request, User $user): RedirectResponse

@@ -61,6 +61,53 @@ class CommercialPortalTest extends TestCase
         $this->assertEquals(30, round(now()->diffInDays($client->premium_ends_at)));
     }
 
+    public function test_commercial_sees_the_actual_saved_credentials_and_client_can_login_with_them(): void
+    {
+        $commercial = User::factory()->create(['role_key' => 'commercial']);
+
+        $response = $this->actingAs($commercial)->post('/commercial/clients', [
+            'name' => 'Nouveau Client',
+            'email' => 'credentials-check@sitiame.ci',
+            'company_name' => 'Client SAS',
+            'password' => 'Sitiame2026!',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('status', function ($status) {
+            return str_contains($status, 'credentials-check@sitiame.ci') && str_contains($status, 'Sitiame2026!');
+        });
+
+        $this->post('/logout');
+        $login = $this->post('/login', [
+            'email' => 'credentials-check@sitiame.ci',
+            'password' => 'Sitiame2026!',
+        ]);
+
+        $login->assertRedirect('/dashboard');
+        $this->assertAuthenticated();
+    }
+
+    public function test_commercial_can_create_client_with_pdf_attestation(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $commercial = User::factory()->create(['role_key' => 'commercial']);
+
+        $response = $this->actingAs($commercial)->post('/commercial/clients', [
+            'name' => 'Client PDF',
+            'email' => 'client-pdf@sitiame.ci',
+            'company_name' => 'Client PDF SAS',
+            'company_logo' => \Illuminate\Http\UploadedFile::fake()->create('attestation-dfe.pdf', 200, 'application/pdf'),
+        ]);
+
+        $response->assertSessionHasNoErrors();
+
+        $client = User::where('email', 'client-pdf@sitiame.ci')->first();
+        $this->assertNotNull($client);
+        $this->assertNotNull($client->company_logo);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($client->company_logo);
+    }
+
     public function test_commercial_can_update_their_client(): void
     {
         $commercial = User::factory()->create(['role_key' => 'commercial']);

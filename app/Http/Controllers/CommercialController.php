@@ -442,10 +442,10 @@ class CommercialController extends Controller
             'company_name' => ['nullable', 'string', 'max:255'],
             'company_sigle' => ['nullable', 'string', 'max:255'],
             'company_tax_id' => ['nullable', 'string', 'max:255'],
-            'company_logo' => ['nullable', 'image', 'max:5120'],
+            'company_logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf,doc,docx', 'max:5120'],
             'sector' => ['nullable', 'string', 'max:255'],
             'rccm' => ['nullable', 'string', 'max:255'],
-            'trade_register' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'trade_register' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx', 'max:5120'],
             'address' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],
             'license_key' => ['nullable', 'string', 'max:64'],
@@ -494,7 +494,7 @@ class CommercialController extends Controller
             );
         });
 
-        return back()->with('status', 'Client enregistré avec succès. Son compte a été créé avec un mois d’essai gratuit.');
+        return back()->with('status', "Client enregistré avec succès. Son compte a été créé avec un mois d’essai gratuit. Identifiants de connexion — E-mail : {$validated['email']} / Mot de passe : {$plainPassword}");
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -511,10 +511,10 @@ class CommercialController extends Controller
             'company_name' => ['nullable', 'string', 'max:255'],
             'company_sigle' => ['nullable', 'string', 'max:255'],
             'company_tax_id' => ['nullable', 'string', 'max:255'],
-            'company_logo' => ['nullable', 'image', 'max:5120'],
+            'company_logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf,doc,docx', 'max:5120'],
             'sector' => ['nullable', 'string', 'max:255'],
             'rccm' => ['nullable', 'string', 'max:255'],
-            'trade_register' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'trade_register' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx', 'max:5120'],
             'address' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],
             'password' => ['nullable', 'string', 'min:8'],
