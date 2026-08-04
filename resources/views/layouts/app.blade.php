@@ -874,6 +874,14 @@
                 }
             });
 
+            // Retour arrière/avant navigateur (bfcache) → le menu et le scroll bloqué
+            // peuvent rester dans leur dernier état JS ; on force une fermeture propre
+            // à chaque affichage de page, sinon le fond semi-transparent du menu reste
+            // au-dessus du contenu et intercepte les clics sans que ce soit visible.
+            window.addEventListener('pageshow', function() {
+                closeSidebar();
+            });
+
         });
     </script>
 

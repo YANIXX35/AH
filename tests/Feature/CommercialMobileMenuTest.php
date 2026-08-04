@@ -123,4 +123,14 @@ class CommercialMobileMenuTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('css/mobile-responsive.css?v=', false);
     }
+
+    public function test_sidebar_is_force_closed_on_pageshow_to_survive_bfcache_navigation(): void
+    {
+        $commercial = User::factory()->create(['role_key' => 'commercial']);
+
+        $response = $this->actingAs($commercial)->get('/commercial/dashboard');
+
+        $response->assertStatus(200);
+        $response->assertSee("addEventListener('pageshow'", false);
+    }
 }

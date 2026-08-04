@@ -257,7 +257,7 @@
             width: min(400px, calc(100vw - 20px));
             right: 10px;
             bottom: 80px;
-            height: min(60vh, 520px);
+            height: min(55vh, 460px);
         }
         .admin-global-chat-launcher {
             right: 12px;
@@ -276,10 +276,10 @@
             left: 0;
             bottom: 0;
             width: 100vw;
-            height: 50vh;          /* Compact sur mobile ; dvh ci-dessous prend le relais si le clavier est ouvert */
-            height: 50dvh;
-            max-height: 420px;
-            min-height: 280px;
+            height: 42vh;          /* Compact sur mobile ; dvh ci-dessous prend le relais si le clavier est ouvert */
+            height: 42dvh;
+            max-height: 360px;
+            min-height: 240px;
             border-radius: 1rem 1rem 0 0;
             border-left: 0;
             border-right: 0;
