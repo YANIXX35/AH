@@ -11,8 +11,4 @@
         <i data-feather="target"></i>
         <span>Prospects</span>
     </a>
-    <a href="#" class="bottom-nav-item js-sidebar-toggle">
-        <i data-feather="menu"></i>
-        <span>Menu</span>
-    </a>
 </nav>

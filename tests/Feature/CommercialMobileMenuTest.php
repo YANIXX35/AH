@@ -70,7 +70,7 @@ class CommercialMobileMenuTest extends TestCase
         $response->assertDontSee('has-bottom-nav', false);
     }
 
-    public function test_commercial_dashboard_shows_bottom_nav_with_four_items(): void
+    public function test_commercial_dashboard_shows_bottom_nav_with_three_items(): void
     {
         $commercial = User::factory()->create(['role_key' => 'commercial']);
 
@@ -78,16 +78,17 @@ class CommercialMobileMenuTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('id="commercialBottomNav"', false);
-        $response->assertSee('class="bottom-nav-item js-sidebar-toggle"', false);
 
         $html = $response->getContent();
         $navStart = strpos($html, 'id="commercialBottomNav"');
         $this->assertNotFalse($navStart);
-        $navHtml = substr($html, $navStart, 1200);
+        $navEnd = strpos($html, '</nav>', $navStart);
+        $navHtml = substr($html, $navStart, $navEnd - $navStart);
         $this->assertStringContainsString('Tableau de bord', $navHtml);
         $this->assertStringContainsString('Portefeuille', $navHtml);
         $this->assertStringContainsString('Prospects', $navHtml);
-        $this->assertStringContainsString('Menu', $navHtml);
+        $this->assertStringNotContainsString('js-sidebar-toggle', $navHtml);
+        $this->assertSame(3, substr_count($navHtml, 'bottom-nav-item'));
     }
 
     public function test_commercial_portefeuille_bottom_nav_marks_portefeuille_active(): void
