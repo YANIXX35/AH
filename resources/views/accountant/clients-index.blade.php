@@ -238,11 +238,11 @@
                             <div class="row g-2 mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label small fw-semibold">Attestation DFE / NIF (Fichier)</label>
-                                    <input type="file" name="company_logo" class="form-control rounded-3 py-2" accept="image/*,.pdf">
+                                    <input type="file" name="company_logo" class="form-control rounded-3 py-2" accept="image/*,.pdf,.doc,.docx">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-semibold">Registre de commerce (PDF/image)</label>
-                                    <input type="file" name="trade_register" class="form-control rounded-3 py-2" accept="image/*,.pdf">
+                                    <input type="file" name="trade_register" class="form-control rounded-3 py-2" accept="image/*,.pdf,.doc,.docx">
                                 </div>
                             </div>
                         </div>
@@ -385,11 +385,11 @@
                         <div class="row g-3 mb-3.5">
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-slate-700 mb-1">Attestation DFE / NIF (Fichier)</label>
-                                <input type="file" name="company_logo" class="form-control rounded-3 py-2.5 px-3 border-slate-200" accept="image/*,.pdf">
+                                <input type="file" name="company_logo" class="form-control rounded-3 py-2.5 px-3 border-slate-200" accept="image/*,.pdf,.doc,.docx">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-slate-700 mb-1">Registre de commerce (Fichier)</label>
-                                <input type="file" name="trade_register" class="form-control rounded-3 py-2.5 px-3 border-slate-200" accept="image/*,.pdf">
+                                <input type="file" name="trade_register" class="form-control rounded-3 py-2.5 px-3 border-slate-200" accept="image/*,.pdf,.doc,.docx">
                             </div>
                         </div>
 

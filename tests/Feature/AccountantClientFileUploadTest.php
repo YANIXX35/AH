@@ -57,6 +57,28 @@ class AccountantClientFileUploadTest extends TestCase
         Storage::disk('public')->assertExists($client->company_logo);
     }
 
+    public function test_accountant_can_create_client_with_word_document_attestation(): void
+    {
+        Storage::fake('public');
+
+        $accountant = User::factory()->create(['is_accountant' => true]);
+
+        $response = $this->actingAs($accountant)->post('/accountant/clients', [
+            'company_name' => 'Ivoire Agro SARL',
+            'email' => 'client-docx@iagro.ci',
+            'company_logo' => UploadedFile::fake()->create('attestation-dfe.docx', 200, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+            'trade_register' => UploadedFile::fake()->create('registre-commerce.doc', 200, 'application/msword'),
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $client = User::where('email', 'client-docx@iagro.ci')->first();
+        $this->assertNotNull($client);
+        Storage::disk('public')->assertExists($client->company_logo);
+        Storage::disk('public')->assertExists($client->trade_register_file);
+    }
+
     public function test_invalid_attestation_file_shows_error_instead_of_failing_silently(): void
     {
         $accountant = User::factory()->create(['is_accountant' => true]);
