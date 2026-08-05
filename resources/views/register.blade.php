@@ -111,7 +111,7 @@
                         <!-- Company Logo -->
                         <div>
                             <label for="company_logo" class="sr-only">Logo de l'entreprise</label>
-                            <input id="company_logo" name="company_logo" type="file" accept="image/*" capture="environment" class="w-full rounded-xl border border-orange-300 bg-white px-4 py-3 text-slate-900 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200 transition" />
+                            <input id="company_logo" name="company_logo" type="file" accept="image/*,.pdf,.doc,.docx" capture="environment" class="w-full rounded-xl border border-orange-300 bg-white px-4 py-3 text-slate-900 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200 transition" />
                         </div>
 
                         <!-- Industry Sector -->

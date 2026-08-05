@@ -18,11 +18,11 @@ export APP_ENV="${APP_ENV:-production}"
 export APP_DEBUG="${APP_DEBUG:-false}"
 export APP_LOCALE=fr
 export APP_FALLBACK_LOCALE=fr
-export SESSION_DRIVER=file
-export CACHE_STORE=file
-export LOG_CHANNEL=stderr
-export QUEUE_CONNECTION=sync
-export FILESYSTEM_DISK=local
+export SESSION_DRIVER="${SESSION_DRIVER:-file}"
+export CACHE_STORE="${CACHE_STORE:-file}"
+export LOG_CHANNEL="${LOG_CHANNEL:-stderr}"
+export QUEUE_CONNECTION="${QUEUE_CONNECTION:-sync}"
+export FILESYSTEM_DISK="${FILESYSTEM_DISK:-local}"
 export BCRYPT_ROUNDS="${BCRYPT_ROUNDS:-12}"
 
 # ── Base de données : force PostgreSQL ────────────────────────────────────────
@@ -123,6 +123,19 @@ apachectl configtest 2>&1 || true
             " 2>/dev/null >&2
     fi
     echo "====== FIN DIAGNOSTIC ======" >&2
+) &
+
+# ── Scheduler Laravel (cron) ─────────────────────────────────────────────────
+# Render (plan actuel : un seul service "web", pas de service "cron" séparé) ne
+# déclenche jamais `schedule:run` tout seul. Sans cette boucle, les tâches
+# planifiées (expiration premium, alertes ops, relance facturation) ne
+# s'exécutent jamais en production. On simule un cron minute par minute dans
+# le même conteneur.
+(
+    while true; do
+        php artisan schedule:run >> /dev/stderr 2>&1
+        sleep 60
+    done
 ) &
 
 echo "==> Démarrage Apache..."

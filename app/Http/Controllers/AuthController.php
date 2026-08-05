@@ -139,20 +139,15 @@ class AuthController extends Controller
                 $this->logAuthEvent('otp_sent', $user->id, $user->email, $request->ip(), 'expires_at='.$expiresAt->toDateTimeString());
                 $mailSent = true;
             } catch (\Throwable $e) {
-                Log::warning('password_reset_otp_primary_mail_failed_fallback_to_log', [
+                // Pas de secours vers le mailer "log" : il écrirait le code OTP en clair dans les
+                // journaux applicatifs tout en faisant croire à tort à l'utilisateur que l'e-mail a
+                // été envoyé (il ne reçoit jamais rien). On échoue franchement à la place.
+                Log::warning('password_reset_otp_mail_failed', [
                     'email' => $user->email,
-                    'otp' => $otp,
                     'message' => $e->getMessage(),
                 ]);
-
-                try {
-                    Mail::mailer('log')->to($user->email)->send(new PasswordResetOtpMail($user, $otp, 10));
-                    $mailSent = true;
-                    $this->logAuthEvent('otp_sent_via_log_fallback', $user->id, $user->email, $request->ip(), 'expires_at='.$expiresAt->toDateTimeString());
-                } catch (\Throwable $logEx) {
-                    $mailSent = false;
-                    $this->logAuthEvent('otp_send_failed', $user->id, $user->email, $request->ip(), $logEx->getMessage());
-                }
+                $mailSent = false;
+                $this->logAuthEvent('otp_send_failed', $user->id, $user->email, $request->ip(), $e->getMessage());
             }
         } else {
             Log::info('password_reset_otp_requested_for_unknown_email', [

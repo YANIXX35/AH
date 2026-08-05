@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\AttachRequestContext;
 use App\Http\Middleware\EnforceAccountantPortalPolicy;
 use App\Http\Middleware\EnsureAccountant;
@@ -45,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', EnforceAccountantPortalPolicy::class);
         $middleware->appendToGroup('web', LogMenuNavigation::class);
         $middleware->appendToGroup('web', AttachRequestContext::class);
+        $middleware->appendToGroup('web', AddSecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
