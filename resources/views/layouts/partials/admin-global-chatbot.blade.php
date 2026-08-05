@@ -555,6 +555,17 @@ document.addEventListener('DOMContentLoaded', function () {
         if (input) input.focus();
     };
 
+    // Exposé globalement pour permettre à d'autres widgets (ex. mini-assistant IA
+    // mobile du dashboard commercial) d'ouvrir ce même assistant réel plutôt que
+    // de dupliquer un faux formulaire non connecté.
+    window.openAdminGlobalChat = (prefillText) => {
+        openChat();
+        if (input && prefillText) {
+            input.value = prefillText;
+            input.focus();
+        }
+    };
+
     const closeChat = () => {
         if (!chatWindow) return;
         chatWindow.classList.add('is-hidden');

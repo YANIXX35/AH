@@ -962,15 +962,12 @@
             <div class="mobile-section-card card p-3 mb-3">
                 <h3 class="h6 fw-bold text-dark mb-1">🤖 Assistant IA</h3>
                 <p class="text-muted small mb-3">Bonjour {{ explode(' ', auth()->user()?->name ?? 'Commercial')[0] }}. Que puis-je analyser pour vous ?</p>
-                <form action="{{ route('commercial.dashboard') }}" method="GET" class="m-0" onsubmit="event.preventDefault(); alert('Lancement du conseiller IA...');">
+                <form class="m-0" onsubmit="event.preventDefault(); window.openAdminGlobalChat && window.openAdminGlobalChat(document.getElementById('mobileAiMiniInput').value); document.getElementById('mobileAiMiniInput').value='';">
                     <div class="bg-light p-2 rounded-3 border">
-                        <input type="text" class="form-control border-0 bg-transparent p-0 text-sm mb-2" placeholder="Posez votre question à l'IA..." style="box-shadow: none; font-size: 0.85rem;">
-                        <div class="d-flex justify-content-between align-items-center pt-1">
-                            <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-2.5 py-1 text-muted text-xs d-flex align-items-center gap-1">
-                                <i data-feather="paperclip" style="width:12px; height:12px;"></i> Joindre
-                            </button>
+                        <input id="mobileAiMiniInput" type="text" class="form-control border-0 bg-transparent p-0 text-sm mb-2" placeholder="Posez votre question à l'IA..." style="box-shadow: none; font-size: 0.85rem;">
+                        <div class="d-flex justify-content-end align-items-center pt-1">
                             <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-bold text-xs">
-                                Créer &rarr;
+                                Envoyer &rarr;
                             </button>
                         </div>
                     </div>

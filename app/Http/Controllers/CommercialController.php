@@ -334,6 +334,38 @@ class CommercialController extends Controller
         return view('commercial.guides');
     }
 
+    /**
+     * Sert les PDF réels des guides d'expertise depuis storage/app/public/guides/.
+     * Aucun contenu n'est généré ici : si le fichier n'a pas encore été déposé par
+     * un administrateur, on le dit clairement au lieu de rediriger silencieusement
+     * vers une autre page comme le faisait l'ancien bouton.
+     */
+    public function downloadGuide(string $slug): RedirectResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $guides = [
+            'bilan-syscohada' => ['file' => 'guide-1-bilan-syscohada.pdf', 'label' => 'Guide 1 : Réussir son Bilan SYSCOHADA Révisé'],
+            'tresorerie-mobile-money' => ['file' => 'guide-2-tresorerie-mobile-money.pdf', 'label' => 'Guide 2 : Trésorerie & Mobile Money'],
+            'investor-readiness' => ['file' => 'guide-3-investor-readiness.pdf', 'label' => 'Guide 3 : Investor Readiness & Levée de Fonds'],
+        ];
+
+        if (! isset($guides[$slug])) {
+            abort(404);
+        }
+
+        $relativePath = 'guides/'.$guides[$slug]['file'];
+
+        if (! Storage::disk('public')->exists($relativePath)) {
+            return redirect()
+                ->route('commercial.guides')
+                ->with('error', '« '.$guides[$slug]['label'].' » n\'est pas encore disponible. Contactez un administrateur pour le mettre en ligne.');
+        }
+
+        return response()->download(
+            Storage::disk('public')->path($relativePath),
+            $guides[$slug]['file']
+        );
+    }
+
     public function club(): View
     {
         return view('commercial.club');
@@ -434,8 +466,8 @@ class CommercialController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:255'],
             'password' => ['nullable', 'string', 'min:8'],
             'company_name' => ['nullable', 'string', 'max:255'],
@@ -450,13 +482,10 @@ class CommercialController extends Controller
             'license_key' => ['nullable', 'string', 'max:64'],
         ]);
 
-        // Valeurs par défaut si les champs sont absents
-        if (empty($validated['email'])) {
-            $validated['email'] = 'client_'.uniqid().'@sitiame-capital.com';
-        }
-        if (empty($validated['name'])) {
-            $validated['name'] = $validated['company_name'] ?? 'Client sans nom';
-        }
+        // Nom et e-mail sont désormais obligatoires (validés ci-dessus) : plus de
+        // génération silencieuse de "client_<uniqid>@sitiame-capital.com" ni de
+        // "Client sans nom". Seul le mot de passe garde une valeur par défaut
+        // documentée, à communiquer explicitement au client.
         $plainPassword = empty($validated['password']) ? 'Sitiame2026' : $validated['password'];
 
         if ($request->hasFile('company_logo')) {

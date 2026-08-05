@@ -37,7 +37,11 @@
 @section('content')
 <div class="guides-bg">
     <div class="container-fluid max-w-7xl mx-auto">
-        
+
+        @if (session('error'))
+            <div class="alert alert-warning rounded-4 mb-4">{{ session('error') }}</div>
+        @endif
+
         <!-- Header Banner -->
         <div class="mockup-card p-4 p-md-5 mb-4 bg-dark text-white rounded-4 shadow-sm position-relative overflow-hidden">
             <div class="position-relative z-1">
@@ -72,7 +76,7 @@
                         <div class="p-3 bg-light rounded-3 mb-3">
                             <div class="text-muted small font-mono">Contenu : Bilan, TAFIRE/TFT, Note Annexes.</div>
                         </div>
-                        <a href="{{ route('commercial.showcase') }}" class="btn btn-primary rounded-pill w-100 fw-bold py-2">
+                        <a href="{{ route('commercial.guides.download', 'bilan-syscohada') }}" class="btn btn-primary rounded-pill w-100 fw-bold py-2">
                             <i data-feather="download" class="me-1" style="width:16px; height:16px;"></i> Télécharger le Guide 1
                         </a>
                     </div>
@@ -99,7 +103,7 @@
                         <div class="p-3 bg-light rounded-3 mb-3">
                             <div class="text-muted small font-mono">Contenu : Rapprochement Mobile, Flux Caisse.</div>
                         </div>
-                        <a href="{{ route('commercial.showcase') }}" class="btn btn-success rounded-pill w-100 fw-bold py-2 text-white">
+                        <a href="{{ route('commercial.guides.download', 'tresorerie-mobile-money') }}" class="btn btn-success rounded-pill w-100 fw-bold py-2 text-white">
                             <i data-feather="download" class="me-1" style="width:16px; height:16px;"></i> Télécharger le Guide 2
                         </a>
                     </div>
@@ -126,7 +130,7 @@
                         <div class="p-3 bg-light rounded-3 mb-3">
                             <div class="text-muted small font-mono">Contenu : Score FIRD, Data Room, Pitch Deck.</div>
                         </div>
-                        <a href="{{ route('commercial.showcase') }}" class="btn btn-dark rounded-pill w-100 fw-bold py-2">
+                        <a href="{{ route('commercial.guides.download', 'investor-readiness') }}" class="btn btn-dark rounded-pill w-100 fw-bold py-2">
                             <i data-feather="download" class="me-1" style="width:16px; height:16px;"></i> Télécharger le Guide 3
                         </a>
                     </div>

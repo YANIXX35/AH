@@ -274,4 +274,16 @@ class CommercialPortalTest extends TestCase
             ],
         ]);
     }
+
+    public function test_commercial_cannot_create_client_without_name_or_email(): void
+    {
+        $commercial = User::factory()->create(['role_key' => 'commercial']);
+
+        $response = $this->actingAs($commercial)->post('/commercial/clients', [
+            'company_name' => 'Entreprise Sans Responsable',
+        ]);
+
+        $response->assertSessionHasErrors(['name', 'email']);
+        $this->assertDatabaseMissing('users', ['company_name' => 'Entreprise Sans Responsable']);
+    }
 }

@@ -575,6 +575,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/portefeuille', [CommercialController::class, 'portefeuille'])->name('portefeuille');
         Route::get('/offres', [CommercialController::class, 'showcase'])->name('showcase');
         Route::get('/guides', [CommercialController::class, 'guides'])->name('guides');
+        Route::get('/guides/{slug}/download', [CommercialController::class, 'downloadGuide'])->name('guides.download');
         Route::get('/club', [CommercialController::class, 'club'])->name('club');
         Route::get('/prospects', [CommercialController::class, 'prospects'])->name('prospects');
         Route::get('/import', [CommercialController::class, 'importFile'])->name('import');
