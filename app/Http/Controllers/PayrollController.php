@@ -132,6 +132,8 @@ class PayrollController extends Controller
 
     public function show(PayrollRun $payroll): View
     {
+        $this->authorize('own', $payroll);
+
         $payroll->load('items');
 
         return view('payroll.show', compact('payroll'));
@@ -139,6 +141,8 @@ class PayrollController extends Controller
 
     public function sync(PayrollRun $payroll, Request $request): RedirectResponse
     {
+        $this->authorize('own', $payroll);
+
         if ($payroll->status === 'synced') {
             return redirect()->back()->with('status', 'Ce lot de paie est déjà synchronisé !');
         }
@@ -191,6 +195,8 @@ class PayrollController extends Controller
 
     public function destroy(PayrollRun $payroll): RedirectResponse
     {
+        $this->authorize('own', $payroll);
+
         $payroll->delete();
 
         return redirect()->route('payroll.index')->with('status', 'Lot de paie supprimé avec succès.');

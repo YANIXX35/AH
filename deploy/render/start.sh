@@ -15,7 +15,7 @@ fi
 # ── Variables critiques : forcées ici pour ne pas dépendre du dashboard Render ──
 # (les valeurs render.yaml ne sont pas toujours injectées sur un service existant)
 export APP_ENV="${APP_ENV:-production}"
-export APP_DEBUG=true               # temporaire — à remettre false après validation
+export APP_DEBUG="${APP_DEBUG:-false}"
 export APP_LOCALE=fr
 export APP_FALLBACK_LOCALE=fr
 export SESSION_DRIVER=file

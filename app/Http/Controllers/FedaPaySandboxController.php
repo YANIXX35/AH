@@ -321,9 +321,14 @@ class FedaPaySandboxController extends Controller
             ]);
         }
 
+        $alreadyActivated = ($transaction->response_payload['premium_activated'] ?? false) === true;
+
         $transaction->update([
             'status' => $status,
-            'response_payload' => $fetched['response_payload'],
+            'response_payload' => array_merge(
+                $fetched['response_payload'] ?? [],
+                $alreadyActivated ? ['premium_activated' => true, 'premium_activated_at' => $transaction->response_payload['premium_activated_at'] ?? now()->toIso8601String()] : []
+            ),
             'failure_reason' => ($fetched['success'] && $this->isApprovedStatus($status))
                 ? null
                 : ($this->isFailureStatus($status) ? ((string) ($fetched['message'] ?? 'Paiement non approuvé.')) : null),
@@ -331,7 +336,7 @@ class FedaPaySandboxController extends Controller
 
         $user = $transaction->user;
         $approved = $this->isApprovedStatus($status);
-        if ($approved && $user !== null && ! $user->isPlatformAdmin() && ! $user->isAccountant()) {
+        if ($approved && $user !== null && ! $alreadyActivated && ! $user->isPlatformAdmin() && ! $user->isAccountant()) {
             $previousStatus = (string) ($user->premium_status ?? 'free');
             $referenceStart = $user->premium_ends_at && $user->premium_ends_at->isFuture()
                 ? $user->premium_ends_at->copy()
@@ -367,6 +372,13 @@ class FedaPaySandboxController extends Controller
                     'country' => $transaction->country,
                     'correspondent' => $transaction->correspondent,
                 ],
+            ]);
+
+            $transaction->update([
+                'response_payload' => array_merge($transaction->response_payload ?? [], [
+                    'premium_activated' => true,
+                    'premium_activated_at' => now()->toIso8601String(),
+                ]),
             ]);
         }
 
