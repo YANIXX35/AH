@@ -504,6 +504,7 @@ class CommercialController extends Controller
             $user = User::create([
                 ...$validated,
                 'password' => Hash::make($plainPassword),
+                'must_change_password' => true,
                 'role_key' => 'manager',
                 'created_by_user_id' => $commercial->id,
                 'kyc_status' => 'submitted',

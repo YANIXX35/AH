@@ -18,6 +18,7 @@ use Illuminate\Notifications\Notifiable;
     'name',
     'email',
     'password',
+    'must_change_password',
     'company_name',
     'company_sigle',
     'company_tax_id',

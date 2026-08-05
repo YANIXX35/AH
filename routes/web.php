@@ -184,6 +184,7 @@ Route::middleware('auth')->group(function () {
             unset($validated['password']);
         } else {
             $validated['password'] = Hash::make($validated['password']);
+            $validated['must_change_password'] = false;
         }
 
         $validated['email_notifications'] = $request->boolean('email_notifications');
