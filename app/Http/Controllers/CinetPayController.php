@@ -146,7 +146,18 @@ class CinetPayController extends Controller
             ?? ''
         ));
 
-        $transaction = $this->resolveTransaction($transactionId, $request->query('simulate') === 'accepted');
+        // Le paramètre "simulate=accepted" ne doit jamais pouvoir activer un
+        // Premium réel : réservé au développement local, à un utilisateur
+        // authentifié, et uniquement sur SA PROPRE transaction. Sans ces trois
+        // garde-fous, n'importe qui pouvait appeler cette URL sans être connecté
+        // et faire créditer la transaction CinetPay la plus récente du système,
+        // quel qu'en soit le propriétaire (contournement de paiement complet).
+        $simulateRequested = $request->query('simulate') === 'accepted';
+        $simulateAllowed = $simulateRequested
+            && app()->environment(['local', 'testing'])
+            && auth()->check();
+
+        $transaction = $this->resolveTransaction($transactionId, $simulateAllowed);
 
         if ($transaction === null) {
             return redirect()
@@ -154,7 +165,7 @@ class CinetPayController extends Controller
                 ->withErrors(['cinetpay' => 'Transaction CinetPay introuvable après retour paiement.']);
         }
 
-        if ($request->query('simulate') === 'accepted') {
+        if ($simulateAllowed) {
             $transaction->update([
                 'status' => 'ACCEPTED',
                 'response_payload' => array_merge($transaction->response_payload ?? [], ['simulate_return' => true]),
