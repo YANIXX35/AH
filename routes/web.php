@@ -117,6 +117,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/entreprise/fird', [CompanyFirdController::class, 'edit'])->name('profile.company.fird');
     Route::post('/profile/entreprise/fird', [CompanyFirdController::class, 'update'])->name('profile.company.fird.update');
 
+    Route::get('/company-documents/{user}/{type}/view', [AccountingDocumentViewerController::class, 'showCompanyDocument'])
+        ->whereIn('type', ['company_logo', 'trade_register'])
+        ->name('company-documents.view');
+    Route::get('/company-documents/{user}/{type}/stream', [AccountingDocumentViewerController::class, 'streamCompanyDocument'])
+        ->whereIn('type', ['company_logo', 'trade_register'])
+        ->name('company-documents.stream');
+
     Route::get('/profile/equipe', [EnterpriseTeamController::class, 'index'])->name('profile.team');
     Route::post('/profile/equipe', [EnterpriseTeamController::class, 'store'])->name('profile.team.store');
     Route::get('/profile/equipe/historique', [EnterpriseTeamController::class, 'history'])->name('profile.team.history');
@@ -373,12 +380,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/documents/{user}/{type}', [AccountantClientController::class, 'updateDocument'])
             ->whereIn('type', ['company_logo', 'trade_register'])
             ->name('documents.update');
-        Route::get('/documents/{user}/{type}/view', [AccountingDocumentViewerController::class, 'showCompanyDocument'])
-            ->whereIn('type', ['company_logo', 'trade_register'])
-            ->name('documents.view');
-        Route::get('/documents/{user}/{type}/stream', [AccountingDocumentViewerController::class, 'streamCompanyDocument'])
-            ->whereIn('type', ['company_logo', 'trade_register'])
-            ->name('documents.stream');
         // Déclarer /workspace/clear avant /workspace/{user}, sinon « clear » est capturé comme identifiant client (POST bloqué).
         Route::match(['get', 'post'], '/workspace/clear', [AccountantClientController::class, 'clearWorkspace'])->name('workspace.clear');
         Route::post('/workspace/{user}', [AccountantClientController::class, 'selectWorkspace'])->name('workspace.select');

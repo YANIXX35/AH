@@ -67,10 +67,43 @@ class AccountantClientDocumentsTest extends TestCase
         Storage::disk('public')->put('company-logos/attestation.pdf', UploadedFile::fake()->create('attestation.pdf', 50, 'application/pdf')->get());
         $client->update(['company_logo' => 'company-logos/attestation.pdf']);
 
-        $response = $this->actingAs($accountant)->get("/accountant/documents/{$client->id}/company_logo/view");
+        $response = $this->actingAs($accountant)->get("/company-documents/{$client->id}/company_logo/view");
 
         $response->assertOk();
         $response->assertSee('Attestation DFE / NIF');
+    }
+
+    public function test_client_can_preview_their_own_trade_register_document(): void
+    {
+        Storage::fake('public');
+
+        $client = User::factory()->create([
+            'trade_register_file' => 'trade-registers/registre.docx',
+        ]);
+        Storage::disk('public')->put(
+            'trade-registers/registre.docx',
+            UploadedFile::fake()->create('registre.docx', 50, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')->get()
+        );
+
+        $response = $this->actingAs($client)->get("/company-documents/{$client->id}/trade_register/view");
+
+        $response->assertOk();
+        $response->assertSee('Registre de commerce');
+    }
+
+    public function test_client_cannot_preview_another_clients_document(): void
+    {
+        Storage::fake('public');
+
+        $client = User::factory()->create();
+        $other = User::factory()->create([
+            'trade_register_file' => 'trade-registers/registre.pdf',
+        ]);
+        Storage::disk('public')->put('trade-registers/registre.pdf', UploadedFile::fake()->create('registre.pdf', 50, 'application/pdf')->get());
+
+        $response = $this->actingAs($client)->get("/company-documents/{$other->id}/trade_register/view");
+
+        $response->assertStatus(403);
     }
 
     public function test_accountant_cannot_access_another_accountants_client_documents(): void

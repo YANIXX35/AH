@@ -297,10 +297,18 @@
                             </div>
                             @if($user->company_logo)
                                 <div class="col-md-6">
-                                    <label class="form-label">Logo actuel</label>
-                                    <div class="border rounded p-2">
-                                        <img src="{{ asset('storage/' . $user->company_logo) }}" alt="Logo entreprise" style="max-width: 180px; max-height: 100px; object-fit: contain;">
-                                    </div>
+                                    <label class="form-label">Logo / attestation actuel</label>
+                                    @php $companyLogoExt = strtolower(pathinfo($user->company_logo, PATHINFO_EXTENSION)); @endphp
+                                    @if(in_array($companyLogoExt, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true))
+                                        <div class="border rounded p-2">
+                                            <img src="{{ asset('storage/' . $user->company_logo) }}" alt="Logo entreprise" style="max-width: 180px; max-height: 100px; object-fit: contain;">
+                                        </div>
+                                    @else
+                                        <div class="border rounded p-2 d-flex align-items-center justify-content-between gap-2">
+                                            <span class="small text-muted text-truncate">{{ basename((string) $user->company_logo) }}</span>
+                                            <a href="{{ route('company-documents.view', ['user' => $user, 'type' => 'company_logo']) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Voir</a>
+                                        </div>
+                                    @endif
                                 </div>
                             @endif
                             @if($user->trade_register_file)
@@ -308,7 +316,7 @@
                                     <label class="form-label">Registre actuel</label>
                                     <div class="border rounded p-2 d-flex align-items-center justify-content-between gap-2">
                                         <span class="small text-muted text-truncate">{{ basename((string) $user->trade_register_file) }}</span>
-                                        <a href="{{ asset('storage/' . $user->trade_register_file) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Voir</a>
+                                        <a href="{{ route('company-documents.view', ['user' => $user, 'type' => 'trade_register']) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Voir</a>
                                     </div>
                                 </div>
                             @endif

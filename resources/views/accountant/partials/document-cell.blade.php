@@ -8,7 +8,7 @@
             <span class="badge bg-light-success text-success py-1 px-2">
                 <i data-feather="check" style="width:12px;height:12px;"></i> Fourni
             </span>
-            <a href="{{ route('accountant.documents.view', ['user' => $client, 'type' => $type]) }}" target="_blank" rel="noopener" class="small text-decoration-none d-inline-flex align-items-center gap-1">
+            <a href="{{ route('company-documents.view', ['user' => $client, 'type' => $type]) }}" target="_blank" rel="noopener" class="small text-decoration-none d-inline-flex align-items-center gap-1">
                 <i data-feather="eye" style="width:14px;height:14px;"></i> Aperçu
             </a>
         @else

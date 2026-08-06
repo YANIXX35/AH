@@ -149,7 +149,7 @@
                                 ])
                                 @if($user->company_logo)
                                     <p class="small text-muted mb-1">Document déjà enregistré</p>
-                                    <a href="{{ asset('storage/' . $user->company_logo) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Voir le fichier joint</a>
+                                    <a href="{{ route('company-documents.view', ['user' => $user, 'type' => 'company_logo']) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Voir le fichier joint</a>
                                 @endif
                             </div>
                             <div class="col-lg-6">
@@ -163,7 +163,7 @@
                                 ])
                                 @if($user->trade_register_file)
                                     <p class="small text-muted mb-1">Document déjà enregistré</p>
-                                    <a href="{{ asset('storage/' . $user->trade_register_file) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Voir le fichier joint</a>
+                                    <a href="{{ route('company-documents.view', ['user' => $user, 'type' => 'trade_register']) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Voir le fichier joint</a>
                                 @endif
                             </div>
                         </div>

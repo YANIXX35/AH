@@ -53,8 +53,8 @@ class AccountingDocumentViewerController extends Controller
             storedPath: $storedPath,
             documentName: $documentName,
             documentTypeLabel: $label,
-            previewUrl: route('accountant.documents.stream', ['user' => $user, 'type' => $type]),
-            backUrl: route('accountant.documents.index'),
+            previewUrl: route('company-documents.stream', ['user' => $user, 'type' => $type]),
+            backUrl: url()->previous() ?: route('profile'),
         ));
     }
 
