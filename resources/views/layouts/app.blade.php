@@ -579,8 +579,21 @@
                                     $topbarShowExpiry = true;
                                 }
                             @endphp
+                            @php
+                                $topbarUserName = Auth::user()?->name ?? 'Utilisateur';
+                                $topbarInitials = collect(explode(' ', trim($topbarUserName)))
+                                    ->filter()
+                                    ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))
+                                    ->take(2)
+                                    ->implode('');
+                            @endphp
                             <a class="nav-link dropdown-toggle d-inline-block" href="#" data-bs-toggle="dropdown">
-                                <img src="{{ (Auth::user()?->avatar) ? asset('storage/' . Auth::user()->avatar) : asset('images/sitiam.png') }}" class="avatar img-fluid rounded me-1" alt="{{ Auth::user()?->name ?? 'Utilisateur' }}" /> <span class="text-dark d-none d-sm-inline-block">{{ explode(' ', Auth::user()?->name ?? 'Utilisateur')[0] }}</span>
+                                @if(Auth::user()?->avatar)
+                                    <img src="{{ asset('storage/' . Auth::user()->avatar) }}" class="avatar img-fluid rounded me-1" alt="{{ $topbarUserName }}" style="object-fit: cover;" />
+                                @else
+                                    <span class="avatar rounded-circle d-inline-flex align-items-center justify-content-center me-1 fw-bold" style="background: #0F2747; color: #F2D89B; font-size: 0.8rem;">{{ $topbarInitials ?: '?' }}</span>
+                                @endif
+                                <span class="text-dark d-none d-sm-inline-block">{{ explode(' ', $topbarUserName)[0] }}</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <div class="dropdown-item-text small text-muted">
