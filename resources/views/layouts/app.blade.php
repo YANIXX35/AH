@@ -374,6 +374,58 @@
             .no-print { display: none !important; }
             .sidebar, .navbar, .footer { display: none !important; }
         }
+
+        /* BOUTONS FLOTTANTS DE NAVIGATION — retour arrière + retour en haut de page */
+        .page-nav-fabs {
+            position: fixed;
+            left: 22px;
+            bottom: 22px;
+            z-index: 1045;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .page-nav-fab {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0F2747;
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .18);
+            cursor: pointer;
+            transition: opacity .2s ease, transform .2s ease, background .15s ease;
+        }
+        .page-nav-fab:hover,
+        .page-nav-fab:focus {
+            background: #163a63;
+            color: #fff;
+        }
+        .page-nav-fab svg {
+            width: 20px;
+            height: 20px;
+        }
+        #scrollTopFab {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px);
+        }
+        #scrollTopFab.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        @media (max-width: 991.98px) {
+            body.has-bottom-nav .page-nav-fabs {
+                bottom: 84px;
+            }
+        }
+        @media print {
+            .page-nav-fabs { display: none !important; }
+        }
     </style>
 </head>
 @php
@@ -715,6 +767,48 @@
     @endauth
 
     @include('partials.webcam-modal')
+
+    <div class="page-nav-fabs no-print">
+        <button type="button" id="goBackFab" class="page-nav-fab" title="Page précédente" aria-label="Revenir à la page précédente">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button type="button" id="scrollTopFab" class="page-nav-fab" title="Retour en haut" aria-label="Revenir en haut de la page">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+        </button>
+    </div>
+    <script>
+        (function () {
+            var goBackBtn = document.getElementById('goBackFab');
+            var scrollTopBtn = document.getElementById('scrollTopFab');
+
+            if (goBackBtn) {
+                goBackBtn.addEventListener('click', function () {
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = '{{ route('dashboard') }}';
+                    }
+                });
+            }
+
+            if (scrollTopBtn) {
+                var toggleScrollTopBtn = function () {
+                    if (window.scrollY > 300) {
+                        scrollTopBtn.classList.add('show');
+                    } else {
+                        scrollTopBtn.classList.remove('show');
+                    }
+                };
+                window.addEventListener('scroll', toggleScrollTopBtn, { passive: true });
+                toggleScrollTopBtn();
+
+                scrollTopBtn.addEventListener('click', function () {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+        })();
+    </script>
+
     <script src="{{ asset('js/adminkit-app.js') }}"></script>
     <script src="{{ asset('js/webcam-capture.js') }}" defer></script>
     <script>
