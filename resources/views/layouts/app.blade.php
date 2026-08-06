@@ -375,12 +375,13 @@
             .sidebar, .navbar, .footer { display: none !important; }
         }
 
-        /* BOUTONS FLOTTANTS DE NAVIGATION — retour arrière + retour en haut de page */
+        /* BOUTONS FLOTTANTS DE NAVIGATION — retour arrière + retour en haut de page
+           Empilés au-dessus de la bulle de chat (right:22px, bottom:22px, 58px) pour ne jamais la recouvrir. */
         .page-nav-fabs {
             position: fixed;
-            left: 22px;
-            bottom: 22px;
-            z-index: 1045;
+            right: 22px;
+            bottom: 92px;
+            z-index: 1040;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -420,7 +421,7 @@
         }
         @media (max-width: 991.98px) {
             body.has-bottom-nav .page-nav-fabs {
-                bottom: 84px;
+                bottom: 154px;
             }
         }
         @media print {
