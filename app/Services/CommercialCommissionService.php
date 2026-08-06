@@ -20,10 +20,17 @@ class CommercialCommissionService
     public const TIER1_SLOTS = 3;
 
     /**
-     * Calcule le solde d'un commercial : commission d'ajout de client (10 000 F pour
-     * chacun des 3 premiers clients ajoutés à vie, 7 500 F pour chaque client suivant)
-     * + 1 500 F pour chaque renouvellement d'abonnement réellement payé (CinetPay) par
-     * un client apporté par ce commercial, après la fin de son essai gratuit.
+     * Calcule le solde d'un commercial :
+     *
+     * - Commission d'ajout : 10 000 F pour chacun des 3 premiers clients à avoir
+     *   réellement payé leur abonnement (CinetPay, après la fin de leur essai gratuit),
+     *   7 000 F pour chaque client payant suivant. Le rang qui détermine le palier suit
+     *   l'ordre du PREMIER PAIEMENT de chaque client, pas l'ordre dans lequel le
+     *   commercial les a ajoutés. Un client jamais payé rapporte 0 F et n'occupe aucun
+     *   rang (il ne bloque donc jamais le tarif à 10 000 F pour un autre client payant).
+     * - Commission de renouvellement : 1 500 F pour chaque paiement CinetPay réel d'un
+     *   client apporté par ce commercial (le tout premier paiement compte à la fois pour
+     *   débloquer la commission d'ajout et pour son propre 1 500 F).
      *
      * @return array{rows: Collection<int, array<string, mixed>>, totalBalance: int, totalSignupEarnings: int, totalRenewalEarnings: int, totalClients: int}
      */
@@ -44,23 +51,36 @@ class CommercialCommissionService
             ->get()
             ->groupBy('user_id');
 
+        // Rang « palier » : uniquement parmi les clients ayant payé au moins une fois,
+        // dans l'ordre de leur premier paiement (pas l'ordre d'ajout).
+        $paymentRankByClientId = $clients
+            ->filter(fn (User $client) => $renewalsByClient->has($client->id))
+            ->sortBy(fn (User $client) => $renewalsByClient->get($client->id)->first()->starts_at)
+            ->values()
+            ->mapWithKeys(fn (User $client, int $index) => [$client->id => $index + 1]);
+
         $rows = collect();
         $totalSignupEarnings = 0;
         $totalRenewalEarnings = 0;
 
-        foreach ($clients as $index => $client) {
-            $rank = $index + 1;
-            $signupBonus = $rank <= self::TIER1_SLOTS ? self::SIGNUP_BONUS_TIER1 : self::SIGNUP_BONUS_TIER2;
+        foreach ($clients as $client) {
             $renewals = $renewalsByClient->get($client->id, collect());
             $renewalCount = $renewals->count();
             $renewalEarnings = $renewalCount * self::RENEWAL_BONUS;
+
+            $paymentRank = $paymentRankByClientId->get($client->id);
+            $hasPaid = $paymentRank !== null;
+            $signupBonus = $hasPaid
+                ? ($paymentRank <= self::TIER1_SLOTS ? self::SIGNUP_BONUS_TIER1 : self::SIGNUP_BONUS_TIER2)
+                : 0;
 
             $totalSignupEarnings += $signupBonus;
             $totalRenewalEarnings += $renewalEarnings;
 
             $rows->push([
                 'client' => $client,
-                'rank' => $rank,
+                'rank' => $paymentRank,
+                'has_paid' => $hasPaid,
                 'signup_bonus' => $signupBonus,
                 'renewal_count' => $renewalCount,
                 'renewal_earnings' => $renewalEarnings,
@@ -70,7 +90,7 @@ class CommercialCommissionService
         }
 
         return [
-            'rows' => $rows->sortByDesc('rank')->values(),
+            'rows' => $rows->sortByDesc(fn (array $row) => $row['client']->created_at)->values(),
             'totalBalance' => $totalSignupEarnings + $totalRenewalEarnings,
             'totalSignupEarnings' => $totalSignupEarnings,
             'totalRenewalEarnings' => $totalRenewalEarnings,

@@ -143,7 +143,7 @@
             <table class="table table-hover align-middle mb-0" style="min-width: 700px;">
                 <thead class="bg-light text-slate-700 text-uppercase fs-8 fw-bold border-bottom">
                     <tr>
-                        <th class="py-3 px-3 text-center" style="width: 50px;">#</th>
+                        <th class="py-3 px-3 text-center" style="width: 60px;">Rang paiement</th>
                         <th class="py-3 px-3">Client / Entreprise</th>
                         <th class="py-3 px-3 text-center">Ajouté le</th>
                         <th class="py-3 px-3 text-end">Bonus d'ajout</th>
@@ -154,13 +154,22 @@
                 <tbody>
                 @forelse($rows as $row)
                     <tr>
-                        <td class="py-2.5 px-3 text-center fw-bold text-muted small align-middle">{{ $row['rank'] }}</td>
+                        <td class="py-2.5 px-3 text-center fw-bold text-muted small align-middle">{{ $row['has_paid'] ? $row['rank'] : '—' }}</td>
                         <td class="py-2.5 px-3 align-middle">
                             <div class="fw-semibold text-dark fs-7">{{ $row['client']->company_name ?: $row['client']->name }}</div>
                             <div class="text-muted small">{{ $row['client']->email }}</div>
                         </td>
                         <td class="py-2.5 px-3 text-center text-slate-500 small align-middle">{{ $row['client']->created_at?->format('d/m/Y') }}</td>
-                        <td class="py-2.5 px-3 text-end align-middle">{{ number_format($row['signup_bonus'], 0, ',', ' ') }} F</td>
+                        <td class="py-2.5 px-3 text-end align-middle">
+                            @if($row['has_paid'])
+                                {{ number_format($row['signup_bonus'], 0, ',', ' ') }} F
+                                @if($row['rank'] <= $tier1Slots)
+                                    <span class="badge bg-light-warning text-warning ms-1" style="font-size:9px;">Palier 1</span>
+                                @endif
+                            @else
+                                <span class="badge bg-light-secondary text-secondary" style="font-size:9px;">Pas encore payé</span>
+                            @endif
+                        </td>
                         <td class="py-2.5 px-3 text-center align-middle">
                             @if($row['renewal_count'] > 0)
                                 <span class="badge bg-light-success text-success">{{ $row['renewal_count'] }}</span>
