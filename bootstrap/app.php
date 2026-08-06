@@ -7,7 +7,6 @@ use App\Http\Middleware\EnsureAccountant;
 use App\Http\Middleware\EnsureAccountNotSuspended;
 use App\Http\Middleware\EnsureCommercial;
 use App\Http\Middleware\EnsureModulePermission;
-use App\Http\Middleware\EnsurePasswordHasBeenChanged;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsurePremiumAccountingAccess;
 use App\Http\Middleware\LogMenuNavigation;
@@ -43,7 +42,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->appendToGroup('web', SetAppLocale::class);
         $middleware->appendToGroup('web', EnsureAccountNotSuspended::class);
-        $middleware->appendToGroup('web', EnsurePasswordHasBeenChanged::class);
         $middleware->appendToGroup('web', SanitizeClientWorkspaceSession::class);
         $middleware->appendToGroup('web', EnforceAccountantPortalPolicy::class);
         $middleware->appendToGroup('web', LogMenuNavigation::class);
