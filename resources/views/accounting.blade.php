@@ -1710,6 +1710,19 @@
                 form.submit();
             }
 
+            (function() {
+                var stateKey = 'DataTables_journalTable_' + document.location.pathname;
+                try {
+                    var saved = JSON.parse(localStorage.getItem(stateKey));
+                    var actualColumnCount = document.querySelectorAll('#journalTable thead th').length;
+                    if (saved && Array.isArray(saved.columns) && saved.columns.length !== actualColumnCount) {
+                        localStorage.removeItem(stateKey);
+                    }
+                } catch (e) {
+                    localStorage.removeItem(stateKey);
+                }
+            })();
+
             var table = $('#journalTable').DataTable({
                 dom: 'Brtip',
                 buttons: [
