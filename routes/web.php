@@ -369,6 +369,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/clients/{user}', [AccountantClientController::class, 'show'])->name('clients.show');
         Route::put('/clients/{user}', [AccountantClientController::class, 'update'])->name('clients.update');
         Route::delete('/clients/{user}', [AccountantClientController::class, 'destroy'])->name('clients.destroy');
+        Route::get('/documents', [AccountantClientController::class, 'documents'])->name('documents.index');
+        Route::post('/documents/{user}/{type}', [AccountantClientController::class, 'updateDocument'])
+            ->whereIn('type', ['company_logo', 'trade_register'])
+            ->name('documents.update');
+        Route::get('/documents/{user}/{type}/view', [AccountingDocumentViewerController::class, 'showCompanyDocument'])
+            ->whereIn('type', ['company_logo', 'trade_register'])
+            ->name('documents.view');
+        Route::get('/documents/{user}/{type}/stream', [AccountingDocumentViewerController::class, 'streamCompanyDocument'])
+            ->whereIn('type', ['company_logo', 'trade_register'])
+            ->name('documents.stream');
         // Déclarer /workspace/clear avant /workspace/{user}, sinon « clear » est capturé comme identifiant client (POST bloqué).
         Route::match(['get', 'post'], '/workspace/clear', [AccountantClientController::class, 'clearWorkspace'])->name('workspace.clear');
         Route::post('/workspace/{user}', [AccountantClientController::class, 'selectWorkspace'])->name('workspace.select');

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -163,6 +164,63 @@ class AccountantClientController extends Controller
         $user->update($validated);
 
         return back()->with('status', 'Informations du dossier client mises à jour avec succès.');
+    }
+
+    /**
+     * Historique des documents (attestation DFE/NIF, registre de commerce) de tous les dossiers clients.
+     */
+    public function documents(Request $request): View
+    {
+        $q = trim((string) $request->query('q', ''));
+        $user = $request->user();
+
+        $query = User::query()->clients();
+
+        if ($user && ! $user->is_platform_admin) {
+            $query->where('created_by_user_id', $user->id);
+        }
+
+        $clients = $query
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($query) use ($q) {
+                    $query->where('name', 'like', '%'.$q.'%')
+                        ->orWhere('company_name', 'like', '%'.$q.'%');
+                });
+            })
+            ->orderBy('name')
+            ->get();
+
+        return view('accountant.documents-index', [
+            'clients' => $clients,
+            'search' => $q,
+        ]);
+    }
+
+    /**
+     * Remplace l'attestation DFE/NIF ou le registre de commerce d'un dossier client.
+     */
+    public function updateDocument(Request $request, User $user, string $type): RedirectResponse
+    {
+        $this->authorizeClient($user);
+
+        $validated = $request->validate([
+            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf,doc,docx', 'max:5120'],
+        ]);
+
+        $column = $type === 'trade_register' ? 'trade_register_file' : 'company_logo';
+        $folder = $type === 'trade_register' ? 'trade-registers' : 'company-logos';
+
+        if ($user->{$column}) {
+            Storage::disk('public')->delete($user->{$column});
+        }
+
+        $user->update([
+            $column => $validated['file']->store($folder, 'public'),
+        ]);
+
+        $label = $type === 'trade_register' ? 'Registre de commerce' : 'Attestation DFE / NIF';
+
+        return back()->with('status', $label.' mis à jour avec succès pour '.$this->clientLabel($user).'.');
     }
 
     public function destroy(Request $request, User $user): RedirectResponse
