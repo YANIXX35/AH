@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CommercialDocument;
 use App\Models\Prospect;
+use App\Models\SubscriptionHistory;
 use App\Models\User;
 use App\Services\CompanyDocumentParserService;
 use App\Services\UserPremiumService;
@@ -198,6 +199,77 @@ class CommercialController extends Controller
             'convertedProspects',
             'recentActivities'
         ));
+    }
+
+    /**
+     * Solde du commercial : commission d'ajout de client (10 000 F pour chacun des 3
+     * premiers clients ajoutés à vie, 7 500 F pour chaque client suivant) + 1 500 F
+     * pour chaque renouvellement d'abonnement réellement payé (CinetPay) par un client
+     * apporté par ce commercial, après la fin de son essai gratuit.
+     */
+    public function balance(Request $request): View
+    {
+        $commercial = $request->user();
+        if (! $commercial) {
+            abort(403);
+        }
+
+        $signupBonusTier1 = 10000;
+        $signupBonusTier2 = 7500;
+        $renewalBonus = 1500;
+        $tier1Slots = 3;
+
+        try {
+            $clients = ($commercial->is_platform_admin ?? false)
+                ? User::query()->clients()->orderBy('created_at')->get()
+                : $commercial->createdClients()->orderBy('created_at')->get();
+        } catch (\Throwable $e) {
+            $clients = collect();
+        }
+
+        $renewalsByClient = SubscriptionHistory::query()
+            ->whereIn('user_id', $clients->pluck('id'))
+            ->where('source', 'like', 'cinetpay%')
+            ->orderBy('starts_at')
+            ->get()
+            ->groupBy('user_id');
+
+        $rows = collect();
+        $totalSignupEarnings = 0;
+        $totalRenewalEarnings = 0;
+
+        foreach ($clients as $index => $client) {
+            $rank = $index + 1;
+            $signupBonus = $rank <= $tier1Slots ? $signupBonusTier1 : $signupBonusTier2;
+            $renewals = $renewalsByClient->get($client->id, collect());
+            $renewalCount = $renewals->count();
+            $renewalEarnings = $renewalCount * $renewalBonus;
+
+            $totalSignupEarnings += $signupBonus;
+            $totalRenewalEarnings += $renewalEarnings;
+
+            $rows->push([
+                'client' => $client,
+                'rank' => $rank,
+                'signup_bonus' => $signupBonus,
+                'renewal_count' => $renewalCount,
+                'renewal_earnings' => $renewalEarnings,
+                'subtotal' => $signupBonus + $renewalEarnings,
+                'last_renewal_at' => $renewals->last()?->starts_at,
+            ]);
+        }
+
+        return view('commercial.balance', [
+            'rows' => $rows->sortByDesc('rank')->values(),
+            'totalBalance' => $totalSignupEarnings + $totalRenewalEarnings,
+            'totalSignupEarnings' => $totalSignupEarnings,
+            'totalRenewalEarnings' => $totalRenewalEarnings,
+            'totalClients' => $clients->count(),
+            'tier1Slots' => $tier1Slots,
+            'signupBonusTier1' => $signupBonusTier1,
+            'signupBonusTier2' => $signupBonusTier2,
+            'renewalBonus' => $renewalBonus,
+        ]);
     }
 
     public function portefeuille(Request $request): View

@@ -85,6 +85,11 @@
                         <i class="align-middle" data-feather="target"></i> <span class="align-middle">Pipeline Leads CRM</span>
                     </a>
                 </li>
+                <li class="sidebar-item {{ request()->routeIs('commercial.balance') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial.balance') }}">
+                        <i class="align-middle" data-feather="dollar-sign"></i> <span class="align-middle">Mon Solde</span>
+                    </a>
+                </li>
 
                 <li class="sidebar-header">AUTRES SERVICES</li>
                 <li class="sidebar-item {{ request()->routeIs('commercial.showcase') ? 'active' : '' }}">
