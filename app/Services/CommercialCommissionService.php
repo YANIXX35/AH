@@ -13,7 +13,7 @@ class CommercialCommissionService
 {
     public const SIGNUP_BONUS_TIER1 = 10000;
 
-    public const SIGNUP_BONUS_TIER2 = 7500;
+    public const SIGNUP_BONUS_TIER2 = 7000;
 
     public const RENEWAL_BONUS = 1500;
 

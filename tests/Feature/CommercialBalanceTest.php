@@ -11,7 +11,7 @@ class CommercialBalanceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_first_three_clients_earn_10000_and_the_rest_earn_7500(): void
+    public function test_first_three_clients_earn_10000_and_the_rest_earn_7000(): void
     {
         $commercial = User::factory()->create(['role_key' => 'commercial']);
 
@@ -26,9 +26,9 @@ class CommercialBalanceTest extends TestCase
         $response = $this->actingAs($commercial)->get('/commercial/solde');
 
         $response->assertOk();
-        // 3 x 10000 + 2 x 7500 = 45000
-        $response->assertSee('45 000 FCFA');
-        $response->assertSee('45 000 FCFA');
+        // 3 x 10000 + 2 x 7000 = 44000
+        $response->assertSee('44 000 FCFA');
+        $response->assertSee('44 000 FCFA');
     }
 
     public function test_only_real_cinetpay_payments_count_as_renewals_not_the_trial_grant(): void
