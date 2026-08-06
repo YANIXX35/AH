@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountantClientController;
+use App\Http\Controllers\AccountantCommercialBalanceController;
 use App\Http\Controllers\AccountantDashboardController;
 use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\AccountingDocumentController;
@@ -370,6 +371,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [AccountantDashboardController::class, 'index'])->name('dashboard');
         Route::get('/ai/live', [AccountantDashboardController::class, 'liveInsights'])->name('dashboard.ai.live');
         Route::get('/commercials-tracking', [AccountantDashboardController::class, 'commercialsTracking'])->name('commercials.index');
+        Route::get('/commercials-balance', [AccountantCommercialBalanceController::class, 'index'])->name('commercials-balance.index');
+        Route::get('/commercials-balance/{commercial}', [AccountantCommercialBalanceController::class, 'show'])->name('commercials-balance.show');
+        Route::post('/commercials-balance/{commercial}/payouts', [AccountantCommercialBalanceController::class, 'storePayout'])->name('commercials-balance.payouts.store');
+        Route::get('/commercials-balance/payouts/{payout}/receipt', [AccountantCommercialBalanceController::class, 'downloadReceipt'])->name('commercials-balance.payouts.receipt');
         Route::post('/parse-company-document', [AccountantDashboardController::class, 'parseCompanyDocument'])->name('parseCompanyDocument');
         Route::get('/clients', [AccountantClientController::class, 'index'])->name('clients.index');
         Route::post('/clients', [AccountantClientController::class, 'store'])->name('clients.store');

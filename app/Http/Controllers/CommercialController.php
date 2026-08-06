@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\CommercialDocument;
 use App\Models\Prospect;
-use App\Models\SubscriptionHistory;
 use App\Models\User;
+use App\Services\CommercialCommissionService;
 use App\Services\CompanyDocumentParserService;
 use App\Services\UserPremiumService;
 use Carbon\Carbon;
@@ -21,7 +21,8 @@ use Illuminate\View\View;
 class CommercialController extends Controller
 {
     public function __construct(
-        private readonly UserPremiumService $userPremium
+        private readonly UserPremiumService $userPremium,
+        private readonly CommercialCommissionService $commission
     ) {}
 
     public function index(Request $request): View
@@ -214,61 +215,18 @@ class CommercialController extends Controller
             abort(403);
         }
 
-        $signupBonusTier1 = 10000;
-        $signupBonusTier2 = 7500;
-        $renewalBonus = 1500;
-        $tier1Slots = 3;
-
-        try {
-            $clients = ($commercial->is_platform_admin ?? false)
-                ? User::query()->clients()->orderBy('created_at')->get()
-                : $commercial->createdClients()->orderBy('created_at')->get();
-        } catch (\Throwable $e) {
-            $clients = collect();
-        }
-
-        $renewalsByClient = SubscriptionHistory::query()
-            ->whereIn('user_id', $clients->pluck('id'))
-            ->where('source', 'like', 'cinetpay%')
-            ->orderBy('starts_at')
-            ->get()
-            ->groupBy('user_id');
-
-        $rows = collect();
-        $totalSignupEarnings = 0;
-        $totalRenewalEarnings = 0;
-
-        foreach ($clients as $index => $client) {
-            $rank = $index + 1;
-            $signupBonus = $rank <= $tier1Slots ? $signupBonusTier1 : $signupBonusTier2;
-            $renewals = $renewalsByClient->get($client->id, collect());
-            $renewalCount = $renewals->count();
-            $renewalEarnings = $renewalCount * $renewalBonus;
-
-            $totalSignupEarnings += $signupBonus;
-            $totalRenewalEarnings += $renewalEarnings;
-
-            $rows->push([
-                'client' => $client,
-                'rank' => $rank,
-                'signup_bonus' => $signupBonus,
-                'renewal_count' => $renewalCount,
-                'renewal_earnings' => $renewalEarnings,
-                'subtotal' => $signupBonus + $renewalEarnings,
-                'last_renewal_at' => $renewals->last()?->starts_at,
-            ]);
-        }
+        $balance = $this->commission->calculateBalance($commercial);
 
         return view('commercial.balance', [
-            'rows' => $rows->sortByDesc('rank')->values(),
-            'totalBalance' => $totalSignupEarnings + $totalRenewalEarnings,
-            'totalSignupEarnings' => $totalSignupEarnings,
-            'totalRenewalEarnings' => $totalRenewalEarnings,
-            'totalClients' => $clients->count(),
-            'tier1Slots' => $tier1Slots,
-            'signupBonusTier1' => $signupBonusTier1,
-            'signupBonusTier2' => $signupBonusTier2,
-            'renewalBonus' => $renewalBonus,
+            'rows' => $balance['rows'],
+            'totalBalance' => $balance['totalBalance'],
+            'totalSignupEarnings' => $balance['totalSignupEarnings'],
+            'totalRenewalEarnings' => $balance['totalRenewalEarnings'],
+            'totalClients' => $balance['totalClients'],
+            'tier1Slots' => CommercialCommissionService::TIER1_SLOTS,
+            'signupBonusTier1' => CommercialCommissionService::SIGNUP_BONUS_TIER1,
+            'signupBonusTier2' => CommercialCommissionService::SIGNUP_BONUS_TIER2,
+            'renewalBonus' => CommercialCommissionService::RENEWAL_BONUS,
         ]);
     }
 
