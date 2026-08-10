@@ -1013,6 +1013,52 @@ class AccountingController extends Controller
         ]);
     }
 
+    /**
+     * Nouveau mécanisme de téléchargement indépendant du plan SYSCOHADA de
+     * référence, avec toutes les colonnes et des en-têtes anti-cache stricts.
+     * Ne dépend d'aucun fichier statique : tout est généré à la volée depuis
+     * plan_comptable_defaults.
+     */
+    public function downloadSyscohadaTemplate()
+    {
+        $accounts = PlanComptableDefault::orderBy('classe')->orderBy('numero_compte')->get();
+
+        $callback = function () use ($accounts) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // BOM UTF-8 pour Excel
+
+            fputcsv($out, [
+                'Classe', 'Compte', 'Intitulé', 'Type', 'Observation', 'Nature',
+                'Catégorie BCEAO', 'Flux TAFIRE', 'Éligible TVA', 'Éligible échéancier', 'Lié immobilisation',
+            ], ';');
+
+            foreach ($accounts as $account) {
+                fputcsv($out, [
+                    $account->classe,
+                    $account->numero_compte,
+                    $account->libelle_compte,
+                    $account->type_compte,
+                    $account->observation,
+                    $account->nature,
+                    $account->categorie_bceao,
+                    $account->flux_tafire,
+                    $account->eligible_tva,
+                    $account->eligible_echeancier ? 'Oui' : 'Non',
+                    $account->lie_immobilisation ? 'Oui' : 'Non',
+                ], ';');
+            }
+
+            fclose($out);
+        };
+
+        return response()->streamDownload($callback, 'plan-comptable-modele-syscohada.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
+    }
+
     public function analyzeSyscohadaFile()
     {
         $filePath = base_path('Doc_comptabilite/modele_syscohada_PLAN COMPLET + LIASSE BCEAO_5.xlsx');

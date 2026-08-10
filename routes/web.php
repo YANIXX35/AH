@@ -495,6 +495,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/accounting/plan-comptable/update', [AccountingController::class, 'updatePlanComptable'])->name('accounting.plan.update');
         Route::post('/accounting/plan-comptable/reset', [AccountingController::class, 'resetPlanComptable'])->name('accounting.plan.reset');
         Route::get('/accounting/plan-comptable/template', [AccountingController::class, 'downloadPlanComptableTemplate'])->name('accounting.plan.download.template');
+        Route::get('/accounting/plan-comptable/download-template-syscohada', [AccountingController::class, 'downloadSyscohadaTemplate'])->name('accounting.plan-comptable.download-template-syscohada');
         Route::get('/accounting/moteur/rapprochement-bancaire', [AccountingController::class, 'bankReconciliation'])->name('accounting.bank-reconciliation');
         Route::get('/accounting/moteur/cloture-mensuelle', [AccountingController::class, 'monthlyClosing'])->name('accounting.monthly-closing');
         Route::post('/accounting/moteur/cloture-mensuelle', [AccountingController::class, 'storeMonthClosure'])->name('accounting.monthly-closing.store');

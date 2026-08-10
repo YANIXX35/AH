@@ -33,7 +33,7 @@
                 <a href="{{ route('accounting') }}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
                     <i data-feather="arrow-left" class="me-1" style="width:14px; height:14px;"></i> Moteur Comptable
                 </a>
-                <a href="{{ route('accounting.plan.download.template') }}" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold">
+                <a href="{{ route('accounting.plan-comptable.download-template-syscohada') }}" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold">
                     <i data-feather="download" class="me-1" style="width:14px; height:14px;"></i> Modèle Excel
                 </a>
             </div>
@@ -60,8 +60,8 @@
                         <p class="text-muted small mb-0">Source actuelle : {{ $source }}</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('accounting.plan.download.template') }}" class="btn btn-outline-info">
-                            <i data-feather="download" class="me-1"></i>Télécharger le modèle
+                        <a href="{{ route('accounting.plan-comptable.download-template-syscohada') }}" class="btn btn-outline-info">
+                            <i data-feather="download" class="me-1"></i>Télécharger le modèle SYSCOHADA
                         </a>
                     </div>
                 </div>
