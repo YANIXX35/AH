@@ -992,13 +992,22 @@ class AccountingController extends Controller
 
     public function downloadPlanComptableTemplate()
     {
-        $filePath = storage_path('app/public/plan-comptable-modele.csv');
+        $accounts = require base_path('database/data/syscohada_plan_comptable_default.php');
 
-        if (! file_exists($filePath)) {
-            abort(404, 'Modèle de plan comptable non trouvé.');
-        }
-
-        return response()->download($filePath, 'plan-comptable-modele.csv', [
+        return response()->streamDownload(function () use ($accounts) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Classe', 'Compte', 'Intitulé', 'Type', 'Observation']);
+            foreach ($accounts as $account) {
+                fputcsv($out, [
+                    $account['classe'],
+                    $account['numero_compte'],
+                    $account['libelle_compte'],
+                    $account['type_compte'],
+                    $account['observation'],
+                ]);
+            }
+            fclose($out);
+        }, 'plan-comptable-modele-syscohada.csv', [
             'Content-Type' => 'text/csv',
         ]);
     }
