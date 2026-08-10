@@ -8,8 +8,8 @@
     <link rel="apple-touch-icon" href="{{ asset('images/sitiam.png') }}">
     <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#0f172a">
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    @vite('resources/css/app.css')
 </head>
 <body class="min-h-screen bg-white">
     <div class="flex min-h-screen">

@@ -6,7 +6,7 @@
     <title>Mot de passe oublié</title>
     <link rel="icon" type="image/png" href="{{ asset('images/sitiam.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/sitiam.png') }}">
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite('resources/css/app.css')
 </head>
 <body class="min-h-screen bg-slate-50">
 <div class="mx-auto max-w-md px-4 py-12">
