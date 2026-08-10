@@ -30,6 +30,28 @@ class PlanComptableDefaultSeedTest extends TestCase
         $this->assertSame('analytique', $classNine->category);
     }
 
+    public function test_seed_defaults_captures_all_eleven_source_columns(): void
+    {
+        $user = User::factory()->create();
+
+        PlanComptableAccount::seedDefaultsFor($user->id);
+
+        $capitalSocial = PlanComptableAccount::where('user_id', $user->id)
+            ->where('numero_compte', '101')
+            ->firstOrFail();
+
+        $this->assertSame('Passif', $capitalSocial->type_compte);
+        $this->assertSame('Compte divisionnaire', $capitalSocial->observation);
+        $this->assertSame('Financement', $capitalSocial->nature);
+        $this->assertSame('Bilan Passif - Capitaux propres / dettes financieres', $capitalSocial->categorie_bceao);
+        $this->assertSame('Financement', $capitalSocial->flux_tafire);
+
+        $sale = PlanComptableAccount::where('user_id', $user->id)
+            ->where('numero_compte', '701')
+            ->firstOrFail();
+        $this->assertNotNull($sale->eligible_tva);
+    }
+
     public function test_seed_defaults_replaces_any_existing_plan(): void
     {
         $user = User::factory()->create();

@@ -21,12 +21,20 @@ class PlanComptableAccount extends Model
         'sous_type',
         'classe',
         'observation',
+        'nature',
+        'categorie_bceao',
+        'flux_tafire',
+        'eligible_tva',
+        'eligible_echeancier',
+        'lie_immobilisation',
         'is_actif',
         'sort_order',
     ];
 
     protected $casts = [
         'is_actif' => 'boolean',
+        'eligible_echeancier' => 'boolean',
+        'lie_immobilisation' => 'boolean',
         'sort_order' => 'integer',
     ];
 
@@ -61,6 +69,12 @@ class PlanComptableAccount extends Model
             'sous_type' => null,
             'classe' => $account['classe'],
             'observation' => $account['observation'],
+            'nature' => $account['nature'] ?? null,
+            'categorie_bceao' => $account['categorie_bceao'] ?? null,
+            'flux_tafire' => $account['flux_tafire'] ?? null,
+            'eligible_tva' => $account['eligible_tva'] ?? null,
+            'eligible_echeancier' => $account['eligible_echeancier'] ?? false,
+            'lie_immobilisation' => $account['lie_immobilisation'] ?? false,
             'is_actif' => $account['is_actif'],
             'sort_order' => $account['sort_order'],
             'created_at' => $now,
