@@ -7,6 +7,7 @@ use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
 use App\Models\AccountingMonthClosure;
 use App\Models\PlanComptableAccount;
+use App\Models\PlanComptableDefault;
 use App\Models\PlanComptableImport;
 use App\Models\TreasuryTransaction;
 use App\Services\BceaoLiasseService;
@@ -992,18 +993,18 @@ class AccountingController extends Controller
 
     public function downloadPlanComptableTemplate()
     {
-        $accounts = require base_path('database/data/syscohada_plan_comptable_default.php');
+        $accounts = PlanComptableDefault::orderBy('sort_order')->get();
 
         return response()->streamDownload(function () use ($accounts) {
             $out = fopen('php://output', 'w');
             fputcsv($out, ['Classe', 'Compte', 'Intitulé', 'Type', 'Observation']);
             foreach ($accounts as $account) {
                 fputcsv($out, [
-                    $account['classe'],
-                    $account['numero_compte'],
-                    $account['libelle_compte'],
-                    $account['type_compte'],
-                    $account['observation'],
+                    $account->classe,
+                    $account->numero_compte,
+                    $account->libelle_compte,
+                    $account->type_compte,
+                    $account->observation,
                 ]);
             }
             fclose($out);

@@ -48,38 +48,42 @@ class PlanComptableAccount extends Model
     /**
      * Installe le plan comptable SYSCOHADA par défaut (classes 1 à 9) pour un
      * utilisateur donné, en remplaçant tout plan existant. Utilisé à la création
-     * d'un nouveau compte entreprise et par le bouton "Réinitialiser".
+     * d'un nouveau compte entreprise, par le bouton "Réinitialiser", et par
+     * l'admin pour repropager le plan de référence aux comptes existants.
+     *
+     * La source de vérité est la table plan_comptable_defaults (modifiable par
+     * un platform admin), pas un fichier figé dans le code.
      */
     public static function seedDefaultsFor(int $userId): void
     {
-        $defaults = require base_path('database/data/syscohada_plan_comptable_default.php');
+        $defaults = PlanComptableDefault::orderBy('sort_order')->get();
 
         static::where('user_id', $userId)->delete();
 
         $now = now();
-        $rows = array_map(static fn (array $account) => [
+        $rows = $defaults->map(fn (PlanComptableDefault $account) => [
             'user_id' => $userId,
-            'prefix' => $account['prefix'],
-            'label' => $account['label'],
-            'category' => $account['category'],
-            'subtype' => $account['subtype'],
-            'numero_compte' => $account['numero_compte'],
-            'libelle_compte' => $account['libelle_compte'],
-            'type_compte' => $account['type_compte'],
+            'prefix' => $account->prefix,
+            'label' => $account->libelle_compte,
+            'category' => $account->category,
+            'subtype' => $account->subtype,
+            'numero_compte' => $account->numero_compte,
+            'libelle_compte' => $account->libelle_compte,
+            'type_compte' => $account->type_compte,
             'sous_type' => null,
-            'classe' => $account['classe'],
-            'observation' => $account['observation'],
-            'nature' => $account['nature'] ?? null,
-            'categorie_bceao' => $account['categorie_bceao'] ?? null,
-            'flux_tafire' => $account['flux_tafire'] ?? null,
-            'eligible_tva' => $account['eligible_tva'] ?? null,
-            'eligible_echeancier' => $account['eligible_echeancier'] ?? false,
-            'lie_immobilisation' => $account['lie_immobilisation'] ?? false,
-            'is_actif' => $account['is_actif'],
-            'sort_order' => $account['sort_order'],
+            'classe' => $account->classe,
+            'observation' => $account->observation,
+            'nature' => $account->nature,
+            'categorie_bceao' => $account->categorie_bceao,
+            'flux_tafire' => $account->flux_tafire,
+            'eligible_tva' => $account->eligible_tva,
+            'eligible_echeancier' => $account->eligible_echeancier,
+            'lie_immobilisation' => $account->lie_immobilisation,
+            'is_actif' => $account->is_actif,
+            'sort_order' => $account->sort_order,
             'created_at' => $now,
             'updated_at' => $now,
-        ], $defaults);
+        ])->all();
 
         foreach (array_chunk($rows, 250) as $chunk) {
             static::insert($chunk);

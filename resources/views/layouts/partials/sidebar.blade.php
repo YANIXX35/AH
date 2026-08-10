@@ -209,6 +209,9 @@
                                 <a class="sidebar-link {{ request()->routeIs('admin.scoring-parameters.*') ? 'active' : '' }}" href="{{ route('admin.scoring-parameters.index') }}">Paramètres scoring 360</a>
                             </li>
                             <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.plan-comptable.*') ? 'active' : '' }}" href="{{ route('admin.plan-comptable.index') }}">Plan comptable de référence</a>
+                            </li>
+                            <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.investment-requests.*') ? 'active' : '' }}" href="{{ route('admin.investment-requests.index') }}">Demandes d’investissement</a>
                             </li>
                             <li class="sidebar-item">

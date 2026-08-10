@@ -17,6 +17,7 @@ use App\Http\Controllers\AdminFinancialAnalysisController;
 use App\Http\Controllers\AdminInvestmentRequestController;
 use App\Http\Controllers\AdminOpsCenterController;
 use App\Http\Controllers\AdminPaymentController;
+use App\Http\Controllers\AdminPlanComptableController;
 use App\Http\Controllers\AdminPlatformLogController;
 use App\Http\Controllers\AdminRbacController;
 use App\Http\Controllers\AdminScoringParametersController;
@@ -439,6 +440,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/scoring-parameters', [AdminScoringParametersController::class, 'index'])->name('scoring-parameters.index');
         Route::post('/scoring-parameters', [AdminScoringParametersController::class, 'update'])->name('scoring-parameters.update');
         Route::post('/scoring-parameters/import', [AdminScoringParametersController::class, 'import'])->name('scoring-parameters.import');
+        Route::get('/plan-comptable', [AdminPlanComptableController::class, 'index'])->name('plan-comptable.index');
+        Route::post('/plan-comptable/upload', [AdminPlanComptableController::class, 'upload'])->name('plan-comptable.upload');
+        Route::post('/plan-comptable/apply-to-existing', [AdminPlanComptableController::class, 'applyToExisting'])->name('plan-comptable.apply-to-existing');
         Route::get('/support/tickets', [AdminSupportTicketController::class, 'index'])->name('support.tickets.index');
         Route::get('/support/tickets/{ticket}', [AdminSupportTicketController::class, 'show'])->name('support.tickets.show');
         Route::get('/support/tickets/{ticket}/feed', [AdminSupportTicketController::class, 'feed'])->name('support.tickets.feed');
