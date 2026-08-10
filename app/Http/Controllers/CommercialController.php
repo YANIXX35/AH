@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CommercialDocument;
+use App\Models\CommercialFeedback;
 use App\Models\Prospect;
 use App\Models\User;
 use App\Services\CompanyDocumentParserService;
@@ -327,6 +328,29 @@ class CommercialController extends Controller
     public function showcase(): View
     {
         return view('commercial.showcase');
+    }
+
+    /**
+     * Enregistre l'avis de satisfaction du commercial sur l'accompagnement
+     * SITIAME (widget "Votre avis compte" du Kit Marketing). Auparavant un
+     * simple alert() JS sans aucune sauvegarde côté serveur.
+     */
+    public function storeFeedback(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'rating' => ['required', 'integer', 'between:1,5'],
+            'satisfaction_label' => ['required', 'string', Rule::in([
+                'Très satisfait', 'Satisfait', 'Moyen', 'Peu satisfait',
+            ])],
+        ]);
+
+        CommercialFeedback::create([
+            'user_id' => $request->user()->id,
+            'rating' => $validated['rating'],
+            'satisfaction_label' => $validated['satisfaction_label'],
+        ]);
+
+        return response()->json(['ok' => true, 'message' => 'Merci pour votre évaluation ! Notre équipe en prend note.']);
     }
 
     public function guides(): View

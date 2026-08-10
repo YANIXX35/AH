@@ -434,7 +434,7 @@
     <div class="sc-sat-crm-layout">
       <div class="sc-sat-card">
         <h3>Votre avis compte</h3>
-        <div class="sc-stars" id="sc-stars">★★★★★</div>
+        <div class="sc-stars" id="sc-stars" data-rating="5">★★★★★</div>
         <p style="color:#B7C3D6; font-size:13px; margin-bottom:14px;">Comment évaluez-vous notre accompagnement ?</p>
         <div class="sc-sat-opts" id="sc-satopts">
           <div class="sc-sat-opt sel">Très satisfait</div>
@@ -442,7 +442,7 @@
           <div class="sc-sat-opt">Moyen</div>
           <div class="sc-sat-opt">Peu satisfait</div>
         </div>
-        <button type="button" class="sc-sat-send" onclick="alert('Merci pour votre évaluation ! Notre équipe en prend note.')">Envoyer mon avis</button>
+        <button type="button" class="sc-sat-send" id="sc-sat-send">Envoyer mon avis</button>
       </div>
 
       <div class="sc-crm-card">
@@ -556,6 +556,7 @@
         const rect = starsEl.getBoundingClientRect();
         const pct = (e.clientX - rect.left) / rect.width;
         const n = Math.max(1, Math.ceil(pct * 5));
+        starsEl.dataset.rating = String(n);
         starsEl.innerHTML = '★★★★★'.split('').map((s,i) => `<span class="${i < n ? 'active':''}">★</span>`).join('');
       });
     }
@@ -567,6 +568,37 @@
         opt.classList.add('sel');
       });
     });
+
+    // Envoi réel de l'avis (auparavant un simple alert() sans sauvegarde)
+    const sendBtn = document.getElementById('sc-sat-send');
+    if (sendBtn) {
+      sendBtn.addEventListener('click', () => {
+        const rating = Number(starsEl?.dataset.rating || 5);
+        const selectedOpt = document.querySelector('.sc-sat-opt.sel');
+        const satisfactionLabel = selectedOpt ? selectedOpt.textContent.trim() : 'Très satisfait';
+
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Envoi...';
+
+        fetch('{{ route('commercial.feedback.store') }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({ rating, satisfaction_label: satisfactionLabel }),
+        })
+          .then(res => res.ok ? res.json() : Promise.reject(res))
+          .then(data => {
+            sendBtn.textContent = 'Merci pour votre avis !';
+          })
+          .catch(() => {
+            sendBtn.disabled = false;
+            sendBtn.textContent = "Erreur, réessayer";
+          });
+      });
+    }
 
     // FAQ Accordion
     document.querySelectorAll('.sc-faq-item').forEach(item => {

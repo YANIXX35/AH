@@ -791,28 +791,17 @@
 
 <!-- Dropdown Menus -->
 <div id="notifications-dropdown" class="dropdown-menu-custom">
-    <a href="#" class="dropdown-item-custom">
-        <i class="fas fa-check-circle text-success me-2"></i>
-        Transaction validée
-        <small class="d-block text-muted">Il y a 30 minutes</small>
-    </a>
-    <a href="#" class="dropdown-item-custom">
-        <i class="fas fa-info-circle text-info me-2"></i>
-        Nouveau rapport disponible
-        <small class="d-block text-muted">Il y a 2 heures</small>
-    </a>
-    <a href="#" class="dropdown-item-custom">
-        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-        Solde faible alerte
-        <small class="d-block text-muted">Il y a 5 heures</small>
-    </a>
-    <a href="#" class="dropdown-item-custom">
-        <i class="fas fa-times-circle text-danger me-2"></i>
-        Transaction échouée
-        <small class="d-block text-muted">Il y a 14 heures</small>
-    </a>
+    @forelse ($notifications ?? [] as $notification)
+        <a href="{{ route('notifications.go', $notification) }}" class="dropdown-item-custom">
+            <i class="fas fa-circle{{ $notification->read_at ? '' : '-notch text-primary' }} me-2"></i>
+            {{ $notification->title }}
+            <small class="d-block text-muted">{{ $notification->created_at->diffForHumans() }}</small>
+        </a>
+    @empty
+        <div class="dropdown-item-custom text-muted text-center py-2">Aucune notification pour le moment.</div>
+    @endforelse
     <hr class="my-2">
-    <a href="#" class="dropdown-item-custom text-center">
+    <a href="{{ route('notifications.index') }}" class="dropdown-item-custom text-center">
         <strong>Voir toutes les notifications</strong>
     </a>
 </div>

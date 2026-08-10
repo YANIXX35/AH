@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\UsesClientWorkspace;
+use App\Models\AppNotification;
 use App\Models\TreasuryAuditLog;
 use App\Models\TreasuryPeriodLock;
 use App\Models\TreasuryTransaction;
@@ -138,6 +139,13 @@ class TreasuryController extends Controller
             ->orderBy('transaction_date')
             ->get();
 
+        // Vraies notifications de l'utilisateur (le menu affichait auparavant
+        // 4 entrées inventées en dur avec des liens morts).
+        $notifications = AppNotification::where('user_id', auth()->id())
+            ->latest()
+            ->take(5)
+            ->get();
+
         return view('treasury.dashboard-crypto', [
             'transactions' => $transactions,
             'totalEncaissements' => $totalEncaissements,
@@ -145,6 +153,7 @@ class TreasuryController extends Controller
             'solde' => $solde,
             'soldeProjecte' => $soldeProjecte,
             'pendingTransactions' => $pendingTransactions,
+            'notifications' => $notifications,
         ]);
     }
 

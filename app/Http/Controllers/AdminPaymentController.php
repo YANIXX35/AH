@@ -213,8 +213,21 @@ class AdminPaymentController extends Controller
     public function destroy(PaymentTransaction $paymentTransaction): RedirectResponse
     {
         $ref = $paymentTransaction->provider_reference ?: 'TX-'.$paymentTransaction->id;
+
+        // Une transaction déjà réglée est une pièce comptable : elle ne doit
+        // jamais disparaître définitivement (litige client, réconciliation,
+        // contrôle fiscal). Seules les transactions non abouties (test,
+        // annulées, échouées) peuvent être retirées, et uniquement via une
+        // suppression logique (soft delete) — récupérable, pas détruite.
+        $paidStatuses = ['ACCEPTED', 'COMPLETED', 'APPROVED', 'SUCCESS', 'SUCCES'];
+        if (in_array(strtoupper((string) $paymentTransaction->status), $paidStatuses, true)) {
+            return back()->withErrors([
+                'payment' => "La transaction {$ref} est marquée réglée : elle ne peut pas être supprimée, pour conserver la piste d'audit comptable.",
+            ]);
+        }
+
         $paymentTransaction->delete();
 
-        return back()->with('status', "La transaction {$ref} a été supprimée avec succès.");
+        return back()->with('status', "La transaction {$ref} a été archivée (suppression réversible).");
     }
 }

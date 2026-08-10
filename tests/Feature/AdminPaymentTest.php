@@ -56,7 +56,7 @@ class AdminPaymentTest extends TestCase
         $receiptResponse->assertSee('25 000 XOF');
     }
 
-    public function test_admin_can_delete_payment_transaction(): void
+    public function test_admin_cannot_delete_a_paid_payment_transaction(): void
     {
         $admin = User::factory()->create(['is_platform_admin' => true]);
         $transaction = PaymentTransaction::create([
@@ -74,7 +74,29 @@ class AdminPaymentTest extends TestCase
         $response = $this->actingAs($admin)->delete("/admin/payments/{$transaction->id}");
 
         $response->assertRedirect();
+        $response->assertSessionHasErrors('payment');
+        $this->assertDatabaseHas('payment_transactions', ['id' => $transaction->id]);
+    }
+
+    public function test_admin_can_soft_delete_a_non_paid_payment_transaction(): void
+    {
+        $admin = User::factory()->create(['is_platform_admin' => true]);
+        $transaction = PaymentTransaction::create([
+            'user_id' => $admin->id,
+            'amount' => 15000,
+            'currency' => 'XOF',
+            'status' => 'FAILED',
+            'country' => 'CI',
+            'correspondent' => 'ORANGE_MONEY',
+            'payer_msisdn' => '+2250700000000',
+            'provider' => 'SIMULATOR',
+            'provider_reference' => 'TX-SIM-TESTDELETE2',
+        ]);
+
+        $response = $this->actingAs($admin)->delete("/admin/payments/{$transaction->id}");
+
+        $response->assertRedirect();
         $response->assertSessionHas('status');
-        $this->assertDatabaseMissing('payment_transactions', ['id' => $transaction->id]);
+        $this->assertSoftDeleted('payment_transactions', ['id' => $transaction->id]);
     }
 }

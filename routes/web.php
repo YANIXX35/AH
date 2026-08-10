@@ -499,6 +499,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('module.permission:treasury')->group(function () {
         Route::redirect('/treasury', '/treasury/tracking')->name('treasury.index');
         Route::get('/treasury/tracking', [TreasuryController::class, 'tracking'])->name('treasury.tracking');
+        Route::get('/treasury/dashboard-crypto', [TreasuryController::class, 'dashboardCrypto'])->name('treasury.dashboard-crypto');
         Route::get('/treasury/balance', [TreasuryController::class, 'balance'])->name('treasury.balance');
         Route::get('/treasury/forecast', [TreasuryController::class, 'forecast'])->name('treasury.forecast');
         Route::post('/treasury/forecast/period/lock', [TreasuryController::class, 'lockTreasuryPeriod'])->name('treasury.forecast.period.lock');
@@ -575,6 +576,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [CommercialController::class, 'index'])->name('dashboard');
         Route::get('/portefeuille', [CommercialController::class, 'portefeuille'])->name('portefeuille');
         Route::get('/offres', [CommercialController::class, 'showcase'])->name('showcase');
+        Route::post('/offres/feedback', [CommercialController::class, 'storeFeedback'])->name('feedback.store');
         Route::get('/guides', [CommercialController::class, 'guides'])->name('guides');
         Route::get('/guides/{slug}/download', [CommercialController::class, 'downloadGuide'])->name('guides.download');
         Route::get('/club', [CommercialController::class, 'club'])->name('club');

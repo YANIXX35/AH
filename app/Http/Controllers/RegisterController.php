@@ -168,6 +168,7 @@ class RegisterController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
+        $welcomeMailSent = true;
         try {
             Mail::to($user->email)->send(new AccountCreatedMail($user));
             Log::info('account_created_mail_sent', [
@@ -175,14 +176,23 @@ class RegisterController extends Controller
                 'email' => $user->email,
             ]);
         } catch (\Throwable $e) {
+            $welcomeMailSent = false;
             Log::warning('account_created_mail_failed', [
                 'email' => $user->email,
                 'message' => $e->getMessage(),
             ]);
         }
 
+        $status = 'Inscription réussie. Pour activer la fonctionnalité Comptabilité, veuillez effectuer le paiement de l’abonnement Enterprise Premium (15 000 FCFA).';
+        if (! $welcomeMailSent) {
+            // Le compte est bien créé (aucun mensonge sur ce point), mais on ne
+            // laisse pas croire que l'e-mail de confirmation a été envoyé alors
+            // qu'il ne l'a pas été.
+            $status .= ' (L’e-mail de confirmation n’a pas pu être envoyé ; vous pouvez continuer normalement, vous êtes déjà connecté.)';
+        }
+
         return redirect()
             ->route('payments.sandbox')
-            ->with('status', 'Inscription réussie. Pour activer la fonctionnalité Comptabilité, veuillez effectuer le paiement de l’abonnement Enterprise Premium (15 000 FCFA).');
+            ->with('status', $status);
     }
 }
