@@ -152,15 +152,19 @@
                             @endif
                             @error('currency')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3 position-relative">
                             <label class="form-label">Compte débit</label>
-                            <input type="text" name="debit_account" value="{{ old('debit_account', $document->extracted_data['debit_account'] ?? ($document->document_type === 'Achat' ? '607 Achats de marchandises' : ($document->document_type === 'Vente' ? '411 Clients' : ($document->document_type === 'Reçu' ? '512 Banque' : '627 Services bancaires')))) }}" class="form-control @error('debit_account') is-invalid @enderror">
-                            @error('debit_account')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <input type="text" class="form-control" placeholder="Rechercher un compte (code ou libellé)…" autocomplete="off" data-account-search="debit" value="{{ old('debit_account', $document->extracted_data['debit_account'] ?? '') }}">
+                            <input type="hidden" name="debit_account" id="debitAccountValue" value="{{ old('debit_account', $document->extracted_data['debit_account'] ?? '') }}" required>
+                            <div class="list-group position-absolute w-100 shadow-sm" style="z-index: 20; display:none; max-height: 260px; overflow-y: auto;" data-account-results="debit"></div>
+                            @error('debit_account')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3 position-relative">
                             <label class="form-label">Compte crédit</label>
-                            <input type="text" name="credit_account" value="{{ old('credit_account', $document->extracted_data['credit_account'] ?? ($document->document_type === 'Achat' ? '401 Fournisseurs' : ($document->document_type === 'Vente' ? '701 Ventes de marchandises' : ($document->document_type === 'Reçu' ? '411 Clients' : '512 Banque')))) }}" class="form-control @error('credit_account') is-invalid @enderror">
-                            @error('credit_account')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <input type="text" class="form-control" placeholder="Rechercher un compte (code ou libellé)…" autocomplete="off" data-account-search="credit" value="{{ old('credit_account', $document->extracted_data['credit_account'] ?? '') }}">
+                            <input type="hidden" name="credit_account" id="creditAccountValue" value="{{ old('credit_account', $document->extracted_data['credit_account'] ?? '') }}" required>
+                            <div class="list-group position-absolute w-100 shadow-sm" style="z-index: 20; display:none; max-height: 260px; overflow-y: auto;" data-account-results="credit"></div>
+                            @error('credit_account')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
                         <button type="submit" class="btn btn-success">Valider et générer l'écriture</button>
                     </form>
@@ -168,4 +172,71 @@
             </div>
         </div>
     </div>
+
+    <script>
+        (function setupAccountPickers() {
+            ['debit', 'credit'].forEach(function (side) {
+                const searchInput = document.querySelector('[data-account-search="' + side + '"]');
+                const resultsBox = document.querySelector('[data-account-results="' + side + '"]');
+                const hiddenInput = document.getElementById(side + 'AccountValue');
+                if (!searchInput || !resultsBox || !hiddenInput) {
+                    return;
+                }
+
+                let debounceTimer = null;
+                let abortController = null;
+
+                function runSearch() {
+                    const q = searchInput.value.trim();
+                    if (abortController) {
+                        abortController.abort();
+                    }
+                    abortController = new AbortController();
+
+                    const params = new URLSearchParams();
+                    if (q) params.set('q', q);
+
+                    fetch('{{ route('accounting.comptes.search') }}?' + params.toString(), {
+                        signal: abortController.signal,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    })
+                        .then(function (r) { return r.json(); })
+                        .then(function (accounts) {
+                            resultsBox.innerHTML = '';
+                            if (!accounts.length) {
+                                resultsBox.style.display = 'none';
+                                return;
+                            }
+                            accounts.forEach(function (account) {
+                                const item = document.createElement('button');
+                                item.type = 'button';
+                                item.className = 'list-group-item list-group-item-action py-1';
+                                item.innerHTML = '<strong>' + account.numero_compte + '</strong> — ' + account.libelle_compte;
+                                item.addEventListener('click', function () {
+                                    hiddenInput.value = account.label;
+                                    searchInput.value = account.label;
+                                    resultsBox.style.display = 'none';
+                                });
+                                resultsBox.appendChild(item);
+                            });
+                            resultsBox.style.display = 'block';
+                        })
+                        .catch(function () { /* requête annulée ou erreur réseau, on ignore */ });
+                }
+
+                searchInput.addEventListener('input', function () {
+                    hiddenInput.value = '';
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(runSearch, 200);
+                });
+                searchInput.addEventListener('focus', runSearch);
+
+                document.addEventListener('click', function (event) {
+                    if (!resultsBox.contains(event.target) && event.target !== searchInput) {
+                        resultsBox.style.display = 'none';
+                    }
+                });
+            });
+        })();
+    </script>
 @endsection

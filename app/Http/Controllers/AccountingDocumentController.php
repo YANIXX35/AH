@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\UsesClientWorkspace;
+use App\Http\Controllers\Concerns\ValidatesPlanComptableAccount;
 use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
 use App\Models\TreasuryTransaction;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 class AccountingDocumentController extends Controller
 {
     use UsesClientWorkspace;
+    use ValidatesPlanComptableAccount;
 
     public function showValidation(AccountingDocument $document)
     {
@@ -37,6 +39,9 @@ class AccountingDocumentController extends Controller
             'debit_account' => ['required', 'string', 'max:255'],
             'credit_account' => ['required', 'string', 'max:255'],
         ]);
+
+        $this->assertAccountBelongsToWorkspacePlan($validated['debit_account'], 'debit_account');
+        $this->assertAccountBelongsToWorkspacePlan($validated['credit_account'], 'credit_account');
 
         $existingData = (array) $document->extracted_data;
         $existingData['document_type'] = $document->document_type;

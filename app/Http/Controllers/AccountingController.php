@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\UsesClientWorkspace;
+use App\Http\Controllers\Concerns\ValidatesPlanComptableAccount;
 use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
 use App\Models\AccountingMonthClosure;
@@ -25,13 +26,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class AccountingController extends Controller
 {
     use UsesClientWorkspace;
+    use ValidatesPlanComptableAccount;
 
     public function index(Request $request)
     {
@@ -211,28 +212,6 @@ class AccountingController extends Controller
             ]);
 
         return response()->json($accounts);
-    }
-
-    /**
-     * Vérifie que le compte saisi (format "CODE Libellé") correspond bien à un
-     * compte réellement présent dans le plan comptable de l'entreprise
-     * (plan_comptable_accounts), synchronisé depuis le référentiel SYSCOHADA.
-     */
-    private function assertAccountBelongsToWorkspacePlan(string $account): void
-    {
-        $code = $this->getAccountPrefix($account) !== null
-            ? preg_replace('/\s.*$/', '', trim($account))
-            : null;
-
-        $exists = $code !== null && PlanComptableAccount::where('user_id', $this->workspaceUserId())
-            ->where('numero_compte', $code)
-            ->exists();
-
-        if (! $exists) {
-            throw ValidationException::withMessages([
-                'debit_account' => "Le compte « {$account} » n'existe pas dans le plan comptable de l'entreprise. Sélectionnez un compte dans la liste proposée.",
-            ]);
-        }
     }
 
     /**
