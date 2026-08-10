@@ -52,15 +52,19 @@
                             @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="row g-3">
-                            <div class="col-md-6">
+                            <div class="col-md-6 position-relative">
                                 <label class="form-label">Compte débit</label>
-                                <input type="text" id="debitAccountEditAuto" value="{{ old('debit_account', $entry->debit_account) }}" class="form-control" readonly>
-                                <small class="form-text text-muted d-block mt-1">Compte calculé automatiquement selon le type de document.</small>
+                                <input type="text" class="form-control" placeholder="Rechercher un compte (code ou libellé)…" autocomplete="off" data-account-search="debit" value="{{ old('debit_account', $entry->debit_account) }}">
+                                <input type="hidden" name="debit_account" id="debitAccountValue" value="{{ old('debit_account', $entry->debit_account) }}" required>
+                                <div class="list-group position-absolute w-100 shadow-sm" style="z-index: 20; display:none; max-height: 260px; overflow-y: auto;" data-account-results="debit"></div>
+                                @error('debit_account')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 position-relative">
                                 <label class="form-label">Compte crédit</label>
-                                <input type="text" id="creditAccountEditAuto" value="{{ old('credit_account', $entry->credit_account) }}" class="form-control" readonly>
-                                <small class="form-text text-muted d-block mt-1">Compte calculé automatiquement selon le type de document.</small>
+                                <input type="text" class="form-control" placeholder="Rechercher un compte (code ou libellé)…" autocomplete="off" data-account-search="credit" value="{{ old('credit_account', $entry->credit_account) }}">
+                                <input type="hidden" name="credit_account" id="creditAccountValue" value="{{ old('credit_account', $entry->credit_account) }}" required>
+                                <div class="list-group position-absolute w-100 shadow-sm" style="z-index: 20; display:none; max-height: 260px; overflow-y: auto;" data-account-results="credit"></div>
+                                @error('credit_account')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                             </div>
                         </div>
                         <div class="mb-3 mt-3">
@@ -98,29 +102,74 @@
     </div>
 
     <script>
-        // Met à jour automatiquement les comptes affichés selon le type sélectionné.
-        function updateEditAccountsByDocumentType() {
-            const documentType = document.getElementById('documentTypeEdit').value;
-            const debitInput = document.getElementById('debitAccountEditAuto');
-            const creditInput = document.getElementById('creditAccountEditAuto');
+        // Recherche/sélection de compte dans le plan comptable de l'entreprise.
+        function setupAccountPickers() {
+            ['debit', 'credit'].forEach(function (side) {
+                const searchInput = document.querySelector('[data-account-search="' + side + '"]');
+                const resultsBox = document.querySelector('[data-account-results="' + side + '"]');
+                const hiddenInput = document.getElementById(side + 'AccountValue');
+                if (!searchInput || !resultsBox || !hiddenInput) {
+                    return;
+                }
 
-            const accountMap = {
-                'Achat': { debit: '607 Achats de marchandises', credit: '401 Fournisseurs' },
-                'Vente': { debit: '411 Clients', credit: '701 Ventes de marchandises' },
-                'Reçu': { debit: '512 Banque', credit: '411 Clients' },
-                'Justificatif': { debit: '627 Services bancaires', credit: '512 Banque' },
-            };
+                let debounceTimer = null;
+                let abortController = null;
 
-            const fallback = { debit: '471 Compte transitoire', credit: '472 Compte d\'attente' };
-            const accounts = accountMap[documentType] || fallback;
+                function runSearch() {
+                    const q = searchInput.value.trim();
+                    if (abortController) {
+                        abortController.abort();
+                    }
+                    abortController = new AbortController();
 
-            debitInput.value = accounts.debit;
-            creditInput.value = accounts.credit;
+                    const params = new URLSearchParams();
+                    if (q) params.set('q', q);
+
+                    fetch('{{ route('accounting.comptes.search') }}?' + params.toString(), {
+                        signal: abortController.signal,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    })
+                        .then(function (r) { return r.json(); })
+                        .then(function (accounts) {
+                            resultsBox.innerHTML = '';
+                            if (!accounts.length) {
+                                resultsBox.style.display = 'none';
+                                return;
+                            }
+                            accounts.forEach(function (account) {
+                                const item = document.createElement('button');
+                                item.type = 'button';
+                                item.className = 'list-group-item list-group-item-action py-1';
+                                item.innerHTML = '<strong>' + account.numero_compte + '</strong> — ' + account.libelle_compte;
+                                item.addEventListener('click', function () {
+                                    hiddenInput.value = account.label;
+                                    searchInput.value = account.label;
+                                    resultsBox.style.display = 'none';
+                                });
+                                resultsBox.appendChild(item);
+                            });
+                            resultsBox.style.display = 'block';
+                        })
+                        .catch(function () { /* requête annulée ou erreur réseau, on ignore */ });
+                }
+
+                searchInput.addEventListener('input', function () {
+                    hiddenInput.value = '';
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(runSearch, 200);
+                });
+                searchInput.addEventListener('focus', runSearch);
+
+                document.addEventListener('click', function (event) {
+                    if (!resultsBox.contains(event.target) && event.target !== searchInput) {
+                        resultsBox.style.display = 'none';
+                    }
+                });
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            document.getElementById('documentTypeEdit').addEventListener('change', updateEditAccountsByDocumentType);
-            updateEditAccountsByDocumentType();
+            setupAccountPickers();
             if (typeof feather !== 'undefined') {
                 feather.replace();
             }

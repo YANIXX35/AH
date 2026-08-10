@@ -468,6 +468,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/accounting', [AccountingController::class, 'index'])->name('accounting');
         Route::get('/accounting/index', fn () => redirect()->route('accounting'))->name('accounting.index');
         Route::post('/accounting/demo', [AccountingController::class, 'seedDemoData'])->name('accounting.demo');
+        Route::get('/accounting/comptes/search', [AccountingController::class, 'searchAccounts'])->name('accounting.comptes.search');
         Route::post('/accounting/entries', [AccountingController::class, 'storeEntry'])->name('accounting.entries.store');
         Route::get('/accounting/entries/{entry}', [AccountingController::class, 'showEntry'])->name('accounting.entries.show');
         Route::get('/accounting/entries/{entry}/document', [AccountingDocumentViewerController::class, 'showEntryDocument'])->name('accounting.entries.document.viewer');

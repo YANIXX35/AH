@@ -1013,16 +1013,36 @@
                                     </summary>
                                 <div class="pt-3">
                                 <div class="row g-3">
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 position-relative">
                                         <label class="form-label fw-500"><i data-feather="arrow-down-circle" class="me-2 text-danger" style="width: 16px; height: 16px;"></i>Compte DÉBIT</label>
-                                        <input type="text" id="debitAccountAuto" class="form-control" placeholder="Compte calculé automatiquement" readonly>
-                                        <small class="form-text text-muted d-block mt-1">Compte déterminé automatiquement selon le type de document.</small>
+                                        <div class="d-flex gap-2">
+                                            <select class="form-select" style="max-width: 90px;" data-account-class-filter="debit">
+                                                <option value="">Toutes</option>
+                                                @foreach(range(1, 9) as $classeOption)
+                                                    <option value="{{ $classeOption }}">Cl. {{ $classeOption }}</option>
+                                                @endforeach
+                                            </select>
+                                            <input type="text" class="form-control" placeholder="Rechercher un compte (code ou libellé)…" autocomplete="off" data-account-search="debit">
+                                        </div>
+                                        <input type="hidden" name="debit_account" id="debitAccountValue" value="{{ old('debit_account') }}" required>
+                                        <div class="list-group position-absolute w-100 shadow-sm" style="z-index: 20; display:none; max-height: 260px; overflow-y: auto;" data-account-results="debit"></div>
+                                        <small class="form-text text-muted d-block mt-1">Recherchez et sélectionnez un compte du plan comptable de l'entreprise.</small>
                                     </div>
-                                    
-                                    <div class="col-md-6">
+
+                                    <div class="col-md-6 position-relative">
                                         <label class="form-label fw-500"><i data-feather="arrow-up-circle" class="me-2 text-success" style="width: 16px; height: 16px;"></i>Compte CRÉDIT</label>
-                                        <input type="text" id="creditAccountAuto" class="form-control" placeholder="Compte calculé automatiquement" readonly>
-                                        <small class="form-text text-muted d-block mt-1">Compte déterminé automatiquement selon le type de document.</small>
+                                        <div class="d-flex gap-2">
+                                            <select class="form-select" style="max-width: 90px;" data-account-class-filter="credit">
+                                                <option value="">Toutes</option>
+                                                @foreach(range(1, 9) as $classeOption)
+                                                    <option value="{{ $classeOption }}">Cl. {{ $classeOption }}</option>
+                                                @endforeach
+                                            </select>
+                                            <input type="text" class="form-control" placeholder="Rechercher un compte (code ou libellé)…" autocomplete="off" data-account-search="credit">
+                                        </div>
+                                        <input type="hidden" name="credit_account" id="creditAccountValue" value="{{ old('credit_account') }}" required>
+                                        <div class="list-group position-absolute w-100 shadow-sm" style="z-index: 20; display:none; max-height: 260px; overflow-y: auto;" data-account-results="credit"></div>
+                                        <small class="form-text text-muted d-block mt-1">Recherchez et sélectionnez un compte du plan comptable de l'entreprise.</small>
                                     </div>
                                 </div>
                                 </div>
@@ -1221,41 +1241,6 @@
             document.getElementById('ttcAmount').value = ttc.toFixed(2);
         }
 
-        // Attribution automatique des comptes selon le type de document.
-        function updateAccountsByDocumentType() {
-            const documentType = document.getElementById('documentType').value;
-            const debitInput = document.getElementById('debitAccountAuto');
-            const creditInput = document.getElementById('creditAccountAuto');
-
-            const accountMap = {
-                'Achat': {
-                    debit: '607 Achats de marchandises',
-                    credit: '401 Fournisseurs'
-                },
-                'Vente': {
-                    debit: '411 Clients',
-                    credit: '701 Ventes de marchandises'
-                },
-                'Reçu': {
-                    debit: '512 Banque',
-                    credit: '411 Clients'
-                },
-                'Justificatif': {
-                    debit: '627 Services bancaires',
-                    credit: '512 Banque'
-                }
-            };
-
-            const fallback = {
-                debit: '471 Compte transitoire',
-                credit: '471 Compte transitoire'
-            };
-
-            const accounts = accountMap[documentType] || fallback;
-            debitInput.value = accounts.debit;
-            creditInput.value = accounts.credit;
-        }
-
         // Boutons rapides TVA
         function setTvaRate(rate) {
             document.getElementById('tvaRate').value = rate;
@@ -1265,7 +1250,84 @@
         // Event listeners pour calcul en temps réel
         document.getElementById('htAmount').addEventListener('input', calculateAmounts);
         document.getElementById('tvaRate').addEventListener('input', calculateAmounts);
-        document.getElementById('documentType').addEventListener('change', updateAccountsByDocumentType);
+
+        // Recherche/sélection de compte dans le plan comptable de l'entreprise
+        // (autocomplétion serveur, ne charge jamais les 1455 comptes d'un coup).
+        (function setupAccountPickers() {
+            ['debit', 'credit'].forEach(function (side) {
+                const searchInput = document.querySelector('[data-account-search="' + side + '"]');
+                const classFilter = document.querySelector('[data-account-class-filter="' + side + '"]');
+                const resultsBox = document.querySelector('[data-account-results="' + side + '"]');
+                const hiddenInput = document.getElementById(side + 'AccountValue');
+                if (!searchInput || !resultsBox || !hiddenInput) {
+                    return;
+                }
+
+                if (hiddenInput.value) {
+                    searchInput.value = hiddenInput.value;
+                }
+
+                let debounceTimer = null;
+                let abortController = null;
+
+                function runSearch() {
+                    const q = searchInput.value.trim();
+                    const classe = classFilter ? classFilter.value : '';
+
+                    if (abortController) {
+                        abortController.abort();
+                    }
+                    abortController = new AbortController();
+
+                    const params = new URLSearchParams();
+                    if (q) params.set('q', q);
+                    if (classe) params.set('classe', classe);
+
+                    fetch('{{ route('accounting.comptes.search') }}?' + params.toString(), {
+                        signal: abortController.signal,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    })
+                        .then(function (r) { return r.json(); })
+                        .then(function (accounts) {
+                            resultsBox.innerHTML = '';
+                            if (!accounts.length) {
+                                resultsBox.style.display = 'none';
+                                return;
+                            }
+                            accounts.forEach(function (account) {
+                                const item = document.createElement('button');
+                                item.type = 'button';
+                                item.className = 'list-group-item list-group-item-action py-1';
+                                item.innerHTML = '<strong>' + account.numero_compte + '</strong> — ' + account.libelle_compte;
+                                item.addEventListener('click', function () {
+                                    hiddenInput.value = account.label;
+                                    searchInput.value = account.label;
+                                    resultsBox.style.display = 'none';
+                                });
+                                resultsBox.appendChild(item);
+                            });
+                            resultsBox.style.display = 'block';
+                        })
+                        .catch(function () { /* requête annulée ou erreur réseau, on ignore */ });
+                }
+
+                searchInput.addEventListener('input', function () {
+                    hiddenInput.value = '';
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(runSearch, 200);
+                });
+                searchInput.addEventListener('focus', runSearch);
+                if (classFilter) {
+                    classFilter.addEventListener('change', runSearch);
+                }
+
+                document.addEventListener('click', function (event) {
+                    if (!resultsBox.contains(event.target) && event.target !== searchInput) {
+                        resultsBox.style.display = 'none';
+                    }
+                });
+            });
+        })();
 
         // Mode ultra ergonomique: une seule section du formulaire ouverte à la fois.
         (function setupAccountingAccordion() {
@@ -1315,7 +1377,6 @@
 
         // Initial calculation
         calculateAmounts();
-        updateAccountsByDocumentType();
     </script>
 
     <div class="row g-4 mb-4">

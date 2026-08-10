@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -112,12 +113,13 @@ class AccountingController extends Controller
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'attachment' => ['nullable', 'file', 'max:51200'],
+            'debit_account' => ['required', 'string', 'max:255'],
+            'credit_account' => ['required', 'string', 'max:255'],
         ]);
 
         $data = $validated;
-        $accounts = $this->resolveAccountsForDocumentType($validated['document_type']);
-        $data['debit_account'] = $accounts['debit'];
-        $data['credit_account'] = $accounts['credit'];
+        $this->assertAccountBelongsToWorkspacePlan($validated['debit_account']);
+        $this->assertAccountBelongsToWorkspacePlan($validated['credit_account']);
         $ocrData = [];
         $statusMessage = 'Écriture enregistrée';
         $linkedDocument = $this->resolveLinkedDocumentFromRequest($request);
@@ -175,7 +177,67 @@ class AccountingController extends Controller
     }
 
     /**
-     * Détermine automatiquement les comptes débit/crédit selon le type de document.
+     * Recherche de comptes du plan comptable de l'entreprise (pas le référentiel
+     * de base plan_comptable_defaults) pour l'autocomplétion de saisie d'écriture.
+     * Utilisé par la saisie manuelle : appelé à chaque frappe côté client, donc
+     * on limite le nombre de résultats plutôt que de charger les 1455 comptes.
+     */
+    public function searchAccounts(Request $request)
+    {
+        $search = trim((string) $request->query('q', ''));
+        $classe = trim((string) $request->query('classe', ''));
+
+        $query = PlanComptableAccount::where('user_id', $this->workspaceUserId());
+
+        if ($classe !== '') {
+            $query->where('classe', $classe);
+        }
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('numero_compte', 'like', "%{$search}%")
+                    ->orWhere('libelle_compte', 'like', "%{$search}%");
+            });
+        }
+
+        $accounts = $query->orderBy('numero_compte')
+            ->limit(20)
+            ->get(['numero_compte', 'libelle_compte', 'classe'])
+            ->map(fn (PlanComptableAccount $a) => [
+                'numero_compte' => $a->numero_compte,
+                'libelle_compte' => $a->libelle_compte,
+                'classe' => $a->classe,
+                'label' => trim($a->numero_compte.' '.$a->libelle_compte),
+            ]);
+
+        return response()->json($accounts);
+    }
+
+    /**
+     * Vérifie que le compte saisi (format "CODE Libellé") correspond bien à un
+     * compte réellement présent dans le plan comptable de l'entreprise
+     * (plan_comptable_accounts), synchronisé depuis le référentiel SYSCOHADA.
+     */
+    private function assertAccountBelongsToWorkspacePlan(string $account): void
+    {
+        $code = $this->getAccountPrefix($account) !== null
+            ? preg_replace('/\s.*$/', '', trim($account))
+            : null;
+
+        $exists = $code !== null && PlanComptableAccount::where('user_id', $this->workspaceUserId())
+            ->where('numero_compte', $code)
+            ->exists();
+
+        if (! $exists) {
+            throw ValidationException::withMessages([
+                'debit_account' => "Le compte « {$account} » n'existe pas dans le plan comptable de l'entreprise. Sélectionnez un compte dans la liste proposée.",
+            ]);
+        }
+    }
+
+    /**
+     * Détermine automatiquement les comptes débit/crédit selon le type de document
+     * (utilisé uniquement par les flux automatiques sans saisie manuelle, ex: OCR).
      */
     private function resolveAccountsForDocumentType(string $documentType): array
     {
@@ -208,6 +270,8 @@ class AccountingController extends Controller
             'amount' => ['required', 'numeric', 'min:0.01'],
             'attachment' => ['nullable', 'file', 'max:51200'],
             'remove_attachment' => ['nullable', 'boolean'],
+            'debit_account' => ['required', 'string', 'max:255'],
+            'credit_account' => ['required', 'string', 'max:255'],
         ]);
 
         // On normalise les valeurs textuelles pour éviter les espaces parasites.
@@ -217,9 +281,8 @@ class AccountingController extends Controller
             }
         }
 
-        $accounts = $this->resolveAccountsForDocumentType($validated['document_type']);
-        $validated['debit_account'] = $accounts['debit'];
-        $validated['credit_account'] = $accounts['credit'];
+        $this->assertAccountBelongsToWorkspacePlan($validated['debit_account']);
+        $this->assertAccountBelongsToWorkspacePlan($validated['credit_account']);
 
         $removeAttachment = (bool) $request->boolean('remove_attachment');
         $attachmentReplaced = false;
