@@ -374,6 +374,59 @@
             .no-print { display: none !important; }
             .sidebar, .navbar, .footer { display: none !important; }
         }
+
+        /* BOUTONS FLOTTANTS DE NAVIGATION — retour arrière + retour en haut de page
+           Empilés au-dessus de la bulle de chat (right:22px, bottom:22px, 58px) pour ne jamais la recouvrir. */
+        .page-nav-fabs {
+            position: fixed;
+            right: 22px;
+            bottom: 92px;
+            z-index: 1040;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .page-nav-fab {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0F2747;
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .18);
+            cursor: pointer;
+            transition: opacity .2s ease, transform .2s ease, background .15s ease;
+        }
+        .page-nav-fab:hover,
+        .page-nav-fab:focus {
+            background: #163a63;
+            color: #fff;
+        }
+        .page-nav-fab svg {
+            width: 20px;
+            height: 20px;
+        }
+        #scrollTopFab {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px);
+        }
+        #scrollTopFab.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        @media (max-width: 991.98px) {
+            body.has-bottom-nav .page-nav-fabs {
+                bottom: 154px;
+            }
+        }
+        @media print {
+            .page-nav-fabs { display: none !important; }
+        }
     </style>
 </head>
 @php
@@ -526,8 +579,21 @@
                                     $topbarShowExpiry = true;
                                 }
                             @endphp
+                            @php
+                                $topbarUserName = Auth::user()?->name ?? 'Utilisateur';
+                                $topbarInitials = collect(explode(' ', trim($topbarUserName)))
+                                    ->filter()
+                                    ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))
+                                    ->take(2)
+                                    ->implode('');
+                            @endphp
                             <a class="nav-link dropdown-toggle d-inline-block" href="#" data-bs-toggle="dropdown">
-                                <img src="{{ (Auth::user()?->avatar) ? asset('storage/' . Auth::user()->avatar) : asset('images/sitiam.png') }}" class="avatar img-fluid rounded me-1" alt="{{ Auth::user()?->name ?? 'Utilisateur' }}" /> <span class="text-dark d-none d-sm-inline-block">{{ explode(' ', Auth::user()?->name ?? 'Utilisateur')[0] }}</span>
+                                @if(Auth::user()?->avatar)
+                                    <img src="{{ asset('storage/' . Auth::user()->avatar) }}" class="avatar img-fluid rounded me-1" alt="{{ $topbarUserName }}" style="object-fit: cover;" />
+                                @else
+                                    <span class="avatar rounded-circle d-inline-flex align-items-center justify-content-center me-1 fw-bold" style="background: #0F2747; color: #F2D89B; font-size: 0.8rem;">{{ $topbarInitials ?: '?' }}</span>
+                                @endif
+                                <span class="text-dark d-none d-sm-inline-block">{{ explode(' ', $topbarUserName)[0] }}</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <div class="dropdown-item-text small text-muted">
@@ -715,6 +781,48 @@
     @endauth
 
     @include('partials.webcam-modal')
+
+    <div class="page-nav-fabs no-print">
+        <button type="button" id="goBackFab" class="page-nav-fab" title="Page précédente" aria-label="Revenir à la page précédente">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button type="button" id="scrollTopFab" class="page-nav-fab" title="Retour en haut" aria-label="Revenir en haut de la page">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+        </button>
+    </div>
+    <script>
+        (function () {
+            var goBackBtn = document.getElementById('goBackFab');
+            var scrollTopBtn = document.getElementById('scrollTopFab');
+
+            if (goBackBtn) {
+                goBackBtn.addEventListener('click', function () {
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = '{{ route('dashboard') }}';
+                    }
+                });
+            }
+
+            if (scrollTopBtn) {
+                var toggleScrollTopBtn = function () {
+                    if (window.scrollY > 300) {
+                        scrollTopBtn.classList.add('show');
+                    } else {
+                        scrollTopBtn.classList.remove('show');
+                    }
+                };
+                window.addEventListener('scroll', toggleScrollTopBtn, { passive: true });
+                toggleScrollTopBtn();
+
+                scrollTopBtn.addEventListener('click', function () {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+        })();
+    </script>
+
     <script src="{{ asset('js/adminkit-app.js') }}"></script>
     <script src="{{ asset('js/webcam-capture.js') }}" defer></script>
     <script>

@@ -1456,7 +1456,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @forelse($entries as $index => $entry)
+                                            @foreach($entries as $index => $entry)
                                                 <tr class="odd">
                                                     <td data-label="Sélection">
                                                         <input type="checkbox" class="entry-select-checkbox" value="{{ $entry->id }}">
@@ -1568,14 +1568,7 @@
                                                         </div>
                                                     </td>
                                                 </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="9" class="text-center py-5">
-                                                        <i data-feather="inbox" style="width: 48px; height: 48px; opacity: 0.3;" class="d-block mb-2"></i>
-                                                        <span class="text-muted">Aucune écriture comptable enregistrée.</span>
-                                                    </td>
-                                                </tr>
-                                            @endforelse
+                                            @endforeach
                                         </tbody>
                                     </table>
                                 </div>
@@ -1710,6 +1703,19 @@
                 form.submit();
             }
 
+            (function() {
+                var stateKey = 'DataTables_journalTable_' + document.location.pathname;
+                try {
+                    var saved = JSON.parse(localStorage.getItem(stateKey));
+                    var actualColumnCount = document.querySelectorAll('#journalTable thead th').length;
+                    if (saved && Array.isArray(saved.columns) && saved.columns.length !== actualColumnCount) {
+                        localStorage.removeItem(stateKey);
+                    }
+                } catch (e) {
+                    localStorage.removeItem(stateKey);
+                }
+            })();
+
             var table = $('#journalTable').DataTable({
                 dom: 'Brtip',
                 buttons: [
@@ -1734,6 +1740,8 @@
                     info: "Affichage de _START_ à _END_ sur _TOTAL_ entrées",
                     infoEmpty: "Affichage de 0 à 0 sur 0 entrées",
                     infoFiltered: "",
+                    emptyTable: "Aucune écriture comptable enregistrée.",
+                    zeroRecords: "Aucune écriture ne correspond à la recherche.",
                     paginate: {
                         first: "Premier",
                         last: "Dernier",

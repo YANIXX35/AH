@@ -75,6 +75,7 @@ class CompanyFirdController extends Controller
             'bank_account_number' => ['nullable', 'array', 'max:8'],
             'bank_account_number.*' => ['nullable', 'string', 'max:128'],
             'trade_register' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
+            'company_logo' => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $auditors = [];
@@ -111,6 +112,13 @@ class CompanyFirdController extends Controller
             $validated['trade_register_file'] = $request->file('trade_register')->store('trade-registers', 'public');
         }
         unset($validated['trade_register']);
+
+        if ($request->hasFile('company_logo')) {
+            if ($user->company_logo) {
+                Storage::disk('public')->delete($user->company_logo);
+            }
+            $validated['company_logo'] = $request->file('company_logo')->store('company-logos', 'public');
+        }
 
         $user->update($validated);
 

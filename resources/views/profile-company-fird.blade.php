@@ -134,11 +134,25 @@
 
                     <div class="col-12">
                         <hr class="my-2">
-                        <h6 class="fw-semibold mb-2">Joindre le registre de commerce</h6>
-                        <p class="small text-muted mb-2">Déposez une copie du <strong>RCCM</strong>, d’un <strong>extrait K-bis</strong> ou équivalent (PDF ou image lisible, max. 5 Mo). Facultatif mais recommandé pour la conformité du dossier.</p>
+                        <h6 class="fw-semibold mb-2">Joindre l’attestation DFE / NIF et le registre de commerce</h6>
+                        <p class="small text-muted mb-2">Déposez une copie de l’<strong>attestation DFE / NIF</strong> et du <strong>RCCM</strong> (extrait K-bis ou équivalent), PDF ou image lisible, max. 5 Mo. Facultatif mais recommandé pour la conformité du dossier.</p>
                         @include('partials.camera-upload-hint')
                         <div class="row g-3 align-items-end">
-                            <div class="col-lg-8">
+                            <div class="col-lg-6">
+                                @include('partials.file-input-camera', [
+                                    'name' => 'company_logo',
+                                    'id' => 'fird_company_logo',
+                                    'label' => 'Fichier — attestation DFE / NIF',
+                                    'accept' => '.pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,image/*',
+                                    'capture' => 'environment',
+                                    'help' => 'PDF, Word ou photo (max. 5 Mo). Bouton « Web » : webcam sur ordinateur.',
+                                ])
+                                @if($user->company_logo)
+                                    <p class="small text-muted mb-1">Document déjà enregistré</p>
+                                    <a href="{{ route('company-documents.view', ['user' => $user, 'type' => 'company_logo']) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Voir le fichier joint</a>
+                                @endif
+                            </div>
+                            <div class="col-lg-6">
                                 @include('partials.file-input-camera', [
                                     'name' => 'trade_register',
                                     'id' => 'fird_trade_register',
@@ -147,13 +161,11 @@
                                     'capture' => 'environment',
                                     'help' => 'PDF ou photo (max. 5 Mo). Bouton « Web » : webcam sur ordinateur.',
                                 ])
-                            </div>
-                            @if($user->trade_register_file)
-                                <div class="col-lg-4">
+                                @if($user->trade_register_file)
                                     <p class="small text-muted mb-1">Document déjà enregistré</p>
-                                    <a href="{{ asset('storage/' . $user->trade_register_file) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Voir le fichier joint</a>
-                                </div>
-                            @endif
+                                    <a href="{{ route('company-documents.view', ['user' => $user, 'type' => 'trade_register']) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Voir le fichier joint</a>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>

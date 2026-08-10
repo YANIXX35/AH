@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountantClientController;
+use App\Http\Controllers\AccountantCommercialBalanceController;
 use App\Http\Controllers\AccountantDashboardController;
 use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\AccountingDocumentController;
@@ -116,6 +117,13 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/profile/entreprise/fird', [CompanyFirdController::class, 'edit'])->name('profile.company.fird');
     Route::post('/profile/entreprise/fird', [CompanyFirdController::class, 'update'])->name('profile.company.fird.update');
+
+    Route::get('/company-documents/{user}/{type}/view', [AccountingDocumentViewerController::class, 'showCompanyDocument'])
+        ->whereIn('type', ['company_logo', 'trade_register'])
+        ->name('company-documents.view');
+    Route::get('/company-documents/{user}/{type}/stream', [AccountingDocumentViewerController::class, 'streamCompanyDocument'])
+        ->whereIn('type', ['company_logo', 'trade_register'])
+        ->name('company-documents.stream');
 
     Route::get('/profile/equipe', [EnterpriseTeamController::class, 'index'])->name('profile.team');
     Route::post('/profile/equipe', [EnterpriseTeamController::class, 'store'])->name('profile.team.store');
@@ -363,12 +371,20 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [AccountantDashboardController::class, 'index'])->name('dashboard');
         Route::get('/ai/live', [AccountantDashboardController::class, 'liveInsights'])->name('dashboard.ai.live');
         Route::get('/commercials-tracking', [AccountantDashboardController::class, 'commercialsTracking'])->name('commercials.index');
+        Route::get('/commercials-balance', [AccountantCommercialBalanceController::class, 'index'])->name('commercials-balance.index');
+        Route::get('/commercials-balance/{commercial}', [AccountantCommercialBalanceController::class, 'show'])->name('commercials-balance.show');
+        Route::post('/commercials-balance/{commercial}/payouts', [AccountantCommercialBalanceController::class, 'storePayout'])->name('commercials-balance.payouts.store');
+        Route::get('/commercials-balance/payouts/{payout}/receipt', [AccountantCommercialBalanceController::class, 'downloadReceipt'])->name('commercials-balance.payouts.receipt');
         Route::post('/parse-company-document', [AccountantDashboardController::class, 'parseCompanyDocument'])->name('parseCompanyDocument');
         Route::get('/clients', [AccountantClientController::class, 'index'])->name('clients.index');
         Route::post('/clients', [AccountantClientController::class, 'store'])->name('clients.store');
         Route::get('/clients/{user}', [AccountantClientController::class, 'show'])->name('clients.show');
         Route::put('/clients/{user}', [AccountantClientController::class, 'update'])->name('clients.update');
         Route::delete('/clients/{user}', [AccountantClientController::class, 'destroy'])->name('clients.destroy');
+        Route::get('/documents', [AccountantClientController::class, 'documents'])->name('documents.index');
+        Route::post('/documents/{user}/{type}', [AccountantClientController::class, 'updateDocument'])
+            ->whereIn('type', ['company_logo', 'trade_register'])
+            ->name('documents.update');
         // Déclarer /workspace/clear avant /workspace/{user}, sinon « clear » est capturé comme identifiant client (POST bloqué).
         Route::match(['get', 'post'], '/workspace/clear', [AccountantClientController::class, 'clearWorkspace'])->name('workspace.clear');
         Route::post('/workspace/{user}', [AccountantClientController::class, 'selectWorkspace'])->name('workspace.select');
@@ -575,6 +591,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('commercial')->prefix('commercial')->name('commercial.')->group(function () {
         Route::get('/dashboard', [CommercialController::class, 'index'])->name('dashboard');
         Route::get('/portefeuille', [CommercialController::class, 'portefeuille'])->name('portefeuille');
+        Route::get('/solde', [CommercialController::class, 'balance'])->name('balance');
         Route::get('/offres', [CommercialController::class, 'showcase'])->name('showcase');
         Route::post('/offres/feedback', [CommercialController::class, 'storeFeedback'])->name('feedback.store');
         Route::get('/guides', [CommercialController::class, 'guides'])->name('guides');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\UsesClientWorkspace;
 use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -40,6 +41,30 @@ class AccountingDocumentViewerController extends Controller
         $this->authorizeDocument($document);
 
         return $this->streamStoredDocument($document->stored_path, $document->original_name);
+    }
+
+    public function showCompanyDocument(User $user, string $type): View
+    {
+        $this->authorizeCompanyDocument($user);
+
+        [$storedPath, $documentName, $label] = $this->resolveCompanyDocument($user, $type);
+
+        return view('accounting.document-viewer', $this->buildViewerPayload(
+            storedPath: $storedPath,
+            documentName: $documentName,
+            documentTypeLabel: $label,
+            previewUrl: route('company-documents.stream', ['user' => $user, 'type' => $type]),
+            backUrl: url()->previous() ?: route('profile'),
+        ));
+    }
+
+    public function streamCompanyDocument(User $user, string $type)
+    {
+        $this->authorizeCompanyDocument($user);
+
+        [$storedPath, $documentName] = $this->resolveCompanyDocument($user, $type);
+
+        return $this->streamStoredDocument($storedPath, $documentName);
     }
 
     private function buildEntryViewerData(AccountingEntry $entry): array
@@ -183,5 +208,28 @@ class AccountingDocumentViewerController extends Controller
         if (! $this->workspaceOwnsDataUserId((int) $document->user_id)) {
             abort(403);
         }
+    }
+
+    private function resolveCompanyDocument(User $user, string $type): array
+    {
+        $column = $type === 'trade_register' ? 'trade_register_file' : 'company_logo';
+        $label = $type === 'trade_register' ? 'Registre de commerce' : 'Attestation DFE / NIF';
+        $storedPath = (string) $user->{$column};
+
+        abort_if($storedPath === '', 404);
+
+        return [$storedPath, basename($storedPath), $label];
+    }
+
+    private function authorizeCompanyDocument(User $user): void
+    {
+        $authUser = auth()->user();
+        abort_unless($authUser, 403);
+
+        if ($authUser->is_platform_admin || $authUser->id === $user->id) {
+            return;
+        }
+
+        abort_unless(($authUser->is_accountant ?? false) && $user->created_by_user_id === $authUser->id, 403);
     }
 }

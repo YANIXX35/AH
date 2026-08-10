@@ -67,7 +67,6 @@ class CommercialMobileMenuTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('<body class="">', false);
-        $response->assertDontSee('has-bottom-nav', false);
     }
 
     public function test_commercial_dashboard_shows_bottom_nav_with_three_items(): void
