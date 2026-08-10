@@ -7,6 +7,7 @@ use App\Models\BillingPlan;
 use App\Models\BillingSubscription;
 use App\Models\EnterpriseLicense;
 use App\Models\KycDocument;
+use App\Models\PlanComptableAccount;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -114,6 +115,8 @@ class RegisterController extends Controller
                 'kyc_status' => 'submitted',
                 'kyc_submitted_at' => now(),
             ]);
+
+            PlanComptableAccount::seedDefaultsFor($created->id);
 
             // Chaque nouvel inscrit dispose de sa propre donnée d'abonnement.
             $freePlan = BillingPlan::query()->where('slug', 'free-trial')->first();

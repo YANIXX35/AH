@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CommercialDocument;
 use App\Models\CommercialFeedback;
+use App\Models\PlanComptableAccount;
 use App\Models\Prospect;
 use App\Models\User;
 use App\Services\CommercialCommissionService;
@@ -564,6 +565,8 @@ class CommercialController extends Controller
                 'kyc_status' => 'submitted',
                 'kyc_submitted_at' => now(),
             ]);
+
+            PlanComptableAccount::seedDefaultsFor($user->id);
 
             // Activer 30 jours (1 mois) d'essai premium gratuit
             $this->userPremium->activateForDays(

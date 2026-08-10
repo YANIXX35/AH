@@ -239,6 +239,15 @@
                                 @forelse($plan as $key => $account)
                                     @php
                                         $class = $account['classe'] ?? $account['prefix'] ?? $key;
+                                        $categoryLabels = [
+                                            'balance' => 'Bilan',
+                                            'resultat' => 'Résultat',
+                                            'hors_bilan' => 'Hors bilan',
+                                            'analytique' => 'Analytique',
+                                            'other' => 'Autre',
+                                        ];
+                                        $categoryValue = $account['category'] ?? (in_array($class, ['6', '7']) ? 'resultat' : 'balance');
+                                        $categoryLabel = $categoryLabels[$categoryValue] ?? $categoryValue;
                                     @endphp
                                     <tr class="table-{{ $class === '1' ? 'primary' : ($class === '2' ? 'success' : ($class === '3' ? 'info' : ($class === '4' ? 'warning' : ($class === '5' ? 'secondary' : ($class === '6' ? 'danger' : 'light'))))) }} bg-opacity-10">
                                         <td class="text-center fw-bold">{{ $class }}</td>
@@ -262,9 +271,9 @@
                                         @endif
                                         <td class="text-center">
                                             <input type="text" class="form-control form-control-sm text-center"
-                                                value="{{ $account['category'] ?? (in_array($class, ['6', '7']) ? 'Résultat' : 'Bilan') }}"
+                                                value="{{ $categoryLabel }}"
                                                 readonly>
-                                            <input type="hidden" name="plan[{{ $key }}][category]" value="{{ $account['category'] ?? (in_array($class, ['6', '7']) ? 'resultat' : 'balance') }}">
+                                            <input type="hidden" name="plan[{{ $key }}][category]" value="{{ $categoryValue }}">
                                         </td>
                                         <td class="text-center">
                                             @if(in_array($class, ['6', '7'], true))

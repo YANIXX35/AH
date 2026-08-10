@@ -985,9 +985,9 @@ class AccountingController extends Controller
 
     public function resetPlanComptable()
     {
-        PlanComptableAccount::where('user_id', $this->workspaceUserId())->delete();
+        PlanComptableAccount::seedDefaultsFor($this->workspaceUserId());
 
-        return redirect()->route('accounting.plan')->with('status', 'Plan comptable réinitialisé au plan par défaut.');
+        return redirect()->route('accounting.plan')->with('status', 'Plan comptable réinitialisé au plan SYSCOHADA par défaut.');
     }
 
     public function downloadPlanComptableTemplate()
@@ -1120,7 +1120,7 @@ class AccountingController extends Controller
                     if (count($cols) >= 2) {
                         $c0 = trim((string) $cols[0]);
                         $c1 = trim((string) $cols[1]);
-                        if (preg_match('/^[1-7][0-9]{0,8}$/', $c0) && mb_strlen($c1) >= 2) {
+                        if (preg_match('/^[1-9][0-9]{0,8}$/', $c0) && mb_strlen($c1) >= 2) {
                             $keys = array_keys($rowData);
                             $codeCol = $keys[0];
                             $labelCol = $keys[1];
@@ -1142,7 +1142,7 @@ class AccountingController extends Controller
                         continue;
                     }
 
-                    if (preg_match('/^([1-7][0-9]{0,8})$/', $code, $m)) {
+                    if (preg_match('/^([1-9][0-9]{0,8})$/', $code, $m)) {
                         $cleanCode = $m[1];
                         $prefix = substr($cleanCode, 0, 1);
                         $accounts[$cleanCode] = [
@@ -1176,7 +1176,7 @@ class AccountingController extends Controller
                     if (count($data) >= 2) {
                         $c0 = trim((string) ($data[0] ?? ''));
                         $c1 = trim((string) ($data[1] ?? ''));
-                        if (preg_match('/^([1-7][0-9]{0,8})$/', $c0) && mb_strlen($c1) >= 2) {
+                        if (preg_match('/^([1-9][0-9]{0,8})$/', $c0) && mb_strlen($c1) >= 2) {
                             $prefix = substr($c0, 0, 1);
                             $accounts[$c0] = [
                                 'numero_compte' => $c0,
@@ -1268,7 +1268,7 @@ class AccountingController extends Controller
                 continue;
             }
 
-            if (preg_match('/^([1-7][0-9]{0,8})\s*[\s\-\:\;\,\t]\s*(.{2,})$/u', $line, $matches)) {
+            if (preg_match('/^([1-9][0-9]{0,8})\s*[\s\-\:\;\,\t]\s*(.{2,})$/u', $line, $matches)) {
                 $code = $matches[1];
                 $label = trim($matches[2]);
                 $label = preg_replace('/\s{2,}/u', ' ', $label) ?? $label;
@@ -1288,7 +1288,7 @@ class AccountingController extends Controller
                 continue;
             }
 
-            if (preg_match('/^([1-7])\s*[\s\-\:\;\,\t]\s*(.{2,})$/u', $line, $matches)) {
+            if (preg_match('/^([1-9])\s*[\s\-\:\;\,\t]\s*(.{2,})$/u', $line, $matches)) {
                 $prefix = $matches[1];
                 $label = trim($matches[2]);
                 $code = $prefix.'00000';
@@ -1492,8 +1492,9 @@ class AccountingController extends Controller
     {
         return match ($prefix) {
             '1', '2', '3', '4', '5' => 'balance',
-            '6' => 'resultat',
-            '7' => 'resultat',
+            '6', '7' => 'resultat',
+            '8' => 'hors_bilan',
+            '9' => 'analytique',
             default => 'other',
         };
     }

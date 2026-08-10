@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\FinancialRatioServiceContract;
+use App\Models\PlanComptableAccount;
 use App\Models\User;
 use App\Services\UserPremiumService;
 use App\Support\ClientWorkspace;
@@ -107,6 +108,8 @@ class AccountantClientController extends Controller
                 'kyc_status' => 'submitted',
                 'kyc_submitted_at' => now(),
             ]);
+
+            PlanComptableAccount::seedDefaultsFor($user->id);
 
             $this->userPremium->activateForDays(
                 $user,
