@@ -90,6 +90,11 @@
                         <i class="align-middle" data-feather="dollar-sign"></i> <span class="align-middle">Mon Solde</span>
                     </a>
                 </li>
+                <li class="sidebar-item {{ request()->routeIs('commercial.prospections.*') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial.prospections.index') }}">
+                        <i class="align-middle" data-feather="bar-chart-2"></i> <span class="align-middle">Prospection</span>
+                    </a>
+                </li>
 
                 <li class="sidebar-header">AUTRES SERVICES</li>
                 <li class="sidebar-item {{ request()->routeIs('commercial.showcase') ? 'active' : '' }}">
