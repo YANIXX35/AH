@@ -212,8 +212,15 @@ class AccountingController extends Controller
             $query->orderByRaw("case when numero_compte like ? then 0 else 1 end", ["{$search}%"]);
         }
 
+        // Quand une classe est sélectionnée (ex. "Cl. 6"), l'utilisateur veut
+        // parcourir TOUTE la classe, pas une frappe partielle à affiner : la
+        // classe la plus fournie du plan SYSCOHADA (classe 2) compte 309
+        // comptes, donc une limite à 100 la tronquait silencieusement (ex.
+        // classe 6 arrêtée à ~628.. alors qu'elle va jusqu'à 6288000/659..).
+        $limit = $classe !== '' ? 350 : 100;
+
         $accounts = $query->orderBy('numero_compte')
-            ->limit(100)
+            ->limit($limit)
             ->get(['numero_compte', 'libelle_compte', 'classe'])
             ->map(fn (PlanComptableAccount $a) => [
                 'numero_compte' => $a->numero_compte,
