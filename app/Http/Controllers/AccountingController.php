@@ -182,6 +182,10 @@ class AccountingController extends Controller
      * de base plan_comptable_defaults) pour l'autocomplétion de saisie d'écriture.
      * Utilisé par la saisie manuelle : appelé à chaque frappe côté client, donc
      * on limite le nombre de résultats plutôt que de charger les 1455 comptes.
+     * La limite doit rester assez large : un préfixe de classe à 2 chiffres
+     * (ex. "60", "70") peut correspondre à plus de 50 comptes divisionnaires
+     * du plan SYSCOHADA — une limite trop basse masquait silencieusement les
+     * derniers comptes (ex. 6478000, 648) sans que rien ne signale la troncature.
      */
     public function searchAccounts(Request $request)
     {
@@ -202,7 +206,7 @@ class AccountingController extends Controller
         }
 
         $accounts = $query->orderBy('numero_compte')
-            ->limit(20)
+            ->limit(100)
             ->get(['numero_compte', 'libelle_compte', 'classe'])
             ->map(fn (PlanComptableAccount $a) => [
                 'numero_compte' => $a->numero_compte,
