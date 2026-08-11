@@ -1065,6 +1065,17 @@ class AccountingController extends Controller
     {
         $accounts = PlanComptableDefault::orderBy('classe')->orderBy('numero_compte')->get();
 
+        app(\App\Services\AdminAuditTrailService::class)->log(
+            'plan_comptable.template_downloaded',
+            \App\Models\User::class,
+            Auth::id(),
+            Auth::id(),
+            null,
+            ['accounts_count' => $accounts->count()],
+            ['route' => 'accounting.plan-comptable.download-template-syscohada'],
+            request()
+        );
+
         $callback = function () use ($accounts) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF"); // BOM UTF-8 pour Excel

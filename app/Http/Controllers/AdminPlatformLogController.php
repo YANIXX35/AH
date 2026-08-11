@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
+use App\Models\AdminAuditTrail;
 use App\Models\MenuActionLog;
+use App\Models\PaymentTransaction;
+use App\Models\PlanComptableImport;
 use App\Models\TreasuryAuditLog;
 use App\Models\User;
 use Carbon\Carbon;
@@ -197,7 +200,8 @@ class AdminPlatformLogController extends Controller
             'otp_check_user_not_found' => 'Compte introuvable',
             'password_reset_confirmed_mail_sent' => 'E-mail confirmation envoyé',
             'password_reset_confirmed_mail_failed' => 'Échec e-mail confirmation',
-            'password_reset_completed' => 'Mot de passe réinitialisé',
+            'password_reset_completed' => 'Mot de passe réinitialisé (OTP)',
+            'password_reset_link_used' => 'Mot de passe réinitialisé (lien admin)',
         ];
         $authLogs = collect();
         if (Schema::hasTable('auth_event_logs')) {
@@ -235,11 +239,98 @@ class AdminPlatformLogController extends Controller
                 });
         }
 
+        $adminActionLabels = [
+            'user.password_reset' => 'Mot de passe réinitialisé (admin)',
+            'user.password_reset_link_generated' => 'Lien de réinitialisation généré',
+            'plan_comptable_defaults.replaced' => 'Plan comptable de référence remplacé',
+            'plan_comptable_defaults.applied_to_existing' => 'Plan comptable appliqué aux comptes existants',
+            'rbac.role.update' => 'Rôle / permissions modifiés',
+        ];
+        $adminLogs = AdminAuditTrail::query()
+            ->with('actor:id,name,email')
+            ->latest('created_at')
+            ->limit(500)
+            ->get()
+            ->map(function (AdminAuditTrail $row) use ($adminActionLabels) {
+                $target = $row->target_type === User::class && $row->target_id
+                    ? User::find($row->target_id)
+                    : null;
+
+                $detailParts = [];
+                if ($target !== null) {
+                    $detailParts[] = 'Concerne : '.$target->name.' ('.$target->email.')';
+                } elseif (! empty($row->after_data['email'])) {
+                    $detailParts[] = 'Concerne : '.$row->after_data['email'];
+                }
+                if (! empty($row->meta['affected_companies'])) {
+                    $detailParts[] = $row->meta['affected_companies'].' entreprise(s) affectée(s)';
+                }
+                if (! empty($row->after_data['total_accounts'])) {
+                    $detailParts[] = $row->after_data['total_accounts'].' comptes';
+                }
+                if (! empty($row->meta['original_filename'])) {
+                    $detailParts[] = 'Fichier : '.$row->meta['original_filename'];
+                }
+
+                return [
+                    'module' => 'admin',
+                    'created_at' => $row->created_at,
+                    'actor_id' => (int) $row->actor_user_id,
+                    'actor_name' => $row->actor?->name ?? '—',
+                    'actor_email' => $row->actor?->email,
+                    'action' => $adminActionLabels[$row->action] ?? $row->action,
+                    'detail' => $detailParts !== [] ? implode(' · ', $detailParts) : '—',
+                    'ip' => $row->ip_address,
+                ];
+            });
+
+        $planImportLogs = PlanComptableImport::query()
+            ->with('user:id,name,email')
+            ->latest('created_at')
+            ->limit(500)
+            ->get()
+            ->map(function (PlanComptableImport $row) {
+                return [
+                    'module' => 'accounting',
+                    'created_at' => $row->created_at,
+                    'actor_id' => (int) $row->user_id,
+                    'actor_name' => $row->user?->name ?? '—',
+                    'actor_email' => $row->user?->email,
+                    'action' => 'Import plan comptable',
+                    'detail' => ($row->original_filename ?? 'Fichier').' · statut '.$row->status
+                        .' · '.$row->valid_rows.' compte(s) valide(s), '.$row->invalid_rows.' invalide(s)',
+                    'ip' => null,
+                ];
+            });
+
+        $paymentLogs = PaymentTransaction::query()
+            ->with('user:id,name,email')
+            ->latest('created_at')
+            ->limit(500)
+            ->get()
+            ->map(function (PaymentTransaction $row) {
+                return [
+                    'module' => 'payments',
+                    'created_at' => $row->created_at,
+                    'actor_id' => (int) $row->user_id,
+                    'actor_name' => $row->user?->name ?? '—',
+                    'actor_email' => $row->user?->email,
+                    'action' => 'Paiement '.strtolower((string) $row->status),
+                    'detail' => number_format((float) $row->amount, 0, ',', ' ').' '.$row->currency
+                        .' · '.($row->provider ?? '—').' · Réf: '.($row->provider_reference ?? '—')
+                        .($row->failure_reason ? ' · '.$row->failure_reason : ''),
+                    'ip' => null,
+                ];
+            });
+
         return $menuLogs
             ->concat($treasuryLogs)
             ->concat($entryLogs)
             ->concat($documentLogs)
             ->concat($authLogs)
+            ->concat($adminLogs)
+            ->concat($planImportLogs)
+            ->concat($paymentLogs)
             ->sortByDesc(fn ($row) => $row['created_at']?->getTimestamp() ?? 0)
             ->values();
     }

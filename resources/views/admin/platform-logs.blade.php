@@ -26,6 +26,8 @@
                     <option value="treasury" @selected(($filters['module'] ?? '') === 'treasury')>Trésorerie</option>
                     <option value="accounting" @selected(($filters['module'] ?? '') === 'accounting')>Comptabilité</option>
                     <option value="auth" @selected(($filters['module'] ?? '') === 'auth')>Authentification</option>
+                    <option value="admin" @selected(($filters['module'] ?? '') === 'admin')>Administration</option>
+                    <option value="payments" @selected(($filters['module'] ?? '') === 'payments')>Paiements</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -95,7 +97,9 @@
                             <span class="badge {{
                                 ($log['module'] ?? '') === 'menu' ? 'bg-info text-dark' :
                                 (($log['module'] ?? '') === 'treasury' ? 'bg-success' :
-                                (($log['module'] ?? '') === 'auth' ? 'bg-primary' : 'bg-warning text-dark'))
+                                (($log['module'] ?? '') === 'auth' ? 'bg-primary' :
+                                (($log['module'] ?? '') === 'admin' ? 'bg-dark' :
+                                (($log['module'] ?? '') === 'payments' ? 'bg-danger' : 'bg-warning text-dark'))))
                             }}">
                                 {{ $log['module'] ?? '—' }}
                             </span>
