@@ -92,6 +92,7 @@ class AccountingController extends Controller
                 'dateTo' => $dateTo,
                 'prefillDocument' => $prefillDocument,
                 'prefillData' => $prefillDocument ? $this->buildEntryPrefillData($prefillDocument) : null,
+                'documentTypeAccountDefaults' => $this->documentTypeAccountMap(),
             ],
             $summary
         ));
@@ -237,16 +238,27 @@ class AccountingController extends Controller
      * Détermine automatiquement les comptes débit/crédit selon le type de document
      * (utilisé uniquement par les flux automatiques sans saisie manuelle, ex: OCR).
      */
+    /**
+     * Comptes débit/crédit par défaut associés à chaque type de document, au
+     * référentiel SYSCOHADA actuellement en place (post-remplacement du plan
+     * comptable). Utilisé à la fois pour les flux automatiques (OCR) et pour
+     * pré-remplir la saisie manuelle dès que l'utilisateur choisit un type,
+     * afin d'éviter d'avoir à rechercher le compte à la main à chaque fois.
+     */
+    private function documentTypeAccountMap(): array
+    {
+        return [
+            'Achat' => ['debit' => '601 Achats de marchandises', 'credit' => '401 Fournisseurs, dettes en compte'],
+            'Vente' => ['debit' => '411 Clients', 'credit' => '701 Ventes de marchandises'],
+            'Reçu' => ['debit' => '521 Banques locales', 'credit' => '411 Clients'],
+            'Justificatif' => ['debit' => '631 Frais bancaires', 'credit' => '521 Banques locales'],
+        ];
+    }
+
     private function resolveAccountsForDocumentType(string $documentType): array
     {
-        $map = [
-            'Achat' => ['debit' => '607 Achats de marchandises', 'credit' => '401 Fournisseurs'],
-            'Vente' => ['debit' => '411 Clients', 'credit' => '701 Ventes de marchandises'],
-            'Reçu' => ['debit' => '512 Banque', 'credit' => '411 Clients'],
-            'Justificatif' => ['debit' => '627 Services bancaires', 'credit' => '512 Banque'],
-        ];
-
-        return $map[$documentType] ?? ['debit' => '471 Compte transitoire', 'credit' => "472 Compte d'attente"];
+        return $this->documentTypeAccountMap()[$documentType]
+            ?? ['debit' => '471 Débiteurs et créditeurs divers', 'credit' => '472 Créances et dettes sur titres de placement'];
     }
 
     public function editEntry(AccountingEntry $entry)

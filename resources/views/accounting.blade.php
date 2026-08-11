@@ -1329,6 +1329,47 @@
             });
         })();
 
+        // Auto-sélection des comptes débit/crédit selon le type de document choisi
+        // en étape 1, pour éviter d'avoir à rechercher les comptes à la main à
+        // chaque écriture. L'utilisateur reste libre de corriger ensuite via la
+        // recherche existante (taper dans le champ écrase la valeur proposée).
+        (function setupDocumentTypeAccountDefaults() {
+            const documentTypeSelect = document.getElementById('documentType');
+            const accountDefaults = @json($documentTypeAccountDefaults ?? []);
+            if (!documentTypeSelect || !accountDefaults) {
+                return;
+            }
+
+            function applyDefaults(force) {
+                const defaults = accountDefaults[documentTypeSelect.value];
+                if (!defaults) {
+                    return;
+                }
+
+                ['debit', 'credit'].forEach(function (side) {
+                    const hiddenInput = document.getElementById(side + 'AccountValue');
+                    const searchInput = document.querySelector('[data-account-search="' + side + '"]');
+                    if (!hiddenInput || !searchInput) {
+                        return;
+                    }
+                    if (!force && hiddenInput.value) {
+                        return;
+                    }
+                    hiddenInput.value = defaults[side];
+                    searchInput.value = defaults[side];
+                });
+            }
+
+            documentTypeSelect.addEventListener('change', function () {
+                applyDefaults(true);
+            });
+
+            // Au chargement (ex. type déjà pré-rempli depuis un document OCR), on
+            // ne complète que les comptes encore vides pour ne jamais écraser une
+            // valeur déjà choisie (ancienne saisie après erreur de validation...).
+            applyDefaults(false);
+        })();
+
         // Mode ultra ergonomique: une seule section du formulaire ouverte à la fois.
         (function setupAccountingAccordion() {
             const sections = Array.from(document.querySelectorAll('#moteur-ecritures details.js-accounting-section'));
