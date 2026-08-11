@@ -24,6 +24,21 @@ class AdminPasswordResetLinkTest extends TestCase
         $this->assertDatabaseCount('admin_password_reset_links', 1);
     }
 
+    public function test_the_admin_generated_link_expires_after_five_minutes(): void
+    {
+        $admin = User::factory()->create(['is_platform_admin' => true]);
+        $target = User::factory()->create();
+
+        $this->actingAs($admin)->postJson(route('admin.users.password-reset-link', $target));
+
+        $link = AdminPasswordResetLink::where('user_id', $target->id)->firstOrFail();
+        $this->assertEqualsWithDelta(
+            now()->addMinutes(5)->timestamp,
+            $link->expires_at->timestamp,
+            5
+        );
+    }
+
     public function test_an_admin_can_generate_a_reset_link_via_ajax_and_gets_json_back(): void
     {
         $admin = User::factory()->create(['is_platform_admin' => true]);

@@ -998,7 +998,7 @@ class AdminController extends Controller
      */
     public function generatePasswordResetLink(Request $request, User $user): RedirectResponse|JsonResponse
     {
-        $token = AdminPasswordResetLink::generateFor($user, $request->user()?->id, 60);
+        $token = AdminPasswordResetLink::generateFor($user, $request->user()?->id, 5);
         $url = route('password.reset-link.show', ['token' => $token]);
 
         $this->auditTrail->log(
@@ -1007,7 +1007,7 @@ class AdminController extends Controller
             $user->id,
             $request->user()?->id,
             [],
-            ['email' => $user->email, 'expires_in_minutes' => 60],
+            ['email' => $user->email, 'expires_in_minutes' => 5],
             ['route' => 'admin.users.password-reset-link'],
             $request
         );

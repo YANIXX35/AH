@@ -200,7 +200,7 @@
 
 @if(session('passwordResetLink'))
     <div class="alert alert-info py-2 mb-3 small">
-        <div class="fw-semibold mb-1">🔗 Lien de réinitialisation généré (valable 1 heure, usage unique) :</div>
+        <div class="fw-semibold mb-1">🔗 Lien de réinitialisation généré (valable 5 minutes, usage unique) :</div>
         <div class="d-flex gap-2 align-items-center flex-wrap">
             <code id="generatedResetLink" class="flex-grow-1 text-break">{{ session('passwordResetLink') }}</code>
             <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0.5" style="font-size:11px;"
