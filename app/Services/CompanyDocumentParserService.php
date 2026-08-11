@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Smalot\PdfParser\Parser as PdfParser;
 use Throwable;
 use ZipArchive;
 
@@ -63,6 +64,20 @@ class CompanyDocumentParserService
                 if (($index = $zip->locateName('word/document.xml')) !== false) {
                     $data = $zip->getFromIndex($index);
                     $zip->close();
+
+                    // Dans un tableau Word, "Nom" et "Jean Kouassi" sont deux cellules
+                    // (<w:tc>) séparées, sans texte entre elles : sans traitement dédié,
+                    // elles ressortiraient collées ou sur des lignes séparées, cassant
+                    // la détection "Libellé : Valeur". On les regroupe sur une seule
+                    // ligne, séparées par une tabulation, une ligne par rangée (<w:tr>).
+                    $data = preg_replace_callback('/<w:tbl\b.*?<\/w:tbl>/s', function ($m) {
+                        $table = preg_replace('/<\/w:tc>/', "\t", $m[0]);
+                        $table = preg_replace('/<\/w:tr>/', "\n", $table);
+
+                        return preg_replace('/<w:p[^>]*>/', '', $table);
+                    }, $data);
+
+                    // Paragraphes hors tableau : un saut de ligne par paragraphe.
                     $data = preg_replace('/<w:p[^>]*>/', "\n", $data);
 
                     return trim(strip_tags($data));
@@ -77,6 +92,17 @@ class CompanyDocumentParserService
 
     private function extractTextFromPdf(string $filePath): string
     {
+        try {
+            $pdf = (new PdfParser)->parseFile($filePath);
+            $text = trim($pdf->getText());
+            if ($text !== '') {
+                return $text;
+            }
+        } catch (Throwable $e) {
+            // PDF chiffré, corrompu ou non standard : on retente le fallback ci-dessous.
+        }
+
+        // Fallback pour les rares PDF non compressés que smalot/pdfparser ne lirait pas.
         $content = @file_get_contents($filePath) ?: '';
         preg_match_all('/(BT[\s\S]*?ET)/', $content, $matches);
         if (! empty($matches[0])) {
@@ -85,7 +111,7 @@ class CompanyDocumentParserService
             return preg_replace('/[^\w\s@.+:-]/u', ' ', strip_tags($rawText));
         }
 
-        return preg_replace('/[^\w\s@.+:-]/u', ' ', $content);
+        return '';
     }
 
     /**
@@ -117,15 +143,7 @@ class CompanyDocumentParserService
             $fields['email'] = strtolower(trim($match[0]));
         }
 
-        // 2. Phone extraction
-        if (preg_match('/(?:\+?\d{1,3}[\s.-]*)?(?:\d{2}[\s.-]*){4,5}/', $text, $match)) {
-            $phone = trim($match[0]);
-            if (strlen(preg_replace('/\D/', '', $phone)) >= 8) {
-                $fields['phone'] = $phone;
-            }
-        }
-
-        // 3. Line-by-line label mapping
+        // 2. Line-by-line label mapping
         foreach ($lines as $line) {
             if (empty($line)) {
                 continue;
@@ -134,6 +152,14 @@ class CompanyDocumentParserService
             $parts = preg_split('/[:;\t=]/', $line, 2);
             $label = strtolower(trim($parts[0] ?? ''));
             $val = trim($parts[1] ?? '');
+
+            // Téléphone (priorité à une ligne explicitement libellée, pour éviter
+            // de confondre un NIF/RCCM avec un numéro de téléphone).
+            if (is_null($fields['phone']) && (str_contains($label, 'telephone') || str_contains($label, 'téléphone') || str_contains($label, 'tel') || str_contains($label, 'gsm') || str_contains($label, 'mobile') || str_contains($label, 'contact'))) {
+                if (! empty($val) && strlen(preg_replace('/\D/', '', $val)) >= 8) {
+                    $fields['phone'] = $val;
+                }
+            }
 
             // Name (Dirigeant)
             if (is_null($fields['name']) && (str_contains($label, 'dirigeant') || str_contains($label, 'gerant') || str_contains($label, 'gérant') || str_contains($label, 'representant') || str_contains($label, 'nom complet') || $label === 'nom')) {
@@ -185,10 +211,19 @@ class CompanyDocumentParserService
             }
 
             // Address
-            if (is_null($fields['address']) && (str_contains($label, 'adresse') || str_contains($label, 'siege') || str_contains($label, 'siège') || str_contains($label, 'localisation'))) {
+            if (is_null($fields['address']) && (str_contains($label, 'adresse') || str_contains($label, 'siege') || str_contains($label, 'siège') || str_contains($label, 'localisation') || str_contains($label, 'boite postale') || str_contains($label, 'boîte postale') || $label === 'bp')) {
                 if (! empty($val)) {
                     $fields['address'] = $val;
                 }
+            }
+        }
+
+        // Repli : aucune ligne "Téléphone :" trouvée, on cherche un numéro plausible
+        // n'importe où dans le texte (moins fiable, donc en dernier recours seulement).
+        if (is_null($fields['phone']) && preg_match('/(?:\+?\d{1,3}[\s.-]*)?(?:\d{2}[\s.-]*){4,5}/', $text, $match)) {
+            $phone = trim($match[0]);
+            if (strlen(preg_replace('/\D/', '', $phone)) >= 8) {
+                $fields['phone'] = $phone;
             }
         }
 
