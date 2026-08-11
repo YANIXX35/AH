@@ -2640,86 +2640,17 @@ class AccountingController extends Controller
             }
 
             $storedPath = $file->store('accounting-documents', 'public');
-            $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
-            $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
-            $documentType = $this->guessDocumentTypeFromFilename($file->getClientOriginalName());
-            $status = 'ocr_failed';
-            $confidence = 0;
-            $extractedData = [
-                'partner' => null,
-                'invoice_number' => null,
-                'invoice_date' => now()->toDateString(),
-                'amount_ht' => 0,
-                'amount_ttc' => 0,
-                'tva' => 0,
-                'currency' => 'FCFA',
-                'debit_account' => $this->resolveAccountsForDocumentType($documentType)['debit'],
-                'credit_account' => $this->resolveAccountsForDocumentType($documentType)['credit'],
-                'ocr_error' => null,
-            ];
+            $extraction = $this->runOcrExtractionForDocument($file, $storedPath, $ocrService, $ocrPipeline);
+            $pipelineResult = $extraction['pipeline_result'];
+            $documentType = $extraction['document_type'];
+            $status = $extraction['status'];
+            $confidence = $extraction['confidence'];
+            $extractedData = $extraction['extracted_data'];
 
-            if ($ocrResult['success'] ?? false) {
-                $confidence = (float) ($pipelineResult['global_confidence'] ?? $ocrResult['confidence'] ?? 0);
-
-                $formDataForOcr = [
-                    'document_reference' => '',
-                    'date' => now()->toDateString(),
-                    'amount' => 0,
-                    'amount_ht' => 0,
-                    'amount_tva' => 0,
-                    'ttc_amount' => 0,
-                    'tva_rate' => 0,
-                    'partner_name' => '',
-                ];
-
-                $verifyResult = $ocrService->verifyCompleteDocument($ocrResult['text'], $formDataForOcr);
-                $extracted = $verifyResult['extracted'] ?? [];
-                $richExtracted = (array) ($pipelineResult['rich_data'] ?? []);
-                if (empty($richExtracted)) {
-                    $richExtracted = $ocrService->extractRichDocumentData($ocrResult['text']);
-                }
-                $documentType = $this->detectDocumentTypeFromOcrText($ocrResult['text'], $documentType);
-                $accounts = $this->resolveAccountsForDocumentType($documentType);
-                $normalizedExtracted = $this->buildValidationExtractedData($ocrResult['text'], $extracted, $richExtracted, $documentType);
-
-                $extractedData = [
-                    'partner' => $normalizedExtracted['partner'],
-                    'invoice_number' => $normalizedExtracted['invoice_number'],
-                    'invoice_date' => $normalizedExtracted['invoice_date'],
-                    'amount_ht' => $normalizedExtracted['amount_ht'],
-                    'amount_ttc' => $normalizedExtracted['amount_ttc'],
-                    'tva' => $normalizedExtracted['tva'],
-                    'currency' => $normalizedExtracted['currency'],
-                    'debit_account' => $accounts['debit'],
-                    'credit_account' => $accounts['credit'],
-                    'ocr_text' => $ocrResult['text'],
-                    'ocr_detected_fields' => $richExtracted,
-                    'ocr_field_confidence' => (array) ($pipelineResult['field_confidence'] ?? []),
-                    'ocr_low_confidence_fields' => (array) ($pipelineResult['low_confidence_fields'] ?? []),
-                    'ocr_review_required' => (bool) ($pipelineResult['review_required'] ?? false),
-                    'ocr_missing_required_fields' => (array) ($pipelineResult['missing_required_fields'] ?? []),
-                    'ocr_error' => null,
-                ];
-
-                // Filtre de qualité (PRD 4.1, D1/D2) : blocage basé uniquement sur la
-                // présence des champs obligatoires (numéro de pièce, dates, identification
-                // du tiers) — plus sur le score de confiance OCR, qui reste affiché comme
-                // signal de confiance sans être bloquant à lui seul.
-                $canAutoValidate = ! (bool) ($pipelineResult['review_required'] ?? false)
-                    && (float) ($normalizedExtracted['amount_ttc'] ?? 0) > 0;
-
-                if ($canAutoValidate) {
-                    $status = 'validated';
-                    $extractedData['ocr_auto_validated'] = true;
-                } else {
-                    $status = 'pending_validation';
-                    $extractedData['ocr_auto_validated'] = false;
-                    $extractedData['ocr_auto_validation_reason'] = 'Validation manuelle requise (informations obligatoires manquantes ou montant incomplet).';
-                    $pendingReviewCount++;
-                }
-            } else {
+            if ($status === 'ocr_failed') {
                 $failedCount++;
-                $extractedData['ocr_error'] = $this->formatOcrFailureDetails($ocrResult);
+            } elseif ($status === 'pending_validation') {
+                $pendingReviewCount++;
             }
 
             $document = AccountingDocument::create([
@@ -2769,6 +2700,182 @@ class AccountingController extends Controller
         }
 
         return redirect()->route('accounting.documents')->with('status', implode(' · ', $messageParts).'.');
+    }
+
+    /**
+     * Lance l'extraction OCR d'un fichier déjà stocké et construit le tableau
+     * extracted_data attendu par AccountingDocument. Factorisé depuis
+     * uploadDocuments() pour être réutilisé par l'import ponctuel déclenché
+     * depuis le formulaire de saisie d'écriture (uploadDocumentForEntryPrefill).
+     */
+    private function runOcrExtractionForDocument(UploadedFile $file, string $storedPath, OcrService $ocrService, OcrPipelineService $ocrPipeline): array
+    {
+        $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
+        $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
+        $documentType = $this->guessDocumentTypeFromFilename($file->getClientOriginalName());
+        $status = 'ocr_failed';
+        $confidence = 0;
+        $extractedData = [
+            'partner' => null,
+            'invoice_number' => null,
+            'invoice_date' => now()->toDateString(),
+            'amount_ht' => 0,
+            'amount_ttc' => 0,
+            'tva' => 0,
+            'currency' => 'FCFA',
+            'debit_account' => $this->resolveAccountsForDocumentType($documentType)['debit'],
+            'credit_account' => $this->resolveAccountsForDocumentType($documentType)['credit'],
+            'ocr_error' => null,
+        ];
+
+        if ($ocrResult['success'] ?? false) {
+            $confidence = (float) ($pipelineResult['global_confidence'] ?? $ocrResult['confidence'] ?? 0);
+
+            $formDataForOcr = [
+                'document_reference' => '',
+                'date' => now()->toDateString(),
+                'amount' => 0,
+                'amount_ht' => 0,
+                'amount_tva' => 0,
+                'ttc_amount' => 0,
+                'tva_rate' => 0,
+                'partner_name' => '',
+            ];
+
+            $verifyResult = $ocrService->verifyCompleteDocument($ocrResult['text'], $formDataForOcr);
+            $extracted = $verifyResult['extracted'] ?? [];
+            $richExtracted = (array) ($pipelineResult['rich_data'] ?? []);
+            if (empty($richExtracted)) {
+                $richExtracted = $ocrService->extractRichDocumentData($ocrResult['text']);
+            }
+            $documentType = $this->detectDocumentTypeFromOcrText($ocrResult['text'], $documentType);
+            $accounts = $this->resolveAccountsForDocumentType($documentType);
+            $normalizedExtracted = $this->buildValidationExtractedData($ocrResult['text'], $extracted, $richExtracted, $documentType);
+
+            $extractedData = [
+                'partner' => $normalizedExtracted['partner'],
+                'invoice_number' => $normalizedExtracted['invoice_number'],
+                'invoice_date' => $normalizedExtracted['invoice_date'],
+                'amount_ht' => $normalizedExtracted['amount_ht'],
+                'amount_ttc' => $normalizedExtracted['amount_ttc'],
+                'tva' => $normalizedExtracted['tva'],
+                'currency' => $normalizedExtracted['currency'],
+                'debit_account' => $accounts['debit'],
+                'credit_account' => $accounts['credit'],
+                'ocr_text' => $ocrResult['text'],
+                'ocr_detected_fields' => $richExtracted,
+                'ocr_field_confidence' => (array) ($pipelineResult['field_confidence'] ?? []),
+                'ocr_low_confidence_fields' => (array) ($pipelineResult['low_confidence_fields'] ?? []),
+                'ocr_review_required' => (bool) ($pipelineResult['review_required'] ?? false),
+                'ocr_missing_required_fields' => (array) ($pipelineResult['missing_required_fields'] ?? []),
+                'ocr_error' => null,
+            ];
+
+            // Filtre de qualité (PRD 4.1, D1/D2) : blocage basé uniquement sur la
+            // présence des champs obligatoires (numéro de pièce, dates, identification
+            // du tiers) — plus sur le score de confiance OCR, qui reste affiché comme
+            // signal de confiance sans être bloquant à lui seul.
+            $canAutoValidate = ! (bool) ($pipelineResult['review_required'] ?? false)
+                && (float) ($normalizedExtracted['amount_ttc'] ?? 0) > 0;
+
+            if ($canAutoValidate) {
+                $status = 'validated';
+                $extractedData['ocr_auto_validated'] = true;
+            } else {
+                $status = 'pending_validation';
+                $extractedData['ocr_auto_validated'] = false;
+                $extractedData['ocr_auto_validation_reason'] = 'Validation manuelle requise (informations obligatoires manquantes ou montant incomplet).';
+            }
+        } else {
+            $extractedData['ocr_error'] = $this->formatOcrFailureDetails($ocrResult);
+        }
+
+        return [
+            'pipeline_result' => $pipelineResult,
+            'document_type' => $documentType,
+            'status' => $status,
+            'confidence' => $confidence,
+            'extracted_data' => $extractedData,
+        ];
+    }
+
+    /**
+     * Import ponctuel d'un seul fichier depuis le formulaire de saisie
+     * d'écriture ("1. Informations du document") : lance la même extraction
+     * OCR que l'import en masse (uploadDocuments), mais répond en JSON avec
+     * les champs extraits pour pré-remplir directement le formulaire, sans
+     * redirection ni création automatique d'écriture — c'est l'utilisateur
+     * qui valide et soumet l'écriture lui-même juste après.
+     */
+    public function uploadDocumentForEntryPrefill(Request $request)
+    {
+        $request->validate([
+            'document' => ['required', 'file', 'max:51200'],
+        ], [
+            'document.required' => 'Veuillez sélectionner un fichier.',
+            'document.max' => 'Fichier trop volumineux. Taille maximale : 50 Mo.',
+        ]);
+
+        $file = $request->file('document');
+        if (! $file->isValid()) {
+            return response()->json([
+                'success' => false,
+                'message' => $this->describeUploadErrorCode($file->getError()),
+            ], 422);
+        }
+
+        $hash = sha1_file($file->getRealPath());
+        $document = AccountingDocument::whereIn('user_id', $this->workspaceDataUserIds())
+            ->where('document_hash', $hash)
+            ->first();
+
+        if (! $document) {
+            $storedPath = $file->store('accounting-documents', 'public');
+            $extraction = $this->runOcrExtractionForDocument($file, $storedPath, new OcrService, new OcrPipelineService);
+
+            $document = AccountingDocument::create([
+                'user_id' => $this->workspaceUserId(),
+                'actor_user_id' => Auth::id(),
+                'original_name' => $file->getClientOriginalName(),
+                'stored_path' => $storedPath,
+                'document_type' => $extraction['document_type'],
+                'status' => $extraction['status'],
+                'document_hash' => $hash,
+                'extracted_data' => $extraction['extracted_data'],
+                'confidence' => $extraction['confidence'],
+                'compliance_rate' => (float) ($extraction['pipeline_result']['compliance_rate'] ?? 0),
+            ]);
+        }
+
+        if ($document->status === 'ocr_failed') {
+            $data = (array) $document->extracted_data;
+
+            return response()->json([
+                'success' => false,
+                'document_id' => $document->id,
+                'message' => $data['ocr_error'] ?? "L'analyse OCR de ce document a échoué. Vous pouvez saisir l'écriture manuellement.",
+            ]);
+        }
+
+        $data = (array) $document->extracted_data;
+        $prefill = $this->buildEntryPrefillData($document);
+
+        return response()->json([
+            'success' => true,
+            'document_id' => $document->id,
+            'document_type' => $prefill['document_type'],
+            'partner_name' => $prefill['partner_name'],
+            'date' => $prefill['date'],
+            'document_reference' => $prefill['document_reference'],
+            'description' => $prefill['description'],
+            'amount' => $prefill['amount'],
+            'amount_tva' => $prefill['amount_tva'],
+            'ttc_amount' => $prefill['ttc_amount'],
+            'tva_rate' => $prefill['tva_rate'],
+            'debit_account' => $data['debit_account'] ?? null,
+            'credit_account' => $data['credit_account'] ?? null,
+            'review_required' => (bool) ($data['ocr_review_required'] ?? false),
+        ]);
     }
 
     /**

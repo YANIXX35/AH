@@ -854,9 +854,8 @@
                     
                     <form action="{{ route('accounting.entries.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        @if($prefillData)
-                            <input type="hidden" name="document_id" value="{{ old('document_id', $prefillData['document_id']) }}">
-                        @endif
+                        <input type="hidden" name="document_id" id="documentIdValue" value="{{ old('document_id', $prefillData['document_id'] ?? '') }}">
+                        <div id="entryPrefillStatus" class="mb-3" style="display:none;"></div>
                         @php
                             $prefillExtracted = (array) ($prefillDocument?->extracted_data ?? []);
                             $prefillRich = (array) ($prefillExtracted['ocr_detected_fields'] ?? []);
@@ -903,8 +902,14 @@
                                     
                                     <div class="col-md-3">
                                         <label class="form-label fw-500">Fichier</label>
-                                        <input type="file" name="attachment" class="form-control @error('attachment') is-invalid @enderror" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx,.zip">
+                                        <div class="d-flex gap-2">
+                                            <input type="file" name="attachment" class="form-control @error('attachment') is-invalid @enderror" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx,.zip">
+                                            <button type="button" id="importAndAnalyzeBtn" class="btn btn-outline-primary text-nowrap" title="Analyser le fichier par OCR et pré-remplir le formulaire" disabled>
+                                                <i data-feather="zap" style="width: 16px; height: 16px;"></i> Importer
+                                            </button>
+                                        </div>
                                         @error('attachment')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                        <small class="form-text text-muted d-block mt-1">Choisissez un fichier puis cliquez sur « Importer » pour pré-remplir automatiquement l'écriture.</small>
                                     </div>
                                     
                                     <div class="col-md-3">
@@ -1368,6 +1373,113 @@
             // ne complète que les comptes encore vides pour ne jamais écraser une
             // valeur déjà choisie (ancienne saisie après erreur de validation...).
             applyDefaults(false);
+        })();
+
+        // Import ponctuel + analyse OCR depuis le formulaire de saisie : évite
+        // d'avoir à passer par la page "Documents" pour pré-remplir l'écriture.
+        (function setupImportAndAnalyze() {
+            const fileInput = document.getElementById('fileInput');
+            const importBtn = document.getElementById('importAndAnalyzeBtn');
+            const statusBox = document.getElementById('entryPrefillStatus');
+            const documentIdInput = document.getElementById('documentIdValue');
+            if (!fileInput || !importBtn || !statusBox || !documentIdInput) {
+                return;
+            }
+
+            function showStatus(message, variant) {
+                statusBox.className = 'mb-3 alert alert-' + variant;
+                statusBox.textContent = message;
+                statusBox.style.display = 'block';
+            }
+
+            function setFieldValue(selector, value) {
+                if (value === undefined || value === null || value === '') {
+                    return;
+                }
+                const el = typeof selector === 'string' ? document.querySelector(selector) : selector;
+                if (el) {
+                    el.value = value;
+                }
+            }
+
+            function fillAccountField(side, label) {
+                if (!label) {
+                    return;
+                }
+                const hiddenInput = document.getElementById(side + 'AccountValue');
+                const searchInput = document.querySelector('[data-account-search="' + side + '"]');
+                if (hiddenInput) hiddenInput.value = label;
+                if (searchInput) searchInput.value = label;
+            }
+
+            fileInput.addEventListener('change', function () {
+                importBtn.disabled = !fileInput.files.length;
+            });
+
+            importBtn.addEventListener('click', function () {
+                if (!fileInput.files.length) {
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('document', fileInput.files[0]);
+
+                const csrfInput = importBtn.closest('form').querySelector('input[name="_token"]');
+
+                importBtn.disabled = true;
+                importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Analyse en cours…';
+                showStatus('Analyse OCR du document en cours, merci de patienter…', 'info');
+
+                fetch('{{ route('accounting.documents.prefill') }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfInput ? csrfInput.value : '',
+                    },
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.document_id) {
+                            documentIdInput.value = data.document_id;
+                        }
+
+                        if (!data.success) {
+                            showStatus(data.message || "L'analyse OCR a échoué. Complétez l'écriture manuellement.", 'warning');
+                            return;
+                        }
+
+                        if (data.document_type) {
+                            const typeSelect = document.getElementById('documentType');
+                            if (typeSelect) typeSelect.value = data.document_type;
+                        }
+                        setFieldValue('input[name="partner_name"]', data.partner_name);
+                        setFieldValue('input[name="date"]', data.date);
+                        setFieldValue('input[name="document_reference"]', data.document_reference);
+                        setFieldValue('textarea[name="description"]', data.description);
+                        setFieldValue('#htAmount', data.amount);
+                        setFieldValue('#tvaAmount', data.amount_tva);
+                        setFieldValue('#ttcAmount', data.ttc_amount);
+                        setFieldValue('#tvaRate', data.tva_rate);
+                        fillAccountField('debit', data.debit_account);
+                        fillAccountField('credit', data.credit_account);
+
+                        showStatus(
+                            data.review_required
+                                ? '✓ Document analysé — champs pré-remplis. Certaines informations sont incertaines, merci de les vérifier avant d\'enregistrer.'
+                                : '✓ Document analysé — champs pré-remplis. Vérifiez avant d\'enregistrer.',
+                            data.review_required ? 'warning' : 'success'
+                        );
+                    })
+                    .catch(function () {
+                        showStatus("Erreur réseau pendant l'analyse du document. Réessayez.", 'danger');
+                    })
+                    .finally(function () {
+                        importBtn.disabled = false;
+                        importBtn.innerHTML = '<i data-feather="zap" style="width: 16px; height: 16px;"></i> Importer';
+                        if (window.feather) feather.replace();
+                    });
+            });
         })();
 
         // Mode ultra ergonomique: une seule section du formulaire ouverte à la fois.

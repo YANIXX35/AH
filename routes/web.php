@@ -499,6 +499,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/accounting/documents/comparison', [AccountingController::class, 'documentsComparison'])->name('accounting.documents.comparison');
 
         Route::post('/accounting/documents', [AccountingController::class, 'uploadDocuments'])->middleware('throttle:ocr-intensive')->name('accounting.documents.upload');
+        Route::post('/accounting/documents/prefill', [AccountingController::class, 'uploadDocumentForEntryPrefill'])->middleware('throttle:ocr-intensive')->name('accounting.documents.prefill');
         Route::get('/accounting/documents/{document}/viewer', [AccountingDocumentViewerController::class, 'showDocument'])->name('accounting.documents.viewer');
         Route::get('/accounting/documents/{document}/source', [AccountingDocumentViewerController::class, 'streamDocument'])->name('accounting.documents.stream');
         Route::post('/accounting/documents/{document}/ocr/retry', [AccountingController::class, 'retryDocumentOcr'])->middleware('throttle:ocr-intensive')->name('accounting.documents.ocr.retry');
