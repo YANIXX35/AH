@@ -11,6 +11,7 @@ use App\Http\Controllers\AdminBugReportController;
 use App\Http\Controllers\AdminCommercialController;
 use App\Http\Controllers\AdminComplianceKycController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminDatabaseBackupController;
 use App\Http\Controllers\AdminEnterpriseLicenseController;
 use App\Http\Controllers\AdminExecutiveDashboardController;
 use App\Http\Controllers\AdminFinancialAnalysisController;
@@ -413,6 +414,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/prospections/{prospection}/approve', [AdminProspectionController::class, 'approve'])->name('prospections.approve');
         Route::post('/prospections/{prospection}/request-revision', [AdminProspectionController::class, 'requestRevision'])->name('prospections.request-revision');
         Route::post('/prospections/{prospection}/reject', [AdminProspectionController::class, 'reject'])->name('prospections.reject');
+
+        Route::get('/backups', [AdminDatabaseBackupController::class, 'index'])->name('backups.index');
+        Route::post('/backups/run', [AdminDatabaseBackupController::class, 'run'])->name('backups.run');
+        Route::get('/backups/{filename}/download', [AdminDatabaseBackupController::class, 'download'])->name('backups.download');
+        Route::delete('/backups/{filename}', [AdminDatabaseBackupController::class, 'destroy'])->name('backups.destroy');
         Route::post('/users/{user}/premium/activate', [AdminController::class, 'activatePremiumTrial'])->name('users.premium.activate');
         Route::post('/users/{user}/premium/deactivate', [AdminController::class, 'deactivatePremium'])->name('users.premium.deactivate');
         Route::get('/dashboard/ai/live', [AdminController::class, 'dashboardLiveInsights'])->name('dashboard.ai.live');

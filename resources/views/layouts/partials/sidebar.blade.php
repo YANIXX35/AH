@@ -194,6 +194,9 @@
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.prospections.*') ? 'active' : '' }}" href="{{ route('admin.prospections.index') }}">Prospections commerciales</a>
                             </li>
+                            <li class="sidebar-item {{ request()->routeIs('admin.backups.*') ? 'active' : '' }}">
+                                <a class="sidebar-link" href="{{ route('admin.backups.index') }}">Sauvegardes base de données</a>
+                            </li>
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.executive.*') ? 'active' : '' }}" href="{{ route('admin.executive.index') }}">Dashboard CEO/CFO</a>
                             </li>
