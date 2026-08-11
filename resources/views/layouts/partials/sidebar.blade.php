@@ -192,6 +192,9 @@
                                 <a class="sidebar-link {{ request()->routeIs('admin.logs.*') ? 'active' : '' }}" href="{{ route('admin.logs.index') }}">Journalisation plateforme</a>
                             </li>
                             <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.commercial-dashboard') ? 'active' : '' }}" href="{{ route('admin.commercial-dashboard') }}">Dashboard Commercial</a>
+                            </li>
+                            <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.prospections.*') ? 'active' : '' }}" href="{{ route('admin.prospections.index') }}">Prospections commerciales</a>
                             </li>
                             <li class="sidebar-item {{ request()->routeIs('admin.backups.*') ? 'active' : '' }}">

@@ -9,6 +9,7 @@ use App\Http\Controllers\AccountingDocumentViewerController;
 use App\Http\Controllers\AdminBillingController;
 use App\Http\Controllers\AdminBugReportController;
 use App\Http\Controllers\AdminCommercialController;
+use App\Http\Controllers\AdminCommercialDashboardController;
 use App\Http\Controllers\AdminComplianceKycController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDatabaseBackupController;
@@ -482,6 +483,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/rbac', [AdminRbacController::class, 'index'])->name('rbac.index');
         Route::post('/rbac/{user}', [AdminRbacController::class, 'update'])->name('rbac.update');
         Route::get('/commerciale', [AdminCommercialController::class, 'index'])->name('commerciale');
+        Route::get('/commercial-dashboard', [AdminCommercialDashboardController::class, 'index'])->name('commercial-dashboard');
     });
 
     Route::middleware(['premium.accounting', 'module.permission:accounting'])->group(function () {
