@@ -38,10 +38,38 @@
     /* Top Navigation Header (Matching Mockup) */
     .mockup-header-bar {
         background: #ffffff;
-        border-radius: 9999px;
-        padding: 8px 16px;
+        border-radius: 24px;
+        padding: 12px 18px;
         border: 1px solid #e2e8f0;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+    }
+
+    .header-search-input {
+        width: 220px;
+        transition: width .2s ease;
+    }
+    .header-search-input:focus {
+        width: 260px;
+    }
+
+    .header-divider {
+        width: 1px;
+        align-self: stretch;
+        background: #e2e8f0;
+        margin: 2px 4px;
+    }
+
+    .header-action-group {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 9999px;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .header-action-group .btn {
+        white-space: nowrap;
     }
 
     .pill-tab-btn {
@@ -519,14 +547,15 @@
         {{-- 💻 VERSION DESKTOP DU DASHBOARD                              --}}
         {{-- ============================================================ --}}
         <div class="d-none d-md-block">
-            <!-- TOP HEADER BAR (Matching Mockup Navigation Bar) -->
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 mockup-header-bar">
-                <!-- Left: Logo & Pill Navigation Tabs -->
-                <div class="d-flex align-items-center gap-2 flex-grow-1 flex-lg-grow-0 w-100 w-lg-auto">
+            <!-- TOP HEADER BAR -->
+            <div class="d-flex flex-column gap-3 mb-4">
+
+                <!-- Rangée 1 : Logo & Navigation -->
+                <div class="d-flex align-items-center gap-2 mockup-header-bar">
                     <div class="bg-primary text-white rounded-circle p-2 d-none d-sm-flex align-items-center justify-content-center flex-shrink-0" style="width:40px; height:40px;">
                         <i data-feather="grid" style="width:20px; height:20px;"></i>
                     </div>
-                    <div class="d-flex align-items-center gap-1 bg-light rounded-pill p-1 border overflow-auto scrollbar-none flex-nowrap w-100">
+                    <div class="d-flex align-items-center gap-1 bg-light rounded-pill p-1 border overflow-auto scrollbar-none flex-nowrap">
                         <a href="{{ route('commercial.dashboard') }}" class="pill-tab-btn pill-tab-btn-active text-decoration-none text-nowrap flex-shrink-0">
                             <i data-feather="layout" class="me-1" style="width:14px; height:14px;"></i> Tableau de bord
                         </a>
@@ -542,30 +571,35 @@
                     </div>
                 </div>
 
-                <!-- Right: Search, Avatar Group, and CTA Action Button -->
-                <div class="d-flex align-items-center justify-content-between justify-content-lg-end gap-2 flex-grow-1 w-100 w-lg-auto">
-                    <div class="position-relative d-none d-md-block">
-                        <i data-feather="search" class="position-absolute text-muted" style="left:14px; top:11px; width:15px; height:15px;"></i>
-                        <input type="text" class="form-control rounded-pill border-0 bg-light ps-5 pe-4" placeholder="Rechercher..." style="width:150px; font-size:0.85rem;">
-                    </div>
-                    
-                    <!-- Avatar Stack (Mockup Style) -->
-                    <div class="d-none d-lg-flex align-items-center me-1 flex-shrink-0">
-                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">EK</div>
-                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">JK</div>
-                        <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem;">+{{ $totalClients }}</div>
+                <!-- Rangée 2 : Recherche, équipe, actions -->
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mockup-header-bar">
+                    <div class="position-relative">
+                        <i data-feather="search" class="position-absolute text-muted" style="left:14px; top:50%; transform:translateY(-50%); width:15px; height:15px;"></i>
+                        <input type="text" class="form-control rounded-pill border-0 bg-light ps-5 pe-4 header-search-input" placeholder="Rechercher un client, un lead…" style="font-size:0.85rem;">
                     </div>
 
-                    <div class="d-flex align-items-center gap-1.5 overflow-auto scrollbar-none flex-nowrap w-100 justify-content-start justify-content-lg-end">
-                        <button type="button" class="btn btn-outline-success rounded-pill px-3 py-2 fw-bold text-xs text-nowrap flex-shrink-0" data-bs-toggle="modal" data-bs-target="#smartImportClientModal">
-                            <i data-feather="upload-cloud" class="me-1" style="width:12px; height:12px;"></i> Importer
-                        </button>
-                        <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-bold text-xs text-nowrap flex-shrink-0" data-bs-toggle="modal" data-bs-target="#addProspectModal">
-                            + Lead
-                        </button>
-                        <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-primary rounded-pill px-3.5 py-2 fw-bold text-xs text-nowrap flex-shrink-0 shadow-sm text-decoration-none">
-                            <i data-feather="user-plus" class="me-1" style="width:12px; height:12px;"></i> + Client
-                        </a>
+                    <div class="d-flex align-items-center gap-2 gap-lg-3 flex-wrap justify-content-end">
+                        <!-- Avatar Stack (équipe) -->
+                        <div class="d-none d-lg-flex align-items-center flex-shrink-0" title="Membres de l'équipe">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">EK</div>
+                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">JK</div>
+                            <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem;">+{{ $totalClients }}</div>
+                        </div>
+
+                        <div class="header-divider d-none d-lg-block"></div>
+
+                        <!-- Groupe d'actions -->
+                        <div class="header-action-group flex-wrap">
+                            <button type="button" class="btn btn-outline-success rounded-pill px-3 py-2 fw-bold text-xs" data-bs-toggle="modal" data-bs-target="#smartImportClientModal">
+                                <i data-feather="upload-cloud" class="me-1" style="width:12px; height:12px;"></i> Importer
+                            </button>
+                            <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-bold text-xs" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                                <i data-feather="user-plus" class="me-1" style="width:12px; height:12px;"></i> + Lead
+                            </button>
+                            <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-primary rounded-pill px-3 py-2 fw-bold text-xs shadow-sm text-decoration-none">
+                                <i data-feather="briefcase" class="me-1" style="width:12px; height:12px;"></i> + Client
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
