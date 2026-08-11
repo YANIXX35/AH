@@ -43,6 +43,30 @@
     </div>
 </div>
 
+<!-- Graphiques -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-xl-7">
+        <div class="card admin-card border-0 p-4 h-100">
+            <h3 class="h6 fw-bold text-dark mb-3">Clients parrainés par commercial</h3>
+            @if($rows->isEmpty())
+                <div class="text-muted small text-center py-4">Aucune donnée à afficher.</div>
+            @else
+                <div style="height: 260px;"><canvas id="commercialClientsChart"></canvas></div>
+            @endif
+        </div>
+    </div>
+    <div class="col-12 col-xl-5">
+        <div class="card admin-card border-0 p-4 h-100">
+            <h3 class="h6 fw-bold text-dark mb-3">Commissions par commercial (gagné vs versé)</h3>
+            @if($rows->isEmpty() || $grandTotalEarned == 0)
+                <div class="text-muted small text-center py-4">Aucune commission enregistrée pour le moment.</div>
+            @else
+                <div style="height: 260px;"><canvas id="commercialCommissionsChart"></canvas></div>
+            @endif
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <!-- Performance par commercial -->
     <div class="col-12 col-xl-8">
@@ -141,6 +165,7 @@
             @if($prospectStatusStats->isEmpty())
                 <div class="text-muted small">Aucun prospect enregistré.</div>
             @else
+                <div style="height: 180px;" class="mb-3"><canvas id="prospectPipelineChart"></canvas></div>
                 @php
                     $prospectLabels = [
                         'nouveau' => 'Nouveau Lead',
@@ -167,6 +192,7 @@
             @if($prospectionStats->isEmpty())
                 <div class="text-muted small">Aucune prospection.</div>
             @else
+                <div style="height: 180px;" class="mb-3"><canvas id="prospectionStatusChart"></canvas></div>
                 @php
                     $prospectionLabels = \App\Models\CommercialProspection::STATUS_LABELS;
                 @endphp
@@ -219,3 +245,109 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof Chart === 'undefined') { return; }
+
+    var clientsEl = document.getElementById('commercialClientsChart');
+    if (clientsEl) {
+        new Chart(clientsEl.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: @json($rows->pluck('commercial.name')),
+                datasets: [{
+                    label: 'Clients parrainés',
+                    data: @json($rows->pluck('totalClients')),
+                    backgroundColor: 'rgba(13, 110, 253, 0.35)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    maxBarThickness: 36
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } }
+            }
+        });
+    }
+
+    var commissionsEl = document.getElementById('commercialCommissionsChart');
+    if (commissionsEl) {
+        new Chart(commissionsEl.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: @json($rows->pluck('commercial.name')),
+                datasets: [
+                    {
+                        label: 'Gagné',
+                        data: @json($rows->pluck('totalEarned')),
+                        backgroundColor: 'rgba(13, 110, 253, 0.35)',
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Versé',
+                        data: @json($rows->pluck('totalPaid')),
+                        backgroundColor: 'rgba(25, 135, 84, 0.35)',
+                        borderColor: 'rgba(25, 135, 84, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    var pipelineEl = document.getElementById('prospectPipelineChart');
+    if (pipelineEl) {
+        new Chart(pipelineEl.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: @json(collect($prospectStatusStats->keys())->map(fn ($s) => $prospectLabels[$s] ?? ucfirst($s))),
+                datasets: [{
+                    data: @json($prospectStatusStats->values()),
+                    backgroundColor: ['#0dcaf0', '#ffc107', '#0d6efd', '#198754', '#6c757d', '#adb5bd']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } }
+            }
+        });
+    }
+
+    var prospectionEl = document.getElementById('prospectionStatusChart');
+    if (prospectionEl) {
+        new Chart(prospectionEl.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: @json(collect($prospectionStats->keys())->map(fn ($s) => $prospectionLabels[$s] ?? ucfirst($s))),
+                datasets: [{
+                    data: @json($prospectionStats->values()),
+                    backgroundColor: ['#0d6efd', '#ffc107', '#198754', '#fd7e14', '#dc3545', '#6c757d']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } }
+            }
+        });
+    }
+});
+</script>
+@endpush
