@@ -74,6 +74,9 @@
                             <td><span class="prospection-status-badge status-{{ $p->status }}">{{ $p->statusLabel() }}</span></td>
                             <td class="text-end">
                                 <a href="{{ route('commercial-supervisor.prospections.show', $p) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">👁 Voir</a>
+                                @if($p->hasFile())
+                                    <a href="{{ asset('storage/' . $p->file_path) }}" download="{{ $p->file_name }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">⬇ Télécharger</a>
+                                @endif
                             </td>
                         </tr>
                     @empty
