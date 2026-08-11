@@ -6,7 +6,7 @@
 @push('styles')
 <style>
     .soft-dashboard-body {
-        background-color: #eef2f6;
+        background: linear-gradient(135deg, #f0f4ff 0%, #eef2f6 45%, #f0f9ff 100%);
         min-height: 100vh;
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         color: #1e293b;
@@ -28,6 +28,81 @@
         box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.03);
     }
 
+    /* En-tête */
+    .import-header {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 55%, #6366f1 100%);
+        border-radius: 24px;
+        padding: 28px 32px;
+        color: #fff;
+        box-shadow: 0 15px 35px -10px rgba(37, 99, 235, 0.35);
+        position: relative;
+        overflow: hidden;
+    }
+    .import-header::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 220px; height: 220px;
+        background: radial-gradient(circle, rgba(255,255,255,0.16) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .import-header .icon-bubble {
+        width: 52px; height: 52px;
+        background: rgba(255,255,255,0.18);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+    .import-header .btn-back {
+        background: rgba(255,255,255,0.14);
+        border: 1px solid rgba(255,255,255,0.35);
+        color: #fff;
+        transition: background .2s ease;
+    }
+    .import-header .btn-back:hover { background: rgba(255,255,255,0.26); color: #fff; }
+
+    /* Zone de dépôt */
+    .dropzone {
+        border: 2px dashed #93c5fd;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #f8fbff 0%, #f1f6fd 100%);
+        padding: 56px 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color .2s ease, background .2s ease, transform .15s ease;
+    }
+    .dropzone:hover {
+        border-color: #3b82f6;
+        background: linear-gradient(180deg, #eff6ff 0%, #e7f0fe 100%);
+    }
+    .dropzone.dropzone-active {
+        border-color: #2563eb;
+        background: linear-gradient(180deg, #dbeafe 0%, #e0e7ff 100%);
+        transform: scale(1.005);
+    }
+    .dropzone .upload-icon-bubble {
+        width: 88px; height: 88px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 18px;
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.18);
+    }
+    .format-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #eef2ff;
+        color: #4338ca;
+        border: 1px solid #e0e7ff;
+        border-radius: 999px;
+        padding: 4px 12px;
+        font-size: .72rem;
+        font-weight: 600;
+        letter-spacing: .02em;
+    }
+
     /* Sécurité anti-débordement : peu importe le texte, le badge de type ne peut pas dépasser sa carte */
     .file-type-badge {
         display: inline-block;
@@ -38,9 +113,28 @@
         vertical-align: middle;
     }
 
+    .doc-row-icon {
+        width: 42px; height: 42px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        color: #2563eb;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .section-eyebrow {
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-size: .72rem;
+        font-weight: 700;
+        color: #64748b;
+    }
+
     @media (max-width: 767.98px) {
         .soft-dashboard-body { min-height: auto; padding: 10px 8px; }
         .soft-dashboard-container { padding: 10px; border-radius: 20px; }
+        .import-header { padding: 20px; border-radius: 20px; }
+        .dropzone { padding: 36px 16px; }
     }
 </style>
 @endpush
@@ -74,17 +168,19 @@
     <div class="soft-dashboard-container">
 
         <!-- HEADER BANNER -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 p-3 bg-white rounded-4 border">
-            <div class="d-flex align-items-center gap-3">
-                <a href="{{ route('commercial.dashboard') }}" class="btn btn-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
-                    <i data-feather="arrow-left" style="width:20px; height:20px;"></i>
-                </a>
+        <div class="import-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div class="d-flex align-items-center gap-3 position-relative">
+                <div class="icon-bubble">
+                    <i data-feather="upload-cloud" style="width:24px; height:24px;"></i>
+                </div>
                 <div>
-                    <h1 class="h4 fw-bold text-dark mb-0">Importateur & Lecteur Universel de Fichiers</h1>
-                    <p class="text-muted small mb-0">Espace dédié pour analyser, lire, extraire et enregistrer vos documents en base de données.</p>
+                    <h1 class="h4 fw-bold mb-1">Importateur &amp; Lecteur Universel de Fichiers</h1>
+                    <p class="mb-0" style="color: rgba(255,255,255,0.85); font-size: .92rem;">
+                        Analysez, lisez, extrayez et enregistrez vos documents en base de données, en toute sécurité.
+                    </p>
                 </div>
             </div>
-            <a href="{{ route('commercial.dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold text-sm">
+            <a href="{{ route('commercial.dashboard') }}" class="btn btn-back rounded-pill px-4 fw-semibold text-sm position-relative">
                 &larr; Retour au Dashboard
             </a>
         </div>
@@ -113,26 +209,40 @@
 
         <!-- MAIN FILE UPLOAD & ANALYZER CARD WITH ENREGISTRER / ANNULER FORM -->
         <div class="mockup-card p-4 mb-5">
+            <div class="section-eyebrow mb-2">Étape 1</div>
             <form action="{{ route('commercial.import.store') }}" method="POST" enctype="multipart/form-data" id="importForm">
                 @csrf
-                
+
                 <!-- Zone de dépôt / Glisser-Déposer -->
-                <div class="border-2 border-dashed border-success rounded-4 p-5 text-center bg-light cursor-pointer mb-4" onclick="document.getElementById('realFileInput').click();">
+                <div class="dropzone mb-4" id="dropzone" onclick="document.getElementById('realFileInput').click();">
                     <input type="file" name="document_file" id="realFileInput" class="d-none" onchange="handleDedicatedFileRead(this.files[0])" required>
-                    <i data-feather="upload-cloud" class="text-success mb-3" style="width:56px; height:56px;"></i>
-                    <h4 class="fw-bold text-dark mb-2">Glissez-déposez ou cliquez ici pour importer un fichier</h4>
-                    <p class="text-muted mb-0">Formats supportés : <code>.csv, .xlsx, .pdf, .txt, .docx, .json, .png, .jpg, .xml, .log</code> (Max 20 Mo)</p>
-                    <button type="button" class="btn btn-success rounded-pill px-4 py-2 mt-3 fw-bold shadow-sm">
-                        Choisir un fichier sur mon appareil
+                    <div class="upload-icon-bubble">
+                        <i data-feather="upload-cloud" class="text-primary" style="width:36px; height:36px;"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-2">Glissez-déposez votre fichier ici</h4>
+                    <p class="text-muted mb-3">ou cliquez pour parcourir les fichiers de votre appareil</p>
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+                        <span class="format-pill">CSV</span>
+                        <span class="format-pill">XLSX</span>
+                        <span class="format-pill">PDF</span>
+                        <span class="format-pill">DOCX</span>
+                        <span class="format-pill">JSON</span>
+                        <span class="format-pill">PNG / JPG</span>
+                        <span class="format-pill">XML · TXT · LOG</span>
+                    </div>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
+                        <i data-feather="folder" class="me-2" style="width:16px; height:16px;"></i>Choisir un fichier sur mon appareil
                     </button>
+                    <p class="text-muted small mt-3 mb-0">Taille maximale : 20 Mo</p>
                 </div>
 
                 <!-- Zone d'affichage des données lues avec BOUTONS ENREGISTRER / ANNULER -->
                 <div id="fileReadOutput" style="display: none;">
+                    <div class="section-eyebrow mb-2 mt-1">Étape 2</div>
                     <div class="card border rounded-4 p-4 bg-white shadow-sm">
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 pb-3 border-bottom">
                             <div class="d-flex align-items-center gap-3">
-                                <span class="badge bg-success text-white rounded-pill px-3 py-2 fs-6 file-type-badge" style="max-width: 160px;" id="fileReadTypeBadge">Fichier</span>
+                                <span class="badge bg-primary text-white rounded-pill px-3 py-2 fs-6 file-type-badge" style="max-width: 160px;" id="fileReadTypeBadge">Fichier</span>
                                 <div>
                                     <h3 class="h5 fw-bold text-dark mb-0" id="fileReadName">—</h3>
                                     <span class="text-muted small" id="fileReadSize">(0 KB)</span>
@@ -143,7 +253,7 @@
                                 <button type="button" class="btn btn-outline-danger rounded-pill px-4 py-2 fw-semibold" onclick="resetFileRead()">
                                     <i data-feather="x-circle" class="me-1" style="width:16px; height:16px;"></i> Annuler
                                 </button>
-                                <button type="submit" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm">
+                                <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
                                     <i data-feather="save" class="me-1" style="width:16px; height:16px;"></i> Enregistrer dans mon espace & BDD
                                 </button>
                             </div>
@@ -169,7 +279,7 @@
                             <button type="button" class="btn btn-outline-danger rounded-pill px-4 py-2 fw-semibold" onclick="resetFileRead()">
                                 Annuler
                             </button>
-                            <button type="submit" class="btn btn-success rounded-pill px-5 py-2 fw-bold shadow-sm fs-6">
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm fs-6">
                                 <i data-feather="check-circle" class="me-1"></i> Confirmé & Enregistrer
                             </button>
                         </div>
@@ -182,7 +292,8 @@
         <div class="mockup-card p-4">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 pb-3 border-bottom">
                 <div>
-                    <h3 class="h5 fw-bold text-dark mb-1">📚 Fichiers & Documents Enregistrés dans la Base de Données</h3>
+                    <div class="section-eyebrow mb-1">Espace de stockage</div>
+                    <h3 class="h5 fw-bold text-dark mb-1">Fichiers &amp; Documents Enregistrés</h3>
                     <p class="text-muted small mb-0">Tous les fichiers enregistrés par votre compte commercial sont archivés en toute sécurité.</p>
                 </div>
                 <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">
@@ -206,7 +317,7 @@
                             <tr>
                                 <td class="py-3">
                                     <div class="d-flex align-items-center gap-3">
-                                        <div class="bg-light text-primary rounded-3 p-2 d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                                        <div class="doc-row-icon">
                                             <i data-feather="file-text" style="width:20px; height:20px;"></i>
                                         </div>
                                         <div>
@@ -256,7 +367,7 @@
                 @forelse($savedDocuments as $doc)
                     <div class="card p-3 mb-3">
                         <div class="d-flex align-items-center gap-3 mb-2">
-                            <div class="bg-light text-primary rounded-3 p-2 d-flex align-items-center justify-content-center" style="width:36px; height:36px;">
+                            <div class="doc-row-icon" style="width:36px; height:36px;">
                                 <i data-feather="file-text" style="width:18px; height:18px;"></i>
                             </div>
                             <div class="min-w-0 flex-grow-1">
@@ -345,6 +456,8 @@ function handleDedicatedFileRead(file) {
     typeBadge.innerText = shortFileTypeLabel(file);
     typeBadge.title = file.type || '';
 
+    outputDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
     const lastMod = new Date(file.lastModified).toLocaleString('fr-FR');
     metaContainer.innerHTML = `
         <div class="col-md-4"><div class="p-3 bg-light rounded-3 border"><strong>Format Mime :</strong> ${file.type || 'Fichier binaire / document'}</div></div>
@@ -376,6 +489,41 @@ function resetFileRead() {
     document.getElementById('fileReadOutput').style.display = 'none';
     document.getElementById('realFileInput').value = '';
 }
+
+// Glisser-déposer réel sur la zone de dépôt.
+(function setupDropzone() {
+    const dropzone = document.getElementById('dropzone');
+    const input = document.getElementById('realFileInput');
+    if (!dropzone || !input) return;
+
+    ['dragenter', 'dragover'].forEach(evt => {
+        dropzone.addEventListener(evt, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('dropzone-active');
+        });
+    });
+
+    ['dragleave', 'dragend'].forEach(evt => {
+        dropzone.addEventListener(evt, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('dropzone-active');
+        });
+    });
+
+    dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove('dropzone-active');
+
+        const files = e.dataTransfer?.files;
+        if (files && files.length > 0) {
+            input.files = files;
+            handleDedicatedFileRead(files[0]);
+        }
+    });
+})();
 </script>
 @endpush
 @endsection
