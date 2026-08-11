@@ -86,6 +86,12 @@ Route::post('/payments/stripe/webhook', [TreasuryController::class, 'stripeWebho
     ->withoutMiddleware(VerifyCsrfToken::class)
     ->name('payments.stripe.webhook');
 
+// Accessibles même si l'utilisateur est déjà connecté (ex: un admin teste le
+// lien qu'il vient de générer pour quelqu'un d'autre dans le même navigateur ;
+// ou l'utilisateur cible a encore une session active ailleurs).
+Route::get('/reset-password/lien/{token}', [AuthController::class, 'showPasswordResetLink'])->middleware('throttle:auth-sensitive')->name('password.reset-link.show');
+Route::post('/reset-password/lien/{token}', [AuthController::class, 'submitPasswordResetLink'])->middleware('throttle:auth-sensitive')->name('password.reset-link.submit');
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', fn () => redirect()->route('home'))->name('login');
     Route::view('/register', 'register')->name('register');
@@ -95,8 +101,6 @@ Route::middleware('guest')->group(function () {
     Route::post('/forgot-password', [AuthController::class, 'sendResetOtp'])->middleware('throttle:auth-sensitive')->name('password.otp.send');
     Route::get('/reset-password', [AuthController::class, 'showResetPassword'])->name('password.reset.form');
     Route::post('/reset-password', [AuthController::class, 'resetPasswordWithOtp'])->middleware('throttle:auth-sensitive')->name('password.otp.reset');
-    Route::get('/reset-password/lien/{token}', [AuthController::class, 'showPasswordResetLink'])->middleware('throttle:auth-sensitive')->name('password.reset-link.show');
-    Route::post('/reset-password/lien/{token}', [AuthController::class, 'submitPasswordResetLink'])->middleware('throttle:auth-sensitive')->name('password.reset-link.submit');
 
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:auth-sensitive')->name('register.post');
 });

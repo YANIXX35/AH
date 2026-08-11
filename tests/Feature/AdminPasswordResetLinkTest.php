@@ -76,6 +76,24 @@ class AdminPasswordResetLinkTest extends TestCase
         $response->assertSee($target->email);
     }
 
+    public function test_an_already_logged_in_admin_can_still_open_and_use_a_reset_link(): void
+    {
+        $admin = User::factory()->create(['is_platform_admin' => true]);
+        $target = User::factory()->create();
+        $token = AdminPasswordResetLink::generateFor($target, $admin->id);
+
+        $showResponse = $this->actingAs($admin)->get(route('password.reset-link.show', $token));
+        $showResponse->assertOk();
+        $showResponse->assertSee($target->email);
+
+        $submitResponse = $this->actingAs($admin)->post(route('password.reset-link.submit', $token), [
+            'password' => 'nouveau-mdp-123',
+            'password_confirmation' => 'nouveau-mdp-123',
+        ]);
+        $submitResponse->assertRedirect(route('login'));
+        $this->assertTrue(Hash::check('nouveau-mdp-123', $target->fresh()->password));
+    }
+
     public function test_an_invalid_token_redirects_to_login_with_an_error(): void
     {
         $response = $this->get(route('password.reset-link.show', 'not-a-real-token'));
