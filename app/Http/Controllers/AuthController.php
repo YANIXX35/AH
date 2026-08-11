@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\PasswordResetConfirmedMail;
 use App\Mail\PasswordResetOtpMail;
+use App\Models\AdminPasswordResetLink;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -256,6 +257,64 @@ class AuthController extends Controller
         return redirect()
             ->route('login')
             ->with('status', 'Mot de passe réinitialisé avec succès. Un e-mail de confirmation a été envoyé.');
+    }
+
+    /**
+     * Page de définition de mot de passe via un lien à usage unique généré
+     * par un platform admin (pas d'e-mail, pas de code OTP nécessaire).
+     */
+    public function showPasswordResetLink(string $token): View|RedirectResponse
+    {
+        $link = AdminPasswordResetLink::findValidByToken($token);
+
+        if ($link === null) {
+            return redirect()->route('login')->withErrors([
+                'reset_link' => 'Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau à votre administrateur.',
+            ]);
+        }
+
+        return view('auth.reset-password-link', ['token' => $token, 'user' => $link->user]);
+    }
+
+    public function submitPasswordResetLink(Request $request, string $token): RedirectResponse
+    {
+        $link = AdminPasswordResetLink::findValidByToken($token);
+
+        if ($link === null) {
+            return redirect()->route('login')->withErrors([
+                'reset_link' => 'Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau à votre administrateur.',
+            ]);
+        }
+
+        $data = $request->validate([
+            'password' => ['required', 'confirmed', 'min:8'],
+        ]);
+
+        $user = $link->user;
+        $user->update([
+            'password' => Hash::make($data['password']),
+            'remember_token' => Str::random(60),
+        ]);
+
+        $link->update([
+            'used_at' => now(),
+            'used_from_ip' => $request->ip(),
+        ]);
+
+        try {
+            Mail::to($user->email)->send(new PasswordResetConfirmedMail($user));
+        } catch (\Throwable $e) {
+            Log::warning('password_reset_link_confirmation_mail_failed', [
+                'email' => $user->email,
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        $this->logAuthEvent('password_reset_link_used', $user->id, $user->email, $request->ip(), null);
+
+        return redirect()
+            ->route('login')
+            ->with('status', 'Mot de passe défini avec succès. Vous pouvez maintenant vous connecter.');
     }
 
     protected function logAuthEvent(string $event, ?int $actorUserId, ?string $email, ?string $ip, ?string $detail): void

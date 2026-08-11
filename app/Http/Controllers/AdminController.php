@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AdminUpdateUserRequest;
 use App\Models\AccountingDocument;
+use App\Models\AdminPasswordResetLink;
 use App\Models\AccountingEntry;
 use App\Models\EnterpriseLicense;
 use App\Models\InvestmentRequest;
@@ -987,6 +988,31 @@ class AdminController extends Controller
         );
 
         return back()->with('status', "Le mot de passe de {$user->name} ({$user->email}) a été réinitialisé avec succès.");
+    }
+
+    /**
+     * Génère un lien à usage unique permettant à l'utilisateur de définir
+     * lui-même son nouveau mot de passe, sans passer par l'e-mail (OTP) ni
+     * par une modification manuelle par l'admin. À transmettre par le canal
+     * de son choix (WhatsApp, SMS, en main propre).
+     */
+    public function generatePasswordResetLink(Request $request, User $user): RedirectResponse
+    {
+        $token = AdminPasswordResetLink::generateFor($user, $request->user()?->id, 60);
+        $url = route('password.reset-link.show', ['token' => $token]);
+
+        $this->auditTrail->log(
+            'user.password_reset_link_generated',
+            User::class,
+            $user->id,
+            $request->user()?->id,
+            [],
+            ['email' => $user->email, 'expires_in_minutes' => 60],
+            ['route' => 'admin.users.password-reset-link'],
+            $request
+        );
+
+        return back()->with('passwordResetLink', $url)->with('passwordResetLinkUserId', $user->id);
     }
 
     public function destroy(Request $request, User $user): RedirectResponse

@@ -198,6 +198,20 @@
     </div>
 @endif
 
+@if(session('passwordResetLink'))
+    <div class="alert alert-info py-2 mb-3 small">
+        <div class="fw-semibold mb-1">🔗 Lien de réinitialisation généré (valable 1 heure, usage unique) :</div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <code id="generatedResetLink" class="flex-grow-1 text-break">{{ session('passwordResetLink') }}</code>
+            <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0.5" style="font-size:11px;"
+                    onclick="navigator.clipboard.writeText(document.getElementById('generatedResetLink').textContent); this.textContent='Copié !';">
+                Copier
+            </button>
+        </div>
+        <div class="text-muted mt-1">Transmettez ce lien à l'utilisateur par le canal de votre choix (WhatsApp, SMS, en main propre).</div>
+    </div>
+@endif
+
 @if($errors->any())
     <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small">
         <ul class="mb-0 small">@foreach($errors->all() as $err)<li>{{ $err }}</li>@endforeach</ul>
@@ -406,6 +420,14 @@
                                                         <button type="button" class="btn btn-xs btn-outline-info rounded-pill px-2 py-0.5" style="font-size:11px;" data-bs-toggle="modal" data-bs-target="#resetPasswordModal{{ $user->id }}" title="Réinitialiser le mot de passe">
                                                             🔑 Mdp
                                                         </button>
+
+                                                        <!-- Lien de réinitialisation à envoyer à l'utilisateur -->
+                                                        <form method="POST" action="{{ route('admin.users.password-reset-link', $user) }}" class="d-inline">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0.5" style="font-size:11px;" title="Générer un lien pour que l'utilisateur définisse lui-même son mot de passe">
+                                                                🔗 Lien
+                                                            </button>
+                                                        </form>
 
                                                         <!-- Activer / Désactiver Premium -->
                                                         @if(! $user->is_platform_admin && ! ($user->is_accountant ?? false))

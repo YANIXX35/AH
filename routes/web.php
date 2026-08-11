@@ -95,6 +95,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/forgot-password', [AuthController::class, 'sendResetOtp'])->middleware('throttle:auth-sensitive')->name('password.otp.send');
     Route::get('/reset-password', [AuthController::class, 'showResetPassword'])->name('password.reset.form');
     Route::post('/reset-password', [AuthController::class, 'resetPasswordWithOtp'])->middleware('throttle:auth-sensitive')->name('password.otp.reset');
+    Route::get('/reset-password/lien/{token}', [AuthController::class, 'showPasswordResetLink'])->middleware('throttle:auth-sensitive')->name('password.reset-link.show');
+    Route::post('/reset-password/lien/{token}', [AuthController::class, 'submitPasswordResetLink'])->middleware('throttle:auth-sensitive')->name('password.reset-link.submit');
 
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:auth-sensitive')->name('register.post');
 });
@@ -399,6 +401,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/users/{user}', [AdminController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [AdminController::class, 'destroy'])->name('users.destroy');
         Route::post('/users/{user}/reset-password', [AdminController::class, 'resetPassword'])->name('users.reset-password');
+        Route::post('/users/{user}/password-reset-link', [AdminController::class, 'generatePasswordResetLink'])->name('users.password-reset-link');
         Route::post('/users/{user}/premium/activate', [AdminController::class, 'activatePremiumTrial'])->name('users.premium.activate');
         Route::post('/users/{user}/premium/deactivate', [AdminController::class, 'deactivatePremium'])->name('users.premium.deactivate');
         Route::get('/dashboard/ai/live', [AdminController::class, 'dashboardLiveInsights'])->name('dashboard.ai.live');
