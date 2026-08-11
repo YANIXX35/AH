@@ -74,6 +74,9 @@
                     <a href="{{ route('commercial.showcase') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none text-nowrap flex-shrink-0">
                         <i data-feather="book-open" class="me-1" style="width:14px; height:14px;"></i> Kit Marketing
                     </a>
+                    <a href="{{ route('commercial.prospections.index') }}" class="pill-tab-btn pill-tab-btn-inactive text-decoration-none text-nowrap flex-shrink-0">
+                        <i data-feather="bar-chart-2" class="me-1" style="width:14px; height:14px;"></i> Prospection
+                    </a>
                 </div>
             </div>
 

@@ -19,6 +19,7 @@ use App\Http\Controllers\AdminOpsCenterController;
 use App\Http\Controllers\AdminPaymentController;
 use App\Http\Controllers\AdminPlanComptableController;
 use App\Http\Controllers\AdminPlatformLogController;
+use App\Http\Controllers\AdminProspectionController;
 use App\Http\Controllers\AdminRbacController;
 use App\Http\Controllers\AdminScoringParametersController;
 use App\Http\Controllers\AdminSupportTicketController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CinetPayController;
 use App\Http\Controllers\CommercialController;
+use App\Http\Controllers\CommercialProspectionController;
 use App\Http\Controllers\CompanyFirdController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentationController;
@@ -406,6 +408,11 @@ Route::middleware('auth')->group(function () {
         Route::delete('/users/{user}', [AdminController::class, 'destroy'])->name('users.destroy');
         Route::post('/users/{user}/reset-password', [AdminController::class, 'resetPassword'])->name('users.reset-password');
         Route::post('/users/{user}/password-reset-link', [AdminController::class, 'generatePasswordResetLink'])->name('users.password-reset-link');
+        Route::get('/prospections', [AdminProspectionController::class, 'index'])->name('prospections.index');
+        Route::get('/prospections/{prospection}', [AdminProspectionController::class, 'show'])->name('prospections.show');
+        Route::post('/prospections/{prospection}/approve', [AdminProspectionController::class, 'approve'])->name('prospections.approve');
+        Route::post('/prospections/{prospection}/request-revision', [AdminProspectionController::class, 'requestRevision'])->name('prospections.request-revision');
+        Route::post('/prospections/{prospection}/reject', [AdminProspectionController::class, 'reject'])->name('prospections.reject');
         Route::post('/users/{user}/premium/activate', [AdminController::class, 'activatePremiumTrial'])->name('users.premium.activate');
         Route::post('/users/{user}/premium/deactivate', [AdminController::class, 'deactivatePremium'])->name('users.premium.deactivate');
         Route::get('/dashboard/ai/live', [AdminController::class, 'dashboardLiveInsights'])->name('dashboard.ai.live');
@@ -624,6 +631,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/prospects', [CommercialController::class, 'storeProspect'])->name('prospects.store');
         Route::put('/prospects/{prospect}/status', [CommercialController::class, 'updateProspectStatus'])->name('prospects.updateStatus');
         Route::delete('/prospects/{prospect}', [CommercialController::class, 'destroyProspect'])->name('prospects.destroy');
+
+        Route::get('/prospections', [CommercialProspectionController::class, 'index'])->name('prospections.index');
+        Route::get('/prospections/create', [CommercialProspectionController::class, 'create'])->name('prospections.create');
+        Route::post('/prospections', [CommercialProspectionController::class, 'store'])->name('prospections.store');
+        Route::get('/prospections/{prospection}', [CommercialProspectionController::class, 'show'])->name('prospections.show');
+        Route::get('/prospections/{prospection}/edit', [CommercialProspectionController::class, 'edit'])->name('prospections.edit');
+        Route::put('/prospections/{prospection}', [CommercialProspectionController::class, 'update'])->name('prospections.update');
+        Route::delete('/prospections/{prospection}', [CommercialProspectionController::class, 'destroy'])->name('prospections.destroy');
+        Route::post('/prospections/{prospection}/submit', [CommercialProspectionController::class, 'submit'])->name('prospections.submit');
     });
 
     Route::middleware('commercial')->get('/dashboard/commercial', [CommercialController::class, 'index']);

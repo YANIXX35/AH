@@ -187,6 +187,9 @@
                                 <a class="sidebar-link {{ request()->routeIs('admin.logs.*') ? 'active' : '' }}" href="{{ route('admin.logs.index') }}">Journalisation plateforme</a>
                             </li>
                             <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.prospections.*') ? 'active' : '' }}" href="{{ route('admin.prospections.index') }}">Prospections commerciales</a>
+                            </li>
+                            <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.executive.*') ? 'active' : '' }}" href="{{ route('admin.executive.index') }}">Dashboard CEO/CFO</a>
                             </li>
                             <li class="sidebar-item">
