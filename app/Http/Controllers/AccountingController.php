@@ -213,14 +213,15 @@ class AccountingController extends Controller
         }
 
         // Quand une classe est sélectionnée (ex. "Cl. 6"), l'utilisateur veut
-        // parcourir TOUTE la classe, pas une frappe partielle à affiner : la
-        // classe la plus fournie du plan SYSCOHADA (classe 2) compte 309
-        // comptes, donc une limite à 100 la tronquait silencieusement (ex.
-        // classe 6 arrêtée à ~628.. alors qu'elle va jusqu'à 6288000/659..).
-        $limit = $classe !== '' ? 350 : 100;
-
+        // parcourir TOUTE la classe, pas une frappe partielle à affiner. Le
+        // référentiel SYSCOHADA complet ne dépasse pas 1455 comptes au total
+        // (toutes classes confondues) : pas de limite arbitraire ici, une
+        // classe ne sera jamais assez grosse pour poser un problème de
+        // performance. Une limite fixe (100, puis 350) avait déjà tronqué
+        // silencieusement la classe 6 à deux reprises — mieux vaut ne plus
+        // deviner un plafond et charger la classe en entier.
         $accounts = $query->orderBy('numero_compte')
-            ->limit($limit)
+            ->when($classe === '', fn ($q) => $q->limit(100))
             ->get(['numero_compte', 'libelle_compte', 'classe'])
             ->map(fn (PlanComptableAccount $a) => [
                 'numero_compte' => $a->numero_compte,
