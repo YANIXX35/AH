@@ -67,13 +67,43 @@
     </div>
 </div>
 
+@if($monthlyLeaderboard->isNotEmpty())
+<div class="card admin-card border-0 p-4 mb-4">
+    <h3 class="h6 fw-bold text-dark mb-3">🏆 Classement du mois</h3>
+    <div class="row g-3">
+        @foreach($monthlyLeaderboard as $index => $entry)
+            <div class="col-md-4 col-sm-6">
+                <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
+                    <span class="badge {{ $index === 0 ? 'bg-warning text-dark' : 'bg-light text-dark border' }}" style="font-size: .9rem;">#{{ $index + 1 }}</span>
+                    <div>
+                        <div class="fw-semibold text-dark small">
+                            @isset($commercialShowRoute)
+                                <a href="{{ route($commercialShowRoute, $entry['commercial']->id) }}">{{ $entry['commercial']->name }}</a>
+                            @else
+                                {{ $entry['commercial']->name }}
+                            @endisset
+                        </div>
+                        <div class="text-muted small">{{ $entry['clientsThisMonth'] }} client(s) · {{ $entry['prospectionsThisMonth'] }} prospection(s)</div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 <div class="row">
     <!-- Performance par commercial -->
     <div class="col-12 col-xl-8">
         <div class="card admin-card border-0 p-4 mb-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <h3 class="h5 fw-bold text-dark mb-0">Performance par commercial</h3>
-                <span class="text-muted small">Triés par commissions gagnées</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">Triés par commissions gagnées</span>
+                    @isset($exportRoute)
+                        <a href="{{ route($exportRoute) }}" class="btn btn-sm btn-outline-secondary">⬇ Exporter CSV</a>
+                    @endisset
+                </div>
             </div>
             @if($rows->isEmpty())
                 <div class="text-center py-4 text-muted">Aucun commercial configuré.</div>
@@ -95,7 +125,13 @@
                             @foreach($rows as $row)
                                 <tr>
                                     <td>
-                                        <div class="fw-semibold text-dark">{{ $row['commercial']->name }}</div>
+                                        <div class="fw-semibold text-dark">
+                                            @isset($commercialShowRoute)
+                                                <a href="{{ route($commercialShowRoute, $row['commercial']->id) }}">{{ $row['commercial']->name }}</a>
+                                            @else
+                                                {{ $row['commercial']->name }}
+                                            @endisset
+                                        </div>
                                         <div class="text-muted small">{{ $row['commercial']->email }}</div>
                                     </td>
                                     <td class="text-center">{{ $row['totalClients'] }}</td>
@@ -161,7 +197,12 @@
     <div class="col-12 col-xl-4">
         <!-- Pipeline de prospects -->
         <div class="card admin-card border-0 p-4 mb-4">
-            <h3 class="h5 fw-bold text-dark mb-3">Pipeline de prospects</h3>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="h5 fw-bold text-dark mb-0">Pipeline de prospects</h3>
+                @isset($prospectsIndexRoute)
+                    <a href="{{ route($prospectsIndexRoute) }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                @endisset
+            </div>
             @if($prospectStatusStats->isEmpty())
                 <div class="text-muted small">Aucun prospect enregistré.</div>
             @else
@@ -228,7 +269,7 @@
         </div>
 
         <!-- Documents importés -->
-        <div class="card admin-card border-0 p-4">
+        <div class="card admin-card border-0 p-4 mb-4">
             <h3 class="h5 fw-bold text-dark mb-3">Documents importés récemment</h3>
             @if($recentDocuments->isEmpty())
                 <div class="text-muted small">Aucun document importé.</div>
@@ -238,6 +279,23 @@
                         <li class="list-group-item px-0 border-0 border-bottom">
                             <div class="fw-semibold text-dark small">{{ $document->original_name }}</div>
                             <div class="text-muted small">{{ $document->user->name ?? '—' }} · {{ $document->created_at->diffForHumans() }}</div>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </div>
+
+        <!-- Historique de connexions -->
+        <div class="card admin-card border-0 p-4">
+            <h3 class="h5 fw-bold text-dark mb-3">Connexions récentes</h3>
+            @if($recentLogins->isEmpty())
+                <div class="text-muted small">Aucune connexion enregistrée.</div>
+            @else
+                <ul class="list-group list-group-flush">
+                    @foreach($recentLogins as $login)
+                        <li class="list-group-item px-0 border-0 border-bottom d-flex justify-content-between">
+                            <span class="fw-semibold text-dark small">{{ $login->user->name ?? '—' }}</span>
+                            <span class="text-muted small">{{ $login->created_at->diffForHumans() }}</span>
                         </li>
                     @endforeach
                 </ul>

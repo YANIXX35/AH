@@ -44,5 +44,10 @@
     <p class="text-muted mb-0">Performance, commissions (lecture seule), prospections, pipeline et retours de tous les commerciaux.</p>
 </div>
 
-@include('partials.commercial-team-overview', ['prospectionsIndexRoute' => 'admin.prospections.index'])
+@include('partials.commercial-team-overview', [
+    'prospectionsIndexRoute' => 'admin.prospections.index',
+    'prospectsIndexRoute' => 'admin.commercial-dashboard.prospects',
+    'commercialShowRoute' => 'admin.commercial-dashboard.show',
+    'exportRoute' => 'admin.commercial-dashboard.export',
+])
 @endsection

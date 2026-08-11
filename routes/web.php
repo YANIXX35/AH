@@ -485,6 +485,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/rbac/{user}', [AdminRbacController::class, 'update'])->name('rbac.update');
         Route::get('/commerciale', [AdminCommercialController::class, 'index'])->name('commerciale');
         Route::get('/commercial-dashboard', [AdminCommercialDashboardController::class, 'index'])->name('commercial-dashboard');
+        Route::get('/commercial-dashboard/prospects', [AdminCommercialDashboardController::class, 'prospects'])->name('commercial-dashboard.prospects');
+        Route::get('/commercial-dashboard/export', [AdminCommercialDashboardController::class, 'exportCsv'])->name('commercial-dashboard.export');
+        Route::get('/commercial-dashboard/{commercial}', [AdminCommercialDashboardController::class, 'showCommercial'])->name('commercial-dashboard.show');
     });
 
     Route::middleware(['premium.accounting', 'module.permission:accounting'])->group(function () {
@@ -654,8 +657,11 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('commercial.supervisor')->prefix('commercial-supervisor')->name('commercial-supervisor.')->group(function () {
         Route::get('/', [CommercialSupervisorController::class, 'dashboard'])->name('dashboard');
+        Route::get('/export', [CommercialSupervisorController::class, 'exportCsv'])->name('export');
+        Route::get('/prospects', [CommercialSupervisorController::class, 'prospects'])->name('prospects.index');
         Route::get('/prospections', [CommercialSupervisorController::class, 'prospections'])->name('prospections.index');
         Route::get('/prospections/{prospection}', [CommercialSupervisorController::class, 'showProspection'])->name('prospections.show');
+        Route::get('/{commercial}', [CommercialSupervisorController::class, 'showCommercial'])->name('commercial.show');
     });
 
     Route::middleware('commercial')->get('/dashboard/commercial', [CommercialController::class, 'index']);

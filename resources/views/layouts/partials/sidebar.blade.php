@@ -152,6 +152,11 @@
                         <i class="align-middle" data-feather="file-text"></i> <span class="align-middle">Prospections (lecture seule)</span>
                     </a>
                 </li>
+                <li class="sidebar-item {{ request()->routeIs('commercial-supervisor.prospects.*') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial-supervisor.prospects.index') }}">
+                        <i class="align-middle" data-feather="target"></i> <span class="align-middle">Pipeline de prospects</span>
+                    </a>
+                </li>
             @else
             @if($sidebarUser && (($sidebarUser->is_accountant ?? false) || $sidebarUser->is_platform_admin))
                 {{-- Cabinet comptable : dossiers clients et synthèse. --}}

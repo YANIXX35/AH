@@ -26,5 +26,10 @@
     <p class="text-muted mb-0">Vue d'ensemble en lecture seule : performance, commissions, prospections, pipeline et retours de tous les commerciaux.</p>
 </div>
 
-@include('partials.commercial-team-overview', ['prospectionsIndexRoute' => 'commercial-supervisor.prospections.index'])
+@include('partials.commercial-team-overview', [
+    'prospectionsIndexRoute' => 'commercial-supervisor.prospections.index',
+    'prospectsIndexRoute' => 'commercial-supervisor.prospects.index',
+    'commercialShowRoute' => 'commercial-supervisor.commercial.show',
+    'exportRoute' => 'commercial-supervisor.export',
+])
 @endsection
