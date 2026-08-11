@@ -14,7 +14,9 @@ class CommercialProspectionPolicy
 
     public function view(User $user, CommercialProspection $prospection): bool
     {
-        return ($user->is_platform_admin ?? false) || $this->own($user, $prospection);
+        return ($user->is_platform_admin ?? false)
+            || ($user->role_key ?? null) === 'commercial_supervisor'
+            || $this->own($user, $prospection);
     }
 
     public function update(User $user, CommercialProspection $prospection): bool

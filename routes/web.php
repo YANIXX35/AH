@@ -31,6 +31,7 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CinetPayController;
 use App\Http\Controllers\CommercialController;
 use App\Http\Controllers\CommercialProspectionController;
+use App\Http\Controllers\CommercialSupervisorController;
 use App\Http\Controllers\CompanyFirdController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentationController;
@@ -649,6 +650,12 @@ Route::middleware('auth')->group(function () {
         Route::put('/prospections/{prospection}', [CommercialProspectionController::class, 'update'])->name('prospections.update');
         Route::delete('/prospections/{prospection}', [CommercialProspectionController::class, 'destroy'])->name('prospections.destroy');
         Route::post('/prospections/{prospection}/submit', [CommercialProspectionController::class, 'submit'])->name('prospections.submit');
+    });
+
+    Route::middleware('commercial.supervisor')->prefix('commercial-supervisor')->name('commercial-supervisor.')->group(function () {
+        Route::get('/', [CommercialSupervisorController::class, 'dashboard'])->name('dashboard');
+        Route::get('/prospections', [CommercialSupervisorController::class, 'prospections'])->name('prospections.index');
+        Route::get('/prospections/{prospection}', [CommercialSupervisorController::class, 'showProspection'])->name('prospections.show');
     });
 
     Route::middleware('commercial')->get('/dashboard/commercial', [CommercialController::class, 'index']);

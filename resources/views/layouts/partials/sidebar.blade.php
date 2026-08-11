@@ -13,10 +13,12 @@
                 && ! ($sidebarUser->is_platform_admin ?? false)
                 && ! ($sidebarUser->is_accountant ?? false)
                 && $sidebarUser->role_key !== 'commercial'
+                && $sidebarUser->role_key !== 'commercial_supervisor'
             ) {
                 $sidebarBrandName = (string) ($sidebarUser->company_name ?: $sidebarBrandName);
             }
             $sidebarIsCommercial = $sidebarUser && $sidebarUser->role_key === 'commercial';
+            $sidebarIsCommercialSupervisor = $sidebarUser && $sidebarUser->role_key === 'commercial_supervisor' && ! ($sidebarUser->is_platform_admin ?? false);
             if ($sidebarUser && $sidebarUser->is_platform_admin) {
                 $sidebarPremiumActive = $sidebarUser->hasActivePremiumPeriod();
                 $sidebarPremiumLabel = $sidebarPremiumActive ? 'Premium Admin' : 'Administrateur';
@@ -35,6 +37,12 @@
                 $sidebarPremiumIcon = '💼';
                 $sidebarPremiumActive = false;
                 $sidebarShowPremiumExpiry = false;
+            } elseif ($sidebarIsCommercialSupervisor) {
+                $sidebarPremiumLabel = 'Superviseur Commercial';
+                $sidebarPremiumBadge = 'bg-info text-dark';
+                $sidebarPremiumIcon = '📊';
+                $sidebarPremiumActive = false;
+                $sidebarShowPremiumExpiry = false;
             } else {
                 $sidebarPremiumActive = $sidebarUser
                     && ($sidebarUser->is_premium ?? false)
@@ -47,7 +55,7 @@
             $sidebarAccountantOnly = $sidebarUser && ($sidebarUser->is_accountant ?? false) && ! ($sidebarUser->is_platform_admin ?? false);
             $sidebarWorkspaceOpen = $sidebarAccountantOnly && \App\Support\ClientWorkspace::isViewingClient();
         @endphp
-        <a class="sidebar-brand d-flex align-items-center gap-2" href="{{ $sidebarIsCommercial ? route('commercial.dashboard') : ($sidebarAccountantOnly ? route('accountant.dashboard') : route('dashboard')) }}">
+        <a class="sidebar-brand d-flex align-items-center gap-2" href="{{ $sidebarIsCommercial ? route('commercial.dashboard') : ($sidebarIsCommercialSupervisor ? route('commercial-supervisor.dashboard') : ($sidebarAccountantOnly ? route('accountant.dashboard') : route('dashboard'))) }}">
             <img src="{{ asset('images/sitiam.png') }}" alt="Logo Sitiame Capital" style="height: 28px; width: auto;">
             <span class="align-middle">{{ $sidebarBrandName }}</span>
         </a>
@@ -124,6 +132,26 @@
                 </li>
 
 
+            @elseif($sidebarIsCommercialSupervisor)
+                <li class="commercial-mobile-header d-lg-none">
+                    <img src="{{ ($sidebarUser->avatar) ? asset('storage/' . $sidebarUser->avatar) : asset('images/sitiam.png') }}" class="rounded-circle" width="44" height="44" alt="{{ $sidebarUser->name }}">
+                    <div>
+                        <div class="commercial-mobile-header-name">{{ $sidebarUser->name }}</div>
+                        <span class="badge bg-info text-dark">📊 Superviseur Commercial</span>
+                    </div>
+                </li>
+
+                <li class="sidebar-header">Supervision Commerciale</li>
+                <li class="sidebar-item {{ request()->routeIs('commercial-supervisor.dashboard') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial-supervisor.dashboard') }}">
+                        <i class="align-middle" data-feather="bar-chart-2"></i> <span class="align-middle">Tableau de bord</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {{ request()->routeIs('commercial-supervisor.prospections.*') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('commercial-supervisor.prospections.index') }}">
+                        <i class="align-middle" data-feather="file-text"></i> <span class="align-middle">Prospections (lecture seule)</span>
+                    </a>
+                </li>
             @else
             @if($sidebarUser && (($sidebarUser->is_accountant ?? false) || $sidebarUser->is_platform_admin))
                 {{-- Cabinet comptable : dossiers clients et synthèse. --}}

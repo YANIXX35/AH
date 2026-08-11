@@ -26,6 +26,10 @@ class DashboardController extends Controller
             return redirect()->route('commercial.dashboard');
         }
 
+        if ($request->user() && $request->user()->role_key === 'commercial_supervisor') {
+            return redirect()->route('commercial-supervisor.dashboard');
+        }
+
         $userIds = ClientWorkspace::dataScopeUserIds($request->user());
 
         // Les agrégats (CA, trésorerie, écritures...) recalculaient une dizaine de
