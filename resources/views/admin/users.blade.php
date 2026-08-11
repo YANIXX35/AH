@@ -422,12 +422,9 @@
                                                         </button>
 
                                                         <!-- Lien de réinitialisation à envoyer à l'utilisateur -->
-                                                        <form method="POST" action="{{ route('admin.users.password-reset-link', $user) }}" class="d-inline">
-                                                            @csrf
-                                                            <button type="submit" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0.5" style="font-size:11px;" title="Générer un lien pour que l'utilisateur définisse lui-même son mot de passe">
-                                                                🔗 Lien
-                                                            </button>
-                                                        </form>
+                                                        <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-0.5 js-generate-reset-link" style="font-size:11px;" data-url="{{ route('admin.users.password-reset-link', $user) }}" title="Générer un lien pour que l'utilisateur définisse lui-même son mot de passe">
+                                                            🔗 Lien
+                                                        </button>
 
                                                         <!-- Activer / Désactiver Premium -->
                                                         @if(! $user->is_platform_admin && ! ($user->is_accountant ?? false))
@@ -535,6 +532,49 @@
             });
         });
     })();
+
+    document.querySelectorAll('.js-generate-reset-link').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const url = btn.getAttribute('data-url');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '...';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken || '',
+                },
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (data.ok && data.url) {
+                        window.prompt(
+                            'Lien de réinitialisation pour ' + data.user_name + ' (' + data.user_email + ') — copiez-le (Ctrl+C) puis Annuler :',
+                            data.url
+                        );
+                    } else {
+                        alert('Réponse inattendue du serveur : ' + JSON.stringify(data));
+                    }
+                })
+                .catch(function (err) {
+                    alert('Échec de la génération du lien : ' + err.message + '\n\nOuvrez la console (F12) pour plus de détails.');
+                    console.error('Erreur génération lien reset password:', err);
+                })
+                .finally(function () {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                });
+        });
+    });
 
     function filterEnterprises(query) {
         const q = query.toLowerCase().trim();

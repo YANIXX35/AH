@@ -24,6 +24,22 @@ class AdminPasswordResetLinkTest extends TestCase
         $this->assertDatabaseCount('admin_password_reset_links', 1);
     }
 
+    public function test_an_admin_can_generate_a_reset_link_via_ajax_and_gets_json_back(): void
+    {
+        $admin = User::factory()->create(['is_platform_admin' => true]);
+        $target = User::factory()->create(['name' => 'Client JSON', 'email' => 'client-json@example.com']);
+
+        $response = $this->actingAs($admin)->postJson(route('admin.users.password-reset-link', $target));
+
+        $response->assertOk();
+        $response->assertJson([
+            'ok' => true,
+            'user_name' => 'Client JSON',
+            'user_email' => 'client-json@example.com',
+        ]);
+        $response->assertJsonStructure(['url']);
+    }
+
     public function test_a_non_admin_cannot_generate_a_reset_link(): void
     {
         $user = User::factory()->create();

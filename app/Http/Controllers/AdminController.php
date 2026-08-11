@@ -996,7 +996,7 @@ class AdminController extends Controller
      * par une modification manuelle par l'admin. À transmettre par le canal
      * de son choix (WhatsApp, SMS, en main propre).
      */
-    public function generatePasswordResetLink(Request $request, User $user): RedirectResponse
+    public function generatePasswordResetLink(Request $request, User $user): RedirectResponse|JsonResponse
     {
         $token = AdminPasswordResetLink::generateFor($user, $request->user()?->id, 60);
         $url = route('password.reset-link.show', ['token' => $token]);
@@ -1011,6 +1011,15 @@ class AdminController extends Controller
             ['route' => 'admin.users.password-reset-link'],
             $request
         );
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'url' => $url,
+                'user_name' => $user->name,
+                'user_email' => $user->email,
+            ]);
+        }
 
         return back()->with('passwordResetLink', $url)->with('passwordResetLinkUserId', $user->id);
     }
