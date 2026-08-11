@@ -203,6 +203,13 @@ class AccountingController extends Controller
                 $q->where('numero_compte', 'like', "%{$search}%")
                     ->orWhere('libelle_compte', 'like', "%{$search}%");
             });
+
+            // Les comptes dont le numéro COMMENCE par la recherche sont ceux que
+            // l'utilisateur vise en tapant un code (ex. "64" -> classe 64, ses
+            // divisionnaires 641../647..). Sans ça, un simple "contient" (164,
+            // 1664000, 564...) les noyait alphabétiquement avant les vrais
+            // résultats pertinents.
+            $query->orderByRaw("case when numero_compte like ? then 0 else 1 end", ["{$search}%"]);
         }
 
         $accounts = $query->orderBy('numero_compte')
