@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CommercialController extends Controller
 {
@@ -395,7 +396,7 @@ class CommercialController extends Controller
      * un administrateur, on le dit clairement au lieu de rediriger silencieusement
      * vers une autre page comme le faisait l'ancien bouton.
      */
-    public function downloadGuide(string $slug): RedirectResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function downloadGuide(string $slug): RedirectResponse|BinaryFileResponse
     {
         $guides = [
             'bilan-syscohada' => ['file' => 'guide-1-bilan-syscohada.pdf', 'label' => 'Guide 1 : Réussir son Bilan SYSCOHADA Révisé'],
@@ -444,7 +445,7 @@ class CommercialController extends Controller
     public function storeDocument(Request $request): RedirectResponse
     {
         $request->validate([
-            'document_file' => ['required', 'file', 'max:20480'],
+            'document_file' => ['required', 'file', 'max:20480', 'mimes:pdf,doc,docx,xls,xlsx,csv,json,png,jpg,jpeg,txt,xml,log'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 

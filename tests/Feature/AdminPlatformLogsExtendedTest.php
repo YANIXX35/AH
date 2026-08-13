@@ -3,10 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\PaymentTransaction;
-use App\Models\PlanComptableAccount;
 use App\Models\PlanComptableImport;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class AdminPlatformLogsExtendedTest extends TestCase
@@ -32,7 +32,7 @@ class AdminPlatformLogsExtendedTest extends TestCase
         $admin = User::factory()->create(['is_platform_admin' => true]);
 
         $csv = "Classe;Compte;Intitulé\n1;10;CAPITAL TEST\n";
-        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('plan.csv', $csv);
+        $file = UploadedFile::fake()->createWithContent('plan.csv', $csv);
         $this->actingAs($admin)->post('/admin/plan-comptable/upload', ['plan_file' => $file]);
 
         $response = $this->actingAs($admin)->get('/admin/platform-logs?module=admin');

@@ -11,6 +11,8 @@ use App\Models\PlanComptableAccount;
 use App\Models\PlanComptableDefault;
 use App\Models\PlanComptableImport;
 use App\Models\TreasuryTransaction;
+use App\Models\User;
+use App\Services\AdminAuditTrailService;
 use App\Services\BceaoLiasseService;
 use App\Services\OcrPipelineService;
 use App\Services\OcrService;
@@ -114,7 +116,7 @@ class AccountingController extends Controller
             'document_reference' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'attachment' => ['nullable', 'file', 'max:51200'],
+            'attachment' => ['nullable', 'file', 'max:51200', 'mimes:pdf,jpg,jpeg,png,xlsx,xls,doc,docx,zip'],
             'debit_account' => ['required', 'string', 'max:255'],
             'credit_account' => ['required', 'string', 'max:255'],
         ]);
@@ -210,7 +212,7 @@ class AccountingController extends Controller
             // divisionnaires 641../647..). Sans ça, un simple "contient" (164,
             // 1664000, 564...) les noyait alphabétiquement avant les vrais
             // résultats pertinents.
-            $query->orderByRaw("case when numero_compte like ? then 0 else 1 end", ["{$search}%"]);
+            $query->orderByRaw('case when numero_compte like ? then 0 else 1 end', ["{$search}%"]);
         }
 
         // Quand une classe est sélectionnée (ex. "Cl. 6"), l'utilisateur veut
@@ -278,7 +280,7 @@ class AccountingController extends Controller
             'document_reference' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'attachment' => ['nullable', 'file', 'max:51200'],
+            'attachment' => ['nullable', 'file', 'max:51200', 'mimes:pdf,jpg,jpeg,png,xlsx,xls,doc,docx,zip'],
             'remove_attachment' => ['nullable', 'boolean'],
             'debit_account' => ['required', 'string', 'max:255'],
             'credit_account' => ['required', 'string', 'max:255'],
@@ -896,7 +898,7 @@ class AccountingController extends Controller
     public function uploadPlanComptable(Request $request)
     {
         $request->validate([
-            'plan_comptable' => ['required', 'file', 'max:51200'],
+            'plan_comptable' => ['required', 'file', 'max:51200', 'mimes:xls,xlsx,csv,pdf'],
         ], [
             'plan_comptable.required' => 'Veuillez choisir un fichier à importer.',
             'plan_comptable.file' => 'Le fichier soumis est invalide.',
@@ -1096,9 +1098,9 @@ class AccountingController extends Controller
     {
         $accounts = PlanComptableDefault::orderBy('classe')->orderBy('numero_compte')->get();
 
-        app(\App\Services\AdminAuditTrailService::class)->log(
+        app(AdminAuditTrailService::class)->log(
             'plan_comptable.template_downloaded',
-            \App\Models\User::class,
+            User::class,
             Auth::id(),
             Auth::id(),
             null,
@@ -1141,46 +1143,6 @@ class AccountingController extends Controller
             'Pragma' => 'no-cache',
             'Expires' => '0',
         ]);
-    }
-
-    public function analyzeSyscohadaFile()
-    {
-        $filePath = base_path('Doc_comptabilite/modele_syscohada_PLAN COMPLET + LIASSE BCEAO_5.xlsx');
-        if (! file_exists($filePath)) {
-            return response()->json(['error' => 'Fichier introuvable', 'path' => $filePath], 404);
-        }
-
-        $spreadsheet = IOFactory::load($filePath);
-        $result = [];
-
-        foreach ($spreadsheet->getAllSheets() as $sheetIndex => $sheet) {
-            $sheetName = $sheet->getTitle();
-            $highestRow = $sheet->getHighestRow();
-            $highestCol = $sheet->getHighestColumn();
-
-            $rows = [];
-            $maxRowsToShow = 50;
-
-            for ($row = 1; $row <= min($highestRow, $maxRowsToShow); $row++) {
-                $cells = [];
-                for ($col = 'A'; $col <= $highestCol; $col++) {
-                    $cellValue = $sheet->getCell($col.$row)->getValue();
-                    $cells[] = mb_substr(trim((string) $cellValue), 0, 100);
-                }
-                $rows[] = $cells;
-            }
-
-            $result[] = [
-                'name' => $sheetName,
-                'index' => $sheetIndex,
-                'dimensions' => "{$highestCol} x {$highestRow}",
-                'rows' => $rows,
-                'total_rows' => $highestRow,
-                'total_cols' => $highestCol,
-            ];
-        }
-
-        return response()->json($result);
     }
 
     private function parsePlanComptableUniversal(string $path): array
@@ -2584,7 +2546,7 @@ class AccountingController extends Controller
     {
         $request->validate([
             'documents' => ['required', 'array', 'min:1'],
-            'documents.*' => ['file', 'max:51200'],
+            'documents.*' => ['file', 'max:51200', 'mimes:pdf,jpg,jpeg,png,xls,xlsx,csv'],
         ], [
             'documents.required' => 'Veuillez sélectionner au moins un document.',
             'documents.array' => 'Le lot de documents envoyé est invalide.',
@@ -2810,7 +2772,7 @@ class AccountingController extends Controller
     public function uploadDocumentForEntryPrefill(Request $request)
     {
         $request->validate([
-            'document' => ['required', 'file', 'max:51200'],
+            'document' => ['required', 'file', 'max:51200', 'mimes:pdf,jpg,jpeg,png,xlsx,xls,doc,docx,zip'],
         ], [
             'document.required' => 'Veuillez sélectionner un fichier.',
             'document.max' => 'Fichier trop volumineux. Taille maximale : 50 Mo.',

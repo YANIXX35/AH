@@ -64,6 +64,9 @@
                 <a href="{{ route('treasury.forecast') }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-dark">
                     <i data-feather="trending-up" class="me-1" style="width:14px; height:14px;"></i> Prévisions
                 </a>
+                <a href="{{ route('treasury.export.csv') }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-dark">
+                    <i data-feather="download" class="me-1" style="width:14px; height:14px;"></i> Exporter CSV
+                </a>
             </div>
         </div>
 

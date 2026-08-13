@@ -24,7 +24,7 @@ class PlanComptableTemplateDownloadTest extends TestCase
         $this->assertStringContainsString('101,Capital social', $clean);
         // L'ancien fichier statique associait le compte 10 au mauvais libellé.
         $this->assertStringNotContainsString('10,Capital et réserves', $clean);
-        $this->assertStringNotContainsString('102,' . "Primes d'émission", $clean);
+        $this->assertStringNotContainsString('102,'."Primes d'émission", $clean);
 
         $lineCount = substr_count($content, "\n");
         $this->assertGreaterThan(1400, $lineCount);

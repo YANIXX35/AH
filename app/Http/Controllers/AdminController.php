@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AdminUpdateUserRequest;
 use App\Models\AccountingDocument;
-use App\Models\AdminPasswordResetLink;
 use App\Models\AccountingEntry;
+use App\Models\AdminPasswordResetLink;
 use App\Models\EnterpriseLicense;
 use App\Models\InvestmentRequest;
 use App\Models\MenuActionLog;
@@ -364,7 +364,7 @@ class AdminController extends Controller
                     'severity' => $ticket->status === SupportTicket::STATUS_OPEN ? 'warning' : 'info',
                     'title' => 'Ticket support '.$ticket->status,
                     'detail' => '#'.$ticket->id.' · '.($ticket->subject ?: 'Sans objet').' · '.($ticket->user?->email ?? 'n/a'),
-                    'url' => route('support.tickets.show', $ticket),
+                    'url' => route('admin.support.tickets.show', $ticket),
                 ];
             });
 
@@ -969,7 +969,7 @@ class AdminController extends Controller
     public function resetPassword(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
-            'password' => ['required', 'string', 'min:6'],
+            'password' => ['required', 'string', 'min:8'],
         ]);
 
         $user->update([

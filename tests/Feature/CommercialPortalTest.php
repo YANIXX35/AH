@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CommercialPortalTest extends TestCase
@@ -114,7 +115,7 @@ class CommercialPortalTest extends TestCase
 
     public function test_commercial_can_create_client_with_pdf_attestation(): void
     {
-        \Illuminate\Support\Facades\Storage::fake('public');
+        Storage::fake('public');
 
         $commercial = User::factory()->create(['role_key' => 'commercial']);
 
@@ -122,7 +123,7 @@ class CommercialPortalTest extends TestCase
             'name' => 'Client PDF',
             'email' => 'client-pdf@sitiame.ci',
             'company_name' => 'Client PDF SAS',
-            'company_logo' => \Illuminate\Http\UploadedFile::fake()->create('attestation-dfe.pdf', 200, 'application/pdf'),
+            'company_logo' => UploadedFile::fake()->create('attestation-dfe.pdf', 200, 'application/pdf'),
         ]);
 
         $response->assertSessionHasNoErrors();
@@ -130,7 +131,7 @@ class CommercialPortalTest extends TestCase
         $client = User::where('email', 'client-pdf@sitiame.ci')->first();
         $this->assertNotNull($client);
         $this->assertNotNull($client->company_logo);
-        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($client->company_logo);
+        Storage::disk('public')->assertExists($client->company_logo);
     }
 
     public function test_commercial_can_update_their_client(): void

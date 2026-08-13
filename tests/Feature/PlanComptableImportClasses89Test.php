@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\PlanComptableAccount;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;

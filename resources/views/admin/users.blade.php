@@ -491,7 +491,7 @@
                             </p>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold small">Nouveau mot de passe</label>
-                                <input type="text" name="password" id="pwdInput{{ $user->id }}" class="form-control form-control-sm rounded-3" placeholder="Saisissez ou générez un mot de passe" required minlength="6" value="12345678">
+                                <input type="text" name="password" id="pwdInput{{ $user->id }}" class="form-control form-control-sm rounded-3" placeholder="Saisissez ou générez un mot de passe" required minlength="8" value="12345678">
                             </div>
                             <div class="d-flex gap-2">
                                 <button type="button" class="btn btn-xs btn-light border rounded-pill px-3" onclick="document.getElementById('pwdInput{{ $user->id }}').value='12345678';">

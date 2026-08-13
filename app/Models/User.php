@@ -273,6 +273,15 @@ class User extends Authenticatable
             'analyst' => in_array($module, ['dashboard', 'investor', 'support'], true),
             'viewer' => in_array($module, ['dashboard'], true),
             'commercial' => in_array($module, ['dashboard', 'clients_management', 'support'], true),
+            // Le superviseur commercial a son propre portail dédié
+            // (/commercial-supervisor, middleware commercial.supervisor) et n'a
+            // aucune raison légitime d'accéder aux modules métier (comptabilité,
+            // trésorerie, stock...). Sans ce cas explicite, un role_key inconnu
+            // du match retombait sur `default => true` et lui ouvrait tous les
+            // modules — un comportement fail-open, correct uniquement pour les
+            // comptes PME propriétaires (role_key = null) auxquels `default`
+            // continue de s'appliquer.
+            'commercial_supervisor' => false,
             default => true,
         };
     }

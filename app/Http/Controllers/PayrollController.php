@@ -151,39 +151,36 @@ class PayrollController extends Controller
 
         DB::transaction(function () use ($payroll, $user) {
             // 1. Écriture Comptable SYSCOHADA
-            try {
-                $entry = AccountingEntry::create([
-                    'user_id' => $user->id,
-                    'entry_date' => $payroll->payment_date,
-                    'piece_number' => 'PAIE-'.str_pad($payroll->id, 5, '0', STR_PAD_LEFT),
-                    'label' => 'Paie du personnel — '.$payroll->title,
-                    'debit_account' => '661100', // Rémunérations directes
-                    'credit_account' => '421100', // Personnel - Rémunérations dues
-                    'amount' => $payroll->total_gross > 0 ? $payroll->total_gross : $payroll->total_net,
-                    'status' => 'validated',
-                ]);
-                $payroll->accounting_entry_id = $entry->id;
-            } catch (\Throwable $e) {
-                // Ignore if accounting tables not available
-            }
+            // Comptes vérifiés dans le référentiel SYSCOHADA actuel (post-remplacement
+            // du plan comptable) : 661 "Rémunérations directes versées au personnel
+            // national" et 422 "Personnel, rémunérations dues" sont tous deux des
+            // comptes divisionnaires (postables), pas des comptes de regroupement.
+            $entry = AccountingEntry::create([
+                'user_id' => $user->id,
+                'date' => $payroll->payment_date,
+                'document_type' => 'Paie',
+                'document_reference' => 'PAIE-'.str_pad($payroll->id, 5, '0', STR_PAD_LEFT),
+                'description' => 'Paie du personnel — '.$payroll->title,
+                'debit_account' => '661 Rémunérations directes versées au personnel national',
+                'credit_account' => '422 Personnel, rémunérations dues',
+                'amount' => $payroll->total_gross > 0 ? $payroll->total_gross : $payroll->total_net,
+            ]);
+            $payroll->accounting_entry_id = $entry->id;
 
             // 2. Décaissement Trésorerie
-            try {
-                $tx = TreasuryTransaction::create([
-                    'user_id' => $user->id,
-                    'transaction_date' => $payroll->payment_date,
-                    'type' => 'expense',
-                    'category' => 'salaries',
-                    'amount' => $payroll->total_net,
-                    'payment_method' => $payroll->payment_method,
-                    'reference' => 'PAYROLL-'.$payroll->id,
-                    'description' => 'Virement Salaires — '.$payroll->title,
-                    'reconciled' => true,
-                ]);
-                $payroll->treasury_transaction_id = $tx->id;
-            } catch (\Throwable $e) {
-                // Ignore if treasury table not available
-            }
+            $tx = TreasuryTransaction::create([
+                'user_id' => $user->id,
+                'actor_user_id' => $user->id,
+                'transaction_date' => $payroll->payment_date,
+                'type' => 'decaissement',
+                'transaction_type' => 'Paiement salaires',
+                'amount' => $payroll->total_net,
+                'reference' => 'PAYROLL-'.$payroll->id,
+                'description' => 'Virement Salaires — '.$payroll->title.' ('.$payroll->payment_method.')',
+                'bank_account' => $payroll->payment_account,
+                'status' => 'effectue',
+            ]);
+            $payroll->treasury_transaction_id = $tx->id;
 
             $payroll->status = 'synced';
             $payroll->synced_at = now();

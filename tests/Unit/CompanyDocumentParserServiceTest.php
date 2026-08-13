@@ -23,7 +23,7 @@ class CompanyDocumentParserServiceTest extends TestCase
             ."Raison sociale: Ivoire Agro SARL\n"
             ."NIF: CI-2026-12345\n"
             ."Ville: Abidjan\n"
-            ."Email de contact: jean@ivoireagro.ci";
+            .'Email de contact: jean@ivoireagro.ci';
 
         $fields = $this->parser->extractFieldsFromText($text);
 

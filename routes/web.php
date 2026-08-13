@@ -219,6 +219,13 @@ Route::middleware('auth')->group(function () {
     })->name('profile.update');
 
     Route::post('/profile/subscription/simulate', function (Request $request) {
+        // Réservé au développement local : sans ce garde-fou, n'importe quel
+        // utilisateur authentifié pouvait s'auto-attribuer le Premium Enterprise
+        // (jusqu'à 365 jours) en appelant directement cette route, contournant
+        // entièrement le paiement CinetPay. Même garde-fou déjà utilisé pour la
+        // simulation de retour de paiement CinetPay (voir CinetPayController).
+        abort_unless(app()->environment(['local', 'testing']), 404);
+
         $user = $request->user();
         if ($user->is_platform_admin) {
             return back()->withErrors([
@@ -543,11 +550,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/accounting/liasse-bceao/pdf/view', [AccountingController::class, 'viewLiasseBceaoPdf'])->name('accounting.liasse-bceao.pdf.view');
     });
 
-    Route::get('/accounting/analyze-syscohada', [AccountingController::class, 'analyzeSyscohadaFile'])->name('accounting.analyze-syscohada');
-
     Route::middleware('module.permission:treasury')->group(function () {
         Route::redirect('/treasury', '/treasury/tracking')->name('treasury.index');
         Route::get('/treasury/tracking', [TreasuryController::class, 'tracking'])->name('treasury.tracking');
+        Route::get('/treasury/export.csv', [TreasuryController::class, 'exportCsv'])->name('treasury.export.csv');
         Route::get('/treasury/dashboard-crypto', [TreasuryController::class, 'dashboardCrypto'])->name('treasury.dashboard-crypto');
         Route::get('/treasury/balance', [TreasuryController::class, 'balance'])->name('treasury.balance');
         Route::get('/treasury/forecast', [TreasuryController::class, 'forecast'])->name('treasury.forecast');
