@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CommercialProspection extends Model
 {
@@ -104,6 +107,25 @@ class CommercialProspection extends Model
     public function isEditable(): bool
     {
         return in_array($this->status, [self::STATUS_DRAFT, self::STATUS_NEEDS_REVISION], true);
+    }
+
+    /**
+     * Réponse de téléchargement du fichier joint, servie directement par Laravel
+     * (via le disque configuré) plutôt qu'en laissant le navigateur requêter
+     * l'URL publique /storage/... directement — évite toute dépendance à ce que
+     * le lien symbolique public/storage soit correctement configuré sur
+     * l'hébergement, et permet un contrôle d'accès (authorize('view', ...) côté
+     * contrôleur) que l'URL publique ne permettait pas.
+     */
+    public function downloadResponse(): StreamedResponse|Response
+    {
+        abort_unless($this->hasFile(), 404, 'Aucun fichier associé à cette prospection.');
+
+        $disk = Storage::disk('public');
+
+        abort_unless($disk->exists($this->file_path), 404, 'Le fichier associé à cette prospection est introuvable sur le serveur.');
+
+        return $disk->download($this->file_path, $this->file_name);
     }
 
     public function getFormattedFileSizeAttribute(): ?string

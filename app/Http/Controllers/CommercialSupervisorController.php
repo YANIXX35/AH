@@ -101,6 +101,13 @@ class CommercialSupervisorController extends Controller
         return view('commercial-supervisor.prospection-show', compact('prospection'));
     }
 
+    public function downloadProspectionFile(CommercialProspection $prospection)
+    {
+        $this->authorize('view', $prospection);
+
+        return $prospection->downloadResponse();
+    }
+
     public function exportCsv(): Response
     {
         $csv = $this->overview->buildPerformanceCsv();

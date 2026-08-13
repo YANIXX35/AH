@@ -420,6 +420,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/users/{user}/password-reset-link', [AdminController::class, 'generatePasswordResetLink'])->name('users.password-reset-link');
         Route::get('/prospections', [AdminProspectionController::class, 'index'])->name('prospections.index');
         Route::get('/prospections/{prospection}', [AdminProspectionController::class, 'show'])->name('prospections.show');
+        Route::get('/prospections/{prospection}/download', [AdminProspectionController::class, 'download'])->name('prospections.download');
         Route::post('/prospections/{prospection}/approve', [AdminProspectionController::class, 'approve'])->name('prospections.approve');
         Route::post('/prospections/{prospection}/request-revision', [AdminProspectionController::class, 'requestRevision'])->name('prospections.request-revision');
         Route::post('/prospections/{prospection}/reject', [AdminProspectionController::class, 'reject'])->name('prospections.reject');
@@ -655,6 +656,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/prospections/create', [CommercialProspectionController::class, 'create'])->name('prospections.create');
         Route::post('/prospections', [CommercialProspectionController::class, 'store'])->name('prospections.store');
         Route::get('/prospections/{prospection}', [CommercialProspectionController::class, 'show'])->name('prospections.show');
+        Route::get('/prospections/{prospection}/download', [CommercialProspectionController::class, 'download'])->name('prospections.download');
         Route::get('/prospections/{prospection}/edit', [CommercialProspectionController::class, 'edit'])->name('prospections.edit');
         Route::put('/prospections/{prospection}', [CommercialProspectionController::class, 'update'])->name('prospections.update');
         Route::delete('/prospections/{prospection}', [CommercialProspectionController::class, 'destroy'])->name('prospections.destroy');
@@ -667,6 +669,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/prospects', [CommercialSupervisorController::class, 'prospects'])->name('prospects.index');
         Route::get('/prospections', [CommercialSupervisorController::class, 'prospections'])->name('prospections.index');
         Route::get('/prospections/{prospection}', [CommercialSupervisorController::class, 'showProspection'])->name('prospections.show');
+        Route::get('/prospections/{prospection}/download', [CommercialSupervisorController::class, 'downloadProspectionFile'])->name('prospections.download');
         Route::get('/{commercial}', [CommercialSupervisorController::class, 'showCommercial'])->name('commercial.show');
     });
 

@@ -63,6 +63,13 @@ class CommercialProspectionController extends Controller
         return view('commercial.prospections.show', compact('prospection'));
     }
 
+    public function download(CommercialProspection $prospection)
+    {
+        $this->authorize('view', $prospection);
+
+        return $prospection->downloadResponse();
+    }
+
     public function edit(CommercialProspection $prospection): View
     {
         $this->authorize('update', $prospection);

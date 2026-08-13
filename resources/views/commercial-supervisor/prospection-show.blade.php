@@ -54,7 +54,7 @@
                             <div class="fw-semibold">{{ $prospection->file_name }}</div>
                             <div class="text-muted small">{{ $prospection->formatted_file_size }}</div>
                         </div>
-                        <a href="{{ asset('storage/' . $prospection->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">Télécharger / Ouvrir</a>
+                        <a href="{{ route('commercial-supervisor.prospections.download', $prospection) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">Télécharger</a>
                     </div>
                 @endif
             </div>

@@ -80,6 +80,11 @@ class AdminProspectionController extends Controller
         return view('admin.prospections.show', compact('prospection'));
     }
 
+    public function download(CommercialProspection $prospection)
+    {
+        return $prospection->downloadResponse();
+    }
+
     public function approve(Request $request, CommercialProspection $prospection): RedirectResponse
     {
         return $this->review($request, $prospection, CommercialProspection::STATUS_APPROVED, 'validée');
