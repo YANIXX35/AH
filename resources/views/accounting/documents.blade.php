@@ -166,7 +166,7 @@
                                 <input type="file" name="documents[]" id="documents" class="form-control @error('documents') is-invalid @enderror" multiple accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv,image/*" style="cursor: pointer;" />
                                 @error('documents')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                 @error('documents.*')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                <div class="form-text">Formats autorisés : PDF, JPG, PNG, XLS, XLSX, CSV · Taille max application : 20 MB · Les PDF/images sont traités localement avec PaddleOCR, en GPU si disponible sinon en CPU.</div>
+                                <div class="form-text">Formats autorisés : PDF, JPG, PNG, XLS, XLSX, CSV · Taille max application : 20 MB · Les PDF/images sont analysés via le service OCR.space.</div>
                             </div>
                         </div>
                         <div class="mb-3">

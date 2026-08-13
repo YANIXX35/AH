@@ -85,7 +85,7 @@
                     @php($ocrPrimary = $document->extracted_data['ocr_detected_fields']['primary'] ?? [])
                     @if(!empty($document->extracted_data['ocr_review_required']))
                         <div class="alert alert-warning py-2">
-                            OCR local PaddleOCR : relecture manuelle recommandée avant validation finale.
+                            OCR via OCR.space : relecture manuelle recommandée avant validation finale.
                         </div>
                     @endif
                     <form action="{{ route('accounting.documents.validate.store', $document) }}" method="POST">

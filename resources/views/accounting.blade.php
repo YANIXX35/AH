@@ -661,7 +661,7 @@
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                         <div>
                             <h6 class="mb-1"><i data-feather="upload" class="me-1"></i>Import rapide: uniquement le document</h6>
-                            <p class="text-muted mb-0 small">Dépose le justificatif (PDF/Image/Excel/CSV), puis le système extrait les données OCR pour créer les écritures et les mouvements bancaires après validation. Les PDF et images sont analysés localement avec PaddleOCR, avec fallback CPU si le GPU n’est pas disponible.</p>
+                            <p class="text-muted mb-0 small">Dépose le justificatif (PDF/Image/Excel/CSV), puis le système extrait les données OCR pour créer les écritures et les mouvements bancaires après validation. Les PDF et images sont analysés via le service OCR.space.</p>
                         </div>
                         <form action="{{ route('accounting.documents.upload') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row align-items-stretch gap-2">
                             @csrf
