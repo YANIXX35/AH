@@ -27,3 +27,8 @@ Thumbs.db
 /google/
 signing.keystore
 signing-key-info.txt
+
+# Ne jamais committer de base de données locale (contient de vraies données/identifiants)
+*.sqlite
+*.sqlite3
+/sitiame_capital
