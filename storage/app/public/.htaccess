@@ -1,0 +1,27 @@
+# Ce dossier contient des fichiers uploadés par les utilisateurs (pièces
+# jointes, documents, plan comptable...) et est servi publiquement via le lien
+# symbolique public/storage — les téléchargements normaux (PDF, images,
+# Office...) doivent continuer à fonctionner. On bloque uniquement
+# l'exécution/le service de fichiers de script, qui n'ont jamais de raison
+# légitime de se trouver ici, pour empêcher qu'un fichier malveillant uploadé
+# sous une extension autorisée mais mal filtrée ne soit exécuté ou interprété
+# par le serveur.
+<FilesMatch "\.(php|php3|php4|php5|php7|php8|phtml|phar|pht|cgi|pl|py|sh|exe|dll)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
