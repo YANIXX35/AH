@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Http;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
@@ -74,20 +75,20 @@ class OcrService
                 ];
             }
 
-            $maxFileSizeKb = (int) config('services.paddle_ocr.max_file_size_kb', 20480);
+            $maxFileSizeKb = (int) config('services.ocr_space.max_file_size_kb', 1024);
             $fileSizeBytes = filesize($fullPath) ?: 0;
             if ($maxFileSizeKb > 0 && $fileSizeBytes > ($maxFileSizeKb * 1024)) {
                 return [
                     'success' => false,
-                    'message' => "Fichier trop volumineux pour la configuration OCR locale actuelle (max {$maxFileSizeKb} KB).",
+                    'message' => "Fichier trop volumineux pour l'OCR (max {$maxFileSizeKb} KB).",
                     'text' => '',
-                    'error_code' => 'LOCAL_OCR_FILE_TOO_LARGE',
+                    'error_code' => 'OCR_FILE_TOO_LARGE',
                     'error_location' => basename($fullPath),
                     'endpoint' => $this->endpoint(),
                 ];
             }
 
-            return $this->runLocalPaddleOcr($fullPath);
+            return $this->callOcrSpace($fullPath, $mimeType);
         } catch (\Exception $e) {
             return [
                 'success' => false,
@@ -102,7 +103,124 @@ class OcrService
 
     private function endpoint(): string
     {
-        return 'local_paddleocr_runner';
+        return 'ocr_space_api';
+    }
+
+    /**
+     * Envoie le fichier à l'API cloud OCR.space pour extraction de texte.
+     * Ne nécessite aucune dépendance serveur (Python, GPU...) — un simple appel
+     * HTTP sortant, ce qui fonctionne sur n'importe quel hébergement, y compris
+     * mutualisé. Remplace l'ancien moteur PaddleOCR local, qui nécessitait un
+     * environnement Python indisponible sur l'hébergement de production actuel.
+     */
+    private function callOcrSpace(string $fullPath, string $mimeType): array
+    {
+        $apiKey = trim((string) config('services.ocr_space.api_key', ''));
+        if ($apiKey === '') {
+            return [
+                'success' => false,
+                'message' => 'Clé API OCR.space manquante. Renseignez OCR_SPACE_API_KEY.',
+                'text' => '',
+                'error_code' => 'OCR_SPACE_CONFIG_MISSING',
+                'error_location' => 'config/services.php',
+                'endpoint' => $this->endpoint(),
+            ];
+        }
+
+        $endpoint = (string) config('services.ocr_space.endpoint', 'https://api.ocr.space/parse/image');
+        $timeout = max(5, (int) config('services.ocr_space.timeout', 60));
+        $fileType = match ($mimeType) {
+            'application/pdf' => 'PDF',
+            'image/png' => 'PNG',
+            default => 'JPG',
+        };
+
+        try {
+            $response = Http::timeout($timeout)
+                ->attach('file', fopen($fullPath, 'rb'), basename($fullPath))
+                ->asMultipart()
+                ->post($endpoint, [
+                    ['name' => 'apikey', 'contents' => $apiKey],
+                    ['name' => 'filetype', 'contents' => $fileType],
+                    ['name' => 'language', 'contents' => (string) config('services.ocr_space.language', 'fre')],
+                    ['name' => 'OCREngine', 'contents' => (string) config('services.ocr_space.engine', 2)],
+                    ['name' => 'isTable', 'contents' => $this->toBooleanString((bool) config('services.ocr_space.is_table', true))],
+                    ['name' => 'scale', 'contents' => $this->toBooleanString((bool) config('services.ocr_space.scale', true))],
+                    ['name' => 'detectOrientation', 'contents' => $this->toBooleanString((bool) config('services.ocr_space.detect_orientation', true))],
+                    ['name' => 'isOverlayRequired', 'contents' => 'false'],
+                ]);
+        } catch (\Throwable $exception) {
+            return [
+                'success' => false,
+                'message' => 'Impossible de contacter le service OCR.space: '.$exception->getMessage(),
+                'text' => '',
+                'error_code' => 'OCR_SPACE_HTTP_ERROR',
+                'error_location' => $endpoint,
+                'endpoint' => $this->endpoint(),
+            ];
+        }
+
+        if ($response->failed()) {
+            return [
+                'success' => false,
+                'message' => 'Le service OCR.space a répondu avec une erreur HTTP '.$response->status().'.',
+                'text' => '',
+                'error_code' => 'OCR_SPACE_HTTP_'.$response->status(),
+                'error_location' => $endpoint,
+                'endpoint' => $this->endpoint(),
+                'raw_response' => ['body' => $response->body()],
+            ];
+        }
+
+        $result = $response->json();
+        if (! is_array($result)) {
+            return [
+                'success' => false,
+                'message' => 'Le service OCR.space a renvoyé une réponse invalide.',
+                'text' => '',
+                'error_code' => 'OCR_SPACE_INVALID_JSON',
+                'error_location' => $endpoint,
+                'endpoint' => $this->endpoint(),
+                'raw_response' => ['body' => $response->body()],
+            ];
+        }
+
+        if ((bool) ($result['IsErroredOnProcessing'] ?? false)) {
+            $errorMessage = $result['ErrorMessage'] ?? $result['ErrorDetails'] ?? 'Erreur inconnue OCR.space.';
+            $errorMessage = is_array($errorMessage) ? implode(' ', $errorMessage) : (string) $errorMessage;
+
+            return [
+                'success' => false,
+                'message' => 'Erreur OCR.space: '.$errorMessage,
+                'text' => '',
+                'error_code' => 'OCR_SPACE_PROCESSING_ERROR',
+                'error_location' => $endpoint,
+                'endpoint' => $this->endpoint(),
+                'raw_response' => $result,
+            ];
+        }
+
+        $parsedText = $this->extractParsedText($result);
+        if ($parsedText === '') {
+            return [
+                'success' => false,
+                'message' => 'Aucun texte détecté par OCR.space.',
+                'text' => '',
+                'error_code' => 'OCR_SPACE_EMPTY_TEXT',
+                'error_location' => $fullPath,
+                'endpoint' => $this->endpoint(),
+                'raw_response' => $result,
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'OCR réalisé avec succès via OCR.space.',
+            'text' => $parsedText,
+            'confidence' => $this->estimateConfidence($result, $parsedText),
+            'endpoint' => $this->endpoint(),
+            'raw_response' => $result,
+        ];
     }
 
     private function runLocalPaddleOcr(string $fullPath): array
