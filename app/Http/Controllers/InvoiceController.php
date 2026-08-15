@@ -81,6 +81,12 @@ class InvoiceController extends Controller
             $validated['notes'] ?? null
         );
 
+        \App\Services\AnalyticsService::track('invoice_created', auth()->id(), [
+            'invoice_id' => $invoice->id,
+            'items_count' => count($validated['items']),
+            'amount_ttc' => $invoice->total_amount ?? null,
+        ]);
+
         return redirect()->route('invoicing.show', $invoice)
             ->with('success', 'Facture '.$invoice->invoice_number.' créée.');
     }

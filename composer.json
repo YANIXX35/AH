@@ -11,6 +11,7 @@
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "phpoffice/phpspreadsheet": "^5.5",
+        "posthog/posthog-php": "^4.13",
         "smalot/pdfparser": "^2.12",
         "stripe/stripe-php": "^20.0"
     },

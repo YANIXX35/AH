@@ -2628,6 +2628,13 @@ class AccountingController extends Controller
                 'compliance_rate' => (float) ($pipelineResult['compliance_rate'] ?? 0),
             ]);
 
+            \App\Services\AnalyticsService::track('document_ocr_imported', Auth::id(), [
+                'document_type' => $documentType,
+                'status' => $status,
+                'confidence' => $confidence,
+                'compliance_rate' => (float) ($pipelineResult['compliance_rate'] ?? 0),
+            ]);
+
             if ($status === 'validated') {
                 if ($this->createEntryFromAutoValidatedDocument($document)) {
                     $autoValidatedCount++;

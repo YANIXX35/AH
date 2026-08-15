@@ -91,6 +91,12 @@ class UserPremiumService
             $request
         );
 
+        \App\Services\AnalyticsService::track('premium_activated', $user->id, [
+            'source' => $source,
+            'days' => $days,
+            'previous_status' => $previousStatus,
+        ]);
+
         return $user->fresh();
     }
 

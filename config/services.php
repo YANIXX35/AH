@@ -128,4 +128,9 @@ return [
         'timeout' => (int) env('GEMINI_TIMEOUT', 45),
     ],
 
+    'posthog' => [
+        'key' => env('POSTHOG_KEY'),
+        'host' => env('POSTHOG_HOST', 'https://eu.i.posthog.com'),
+    ],
+
 ];

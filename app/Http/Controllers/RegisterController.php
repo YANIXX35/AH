@@ -171,6 +171,10 @@ class RegisterController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
+        \App\Services\AnalyticsService::track('user_registered', $user->id, [
+            'has_license_key' => ! empty($validated['license_key'] ?? null),
+        ]);
+
         $welcomeMailSent = true;
         try {
             Mail::to($user->email)->send(new AccountCreatedMail($user));
