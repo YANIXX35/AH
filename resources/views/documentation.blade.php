@@ -167,5 +167,7 @@
         </div>
         <p class="mt-10 border-t border-white/10 pt-8 text-center text-xs text-slate-500">SITIAME CAPITAL © {{ date('Y') }} · Tous droits réservés</p>
     </footer>
+
+    @include('partials.posthog')
 </body>
 </html>

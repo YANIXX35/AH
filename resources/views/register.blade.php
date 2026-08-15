@@ -314,5 +314,7 @@
             });
         }
     </script>
+
+    @include('partials.posthog')
 </body>
 </html>
