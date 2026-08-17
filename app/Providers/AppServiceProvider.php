@@ -14,6 +14,7 @@ use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Console\ServeCommand;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
@@ -46,6 +47,14 @@ class AppServiceProvider extends ServiceProvider
     {
         // Limite utf8mb4 pour les index uniques MySQL (varchar 255 → 191).
         Schema::defaultStringLength(191);
+
+        // Sans ça, ->links() rend la vue de pagination Tailwind par défaut de
+        // Laravel, dont les classes utilitaires (h-5 w-5...) n'existent pas
+        // dans cette app (Bootstrap 5 via AdminKit) — les flèches précédent/
+        // suivant s'affichent alors en SVG brut, sans aucune contrainte de
+        // taille (visible sur toute page paginée : signalements, backups,
+        // prospections...).
+        Paginator::useBootstrapFive();
 
         AppNotification::created(function (AppNotification $notification): void {
             $notification->loadMissing('user');
