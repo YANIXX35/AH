@@ -193,6 +193,11 @@
                                     <i class="align-middle" data-feather="plus-circle" style="width:14px;height:14px;"></i> <span class="align-middle">Ajouter Client / Entreprise</span>
                                 </a>
                             </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('accountant.change-requests.*') ? 'active' : '' }}" href="{{ route('accountant.change-requests.index') }}">
+                                    <i class="align-middle" data-feather="check-square" style="width:14px;height:14px;"></i> <span class="align-middle">Validation comptable</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </li>
@@ -241,6 +246,9 @@
                             </li>
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.compliance.accounting-quality.*') ? 'active' : '' }}" href="{{ route('admin.compliance.accounting-quality.index') }}">Qualité comptable</a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.compliance.change-requests.*') ? 'active' : '' }}" href="{{ route('admin.compliance.change-requests.index') }}">Validations comptables</a>
                             </li>
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.rbac.*') ? 'active' : '' }}" href="{{ route('admin.rbac.index') }}">RBAC rôles & permissions</a>

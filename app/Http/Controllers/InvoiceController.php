@@ -7,10 +7,12 @@ use App\Http\Controllers\Concerns\UsesClientWorkspace;
 use App\Models\Invoice;
 use App\Models\PlanComptableAccount;
 use App\Models\TreasuryTransaction;
+use App\Services\AccountingChangeApprovalService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -19,7 +21,15 @@ class InvoiceController extends Controller
 {
     use UsesClientWorkspace;
 
-    public function __construct(private readonly InvoiceService $invoiceService) {}
+    public function __construct(
+        private readonly InvoiceService $invoiceService,
+        private readonly AccountingChangeApprovalService $changeApproval
+    ) {}
+
+    private function invoiceLabel(Invoice $invoice): string
+    {
+        return 'Facture '.$invoice->invoice_number.' — '.$invoice->client_name.' ('.number_format((float) $invoice->total_amount, 0, ',', ' ').' FCFA)';
+    }
 
     public function index(Request $request): View
     {
@@ -174,6 +184,32 @@ class InvoiceController extends Controller
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
         ]);
 
+        if (! Auth::user()?->is_accountant) {
+            try {
+                $this->changeApproval->requestChange(
+                    $invoice,
+                    'update',
+                    $invoice->user_id,
+                    Auth::id(),
+                    $this->invoiceLabel($invoice),
+                    [
+                        'client_name' => $validated['client_name'],
+                        'client_contact' => $validated['client_contact'] ?? null,
+                        'client_address' => $validated['client_address'] ?? null,
+                        'client_tax_id' => $validated['client_tax_id'] ?? null,
+                        'due_date' => $validated['due_date'],
+                        'items' => $validated['items'],
+                        'tax_rate' => (float) ($validated['tax_rate'] ?? 0),
+                        'notes' => $validated['notes'] ?? null,
+                    ]
+                );
+            } catch (\RuntimeException $e) {
+                return back()->withErrors(['items' => $e->getMessage()])->withInput();
+            }
+
+            return redirect()->route('invoicing.show', $invoice)->with('success', 'Modification envoyée pour validation comptable.');
+        }
+
         try {
             $this->invoiceService->updateInvoice($invoice, [
                 'client_name' => $validated['client_name'],
@@ -200,6 +236,23 @@ class InvoiceController extends Controller
             'reason' => ['required', 'string', 'max:500'],
         ]);
 
+        if (! Auth::user()?->is_accountant) {
+            try {
+                $this->changeApproval->requestChange(
+                    $invoice,
+                    'cancel',
+                    $invoice->user_id,
+                    Auth::id(),
+                    $this->invoiceLabel($invoice),
+                    ['reason' => $validated['reason']]
+                );
+            } catch (\RuntimeException $e) {
+                return back()->withErrors(['reason' => $e->getMessage()]);
+            }
+
+            return back()->with('success', 'Annulation envoyée pour validation comptable.');
+        }
+
         try {
             $this->invoiceService->cancelInvoice($invoice, $validated['reason'], auth()->id());
         } catch (\InvalidArgumentException $e) {
@@ -212,6 +265,22 @@ class InvoiceController extends Controller
     public function destroy(Invoice $invoice): RedirectResponse
     {
         $this->authorizeInvoice($invoice);
+
+        if (! Auth::user()?->is_accountant) {
+            try {
+                $this->changeApproval->requestChange(
+                    $invoice,
+                    'delete',
+                    $invoice->user_id,
+                    Auth::id(),
+                    $this->invoiceLabel($invoice)
+                );
+            } catch (\RuntimeException $e) {
+                return back()->withErrors(['invoice' => $e->getMessage()]);
+            }
+
+            return redirect()->route('invoicing.index')->with('success', 'Suppression envoyée pour validation comptable.');
+        }
 
         try {
             $this->invoiceService->deleteInvoice($invoice, auth()->id());

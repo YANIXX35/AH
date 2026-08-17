@@ -383,6 +383,26 @@ class AccountingController extends Controller
             $field => $field === 'date' ? optional($entry->date)->toDateString() : $entry->{$field},
         ])->all();
 
+        if (! Auth::user()?->is_accountant) {
+            $validated['actor_user_id'] = Auth::id();
+            try {
+                app(\App\Services\AccountingChangeApprovalService::class)->requestChange(
+                    $entry,
+                    'update',
+                    $entry->user_id,
+                    Auth::id(),
+                    'Écriture du '.$entry->date->format('d/m/Y').' — '.$entry->description.' ('.number_format((float) $entry->amount, 0, ',', ' ').' FCFA)',
+                    $validated
+                );
+            } catch (\RuntimeException $e) {
+                return redirect()->route('accounting')->with('status', $e->getMessage());
+            }
+
+            return redirect()
+                ->route('accounting')
+                ->with('status', 'Modification envoyée pour validation comptable.');
+        }
+
         $validated['actor_user_id'] = Auth::id();
         $entry->update($validated);
 
@@ -423,6 +443,22 @@ class AccountingController extends Controller
     public function destroyEntry(AccountingEntry $entry)
     {
         $this->authorizeEntry($entry);
+
+        if (! Auth::user()?->is_accountant) {
+            try {
+                app(\App\Services\AccountingChangeApprovalService::class)->requestChange(
+                    $entry,
+                    'delete',
+                    $entry->user_id,
+                    Auth::id(),
+                    'Écriture du '.$entry->date->format('d/m/Y').' — '.$entry->description.' ('.number_format((float) $entry->amount, 0, ',', ' ').' FCFA)'
+                );
+            } catch (\RuntimeException $e) {
+                return redirect()->route('accounting')->with('status', $e->getMessage());
+            }
+
+            return redirect()->route('accounting')->with('status', 'Suppression envoyée pour validation comptable.');
+        }
 
         TreasuryAudit::log($entry->user_id, 'accounting.entry.deleted', $entry, [
             'actor_user_id' => Auth::id(),
@@ -2994,6 +3030,22 @@ class AccountingController extends Controller
     {
         if (! $this->workspaceOwnsDataUserId((int) $document->user_id)) {
             abort(403);
+        }
+
+        if (! Auth::user()?->is_accountant) {
+            try {
+                app(\App\Services\AccountingChangeApprovalService::class)->requestChange(
+                    $document,
+                    'delete',
+                    $document->user_id,
+                    Auth::id(),
+                    'Document — '.$document->original_name.($document->entries()->count() > 0 ? ' ('.$document->entries()->count().' écriture(s) liée(s))' : '')
+                );
+            } catch (\RuntimeException $e) {
+                return back()->with('status', $e->getMessage());
+            }
+
+            return back()->with('status', 'Suppression envoyée pour validation comptable.');
         }
 
         TreasuryAudit::log($document->user_id, 'accounting.document.deleted', $document, [

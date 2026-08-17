@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\AccountantChangeRequestController;
 use App\Http\Controllers\AccountantClientController;
 use App\Http\Controllers\AccountantCommercialBalanceController;
 use App\Http\Controllers\AccountantDashboardController;
 use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\AccountingDocumentController;
 use App\Http\Controllers\AccountingDocumentViewerController;
+use App\Http\Controllers\AdminAccountingChangeRequestController;
 use App\Http\Controllers\AdminAccountingQualityController;
 use App\Http\Controllers\AdminBillingController;
 use App\Http\Controllers\AdminBugReportController;
@@ -408,6 +410,9 @@ Route::middleware('auth')->group(function () {
         // Déclarer /workspace/clear avant /workspace/{user}, sinon « clear » est capturé comme identifiant client (POST bloqué).
         Route::match(['get', 'post'], '/workspace/clear', [AccountantClientController::class, 'clearWorkspace'])->name('workspace.clear');
         Route::post('/workspace/{user}', [AccountantClientController::class, 'selectWorkspace'])->name('workspace.select');
+        Route::get('/change-requests', [AccountantChangeRequestController::class, 'index'])->name('change-requests.index');
+        Route::post('/change-requests/{changeRequest}/approve', [AccountantChangeRequestController::class, 'approve'])->name('change-requests.approve');
+        Route::post('/change-requests/{changeRequest}/reject', [AccountantChangeRequestController::class, 'reject'])->name('change-requests.reject');
     });
 
     Route::middleware('platform.admin')->prefix('admin')->name('admin.')->group(function () {
@@ -491,6 +496,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/compliance/kyc-documents/{document}/stream', [AdminComplianceKycController::class, 'streamDocument'])->name('compliance.kyc.document.stream');
         Route::get('/compliance/accounting-quality', [AdminAccountingQualityController::class, 'index'])->name('compliance.accounting-quality.index');
         Route::post('/compliance/accounting-quality/{user}/review-now', [AdminAccountingQualityController::class, 'reviewNow'])->name('compliance.accounting-quality.review-now');
+        Route::get('/compliance/change-requests', [AdminAccountingChangeRequestController::class, 'index'])->name('compliance.change-requests.index');
         Route::get('/executive-dashboard', [AdminExecutiveDashboardController::class, 'index'])->name('executive.index');
         Route::get('/rbac', [AdminRbacController::class, 'index'])->name('rbac.index');
         Route::post('/rbac/{user}', [AdminRbacController::class, 'update'])->name('rbac.update');
