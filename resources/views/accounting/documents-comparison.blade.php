@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Branche Comparaison OCR | Sitiame Capitale')
+@section('title', 'Branche Comparaison OCR | Sitiame Capital')
 @section('page_title', 'Branche spéciale - Comparaison OCR')
 
 @section('content')

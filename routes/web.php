@@ -6,6 +6,7 @@ use App\Http\Controllers\AccountantDashboardController;
 use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\AccountingDocumentController;
 use App\Http\Controllers\AccountingDocumentViewerController;
+use App\Http\Controllers\AdminAccountingQualityController;
 use App\Http\Controllers\AdminBillingController;
 use App\Http\Controllers\AdminBugReportController;
 use App\Http\Controllers\AdminCommercialController;
@@ -488,6 +489,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/compliance/kyc/{user}/reject', [AdminComplianceKycController::class, 'reject'])->name('compliance.kyc.reject');
         Route::post('/compliance/kyc/{user}/resubmit', [AdminComplianceKycController::class, 'resubmit'])->name('compliance.kyc.resubmit');
         Route::get('/compliance/kyc-documents/{document}/stream', [AdminComplianceKycController::class, 'streamDocument'])->name('compliance.kyc.document.stream');
+        Route::get('/compliance/accounting-quality', [AdminAccountingQualityController::class, 'index'])->name('compliance.accounting-quality.index');
+        Route::post('/compliance/accounting-quality/{user}/review-now', [AdminAccountingQualityController::class, 'reviewNow'])->name('compliance.accounting-quality.review-now');
         Route::get('/executive-dashboard', [AdminExecutiveDashboardController::class, 'index'])->name('executive.index');
         Route::get('/rbac', [AdminRbacController::class, 'index'])->name('rbac.index');
         Route::post('/rbac/{user}', [AdminRbacController::class, 'update'])->name('rbac.update');

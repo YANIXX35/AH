@@ -24,6 +24,9 @@ class AccountingEntry extends Model
         'ocr_detected_amount',
         'ocr_verified_at',
         'ocr_text',
+        'quality_status',
+        'quality_reviewed_at',
+        'quality_issues',
     ];
 
     public $timestamps = true;
@@ -31,6 +34,8 @@ class AccountingEntry extends Model
     protected $casts = [
         'date' => 'date',
         'amount' => 'decimal:2',
+        'quality_reviewed_at' => 'datetime',
+        'quality_issues' => 'array',
     ];
 
     public function setOcrStatusAttribute(?string $value): void

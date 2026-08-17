@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Dashboard Trésorerie | Sitiame Capitale')
+@section('title', 'Dashboard Trésorerie | Sitiame Capital')
 @section('page_title', '💰 Dashboard Trésorerie')
 
 @push('styles')
@@ -417,7 +417,7 @@
     <div class="sidebar-header">
         <a href="{{ route('dashboard') }}" class="sidebar-logo">
             <i class="fas fa-chart-line"></i>
-            Sitiame Capitale
+            Sitiame Capital
         </a>
     </div>
     

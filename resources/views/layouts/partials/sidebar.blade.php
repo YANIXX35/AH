@@ -7,7 +7,7 @@
 
         @php
             $sidebarUser = auth()->user();
-            $sidebarBrandName = config('app.name', 'Sitiame Capitale');
+            $sidebarBrandName = config('app.name', 'Sitiame Capital');
             if (
                 $sidebarUser
                 && ! ($sidebarUser->is_platform_admin ?? false)
@@ -238,6 +238,9 @@
                             </li>
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.compliance.kyc.*') ? 'active' : '' }}" href="{{ route('admin.compliance.kyc.index') }}">Conformité KYC/KYB</a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.compliance.accounting-quality.*') ? 'active' : '' }}" href="{{ route('admin.compliance.accounting-quality.index') }}">Qualité comptable</a>
                             </li>
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.rbac.*') ? 'active' : '' }}" href="{{ route('admin.rbac.index') }}">RBAC rôles & permissions</a>

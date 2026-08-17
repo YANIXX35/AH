@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Paiement Mobile | Sitiame Capitale')
+@section('title', 'Paiement Mobile | Sitiame Capital')
 @section('page_title', 'Paiement Mobile FedaPay')
 
 @section('content')

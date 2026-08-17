@@ -17,7 +17,7 @@ class SystemBaseUsersSeeder extends Seeder
                 'password' => 'AdminSitiame2026!',
                 'is_platform_admin' => true,
                 'is_accountant' => false,
-                'company_name' => 'Sitiame Capitale',
+                'company_name' => 'Sitiame Capital',
                 'premium_status' => 'free',
                 'is_premium' => false,
             ],

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Profil | Sitiame Capitale')
+@section('title', 'Profil | Sitiame Capital')
 @section('page_title', 'Profil & paramètres')
 
 @push('styles')

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Modifier Écriture | Sitiame Capitale')
+@section('title', 'Modifier Écriture | Sitiame Capital')
 @section('page_title', 'Modifier l’écriture comptable')
 
 @section('content')

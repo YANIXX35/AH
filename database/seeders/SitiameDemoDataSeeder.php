@@ -22,19 +22,19 @@ class SitiameDemoDataSeeder extends Seeder
 
         if (! $user) {
             $user = User::create([
-                'name' => 'Démo Sitiame Capitale',
-                'email' => 'demo@sitiame-capitale.local',
+                'name' => 'Démo Sitiame Capital',
+                'email' => 'demo@sitiame-capital.local',
                 'password' => Hash::make('DemoSitiame2026!'),
                 'email_verified_at' => now(),
             ]);
-            $this->command?->info('Compte démo créé : demo@sitiame-capitale.local / DemoSitiame2026!');
+            $this->command?->info('Compte démo créé : demo@sitiame-capital.local / DemoSitiame2026!');
         }
 
         $today = Carbon::today();
 
         $user->forceFill([
-            'company_name' => 'Sitiame Capitale SARL',
-            'company_designation' => 'Sitiame Capitale — Solutions de gestion financière et comptable',
+            'company_name' => 'Sitiame Capital SARL',
+            'company_designation' => 'Sitiame Capital — Solutions de gestion financière et comptable',
             'company_sigle' => 'SC',
             'company_tax_id' => 'CI-ABJ-2026-F-00012345',
             'sector' => 'Technologies financières et logiciels de gestion',
@@ -141,7 +141,7 @@ class SitiameDemoDataSeeder extends Seeder
             ]);
         }
 
-        $this->command?->info('Données démo Sitiame Capitale appliquées pour l’utilisateur #'.$user->id.'.');
+        $this->command?->info('Données démo Sitiame Capital appliquées pour l’utilisateur #'.$user->id.'.');
 
         // Accès volet « Administration » si l’e-mail correspond à PLATFORM_ADMIN_EMAIL (.env).
         $platformAdminEmail = env('PLATFORM_ADMIN_EMAIL');

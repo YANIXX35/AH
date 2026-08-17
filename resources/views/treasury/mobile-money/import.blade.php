@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Rapprochement Mobile Money | Sitiame Capitale')
+@section('title', 'Rapprochement Mobile Money | Sitiame Capital')
 @section('page_title', 'Rapprochement Mobile Money')
 
 @section('content')

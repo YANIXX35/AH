@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Solde Trésorerie | Sitiame Capitale')
+@section('title', 'Solde Trésorerie | Sitiame Capital')
 @section('page_title', 'Solde de Trésorerie')
 
 @push('styles')
@@ -97,8 +97,11 @@
             <div class="balance-kpi-card kpi-primary">
                 <div class="card-body d-flex justify-content-between align-items-start gap-2">
                     <div>
-                        <div class="balance-kpi-title">Solde actuel</div>
+                        <div class="balance-kpi-title" title="Toutes les opérations marquées « effectué », y compris un chèque pas encore crédité en banque.">Solde actuel (théorique)</div>
                         <div class="balance-kpi-value {{ $soldeActuel >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($soldeActuel, 0, ',', ' ') }} FCFA</div>
+                        <div class="balance-kpi-meta" title="Ne compte que les fonds dont la date de valeur est déjà passée — ce qui est réellement disponible en banque aujourd'hui.">
+                            Trésorerie réelle disponible : <strong class="{{ $soldeActuelReel >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($soldeActuelReel, 0, ',', ' ') }} FCFA</strong>
+                        </div>
                         <div class="balance-kpi-meta">Ouverture période : {{ number_format($soldeOuverture, 0, ',', ' ') }} FCFA</div>
                     </div>
                     <span class="balance-kpi-icon icon-primary"><i data-feather="dollar-sign" style="width:20px;height:20px;"></i></span>

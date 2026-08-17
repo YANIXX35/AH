@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $product->name.' | Sitiame Capitale')
+@section('title', $product->name.' | Sitiame Capital')
 @section('page_title', $product->name)
 
 @section('content')

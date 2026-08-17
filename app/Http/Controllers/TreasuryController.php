@@ -162,6 +162,13 @@ class TreasuryController extends Controller
             ->sum('amount');
         $soldeNetEffectue = $encaissementsEffectues - $decaissementsEffectues;
 
+        // Trésorerie réelle (PRD 4.4), sur le même filtre — fonds dont la date de valeur
+        // est déjà passée, distinct de "effectué" qui inclut un chèque pas encore crédité.
+        $clearedQuery = clone $query;
+        $soldeNetReel = (float) $clearedQuery
+            ->cleared()
+            ->sum(DB::raw("CASE WHEN type = 'encaissement' THEN amount ELSE -amount END"));
+
         $engagementsPlanifies = (float) $summaryRows
             ->where('status', 'planifie')
             ->sum(fn ($tx) => $tx->type === 'encaissement' ? (float) $tx->amount : -(float) $tx->amount);
@@ -190,6 +197,7 @@ class TreasuryController extends Controller
             'decaissementsTotal' => $decaissementsTotal,
             'soldeNetFiltre' => $soldeNetFiltre,
             'soldeNetEffectue' => $soldeNetEffectue,
+            'soldeNetReel' => $soldeNetReel,
             'engagementsPlanifies' => $engagementsPlanifies,
             'soldeOuverturePeriode' => $soldeOuverturePeriode,
             'soldeCloturePeriode' => $soldeCloturePeriode,
@@ -240,9 +248,16 @@ class TreasuryController extends Controller
             ->orderBy('id')
             ->get();
 
-        // Solde réalisé à date (base des projections).
+        // Solde réalisé à date (base des projections) — trésorerie théorique : tout ce qui
+        // est marqué "effectué", y compris un chèque pas encore crédité en banque.
         $currentBalance = (float) TreasuryTransaction::whereIn('user_id', $userIds)
             ->effectuees()
+            ->sum(DB::raw("CASE WHEN type = 'encaissement' THEN amount ELSE -amount END"));
+
+        // Trésorerie réelle (PRD 4.4) : ne compte que les fonds dont la date de valeur
+        // est déjà passée.
+        $currentBalanceReel = (float) TreasuryTransaction::whereIn('user_id', $userIds)
+            ->cleared()
             ->sum(DB::raw("CASE WHEN type = 'encaissement' THEN amount ELSE -amount END"));
 
         $totalPlannedIn = (float) $plannedTransactions->where('type', 'encaissement')->sum('amount');
@@ -311,6 +326,7 @@ class TreasuryController extends Controller
         return view('treasury.forecast', [
             'plannedTransactions' => $plannedTransactions,
             'currentBalance' => $currentBalance,
+            'currentBalanceReel' => $currentBalanceReel,
             'weeklyProjections' => $weeklyProjections,
             'scenarioWeeklyProjections' => $scenarioWeeklyProjections,
             'periodEnd' => $periodEnd,
@@ -492,6 +508,7 @@ class TreasuryController extends Controller
             'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string|max:255',
             'transaction_date' => 'required|date',
+            'value_date' => 'nullable|date|after_or_equal:transaction_date',
             'reference' => 'nullable|string|max:100',
             'bank_account' => 'nullable|string|max:100',
             'status' => 'required|in:planifie,effectue,annule',
@@ -551,6 +568,7 @@ class TreasuryController extends Controller
             'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string|max:255',
             'transaction_date' => 'required|date',
+            'value_date' => 'nullable|date|after_or_equal:transaction_date',
             'reference' => 'nullable|string|max:100',
             'bank_account' => 'nullable|string|max:100',
             'status' => 'required|in:planifie,effectue,annule',
@@ -1258,6 +1276,14 @@ class TreasuryController extends Controller
 
     private function normalizePaymentFields(array $validated): array
     {
+        // Trésorerie réelle vs théorique (PRD 4.4). Mobile Money : toujours réel et
+        // immédiat, la valeur saisie est ignorée. Instrument bancaire : la date de
+        // valeur reflète les conditions bancaires du client — l'utilisateur la
+        // renseigne ; à défaut, on ne suppose aucun délai (comportement historique).
+        $validated['value_date'] = ($validated['payment_module'] ?? 'stripe') === 'fedapay_mobile'
+            ? $validated['transaction_date']
+            : ($validated['value_date'] ?? $validated['transaction_date']);
+
         if (($validated['payment_module'] ?? 'stripe') === 'fedapay_mobile') {
             $validated['payment_provider'] = 'FedaPay';
             $validated['mobile_method'] = $validated['mobile_method'] ?? 'wave';

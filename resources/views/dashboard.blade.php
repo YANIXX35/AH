@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard | Sitiame Capitale')
+@section('title', 'Dashboard | Sitiame Capital')
 @section('page_title', 'Vue globale')
 
 @push('styles')

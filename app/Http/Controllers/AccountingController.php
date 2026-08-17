@@ -10,6 +10,7 @@ use App\Models\AccountingMonthClosure;
 use App\Models\PlanComptableAccount;
 use App\Models\PlanComptableDefault;
 use App\Models\PlanComptableImport;
+use App\Models\TreasuryAuditLog;
 use App\Models\TreasuryTransaction;
 use App\Models\User;
 use App\Services\AdminAuditTrailService;
@@ -377,8 +378,26 @@ class AccountingController extends Controller
             }
         }
 
+        $auditFields = ['date', 'document_type', 'document_reference', 'description', 'debit_account', 'credit_account', 'amount'];
+        $before = collect($auditFields)->mapWithKeys(fn ($field) => [
+            $field => $field === 'date' ? optional($entry->date)->toDateString() : $entry->{$field},
+        ])->all();
+
         $validated['actor_user_id'] = Auth::id();
         $entry->update($validated);
+
+        $after = collect($auditFields)->mapWithKeys(fn ($field) => [
+            $field => $field === 'date' ? optional($entry->date)->toDateString() : $entry->{$field},
+        ])->all();
+
+        if ($before !== $after || $attachmentReplaced || $attachmentRemoved) {
+            TreasuryAudit::log($entry->user_id, 'accounting.entry.updated', $entry, [
+                'before' => $before,
+                'after' => $after,
+                'attachment_replaced' => $attachmentReplaced,
+                'attachment_removed' => $attachmentRemoved,
+            ]);
+        }
 
         $status = 'Écriture mise à jour.';
         $ocrReset = isset($validated['ocr_status']) && $validated['ocr_status'] === 'pending';
@@ -686,7 +705,14 @@ class AccountingController extends Controller
 
         $autoCorrectionProposal = $this->buildAutoCorrectionProposal($entry);
 
-        return view('accounting.show-entry', compact('entry', 'autoCorrectionProposal'));
+        $auditLogs = TreasuryAuditLog::with(['actor:id,name,email'])
+            ->where('subject_type', $entry->getMorphClass())
+            ->where('subject_id', $entry->id)
+            ->orderByDesc('id')
+            ->limit(20)
+            ->get();
+
+        return view('accounting.show-entry', compact('entry', 'autoCorrectionProposal', 'auditLogs'));
     }
 
     public function retryEntryOcr(AccountingEntry $entry)
@@ -802,10 +828,17 @@ class AccountingController extends Controller
         $verificationPayload = $this->buildAutoCorrectionVerificationPayload($correctedPayload, $normalized);
         $verifyResult = $ocrService->verifyCompleteDocument($ocrText, $verificationPayload);
         $ocrAnalysis = $this->buildEntryOcrDataFromVerification($verifyResult, $ocrText);
+        $changes = $this->buildAutoCorrectionChanges($entry, $correctedPayload);
 
         $entry->update(array_merge($correctedPayload, $ocrAnalysis['ocr_data'], [
             'actor_user_id' => Auth::id(),
         ]));
+
+        if (! empty($changes)) {
+            TreasuryAudit::log($entry->user_id, 'accounting.entry.ocr_auto_corrected', $entry, [
+                'changes' => $changes,
+            ]);
+        }
 
         return redirect()
             ->route('accounting.entries.show', $entry)
@@ -877,6 +910,10 @@ class AccountingController extends Controller
             'ocr_verified_at' => now(),
             'ocr_text' => $manualLog.($entry->ocr_text ?? ''),
             'actor_user_id' => Auth::id(),
+        ]);
+
+        TreasuryAudit::log($entry->user_id, 'accounting.entry.ocr_manual_validated', $entry, [
+            'comment' => trim($validated['manual_comment']),
         ]);
 
         return redirect()

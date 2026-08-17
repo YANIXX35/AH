@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Rapport comptable | Sitiame Capitale')
+@section('title', 'Rapport comptable | Sitiame Capital')
 @section('page_title', 'Rapport comptable')
 
 @section('content')
@@ -1418,7 +1418,7 @@
         <div class="bilan-header">
             <div class="field">
                 <span>Dénomination sociale de l’entreprise :</span>
-                {{ $companyName ?? 'Sitiame Capitale' }}
+                {{ $companyName ?? 'Sitiame Capital' }}
             </div>
             <div class="field">
                 <span>Sigle usuel :</span>

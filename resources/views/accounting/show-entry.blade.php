@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Détails Écriture | Sitiame Capitale')
+@section('title', 'Détails Écriture | Sitiame Capital')
 @section('page_title', 'Détails de l’écriture comptable')
 
 @section('content')
@@ -184,6 +184,59 @@
                             </div>
                         </div>
                     @endif
+
+                    @php
+                        $entryAuditActionLabels = [
+                            'accounting.entry.updated' => 'Modification manuelle',
+                            'accounting.entry.ocr_auto_corrected' => 'Correction automatique OCR',
+                            'accounting.entry.ocr_manual_validated' => 'Validation manuelle OCR',
+                            'accounting.entry.deleted' => 'Suppression',
+                        ];
+                    @endphp
+                    <div class="card mt-4">
+                        <div class="card-header bg-light">
+                            <strong>Journal d'audit de cette écriture</strong>
+                        </div>
+                        <div class="card-body">
+                            @if($auditLogs->isEmpty())
+                                <p class="text-muted mb-0">Aucune modification enregistrée depuis la création de l'écriture.</p>
+                            @else
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Action</th>
+                                                <th>Auteur</th>
+                                                <th>Détail</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($auditLogs as $log)
+                                                <tr>
+                                                    <td>{{ $log->created_at?->format('d/m/Y H:i') ?? '—' }}</td>
+                                                    <td>{{ $entryAuditActionLabels[$log->action] ?? $log->action }}</td>
+                                                    <td>
+                                                        <div class="small fw-medium">{{ $log->actor?->name ?? '—' }}</div>
+                                                        @if($log->actor?->email)
+                                                            <div class="small text-muted">{{ $log->actor->email }}</div>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if(!empty($log->properties))
+                                                            <code class="d-block">{{ \Illuminate\Support\Str::limit(json_encode($log->properties, JSON_UNESCAPED_UNICODE), 160) }}</code>
+                                                        @else
+                                                            <span class="text-muted">—</span>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

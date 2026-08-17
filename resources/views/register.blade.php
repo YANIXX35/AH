@@ -27,7 +27,7 @@
                     <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm p-2">
                         <img src="{{ asset('images/sitiam.png') }}" alt="Logo Sitiame Capital" class="h-full w-auto">
                     </div>
-                    <h2 class="text-4xl font-bold">Sitiame Capitale</h2>
+                    <h2 class="text-4xl font-bold">Sitiame Capital</h2>
                     <p class="text-white/90 text-lg leading-relaxed">Enregistrez votre entreprise et gérez votre présence digitale</p>
                 </div>
             </div>

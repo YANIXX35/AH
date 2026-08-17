@@ -13,3 +13,5 @@ Schedule::command('app:ops-alerts-scan')->everyFifteenMinutes();
 Schedule::command('app:ops-ai-autonomous-approvals')->everyFifteenMinutes();
 Schedule::command('app:billing-dunning-daily')->dailyAt('02:15');
 Schedule::command('app:backup-database')->everyFourHours()->withoutOverlapping();
+Schedule::command('app:accounting-quality-review')->monthlyOn(1, '03:30')->withoutOverlapping();
+Schedule::command('app:accounting-pending-reminder')->dailyAt('08:00')->withoutOverlapping();

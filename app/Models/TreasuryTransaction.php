@@ -40,6 +40,7 @@ class TreasuryTransaction extends Model
         'amount',
         'description',
         'transaction_date',
+        'value_date',
         'reference',
         'bank_account',
         'status',
@@ -48,6 +49,7 @@ class TreasuryTransaction extends Model
 
     protected $casts = [
         'transaction_date' => 'date',
+        'value_date' => 'date',
         'amount' => 'decimal:2',
         'stripe_paid_at' => 'datetime',
         'created_at' => 'datetime',
@@ -62,6 +64,15 @@ class TreasuryTransaction extends Model
         return Attribute::make(
             get: fn ($value) => $value ? Carbon::parse($value) : null,
         );
+    }
+
+    /**
+     * Date à laquelle les fonds sont effectivement disponibles — `value_date` si
+     * renseignée, sinon `transaction_date` (comportement historique, avant PRD 4.4).
+     */
+    public function getEffectiveValueDateAttribute(): ?Carbon
+    {
+        return $this->value_date ?? $this->transaction_date;
     }
 
     /**
@@ -125,5 +136,25 @@ class TreasuryTransaction extends Model
     public function scopeByDateRange($query, $start, $end)
     {
         return $query->whereBetween('transaction_date', [$start, $end]);
+    }
+
+    /**
+     * Scope : fonds réellement disponibles à la date donnée (PRD 4.4) — transactions
+     * effectuées dont la date de valeur (ou, à défaut, la date de transaction) est
+     * déjà passée. Distinct de scopeEffectuees(), qui inclut aussi les instruments
+     * bancaires marqués "effectué" mais pas encore crédités en banque.
+     */
+    public function scopeCleared($query, $asOf = null)
+    {
+        $asOf = $asOf ? Carbon::parse($asOf) : now();
+
+        return $query->effectuees()
+            ->where(function ($q) use ($asOf) {
+                $q->where(function ($q2) use ($asOf) {
+                    $q2->whereNotNull('value_date')->where('value_date', '<=', $asOf->toDateString());
+                })->orWhere(function ($q2) use ($asOf) {
+                    $q2->whereNull('value_date')->where('transaction_date', '<=', $asOf->toDateString());
+                });
+            });
     }
 }

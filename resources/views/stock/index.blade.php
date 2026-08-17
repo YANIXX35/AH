@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Gestion de stock | Sitiame Capitale')
+@section('title', 'Gestion de stock | Sitiame Capital')
 @section('page_title', 'Gestion de Stock')
 
 @push('styles')

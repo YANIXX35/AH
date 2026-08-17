@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Validation document | Sitiame Capitale')
+@section('title', 'Validation document | Sitiame Capital')
 @section('page_title', 'Validation du document comptable')
 
 @section('content')

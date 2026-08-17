@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dossier d’investissement | Sitiame Capitale')
+@section('title', 'Dossier d’investissement | Sitiame Capital')
 @section('page_title', 'Dossier investissement')
 
 @push('styles')
@@ -72,6 +72,9 @@
                 Le score ci-dessous reste calculé et affiché, mais n'a pas encore été confirmé par un contrôle qualité périodique — à interpréter avec prudence.
                 @if($qualityReview)
                     <span class="d-block small mt-1">Dernier statut enregistré : <strong>{{ $qualityReview->status }}</strong> ({{ optional($qualityReview->reviewed_at)->format('d/m/Y H:i') }}).</span>
+                @endif
+                @if(($nonCompliantEntriesCount ?? 0) > 0)
+                    <span class="d-block small mt-1">Détail automatique : {{ $nonCompliantEntriesCount }} écriture(s) signalée(s) par le contrôle de complétude (référence, montant ou identification du tiers manquants) — à consulter avant de valider la période.</span>
                 @endif
             </div>
             @if($canReviewQuality)

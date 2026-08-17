@@ -172,6 +172,9 @@ class MobileMoneyReconciliationService
                 $transaction->counterparty_name ? ' — '.$transaction->counterparty_name : ''
             )),
             'transaction_date' => $transaction->occurred_at,
+            // Mobile Money : encaissement/décaissement réel et immédiat (PRD 4.4) —
+            // aucun délai bancaire, la date de valeur est toujours la date de l'opération.
+            'value_date' => $transaction->occurred_at,
             'reference' => $transaction->external_reference,
             'status' => 'effectue',
         ]);

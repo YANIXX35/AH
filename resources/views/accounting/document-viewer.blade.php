@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Lecteur de document | Sitiame Capitale')
+@section('title', 'Lecteur de document | Sitiame Capital')
 @section('page_title', 'Lecteur de document')
 
 @push('styles')

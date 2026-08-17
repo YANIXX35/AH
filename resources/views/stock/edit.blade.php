@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Éditer '.$product->name.' | Sitiame Capitale')
+@section('title', 'Éditer '.$product->name.' | Sitiame Capital')
 @section('page_title', 'Éditer '.$product->name)
 
 @section('content')

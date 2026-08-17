@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Éditer Transaction | Sitiame Capitale')
+@section('title', 'Éditer Transaction | Sitiame Capital')
 @section('page_title', 'Modifier transaction de trésorerie')
 
 @push('styles')
@@ -191,6 +191,16 @@
                                 <input type="date" id="transaction_date" name="transaction_date" class="form-control @error('transaction_date') is-invalid @enderror"
                                        value="{{ old('transaction_date', $transaction->transaction_date->format('Y-m-d')) }}" required>
                                 @error('transaction_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-1">
+                            <div class="col-12 col-md-6">
+                                <label class="crypto-form-label" for="value_date">Date de valeur (fonds disponibles en banque)</label>
+                                <input type="date" id="value_date" name="value_date" class="form-control @error('value_date') is-invalid @enderror"
+                                       value="{{ old('value_date', optional($transaction->value_date)->format('Y-m-d')) }}">
+                                <div class="form-text">Pour un chèque ou un virement : date à laquelle la banque crédite réellement le compte, si différente de la date de transaction. Laissez vide pour Mobile Money — toujours immédiat.</div>
+                                @error('value_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                         </div>
 

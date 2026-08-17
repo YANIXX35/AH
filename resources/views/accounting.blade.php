@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Comptabilité | Sitiame Capitale')
+@section('title', 'Comptabilité | Sitiame Capital')
 @section('page_title', 'Moteur comptable')
 
 @push('styles')

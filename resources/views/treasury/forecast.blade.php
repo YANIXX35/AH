@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Prévisions Trésorerie | Sitiame Capitale')
+@section('title', 'Prévisions Trésorerie | Sitiame Capital')
 @section('page_title', 'Prévisions de trésorerie')
 
 @push('styles')
@@ -367,10 +367,13 @@
                 <div class="col-12 col-md-6 col-xl">
                     <div class="card crypto-kpi kpi-solde">
                         <div class="card-body py-3">
-                            <small class="kpi-label d-block">Solde réalisé (à date)</small>
+                            <small class="kpi-label d-block" title="Toutes les opérations marquées « effectué », y compris un chèque pas encore crédité en banque.">Solde réalisé (à date, théorique)</small>
                             <div class="kpi-value {{ $currentBalance >= 0 ? 'text-success' : 'text-danger' }}">
                                 {{ number_format($currentBalance, 0, ',', ' ') }} FCFA
                             </div>
+                            <small class="d-block text-muted mt-1" title="Ne compte que les fonds dont la date de valeur est déjà passée.">
+                                Réel disponible : <strong class="{{ $currentBalanceReel >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($currentBalanceReel, 0, ',', ' ') }} FCFA</strong>
+                            </small>
                         </div>
                     </div>
                 </div>

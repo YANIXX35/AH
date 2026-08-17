@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Documents Comptables | Sitiame Capitale')
+@section('title', 'Documents Comptables | Sitiame Capital')
 @section('page_title', 'Documents Comptables')
 
 @push('styles')
@@ -273,6 +273,9 @@
                                         <td>
                                             @if($document->status === 'pending_validation')
                                                 <span class="badge bg-warning-subtle text-warning-emphasis">À valider</span>
+                                                @if($document->created_at && $document->created_at->diffInDays(now()) >= 3)
+                                                    <span class="d-block small text-danger mt-1">En attente depuis {{ $document->created_at->diffInDays(now()) }} jours</span>
+                                                @endif
                                             @elseif($document->status === 'validated')
                                                 <span class="badge bg-success-subtle text-success-emphasis">Validé</span>
                                             @elseif($document->status === 'ocr_failed')

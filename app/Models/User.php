@@ -82,6 +82,7 @@ use Illuminate\Notifications\Notifiable;
     'kyc_validated_at',
     'kyc_validated_by_user_id',
     'kyc_rejection_reason',
+    'accounting_quality_reviewed_at',
     'account_suspended',
     'suspended_at',
     'suspended_reason',
@@ -126,6 +127,7 @@ class User extends Authenticatable
             'module_permissions' => 'array',
             'kyc_submitted_at' => 'datetime',
             'kyc_validated_at' => 'datetime',
+            'accounting_quality_reviewed_at' => 'datetime',
             'account_suspended' => 'boolean',
             'suspended_at' => 'datetime',
             'auto_suspended_for_payment' => 'boolean',
@@ -254,6 +256,11 @@ class User extends Authenticatable
     public function kycDocuments(): HasMany
     {
         return $this->hasMany(KycDocument::class);
+    }
+
+    public function accountingEntries(): HasMany
+    {
+        return $this->hasMany(\App\Models\AccountingEntry::class);
     }
 
     public function canAccessModule(string $module): bool

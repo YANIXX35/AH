@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reçu de Paiement #REC-{{ date('Y') }}-{{ str_pad($payment->id, 6, '0', STR_PAD_LEFT) }} | Sitiame Capitale</title>
+    <title>Reçu de Paiement #REC-{{ date('Y') }}-{{ str_pad($payment->id, 6, '0', STR_PAD_LEFT) }} | Sitiame Capital</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -80,7 +80,7 @@
         <!-- HEADER -->
         <div class="receipt-header d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
-                <div class="brand-title">SITIAME CAPITALE</div>
+                <div class="brand-title">SITIAME CAPITAL</div>
                 <div class="text-muted small">Plateforme de Gestion Financière &amp; Comptable</div>
                 <div class="text-muted small">Abidjan, Côte d'Ivoire · support@sitiame-capital.com</div>
             </div>
@@ -176,11 +176,11 @@
         <!-- FOOTER & SIGNATURE -->
         <div class="mt-5 pt-3 border-top d-flex justify-content-between align-items-end flex-wrap gap-3">
             <div class="text-muted small" style="max-width: 450px;">
-                Ce reçu certifie le règlement effectif de l'abonnement Premium Sitiame Capitale.
+                Ce reçu certifie le règlement effectif de l'abonnement Premium Sitiame Capital.
                 Document généré automatiquement et faisant foi de paiement électronique.
             </div>
             <div class="text-end">
-                <div class="text-muted small mb-1">Pour la direction Sitiame Capitale</div>
+                <div class="text-muted small mb-1">Pour la direction Sitiame Capital</div>
                 <div class="fw-bold text-primary font-monospace" style="letter-spacing:1px;">[ TAMPON ET SIGNATURE NUMÉRIQUE ]</div>
             </div>
         </div>

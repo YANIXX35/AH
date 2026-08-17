@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Plan comptable OHADA | Sitiame Capitale')
+@section('title', 'Plan comptable OHADA | Sitiame Capital')
 @section('page_title', 'Plan comptable OHADA')
 
 @push('styles')

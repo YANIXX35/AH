@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Accounting\QualityControlService;
 use App\Http\Controllers\Concerns\UsesClientWorkspace;
+use App\Models\AccountingEntry;
 use App\Models\InvestmentRequest;
 use App\Models\InvestorProfile;
 use App\Services\InvestmentDossierChecklistService;
@@ -40,6 +41,12 @@ class InvestorController extends Controller
         $qualityPeriod = $qualityControl->currentPeriod();
         $qualityReview = $qualityControl->findForPeriod($userId, $qualityPeriod['start'], $qualityPeriod['end']);
         $qualityChecked = $qualityControl->isQualityCheckedForPeriod($userId, $qualityPeriod['start'], $qualityPeriod['end']);
+        // Preuve à l'appui de la décision du comptable — n'influence pas $qualityChecked,
+        // qui reste le seul gate (marquage manuel via markPeriodReviewed).
+        $nonCompliantEntriesCount = AccountingEntry::query()
+            ->where('user_id', $userId)
+            ->where('quality_status', 'non_compliant')
+            ->count();
         $checklist = $checklistService->build($userId, $metrics['breakdown']);
         $checklistSummary = $checklistService->summarize($checklist);
         $requests = InvestmentRequest::where('user_id', $userId)
@@ -73,6 +80,7 @@ class InvestorController extends Controller
             'qualityPeriod' => $qualityPeriod,
             'qualityReview' => $qualityReview,
             'qualityChecked' => $qualityChecked,
+            'nonCompliantEntriesCount' => $nonCompliantEntriesCount,
             'canReviewQuality' => (bool) (Auth::user()?->is_accountant || Auth::user()?->is_platform_admin),
         ]);
     }

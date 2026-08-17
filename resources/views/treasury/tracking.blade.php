@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Suivi Trésorerie | Sitiame Capitale')
+@section('title', 'Suivi Trésorerie | Sitiame Capital')
 @section('page_title', 'Tableau de bord Trésorerie')
 
 @push('styles')
@@ -97,6 +97,9 @@
                 <div class="mondays-metric-val text-primary mb-1">{{ number_format($soldeNetEffectue, 0, ',', ' ') }} <small class="fs-6 fw-normal text-muted">FCFA</small></div>
                 <div class="small {{ $soldeNetFiltre >= 0 ? 'text-success' : 'text-danger' }}">
                     {{ $soldeNetFiltre >= 0 ? '+' : '' }}{{ number_format($soldeNetFiltre, 0, ',', ' ') }} FCFA sur la période
+                </div>
+                <div class="small text-muted mt-1" title="Ne compte que les fonds dont la date de valeur est déjà passée — ce qui est réellement disponible en banque.">
+                    Réel disponible : <strong class="{{ $soldeNetReel >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($soldeNetReel, 0, ',', ' ') }} FCFA</strong>
                 </div>
             </div>
         </div>

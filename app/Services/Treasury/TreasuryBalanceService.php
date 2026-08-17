@@ -35,6 +35,20 @@ class TreasuryBalanceService
             ->sum('amount');
         $soldeActuel = $encaissementsEffectues - $decaissementsEffectues;
 
+        // Trésorerie réelle (PRD 4.4) : ne compte que les fonds dont la date de valeur
+        // est déjà passée — distinct de $soldeActuel, qui compte tout ce qui est marqué
+        // "effectué" même si un instrument bancaire (chèque, virement) n'est pas encore
+        // crédité en banque.
+        $encaissementsReels = (float) TreasuryTransaction::whereIn('user_id', $userIds)
+            ->encaissements()
+            ->cleared()
+            ->sum('amount');
+        $decaissementsReels = (float) TreasuryTransaction::whereIn('user_id', $userIds)
+            ->decaissements()
+            ->cleared()
+            ->sum('amount');
+        $soldeActuelReel = $encaissementsReels - $decaissementsReels;
+
         $soldeOuverture = TreasuryTransaction::whereIn('user_id', $userIds)
             ->effectuees()
             ->whereDate('transaction_date', '<', $monthStart)
@@ -88,8 +102,11 @@ class TreasuryBalanceService
 
         return [
             'soldeActuel' => $soldeActuel,
+            'soldeActuelReel' => $soldeActuelReel,
             'encaissementsEffectues' => $encaissementsEffectues,
             'decaissementsEffectues' => $decaissementsEffectues,
+            'encaissementsReels' => $encaissementsReels,
+            'decaissementsReels' => $decaissementsReels,
             'soldeOuverture' => $soldeOuverture,
             'monthTransactions' => $monthTransactions,
             'dailyBalances' => $dailyBalances,

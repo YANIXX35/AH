@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Historique des abonnements | Sitiame Capitale')
+@section('title', 'Historique des abonnements | Sitiame Capital')
 @section('page_title', 'Historique des abonnements')
 
 @section('content')

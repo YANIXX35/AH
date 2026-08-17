@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Modifier '.$invoice->invoice_number.' | Sitiame Capitale')
+@section('title', 'Modifier '.$invoice->invoice_number.' | Sitiame Capital')
 @section('page_title', 'Modifier une facture')
 
 @section('content')

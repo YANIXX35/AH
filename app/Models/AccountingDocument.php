@@ -19,12 +19,14 @@ class AccountingDocument extends Model
         'extracted_data',
         'confidence',
         'compliance_rate',
+        'last_reminder_sent_at',
     ];
 
     protected $casts = [
         'extracted_data' => 'array',
         'confidence' => 'decimal:2',
         'compliance_rate' => 'decimal:2',
+        'last_reminder_sent_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

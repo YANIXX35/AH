@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Journal d\'activité | Sitiame Capitale')
+@section('title', 'Journal d\'activité | Sitiame Capital')
 @section('page_title', 'Journal d\'activité')
 
 @section('content')
