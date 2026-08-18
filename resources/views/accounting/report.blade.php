@@ -471,10 +471,10 @@
                             <a href="{{ route('accounting.report.journal') }}{{ $reportSuffix }}" class="btn btn-sm {{ $reportType === 'journal' ? 'btn-primary' : 'btn-outline-primary' }}">Journal</a>
                             <a href="{{ route('accounting.report.grand-livre') }}{{ $reportSuffix }}" class="btn btn-sm {{ $reportType === 'grand-livre' ? 'btn-primary' : 'btn-outline-primary' }}">Grand livre</a>
                             <a href="{{ route('accounting.report.balance') }}{{ $reportSuffix }}" class="btn btn-sm {{ $reportType === 'balance' ? 'btn-primary' : 'btn-outline-primary' }}">Balance</a>
-                            <a href="{{ route('accounting.report.bilan') }}{{ $reportSuffix }}" class="btn btn-sm {{ $reportType === 'bilan' ? 'btn-primary' : 'btn-outline-primary' }}">Bilan</a>
-                            <a href="{{ route('accounting.report.resultat') }}{{ $reportSuffix }}" class="btn btn-sm {{ $reportType === 'resultat' ? 'btn-primary' : 'btn-outline-primary' }}">Compte de résultat</a>
-                            <a href="{{ route('accounting.report.tafire') }}{{ $reportSuffix }}" class="btn btn-sm {{ $reportType === 'tafire' ? 'btn-primary' : 'btn-outline-primary' }}">TAFIRE</a>
-                            <a href="{{ route('accounting.report.annexe') }}{{ $reportSuffix }}" class="btn btn-sm {{ $reportType === 'annexe' ? 'btn-primary' : 'btn-outline-primary' }}">État annexe</a>
+                            <a href="{{ route('accounting.liasse-bceao', request()->query()) }}#actif" class="btn btn-sm btn-outline-primary">Bilan</a>
+                            <a href="{{ route('accounting.liasse-bceao', request()->query()) }}#resultat" class="btn btn-sm btn-outline-primary">Compte de résultat</a>
+                            <a href="{{ route('accounting.liasse-bceao', request()->query()) }}#tafire" class="btn btn-sm btn-outline-primary">TAFIRE</a>
+                            <a href="{{ route('accounting.liasse-bceao', request()->query()) }}#annexes" class="btn btn-sm btn-outline-primary">État annexe</a>
                             <a href="{{ route('accounting.bank-reconciliation', array_filter(['date_from' => $dateFrom, 'date_to' => $dateTo])) }}" class="btn btn-sm btn-outline-dark">Rapprochement</a>
                             <a href="{{ route('accounting.monthly-closing') }}" class="btn btn-sm btn-outline-dark">Clôture mensuelle</a>
                         </div>

@@ -2096,6 +2096,20 @@ class AccountingController extends Controller
 
     public function report(Request $request)
     {
+        // Bilan/résultat/TAFIRE/annexe : redirige vers la Liasse BCEAO, qui calcule
+        // les vraies masses SYSCOHADA par compte (BceaoLiasseService) — cette page
+        // ne les calculait qu'à partir de 2 agrégats globaux (actifs/passifs).
+        $liasseAnchor = match (true) {
+            $request->routeIs('accounting.report.bilan') => 'actif',
+            $request->routeIs('accounting.report.resultat') => 'resultat',
+            $request->routeIs('accounting.report.tafire') => 'tafire',
+            $request->routeIs('accounting.report.annexe') => 'annexes',
+            default => null,
+        };
+        if ($liasseAnchor !== null) {
+            return redirect(route('accounting.liasse-bceao', $request->query()).'#'.$liasseAnchor);
+        }
+
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
 
@@ -2178,51 +2192,25 @@ class AccountingController extends Controller
         ], $summary));
     }
 
+    /**
+     * @deprecated Ce "Bilan" calculait ses lignes (AA/AB/AC/DA/CI...) à partir de
+     * seulement 2 agrégats globaux (actifs/passifs), pas des vraies masses SYSCOHADA
+     * par compte — au contraire de BceaoLiasseService, déjà correct et déjà utilisé
+     * par la Liasse BCEAO. On y redirige plutôt que de dupliquer/corriger ce calcul.
+     */
     public function downloadBilan(Request $request)
     {
-        $payload = $this->buildReportPayload($request, 'bilan');
-
-        return Pdf::setOptions(['isRemoteEnabled' => true])
-            ->loadView('accounting.report-bilan-pdf', $payload)
-            ->setPaper('a4', 'portrait')
-            ->download('bilan-'.($payload['bilanReference'] ?? 'rapport').'.pdf');
+        return redirect()->route('accounting.liasse-bceao.pdf.download', $request->query());
     }
 
     public function viewBilanPdf(Request $request)
     {
-        $payload = $this->buildReportPayload($request, 'bilan');
-
-        return Pdf::setOptions(['isRemoteEnabled' => true])
-            ->loadView('accounting.report-bilan-pdf', $payload)
-            ->setPaper('a4', 'portrait')
-            ->stream('bilan-'.($payload['bilanReference'] ?? 'rapport').'.pdf');
+        return redirect()->route('accounting.liasse-bceao.pdf.view', $request->query());
     }
 
-    public function showBilanPdfViewer(Request $request): View
+    public function showBilanPdfViewer(Request $request)
     {
-        $payload = $this->buildReportPayload($request, 'bilan');
-        $pdfBinary = Pdf::setOptions(['isRemoteEnabled' => true])
-            ->loadView('accounting.report-bilan-pdf', $payload)
-            ->setPaper('a4', 'portrait')
-            ->output();
-
-        $queryParams = array_filter([
-            'date_from' => $request->query('date_from'),
-            'date_to' => $request->query('date_to'),
-        ]);
-
-        return view('accounting.document-viewer', [
-            'documentName' => 'Bilan - '.($payload['exerciseYear'] ?? now()->format('Y')),
-            'documentTypeLabel' => 'Rapport bilan (PDF généré)',
-            'previewType' => 'pdf',
-            'previewUrl' => route('accounting.report.bilan.view', $queryParams),
-            'backUrl' => route('accounting.report.bilan', $queryParams),
-            'mimeType' => 'application/pdf',
-            'fileExtension' => 'PDF',
-            'fileSizeLabel' => $this->formatFileSizeLabel(strlen($pdfBinary)),
-            'textPreview' => null,
-            'pdfDataBase64' => base64_encode($pdfBinary),
-        ]);
+        return redirect()->route('accounting.liasse-bceao', array_merge($request->query(), ['_' => 'actif']));
     }
 
     public function liasseBceao(Request $request, BceaoLiasseService $liasseService)
@@ -2302,86 +2290,6 @@ class AccountingController extends Controller
             'liasseReference' => $liasseReference,
             'qrUrl' => $qrUrl,
         ];
-    }
-
-    private function formatFileSizeLabel(int $bytes): string
-    {
-        if ($bytes >= 1024 * 1024) {
-            return number_format($bytes / (1024 * 1024), 2, ',', ' ').' MB';
-        }
-
-        if ($bytes >= 1024) {
-            return number_format($bytes / 1024, 1, ',', ' ').' KB';
-        }
-
-        return $bytes.' octets';
-    }
-
-    private function buildReportPayload(Request $request, string $reportType = 'full'): array
-    {
-        $dateFrom = $request->query('date_from');
-        $dateTo = $request->query('date_to');
-
-        $entries = AccountingEntry::whereIn('user_id', $this->workspaceDataUserIds())
-            ->when($dateFrom, function ($query, $dateFrom) {
-                $query->whereDate('date', '>=', $dateFrom);
-            })
-            ->when($dateTo, function ($query, $dateTo) {
-                $query->whereDate('date', '<=', $dateTo);
-            })
-            ->orderByDesc('date')
-            ->orderByDesc('id')
-            ->get();
-
-        $summary = $this->summarizeEntries($entries);
-        $user = Auth::user();
-        $companyName = $user->company_name ?: $user->company_designation ?: config('plancomptable.company.name', config('app.name'));
-        $companySigle = $user->company_sigle ?? '';
-        $companyAddress = $user->address ?? '';
-        $companyTaxId = $user->company_tax_id ?: $user->rccm;
-
-        $companyLogo = \App\Support\CompanyLogo::toDataUri($user->company_logo);
-
-        $periodStart = $entries->min('date');
-        $periodEnd = $entries->max('date');
-        $exerciseDate = $periodEnd ?? now();
-
-        $bilanReference = null;
-        $qrUrl = null;
-        if ($reportType === 'bilan') {
-            $referenceInput = sprintf(
-                '%s|%s|%s|%s|%s|%s|%s',
-                $companyName,
-                $companySigle,
-                $companyTaxId,
-                $exerciseDate->format('Y'),
-                $periodEnd ? $periodEnd->format('Y-m-d') : '',
-                $this->workspaceUserId(),
-                now()->format('Y-m-d H:i:s')
-            );
-
-            $bilanReference = strtoupper(Str::substr(hash('sha256', $referenceInput), 0, 16));
-            $qrData = sprintf('BILAN|%s|%s|%s|%s|REF:%s', $companyName, $companySigle, $companyTaxId, $exerciseDate->format('Y'), $bilanReference);
-            $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='.urlencode($qrData);
-        }
-
-        return array_merge([
-            'entries' => $entries,
-            'companyName' => $companyName,
-            'companySigle' => $companySigle,
-            'companyAddress' => $companyAddress,
-            'companyTaxId' => $companyTaxId,
-            'companyLogo' => $companyLogo,
-            'bilanReference' => $bilanReference,
-            'qrUrl' => $qrUrl,
-            'exerciseEnd' => $periodEnd ? $periodEnd->format('d/m/Y') : '',
-            'exerciseYear' => $exerciseDate->format('Y'),
-            'previousYear' => $exerciseDate->copy()->subYear()->format('Y'),
-            'durationMonths' => $periodStart && $periodEnd ? Carbon::parse($periodStart)->diffInMonths(Carbon::parse($periodEnd)) + 1 : '',
-            'dateFrom' => $dateFrom,
-            'dateTo' => $dateTo,
-            'reportType' => $reportType,
-        ], $summary);
     }
 
     private function authorizeEntry(AccountingEntry $entry): void

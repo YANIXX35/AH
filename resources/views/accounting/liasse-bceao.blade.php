@@ -578,4 +578,15 @@
         </div>{{-- end tab-content --}}
     </div>
 </div>
+
+<script>
+(function () {
+    var hash = window.location.hash.replace('#', '');
+    if (!hash) { return; }
+    var tabButton = document.getElementById(hash + '-tab');
+    if (tabButton && window.bootstrap) {
+        new bootstrap.Tab(tabButton).show();
+    }
+})();
+</script>
 @endsection
