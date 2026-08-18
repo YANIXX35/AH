@@ -296,7 +296,10 @@ class InvoiceController extends Controller
         $this->authorizeInvoice($invoice);
         $invoice->load(['items', 'user']);
 
-        $pdf = Pdf::loadView('invoicing.pdf', ['invoice' => $invoice]);
+        $pdf = Pdf::loadView('invoicing.pdf', [
+            'invoice' => $invoice,
+            'companyLogo' => \App\Support\CompanyLogo::toDataUri($invoice->user->company_logo),
+        ]);
         $path = 'invoices/'.$invoice->invoice_number.'.pdf';
         Storage::disk('public')->put($path, $pdf->output());
         $invoice->update(['pdf_path' => $path]);

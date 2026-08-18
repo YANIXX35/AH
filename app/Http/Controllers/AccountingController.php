@@ -2340,18 +2340,7 @@ class AccountingController extends Controller
         $companyAddress = $user->address ?? '';
         $companyTaxId = $user->company_tax_id ?: $user->rccm;
 
-        // Convert logo to base64 for PDF rendering
-        $companyLogo = null;
-        if ($user->company_logo) {
-            $logoPath = storage_path('app/public/'.$user->company_logo);
-            if (file_exists($logoPath)) {
-                $logoData = file_get_contents($logoPath);
-                $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                $logoMime = finfo_file($finfo, $logoPath);
-                finfo_close($finfo);
-                $companyLogo = 'data:'.$logoMime.';base64,'.base64_encode($logoData);
-            }
-        }
+        $companyLogo = \App\Support\CompanyLogo::toDataUri($user->company_logo);
 
         $periodStart = $entries->min('date');
         $periodEnd = $entries->max('date');

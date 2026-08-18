@@ -28,6 +28,7 @@
         .row { width: 100%; clear: both; }
         .col-left { float: left; width: 58%; }
         .col-right { float: right; width: 40%; text-align: right; }
+        .brand-logo { max-height: 56px; max-width: 160px; margin-bottom: 8px; }
         .brand-name { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0; }
         .brand-sub { margin: 2px 0 0; color: #6b7280; font-size: 10px; }
         .invoice-title { font-size: 20px; font-weight: 700; margin: 14px 0 2px; }
@@ -50,6 +51,9 @@
     <div class="header">
         <div class="row">
             <div class="col-left">
+                @if ($companyLogo)
+                    <img src="{{ $companyLogo }}" alt="Logo" class="brand-logo">
+                @endif
                 <p class="brand-name">{{ $invoice->user->company_name ?? $invoice->user->name ?? 'Emetteur' }}</p>
                 @if ($invoice->user->company_sigle)
                     <p class="brand-sub">{{ $invoice->user->company_sigle }}</p>
