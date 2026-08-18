@@ -5,249 +5,130 @@
     <title>{{ $invoice->invoice_number }}</title>
     <style>
         @page {
-            margin: 32px 38px 40px;
+            margin: 35px 40px;
         }
-        * { box-sizing: border-box; }
         body {
             font-family: DejaVu Sans, sans-serif;
-            color: #1E293B;
-            font-size: 10.5px;
-            line-height: 1.5;
+            color: #222;
+            font-size: 12px;
             margin: 0;
         }
-        p { margin: 0; }
-
-        /* En-tête */
-        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
-        .header-table td { border: none; padding: 0; vertical-align: top; }
-        .header-right { text-align: right; }
-
-        .brand-table { border-collapse: collapse; }
-        .brand-table td { border: none; padding: 0; vertical-align: middle; }
-        .brand-logo-cell { width: 52px; padding-right: 10px !important; }
-        .brand-logo { max-height: 48px; max-width: 48px; }
-        .brand-name { font-size: 16px; font-weight: 700; color: #0F2747; }
-        .brand-sigle { font-size: 9.5px; color: #64748B; margin-top: 1px; }
-
-        .issuer-details { margin-top: 8px; color: #64748B; font-size: 9px; line-height: 1.6; }
-        .issuer-details span.sep { color: #CBD5E1; margin: 0 4px; }
-
-        .doc-title { font-size: 22px; font-weight: 700; color: #0F2747; letter-spacing: 1px; }
-        .doc-number { font-size: 11px; color: #64748B; margin-top: 3px; }
-        .doc-number strong { color: #1E293B; }
-
-        .header-rule { border-bottom: 2px solid #0F2747; margin: 14px 0 16px; }
-
-        /* Bandeau statut + échéance */
-        .status-band { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-        .status-band td { border: none; padding: 0; vertical-align: middle; }
-        .due-note { color: #64748B; font-size: 9.5px; }
-        .due-note strong { color: #1E293B; }
-        .status-pill {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 3px;
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            color: #ffffff;
-            background: #64748B;
+        .header {
+            border-bottom: 1px solid #d9dee7;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
         }
-        .status-unpaid { background: #B45309; }
-        .status-partially_paid { background: #B45309; }
-        .status-paid { background: #15803D; }
-        .status-cancelled { background: #64748B; }
-
-        /* Cartes émetteur / client */
-        .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
-        .meta-table td { border: none; padding: 0; vertical-align: top; width: 50%; }
-        .meta-table td.gap { width: 16px; padding: 0; }
-        .meta-card {
-            border: 1px solid #E2E8F0;
-            border-radius: 4px;
-            padding: 11px 13px;
-        }
-        .meta-card-title {
-            font-size: 8.5px;
-            font-weight: 700;
-            letter-spacing: 0.6px;
-            text-transform: uppercase;
-            color: #94A3B8;
-            margin-bottom: 7px;
-        }
-        .meta-row { margin-bottom: 5px; }
-        .meta-row:last-child { margin-bottom: 0; }
-        .meta-label { font-size: 8.5px; color: #94A3B8; }
-        .meta-value { font-size: 10.5px; font-weight: 700; color: #1E293B; }
-
-        /* Tableau des articles */
-        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
-        .items-table thead th {
-            background: #0F2747;
-            color: #ffffff;
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 0.4px;
-            text-transform: uppercase;
-            text-align: left;
-            padding: 8px 10px;
-            border: none;
-        }
-        .items-table tbody td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #E2E8F0;
-            color: #1E293B;
-            font-size: 10.5px;
-        }
-        .items-table tbody tr:nth-child(even) td { background: #F8FAFC; }
-        .text-right { text-align: right; }
-
-        /* Totaux */
-        .totals-wrap { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        .totals-wrap td { border: none; padding: 0; vertical-align: top; }
-        .totals { width: 100%; border-collapse: collapse; }
-        .totals td { padding: 5px 0; font-size: 10px; color: #475569; border: none; }
-        .totals td.label { text-align: left; }
-        .totals td.value { text-align: right; font-weight: 600; color: #1E293B; }
-        .totals tr.total-ttc td { border-top: 1px solid #E2E8F0; padding-top: 8px; font-size: 12px; font-weight: 700; color: #0F2747; }
-        .totals tr.balance-row td {
-            font-size: 12px;
-            font-weight: 700;
-            color: #ffffff;
-            background: #0F2747;
-            padding: 8px 10px;
-        }
-        .totals tr.balance-row td.label { border-radius: 4px 0 0 4px; }
-        .totals tr.balance-row td.value { border-radius: 0 4px 4px 0; }
-
-        /* Coordonnées bancaires / notes */
-        .section-title { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #94A3B8; margin: 20px 0 6px; }
-        .bank-table { width: 100%; border-collapse: collapse; }
-        .bank-table th {
-            text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px;
-            color: #94A3B8; padding: 6px 10px; border-bottom: 1px solid #E2E8F0;
-        }
-        .bank-table td { padding: 7px 10px; border-bottom: 1px solid #E2E8F0; font-size: 10px; color: #1E293B; }
-
-        .notes-box { border: 1px solid #E2E8F0; border-radius: 4px; padding: 10px 12px; font-size: 9.5px; color: #475569; margin-top: 6px; }
-
         .footer {
-            position: fixed;
-            bottom: -18px;
-            left: 0;
-            right: 0;
-            border-top: 1px solid #E2E8F0;
-            font-size: 8.5px;
-            color: #94A3B8;
-            text-align: center;
-            padding-top: 7px;
+            border-top: 1px solid #d9dee7;
+            font-size: 10px;
+            color: #6b7280;
+            padding-top: 8px;
+            margin-top: 20px;
         }
+        .row { width: 100%; clear: both; }
+        .col-left { float: left; width: 58%; }
+        .col-right { float: right; width: 40%; text-align: right; }
+        .brand-table { border-collapse: collapse; margin-bottom: 4px; }
+        .brand-table td { border: none; padding: 0; vertical-align: middle; }
+        .brand-logo-cell { width: 60px; padding-right: 12px !important; }
+        .brand-logo { max-height: 56px; max-width: 56px; }
+        .brand-name { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0; }
+        .brand-sub { margin: 2px 0 0; color: #6b7280; font-size: 10px; }
+        .invoice-title { font-size: 20px; font-weight: 700; margin: 14px 0 2px; }
+        .muted { color: #666; }
+        .meta-card { border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px; margin-bottom: 12px; }
+        .meta-label { color: #6b7280; font-size: 10px; margin-bottom: 2px; }
+        .meta-value { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+        .spacer { height: 10px; clear: both; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
+        th { background: #f8fafc; color: #334155; font-size: 11px; }
+        .totals { margin-top: 14px; width: 45%; margin-left: auto; }
+        .totals th { width: 55%; }
+        .totals .balance-row th, .totals .balance-row td { font-weight: 700; }
+        .bank-table { width: 100%; margin-top: 8px; }
+        .text-right { text-align: right; }
     </style>
 </head>
 <body>
-    <table class="header-table">
-        <tr>
-            <td>
+    <div class="header">
+        <div class="row">
+            <div class="col-left">
                 @if ($companyLogo)
                     <table class="brand-table"><tr>
-                        <td class="brand-logo-cell"><img src="{{ $companyLogo }}" alt="Logo"></td>
-                        <td>
-                            <p class="brand-name">{{ $invoice->user->company_name ?? $invoice->user->name ?? 'Emetteur' }}</p>
-                            @if ($invoice->user->company_sigle)
-                                <p class="brand-sigle">{{ $invoice->user->company_sigle }}</p>
-                            @endif
-                        </td>
+                        <td class="brand-logo-cell"><img src="{{ $companyLogo }}" alt="Logo" class="brand-logo"></td>
+                        <td><p class="brand-name">{{ $invoice->user->company_name ?? $invoice->user->name ?? 'Emetteur' }}</p></td>
                     </tr></table>
                 @else
                     <p class="brand-name">{{ $invoice->user->company_name ?? $invoice->user->name ?? 'Emetteur' }}</p>
-                    @if ($invoice->user->company_sigle)
-                        <p class="brand-sigle">{{ $invoice->user->company_sigle }}</p>
-                    @endif
                 @endif
-
+                @if ($invoice->user->company_sigle)
+                    <p class="brand-sub">{{ $invoice->user->company_sigle }}</p>
+                @endif
                 @php
                     $issuerAddress = $invoice->user->full_geographic_address
                         ?: trim(collect([$invoice->user->address ?? null, $invoice->user->city ?? null])->filter()->implode(', '));
-                    $issuerLines = collect([
-                        $issuerAddress,
-                        $invoice->user->phone ? 'Tel : '.$invoice->user->phone : null,
-                        $invoice->user->email,
-                        $invoice->user->rccm ? 'RCCM : '.$invoice->user->rccm : null,
-                        $invoice->user->company_tax_id ? 'NIF : '.$invoice->user->company_tax_id : null,
-                    ])->filter();
                 @endphp
-                @if ($issuerLines->isNotEmpty())
-                    <p class="issuer-details">{{ $issuerLines->implode(' · ') }}</p>
+                @if ($issuerAddress)
+                    <p class="brand-sub">{{ $issuerAddress }}</p>
                 @endif
-            </td>
-            <td class="header-right">
-                <p class="doc-title">FACTURE</p>
-                <p class="doc-number">N&deg; <strong>{{ $invoice->invoice_number }}</strong></p>
-                <p class="doc-number">Emise le <strong>{{ $invoice->issue_date->format('d/m/Y') }}</strong></p>
-            </td>
-        </tr>
-    </table>
-    <div class="header-rule"></div>
+                @if ($invoice->user->phone)
+                    <p class="brand-sub">Tel : {{ $invoice->user->phone }}</p>
+                @endif
+                <p class="brand-sub">{{ $invoice->user->email ?? '' }}</p>
+                @if ($invoice->user->rccm)
+                    <p class="brand-sub">RCCM : {{ $invoice->user->rccm }}</p>
+                @endif
+                @if ($invoice->user->company_tax_id)
+                    <p class="brand-sub">NIF : {{ $invoice->user->company_tax_id }}</p>
+                @endif
+            </div>
+            <div class="col-right">
+                <p class="brand-sub">Date d'emission</p>
+                <p style="margin:0; font-weight:700;">{{ $invoice->issue_date->format('d/m/Y') }}</p>
+                <p class="brand-sub" style="margin-top:8px;">Reference facture</p>
+                <p style="margin:0; font-weight:700;">{{ $invoice->invoice_number }}</p>
+            </div>
+        </div>
+    </div>
 
-    <table class="status-band">
-        <tr>
-            <td>
-                <span class="status-pill status-{{ $invoice->status }}">{{ strtoupper(str_replace('_', ' ', (string) $invoice->status)) }}</span>
-            </td>
-            <td class="text-right due-note">Echeance de paiement : <strong>{{ $invoice->due_date->format('d/m/Y') }}</strong></td>
-        </tr>
-    </table>
+    <div class="invoice-title">FACTURE</div>
+    <p class="muted" style="margin:0 0 12px;">Echeance de paiement : {{ $invoice->due_date->format('d/m/Y') }}</p>
 
-    <table class="meta-table">
-        <tr>
-            <td>
-                <div class="meta-card">
-                    <div class="meta-card-title">Facture a</div>
-                    <div class="meta-row">
-                        <div class="meta-value">{{ $invoice->client_name }}</div>
-                    </div>
-                    @if ($invoice->client_contact)
-                        <div class="meta-row">
-                            <div class="meta-label">Contact</div>
-                            <div class="meta-value" style="font-size:9.5px; font-weight:400;">{{ $invoice->client_contact }}</div>
-                        </div>
-                    @endif
-                    @if ($invoice->client_address)
-                        <div class="meta-row">
-                            <div class="meta-label">Adresse</div>
-                            <div class="meta-value" style="font-size:9.5px; font-weight:400;">{{ $invoice->client_address }}</div>
-                        </div>
-                    @endif
-                    @if ($invoice->client_tax_id)
-                        <div class="meta-row">
-                            <div class="meta-label">NIF</div>
-                            <div class="meta-value" style="font-size:9.5px; font-weight:400;">{{ $invoice->client_tax_id }}</div>
-                        </div>
-                    @endif
-                </div>
-            </td>
-            <td class="gap"></td>
-            <td>
-                <div class="meta-card">
-                    <div class="meta-card-title">Recapitulatif</div>
-                    <div class="meta-row">
-                        <div class="meta-label">Devise</div>
-                        <div class="meta-value">{{ $invoice->currency }}</div>
-                    </div>
-                    <div class="meta-row">
-                        <div class="meta-label">Montant regle</div>
-                        <div class="meta-value">{{ number_format((float) $invoice->amount_paid, 0, ',', ' ') }} {{ $invoice->currency }}</div>
-                    </div>
-                    <div class="meta-row">
-                        <div class="meta-label">Solde du</div>
-                        <div class="meta-value">{{ number_format($invoice->balanceDue(), 0, ',', ' ') }} {{ $invoice->currency }}</div>
-                    </div>
-                </div>
-            </td>
-        </tr>
-    </table>
+    <div class="row">
+        <div class="col-left">
+            <div class="meta-card">
+                <div class="meta-label">Client</div>
+                <div class="meta-value">{{ $invoice->client_name }}</div>
 
-    <table class="items-table">
+                <div class="meta-label">Contact</div>
+                <div class="meta-value">{{ $invoice->client_contact ?? 'Non renseigne' }}</div>
+
+                <div class="meta-label">Adresse</div>
+                <div class="meta-value">{{ $invoice->client_address ?? 'Non renseignee' }}</div>
+
+                @if ($invoice->client_tax_id)
+                    <div class="meta-label">NIF</div>
+                    <div class="meta-value">{{ $invoice->client_tax_id }}</div>
+                @endif
+            </div>
+        </div>
+        <div class="col-right">
+            <div class="meta-card" style="text-align:left;">
+                <div class="meta-label">Statut</div>
+                <div class="meta-value">{{ strtoupper((string) $invoice->status) }}</div>
+
+                <div class="meta-label">Devise</div>
+                <div class="meta-value">{{ $invoice->currency }}</div>
+
+                <div class="meta-label">Solde du</div>
+                <div class="meta-value">{{ number_format($invoice->balanceDue(), 0, ',', ' ') }} {{ $invoice->currency }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="spacer"></div>
+
+    <table>
         <thead>
             <tr>
                 <th>Libelle</th>
@@ -268,19 +149,12 @@
         </tbody>
     </table>
 
-    <table class="totals-wrap">
-        <tr>
-            <td style="width:55%;"></td>
-            <td style="width:45%;">
-                <table class="totals">
-                    <tr><td class="label">Sous-total</td><td class="value">{{ number_format((float) $invoice->subtotal, 0, ',', ' ') }} {{ $invoice->currency }}</td></tr>
-                    <tr><td class="label">TVA ({{ $invoice->tax_rate }}%)</td><td class="value">{{ number_format((float) $invoice->tax_amount, 0, ',', ' ') }} {{ $invoice->currency }}</td></tr>
-                    <tr class="total-ttc"><td class="label">Total TTC</td><td class="value">{{ number_format((float) $invoice->total_amount, 0, ',', ' ') }} {{ $invoice->currency }}</td></tr>
-                    <tr><td colspan="2" style="height:6px; padding:0;"></td></tr>
-                    <tr class="balance-row"><td class="label">Solde du</td><td class="value">{{ number_format($invoice->balanceDue(), 0, ',', ' ') }} {{ $invoice->currency }}</td></tr>
-                </table>
-            </td>
-        </tr>
+    <table class="totals">
+        <tr><th>Sous-total</th><td class="text-right">{{ number_format((float) $invoice->subtotal, 0, ',', ' ') }} {{ $invoice->currency }}</td></tr>
+        <tr><th>TVA ({{ $invoice->tax_rate }}%)</th><td class="text-right">{{ number_format((float) $invoice->tax_amount, 0, ',', ' ') }} {{ $invoice->currency }}</td></tr>
+        <tr><th>Total TTC</th><td class="text-right"><strong>{{ number_format((float) $invoice->total_amount, 0, ',', ' ') }} {{ $invoice->currency }}</strong></td></tr>
+        <tr><th>Montant paye</th><td class="text-right">{{ number_format((float) $invoice->amount_paid, 0, ',', ' ') }} {{ $invoice->currency }}</td></tr>
+        <tr class="balance-row"><th>Solde du</th><td class="text-right">{{ number_format($invoice->balanceDue(), 0, ',', ' ') }} {{ $invoice->currency }}</td></tr>
     </table>
 
     @php
@@ -288,7 +162,8 @@
             ->filter(fn ($row) => !empty($row['bank']) || !empty($row['account_number']));
     @endphp
     @if ($bankAccounts->isNotEmpty())
-        <p class="section-title">Coordonnees de paiement</p>
+        <div class="spacer"></div>
+        <p class="muted" style="margin:0 0 4px; font-weight:700;">Coordonnees de paiement</p>
         <table class="bank-table">
             <thead>
                 <tr>
@@ -308,12 +183,12 @@
     @endif
 
     @if ($invoice->notes)
-        <p class="section-title">Notes</p>
-        <div class="notes-box">{{ $invoice->notes }}</div>
+        <div class="spacer"></div>
+        <p class="muted">{{ $invoice->notes }}</p>
     @endif
 
     <div class="footer">
-        Document genere via {{ config('app.name') }} — Facturation, le {{ now()->format('d/m/Y H:i') }}.
+        Document genere via {{ config('app.name') }} - Facturation, le {{ now()->format('d/m/Y H:i') }}.
     </div>
 </body>
 </html>
