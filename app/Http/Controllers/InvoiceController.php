@@ -319,22 +319,23 @@ class InvoiceController extends Controller
         $invoice->load(['items', 'user']);
         $filename = 'facture-'.$invoice->invoice_number;
         $title = 'Facture '.$invoice->invoice_number.' — '.$invoice->client_name;
+        $logoPath = \App\Support\CompanyLogo::absolutePath($invoice->user->company_logo);
 
         $summary = [
-            ['Emetteur', $invoice->user->company_name ?? $invoice->user->name ?? '-'],
+            ['Émetteur', $invoice->user->company_name ?? $invoice->user->name ?? '-'],
             ['Client', $invoice->client_name],
-            ['Date d\'emission', $invoice->issue_date->format('d/m/Y')],
-            ['Echeance', $invoice->due_date->format('d/m/Y')],
+            ['Date d\'émission', $invoice->issue_date->format('d/m/Y')],
+            ['Échéance', $invoice->due_date->format('d/m/Y')],
             ['Statut', strtoupper((string) $invoice->status)],
             ['Devise', $invoice->currency],
             ['Sous-total', number_format((float) $invoice->subtotal, 0, ',', ' ').' '.$invoice->currency],
             ['TVA ('.$invoice->tax_rate.'%)', number_format((float) $invoice->tax_amount, 0, ',', ' ').' '.$invoice->currency],
             ['Total TTC', number_format((float) $invoice->total_amount, 0, ',', ' ').' '.$invoice->currency],
-            ['Montant paye', number_format((float) $invoice->amount_paid, 0, ',', ' ').' '.$invoice->currency],
-            ['Solde du', number_format($invoice->balanceDue(), 0, ',', ' ').' '.$invoice->currency],
+            ['Montant payé', number_format((float) $invoice->amount_paid, 0, ',', ' ').' '.$invoice->currency],
+            ['Solde dû', number_format($invoice->balanceDue(), 0, ',', ' ').' '.$invoice->currency],
         ];
 
-        $headers = ['Libelle', 'Quantite', 'Prix unitaire', 'Total'];
+        $headers = ['Libellé', 'Quantité', 'Prix unitaire', 'Total'];
         $rows = $invoice->items->map(fn ($item) => [
             $item->description,
             $item->quantity,
@@ -344,8 +345,8 @@ class InvoiceController extends Controller
 
         return match ($format) {
             'csv' => $exporter->csv($filename, $title, $summary, $headers, $rows),
-            'xlsx' => $exporter->excel($filename, $title, $summary, $headers, $rows),
-            'docx' => $exporter->word($filename, $title, $summary, $headers, $rows),
+            'xlsx' => $exporter->excel($filename, $title, $summary, $headers, $rows, $logoPath),
+            'docx' => $exporter->word($filename, $title, $summary, $headers, $rows, $logoPath),
             default => abort(404),
         };
     }

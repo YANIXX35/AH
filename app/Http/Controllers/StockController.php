@@ -91,23 +91,24 @@ class StockController extends Controller
             return $this->downloadPdf($product);
         }
 
-        $product->load('movements');
+        $product->load(['movements', 'user']);
         $filename = 'fiche-stock-'.($product->sku ?: $product->id);
         $title = 'Fiche stock — '.$product->name;
+        $logoPath = CompanyLogo::absolutePath($product->user->company_logo);
 
         $summary = [
-            ['Reference', $product->sku ?: '-'],
-            ['Quantite en stock', number_format((float) $product->quantity_on_hand, 2, ',', ' ').' '.$product->unit],
+            ['Référence', $product->sku ?: '-'],
+            ['Quantité en stock', number_format((float) $product->quantity_on_hand, 2, ',', ' ').' '.$product->unit],
             ['CUMP', number_format((float) $product->average_cost, 0, ',', ' ').' FCFA'],
             ['Valeur du stock', number_format($product->stockValue(), 0, ',', ' ').' FCFA'],
             ['Prix de vente', number_format((float) $product->sale_price, 0, ',', ' ').' FCFA'],
         ];
         if ($product->reorder_threshold !== null) {
-            $summary[] = ['Seuil de reapprovisionnement', number_format((float) $product->reorder_threshold, 2, ',', ' ').' '.$product->unit];
+            $summary[] = ['Seuil de réapprovisionnement', number_format((float) $product->reorder_threshold, 2, ',', ' ').' '.$product->unit];
         }
 
-        $headers = ['Date', 'Type', 'Quantite', 'Cout unitaire', 'Solde apres', 'Motif'];
-        $typeLabels = ['entree' => 'Entree', 'sortie' => 'Sortie', 'ajustement' => 'Ajustement'];
+        $headers = ['Date', 'Type', 'Quantité', 'Coût unitaire', 'Solde après', 'Motif'];
+        $typeLabels = ['entree' => 'Entrée', 'sortie' => 'Sortie', 'ajustement' => 'Ajustement'];
         $rows = $product->movements->map(fn ($m) => [
             optional($m->movement_date)->format('d/m/Y'),
             $typeLabels[$m->type] ?? $m->type,
@@ -119,8 +120,8 @@ class StockController extends Controller
 
         return match ($format) {
             'csv' => $exporter->csv($filename, $title, $summary, $headers, $rows),
-            'xlsx' => $exporter->excel($filename, $title, $summary, $headers, $rows),
-            'docx' => $exporter->word($filename, $title, $summary, $headers, $rows),
+            'xlsx' => $exporter->excel($filename, $title, $summary, $headers, $rows, $logoPath),
+            'docx' => $exporter->word($filename, $title, $summary, $headers, $rows, $logoPath),
             default => abort(404),
         };
     }

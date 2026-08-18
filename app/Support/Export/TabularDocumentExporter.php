@@ -2,10 +2,14 @@
 
 namespace App\Support\Export;
 
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpWord\IOFactory as WordIOFactory;
+use PhpOffice\PhpWord\PhpWord;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -18,6 +22,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class TabularDocumentExporter
 {
+    private const NAVY = '0F2747';
+
+    private const SLATE_BG = 'F1F5F9';
+
+    private const BORDER = 'D9DEE7';
+
     /**
      * @param  array<int, array{0: string, 1: mixed}>  $summary
      * @param  array<int, string>  $tableHeaders
@@ -52,39 +62,58 @@ class TabularDocumentExporter
      * @param  array<int, string>  $tableHeaders
      * @param  array<int, array<int, mixed>>  $tableRows
      */
-    public function excel(string $filename, string $title, array $summary, array $tableHeaders, array $tableRows): StreamedResponse
+    public function excel(string $filename, string $title, array $summary, array $tableHeaders, array $tableRows, ?string $logoPath = null): StreamedResponse
     {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle(mb_substr($title, 0, 31));
+        $lastCol = $this->columnLetter(max(count($tableHeaders), 2));
 
-        $sheet->setCellValue('A1', $title);
-        $lastCol = $this->columnLetter(count($tableHeaders));
-        $sheet->mergeCells('A1:'.$lastCol.'1');
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $row = 1;
+        if ($logoPath) {
+            $drawing = new Drawing();
+            $drawing->setPath($logoPath);
+            $drawing->setHeight(48);
+            $drawing->setCoordinates('A1');
+            $drawing->setOffsetX(2);
+            $drawing->setOffsetY(2);
+            $drawing->setWorksheet($sheet);
+            $sheet->getRowDimension(1)->setRowHeight(38);
+            $row = 3;
+        }
 
-        $row = 3;
+        $sheet->setCellValue('A'.$row, $title);
+        $sheet->mergeCells('A'.$row.':'.$lastCol.$row);
+        $sheet->getStyle('A'.$row)->getFont()->setBold(true)->setSize(14)->getColor()->setRGB(self::NAVY);
+        $row += 2;
+
         foreach ($summary as [$label, $value]) {
             $sheet->setCellValue('A'.$row, $label);
             $sheet->setCellValue('B'.$row, $value);
             $sheet->getStyle('A'.$row)->getFont()->setBold(true);
+            $sheet->getStyle('A'.$row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB(self::SLATE_BG);
+            $sheet->getStyle('A'.$row.':B'.$row)->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB(self::BORDER);
             $row++;
         }
 
-        $headerRow = $row + 1;
+        $row++;
+        $headerRow = $row;
         foreach ($tableHeaders as $i => $header) {
             $sheet->setCellValue($this->columnLetter($i + 1).$headerRow, $header);
         }
-        $sheet->getStyle('A'.$headerRow.':'.$lastCol.$headerRow)->getFont()->setBold(true);
-        $sheet->getStyle('A'.$headerRow.':'.$lastCol.$headerRow)->getFill()
-            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-            ->getStartColor()->setRGB('0F2747');
-        $sheet->getStyle('A'.$headerRow.':'.$lastCol.$headerRow)->getFont()->getColor()->setRGB('FFFFFF');
+        $headerRange = 'A'.$headerRow.':'.$this->columnLetter(count($tableHeaders)).$headerRow;
+        $sheet->getStyle($headerRange)->getFont()->setBold(true)->getColor()->setRGB('FFFFFF');
+        $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB(self::NAVY);
 
         $dataRow = $headerRow + 1;
         foreach ($tableRows as $tableRow) {
             foreach ($tableRow as $i => $value) {
                 $sheet->setCellValue($this->columnLetter($i + 1).$dataRow, $value);
+            }
+            $rowRange = 'A'.$dataRow.':'.$this->columnLetter(count($tableHeaders)).$dataRow;
+            $sheet->getStyle($rowRange)->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB(self::BORDER);
+            if ($dataRow % 2 === 0) {
+                $sheet->getStyle($rowRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB(self::SLATE_BG);
             }
             $dataRow++;
         }
@@ -92,6 +121,7 @@ class TabularDocumentExporter
         foreach (range(1, count($tableHeaders)) as $i) {
             $sheet->getColumnDimensionByColumn($i)->setAutoSize(true);
         }
+        $sheet->getColumnDimension('B')->setAutoSize(true);
 
         $writer = new Xlsx($spreadsheet);
 
@@ -107,32 +137,44 @@ class TabularDocumentExporter
      * @param  array<int, string>  $tableHeaders
      * @param  array<int, array<int, mixed>>  $tableRows
      */
-    public function word(string $filename, string $title, array $summary, array $tableHeaders, array $tableRows): StreamedResponse
+    public function word(string $filename, string $title, array $summary, array $tableHeaders, array $tableRows, ?string $logoPath = null): StreamedResponse
     {
         $phpWord = new PhpWord();
-        $section = $phpWord->addSection();
-        $section->addText($title, ['bold' => true, 'size' => 16]);
+        $phpWord->setDefaultFontName('DejaVu Sans');
+        $phpWord->setDefaultFontSize(10);
+        $section = $phpWord->addSection(['marginTop' => 700, 'marginBottom' => 700, 'marginLeft' => 900, 'marginRight' => 900]);
+
+        if ($logoPath) {
+            $section->addImage($logoPath, ['height' => 50, 'width' => 50, 'wrappingStyle' => 'inline']);
+        }
+
+        $section->addText($title, ['bold' => true, 'size' => 16, 'color' => self::NAVY]);
         $section->addTextBreak(1);
 
-        $summaryTable = $section->addTable(['borderSize' => 6, 'borderColor' => 'D9DEE7', 'cellMargin' => 80]);
+        $summaryTable = $section->addTable([
+            'borderSize' => 4, 'borderColor' => self::BORDER, 'cellMargin' => 100, 'width' => 100 * 50, 'unit' => 'pct',
+        ]);
         foreach ($summary as [$label, $value]) {
             $summaryTable->addRow();
-            $summaryTable->addCell(3200)->addText((string) $label, ['bold' => true]);
+            $summaryTable->addCell(3200, ['bgColor' => self::SLATE_BG])->addText((string) $label, ['bold' => true, 'color' => self::NAVY]);
             $summaryTable->addCell(4800)->addText((string) $value);
         }
 
         $section->addTextBreak(1);
+        $section->addText('Détail', ['bold' => true, 'size' => 12, 'color' => self::NAVY]);
 
         $colWidth = (int) floor(9000 / max(1, count($tableHeaders)));
-        $dataTable = $section->addTable(['borderSize' => 6, 'borderColor' => 'D9DEE7', 'cellMargin' => 80]);
+        $dataTable = $section->addTable(['borderSize' => 4, 'borderColor' => self::BORDER, 'cellMargin' => 90]);
         $dataTable->addRow();
         foreach ($tableHeaders as $header) {
-            $dataTable->addCell($colWidth, ['bgColor' => '0F2747'])->addText($header, ['bold' => true, 'color' => 'FFFFFF']);
+            $dataTable->addCell($colWidth, ['bgColor' => self::NAVY, 'valign' => 'center'])
+                ->addText($header, ['bold' => true, 'color' => 'FFFFFF', 'size' => 9]);
         }
-        foreach ($tableRows as $tableRow) {
+        foreach ($tableRows as $index => $tableRow) {
             $dataTable->addRow();
+            $bg = $index % 2 === 1 ? self::SLATE_BG : 'FFFFFF';
             foreach ($tableRow as $value) {
-                $dataTable->addCell($colWidth)->addText((string) $value);
+                $dataTable->addCell($colWidth, ['bgColor' => $bg])->addText((string) $value, ['size' => 9]);
             }
         }
 
@@ -146,6 +188,6 @@ class TabularDocumentExporter
 
     private function columnLetter(int $index): string
     {
-        return \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index);
+        return Coordinate::stringFromColumnIndex($index);
     }
 }

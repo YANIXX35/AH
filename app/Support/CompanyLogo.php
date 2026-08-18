@@ -29,4 +29,20 @@ class CompanyLogo
 
         return 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($absolutePath));
     }
+
+    /**
+     * Chemin absolu sur disque — utilisé par les exports Excel/Word, dont les
+     * bibliothèques (PhpSpreadsheet, PhpWord) embarquent une image depuis un
+     * fichier réel plutôt qu'une data URI.
+     */
+    public static function absolutePath(?string $storedPath): ?string
+    {
+        if (! $storedPath) {
+            return null;
+        }
+
+        $absolutePath = storage_path('app/public/'.$storedPath);
+
+        return file_exists($absolutePath) ? $absolutePath : null;
+    }
 }
