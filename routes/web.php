@@ -38,6 +38,7 @@ use App\Http\Controllers\CommercialSupervisorController;
 use App\Http\Controllers\CompanyFirdController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentationController;
+use App\Http\Controllers\DocumentVerificationController;
 use App\Http\Controllers\EnterpriseTeamController;
 use App\Http\Controllers\FedaPaySandboxController;
 use App\Http\Controllers\InAppNotificationController;
@@ -99,6 +100,13 @@ Route::post('/payments/stripe/webhook', [TreasuryController::class, 'stripeWebho
 // ou l'utilisateur cible a encore une session active ailleurs).
 Route::get('/reset-password/lien/{token}', [AuthController::class, 'showPasswordResetLink'])->middleware('throttle:auth-sensitive')->name('password.reset-link.show');
 Route::post('/reset-password/lien/{token}', [AuthController::class, 'submitPasswordResetLink'])->middleware('throttle:auth-sensitive')->name('password.reset-link.submit');
+
+// Page publique (sans connexion) affichée en scannant le QR code d'un bilan
+// ou d'une liasse BCEAO générés : permet à un tiers (banquier, auditeur...)
+// de vérifier l'authenticité du document sans avoir accès au reste de l'app.
+Route::get('/verifier/{reference}', [DocumentVerificationController::class, 'show'])
+    ->middleware('throttle:60,1')
+    ->name('documents.verify');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', fn () => redirect()->route('home'))->name('login');

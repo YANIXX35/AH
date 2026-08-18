@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\ValidatesPlanComptableAccount;
 use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
 use App\Models\AccountingMonthClosure;
+use App\Models\DocumentVerification;
 use App\Models\PlanComptableAccount;
 use App\Models\PlanComptableDefault;
 use App\Models\PlanComptableImport;
@@ -2094,7 +2095,7 @@ class AccountingController extends Controller
             .'Action recommandée: '.$action."\n";
     }
 
-    public function report(Request $request)
+    public function report(Request $request, BceaoLiasseService $liasseService)
     {
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
@@ -2154,8 +2155,27 @@ class AccountingController extends Controller
             );
 
             $bilanReference = strtoupper(Str::substr(hash('sha256', $referenceInput), 0, 16));
-            $qrData = sprintf('BILAN|%s|%s|%s|%s|REF:%s', $companyName, $companySigle, $companyTaxId, $exerciseDate->format('Y'), $bilanReference);
-            $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='.urlencode($qrData);
+
+            $liasseForVerification = $liasseService->generateLiasse($entries);
+
+            DocumentVerification::updateOrCreate(
+                ['reference' => $bilanReference],
+                [
+                    'type' => 'bilan',
+                    'user_id' => $this->workspaceUserId(),
+                    'company_name' => $companyName,
+                    'company_sigle' => $companySigle,
+                    'company_tax_id' => $companyTaxId,
+                    'exercise_year' => $exerciseDate->format('Y'),
+                    'total_actif' => $liasseForVerification['actif']['total']['net_n'] ?? null,
+                    'total_passif' => $liasseForVerification['passif']['total']['net_n'] ?? null,
+                    'resultat_net' => $liasseForVerification['resultat']['totals']['XZ']['net_n'] ?? null,
+                    'generated_at' => now(),
+                ]
+            );
+
+            $verificationUrl = route('documents.verify', $bilanReference);
+            $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='.urlencode($verificationUrl);
         }
 
         return view('accounting.report', array_merge([
@@ -2260,8 +2280,25 @@ class AccountingController extends Controller
 
         $referenceInput = sprintf('%s|%s|%s|%s', $companyName, $companyTaxId, $exerciseDate->format('Y'), $this->workspaceUserId());
         $liasseReference = 'BCEAO-'.strtoupper(Str::substr(hash('sha256', $referenceInput), 0, 12));
-        $qrData = sprintf('LIASSE|%s|%s|%s|REF:%s', $companyName, $companyTaxId, $exerciseDate->format('Y'), $liasseReference);
-        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='.urlencode($qrData);
+
+        DocumentVerification::updateOrCreate(
+            ['reference' => $liasseReference],
+            [
+                'type' => 'liasse',
+                'user_id' => $this->workspaceUserId(),
+                'company_name' => $companyName,
+                'company_sigle' => $companySigle,
+                'company_tax_id' => $companyTaxId,
+                'exercise_year' => $exerciseDate->format('Y'),
+                'total_actif' => $liasse['actif']['total']['net_n'] ?? null,
+                'total_passif' => $liasse['passif']['total']['net_n'] ?? null,
+                'resultat_net' => $liasse['resultat']['totals']['XZ']['net_n'] ?? null,
+                'generated_at' => now(),
+            ]
+        );
+
+        $verificationUrl = route('documents.verify', $liasseReference);
+        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='.urlencode($verificationUrl);
 
         return [
             'liasse' => $liasse,
