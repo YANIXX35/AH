@@ -107,10 +107,10 @@
                             <div class="col-md-4">
                                 <p class="small text-muted mb-1">Photo</p>
                                 @if($req->isPdfPath($req->photo_path))
-                                    <a href="{{ $req->publicUrl($req->photo_path) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">Ouvrir le fichier</a>
+                                    <a href="{{ route('admin.investment-requests.document.stream', [$req, 'photo']) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">Ouvrir le fichier</a>
                                 @else
-                                    <a href="{{ $req->publicUrl($req->photo_path) }}" target="_blank" rel="noopener">
-                                        <img src="{{ $req->publicUrl($req->photo_path) }}" alt="Photo représentant" class="img-fluid rounded border" style="max-height: 220px;">
+                                    <a href="{{ route('admin.investment-requests.document.stream', [$req, 'photo']) }}" target="_blank" rel="noopener">
+                                        <img src="{{ route('admin.investment-requests.document.stream', [$req, 'photo']) }}" alt="Photo représentant" class="img-fluid rounded border" style="max-height: 220px;">
                                     </a>
                                 @endif
                             </div>
@@ -119,10 +119,10 @@
                             <div class="col-md-4">
                                 <p class="small text-muted mb-1">Recto</p>
                                 @if($req->isPdfPath($req->identity_document_front_path))
-                                    <a href="{{ $req->publicUrl($req->identity_document_front_path) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Ouvrir le PDF</a>
+                                    <a href="{{ route('admin.investment-requests.document.stream', [$req, 'identity_front']) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Ouvrir le PDF</a>
                                 @else
-                                    <a href="{{ $req->publicUrl($req->identity_document_front_path) }}" target="_blank" rel="noopener">
-                                        <img src="{{ $req->publicUrl($req->identity_document_front_path) }}" alt="Recto" class="img-fluid rounded border" style="max-height: 220px;">
+                                    <a href="{{ route('admin.investment-requests.document.stream', [$req, 'identity_front']) }}" target="_blank" rel="noopener">
+                                        <img src="{{ route('admin.investment-requests.document.stream', [$req, 'identity_front']) }}" alt="Recto" class="img-fluid rounded border" style="max-height: 220px;">
                                     </a>
                                 @endif
                             </div>
@@ -131,10 +131,10 @@
                             <div class="col-md-4">
                                 <p class="small text-muted mb-1">Verso</p>
                                 @if($req->isPdfPath($req->identity_document_back_path))
-                                    <a href="{{ $req->publicUrl($req->identity_document_back_path) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Ouvrir le PDF</a>
+                                    <a href="{{ route('admin.investment-requests.document.stream', [$req, 'identity_back']) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Ouvrir le PDF</a>
                                 @else
-                                    <a href="{{ $req->publicUrl($req->identity_document_back_path) }}" target="_blank" rel="noopener">
-                                        <img src="{{ $req->publicUrl($req->identity_document_back_path) }}" alt="Verso" class="img-fluid rounded border" style="max-height: 220px;">
+                                    <a href="{{ route('admin.investment-requests.document.stream', [$req, 'identity_back']) }}" target="_blank" rel="noopener">
+                                        <img src="{{ route('admin.investment-requests.document.stream', [$req, 'identity_back']) }}" alt="Verso" class="img-fluid rounded border" style="max-height: 220px;">
                                     </a>
                                 @endif
                             </div>

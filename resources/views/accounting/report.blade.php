@@ -488,7 +488,7 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
             <div class="d-flex align-items-center">
                 @if(!empty($companyLogo))
-                    <img src="{{ asset('storage/' . $companyLogo) }}" alt="Logo {{ $companyName }}" style="width:120px; height:auto; object-fit:contain;" />
+                    <img src="{{ route('company-documents.stream', ['user' => $companyLogoUser, 'type' => 'company_logo']) }}" alt="Logo {{ $companyName }}" style="width:120px; height:auto; object-fit:contain;" />
                 @else
                     <img src="{{ asset('images/logo.svg') }}" alt="Logo par défaut" style="width:120px; height:auto; object-fit:contain;" />
                 @endif
@@ -524,7 +524,7 @@
     <div class="journal-print-header">
         <div class="d-flex align-items-start gap-3">
             @if(!empty($companyLogo))
-                <img src="{{ asset('storage/' . $companyLogo) }}" alt="Logo {{ $companyName }}" style="width:90px; height:auto; object-fit:contain;" />
+                <img src="{{ route('company-documents.stream', ['user' => $companyLogoUser, 'type' => 'company_logo']) }}" alt="Logo {{ $companyName }}" style="width:90px; height:auto; object-fit:contain;" />
             @else
                 <img src="{{ asset('images/logo.svg') }}" alt="Logo par défaut" style="width:90px; height:auto; object-fit:contain;" />
             @endif

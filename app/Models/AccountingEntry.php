@@ -93,15 +93,11 @@ class AccountingEntry extends Model
 
     public function getSourceDocumentUrl(): ?string
     {
-        if ($this->document?->stored_path) {
-            return asset('storage/'.$this->document->stored_path);
+        if (! $this->document?->stored_path && ! $this->attachment_path) {
+            return null;
         }
 
-        if ($this->attachment_path) {
-            return asset('storage/'.$this->attachment_path);
-        }
-
-        return null;
+        return route('accounting.entries.document.stream', $this);
     }
 
     public function getOcrSummaryLines(): array

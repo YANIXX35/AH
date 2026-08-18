@@ -301,7 +301,7 @@
                                     @php $companyLogoExt = strtolower(pathinfo($user->company_logo, PATHINFO_EXTENSION)); @endphp
                                     @if(in_array($companyLogoExt, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true))
                                         <div class="border rounded p-2">
-                                            <img src="{{ asset('storage/' . $user->company_logo) }}" alt="Logo entreprise" style="max-width: 180px; max-height: 100px; object-fit: contain;">
+                                            <img src="{{ route('company-documents.stream', ['user' => $user, 'type' => 'company_logo']) }}" alt="Logo entreprise" style="max-width: 180px; max-height: 100px; object-fit: contain;">
                                         </div>
                                     @else
                                         <div class="border rounded p-2 d-flex align-items-center justify-content-between gap-2">

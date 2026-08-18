@@ -454,6 +454,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/investment-requests', [AdminInvestmentRequestController::class, 'index'])->name('investment-requests.index');
         Route::get('/investment-requests/{investmentRequest}', [AdminInvestmentRequestController::class, 'show'])->name('investment-requests.show');
         Route::post('/investment-requests/{investmentRequest}/workflow', [AdminInvestmentRequestController::class, 'updateWorkflow'])->name('investment-requests.workflow');
+        Route::get('/investment-requests/{investmentRequest}/document/{field}', [AdminInvestmentRequestController::class, 'streamDocument'])
+            ->whereIn('field', ['photo', 'identity_front', 'identity_back'])
+            ->name('investment-requests.document.stream');
         Route::get('/licenses', [AdminEnterpriseLicenseController::class, 'index'])->name('licenses.index');
         Route::post('/licenses', [AdminEnterpriseLicenseController::class, 'store'])->name('licenses.store');
         Route::post('/licenses/assign', [AdminEnterpriseLicenseController::class, 'assign'])->name('licenses.assign');

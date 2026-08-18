@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\InvestmentRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 /**
@@ -107,5 +108,22 @@ class AdminInvestmentRequestController extends Controller
         return redirect()
             ->route('admin.investment-requests.show', $investmentRequest)
             ->with('status', 'Demande mise à jour.');
+    }
+
+    public function streamDocument(InvestmentRequest $investmentRequest, string $field)
+    {
+        $column = match ($field) {
+            'photo' => 'photo_path',
+            'identity_front' => 'identity_document_front_path',
+            'identity_back' => 'identity_document_back_path',
+        };
+
+        $path = (string) $investmentRequest->{$column};
+        abort_if($path === '', 404);
+        abort_unless(Storage::disk('public')->exists($path), 404);
+
+        return response()->file(Storage::disk('public')->path($path), [
+            'Content-Disposition' => 'inline; filename="'.basename($path).'"',
+        ]);
     }
 }

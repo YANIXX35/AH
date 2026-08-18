@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class InvestmentRequest extends Model
 {
@@ -53,18 +52,6 @@ class InvestmentRequest extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
-    }
-
-    /**
-     * URL publique d’un fichier stocké sur le disque « public » (photo ou pièce d’identité).
-     */
-    public function publicUrl(?string $path): ?string
-    {
-        if ($path === null || $path === '') {
-            return null;
-        }
-
-        return Storage::disk('public')->url($path);
     }
 
     public function isPdfPath(?string $path): bool

@@ -2165,6 +2165,7 @@ class AccountingController extends Controller
             'companyAddress' => $companyAddress,
             'companyTaxId' => $companyTaxId,
             'companyLogo' => $companyLogo,
+            'companyLogoUser' => $user,
             'bilanReference' => $bilanReference,
             'qrUrl' => $qrUrl,
             'exerciseEnd' => $periodEnd ? $periodEnd->format('d/m/Y') : '',
