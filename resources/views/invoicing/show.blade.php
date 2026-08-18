@@ -20,7 +20,13 @@
                     <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
                 </form>
             @endif
-            <a href="{{ route('invoicing.pdf', $invoice) }}" class="btn btn-outline-secondary btn-sm">Télécharger PDF</a>
+            <select id="invoiceExportFormat" class="form-select form-select-sm d-inline-block" style="width:auto;" aria-label="Format de téléchargement">
+                <option value="pdf">PDF</option>
+                <option value="xlsx">Excel (XLSX)</option>
+                <option value="csv">CSV</option>
+                <option value="docx">Word (DOCX)</option>
+            </select>
+            <a id="invoiceExportLink" href="{{ route('invoicing.export', [$invoice, 'pdf']) }}" class="btn btn-outline-secondary btn-sm">Télécharger</a>
             <a href="{{ route('invoicing.index') }}" class="btn btn-outline-secondary btn-sm">Retour</a>
         </div>
     </div>
@@ -248,6 +254,16 @@
         if (!confirm(message)) {
             e.preventDefault();
         }
+    });
+})();
+</script>
+<script>
+(function () {
+    var formatSelect = document.getElementById('invoiceExportFormat');
+    var link = document.getElementById('invoiceExportLink');
+    var baseUrl = link.getAttribute('href').replace(/\/pdf$/, '');
+    formatSelect.addEventListener('change', function () {
+        link.setAttribute('href', baseUrl + '/' + formatSelect.value);
     });
 })();
 </script>

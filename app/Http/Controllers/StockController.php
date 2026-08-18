@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\UsesClientWorkspace;
 use App\Http\Requests\StockProductRequest;
 use App\Models\StockProduct;
 use App\Support\CompanyLogo;
+use App\Support\Export\TabularDocumentExporter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,6 +81,48 @@ class StockController extends Controller
         ]);
 
         return $pdf->download('fiche-stock-'.($product->sku ?: $product->id).'.pdf');
+    }
+
+    public function export(StockProduct $product, string $format, TabularDocumentExporter $exporter)
+    {
+        $this->authorizeProduct($product);
+
+        if ($format === 'pdf') {
+            return $this->downloadPdf($product);
+        }
+
+        $product->load('movements');
+        $filename = 'fiche-stock-'.($product->sku ?: $product->id);
+        $title = 'Fiche stock — '.$product->name;
+
+        $summary = [
+            ['Reference', $product->sku ?: '-'],
+            ['Quantite en stock', number_format((float) $product->quantity_on_hand, 2, ',', ' ').' '.$product->unit],
+            ['CUMP', number_format((float) $product->average_cost, 0, ',', ' ').' FCFA'],
+            ['Valeur du stock', number_format($product->stockValue(), 0, ',', ' ').' FCFA'],
+            ['Prix de vente', number_format((float) $product->sale_price, 0, ',', ' ').' FCFA'],
+        ];
+        if ($product->reorder_threshold !== null) {
+            $summary[] = ['Seuil de reapprovisionnement', number_format((float) $product->reorder_threshold, 2, ',', ' ').' '.$product->unit];
+        }
+
+        $headers = ['Date', 'Type', 'Quantite', 'Cout unitaire', 'Solde apres', 'Motif'];
+        $typeLabels = ['entree' => 'Entree', 'sortie' => 'Sortie', 'ajustement' => 'Ajustement'];
+        $rows = $product->movements->map(fn ($m) => [
+            optional($m->movement_date)->format('d/m/Y'),
+            $typeLabels[$m->type] ?? $m->type,
+            number_format((float) $m->quantity, 2, ',', ' '),
+            $m->unit_cost !== null ? number_format((float) $m->unit_cost, 0, ',', ' ').' FCFA' : '-',
+            number_format((float) $m->quantity_after, 2, ',', ' '),
+            $m->reason ?: '-',
+        ])->all();
+
+        return match ($format) {
+            'csv' => $exporter->csv($filename, $title, $summary, $headers, $rows),
+            'xlsx' => $exporter->excel($filename, $title, $summary, $headers, $rows),
+            'docx' => $exporter->word($filename, $title, $summary, $headers, $rows),
+            default => abort(404),
+        };
     }
 
     public function edit(StockProduct $product): View

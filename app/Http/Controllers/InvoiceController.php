@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\PlanComptableAccount;
 use App\Models\TreasuryTransaction;
 use App\Services\AccountingChangeApprovalService;
+use App\Support\Export\TabularDocumentExporter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -305,6 +306,48 @@ class InvoiceController extends Controller
         $invoice->update(['pdf_path' => $path]);
 
         return Storage::disk('public')->download($path, $invoice->invoice_number.'.pdf');
+    }
+
+    public function export(Invoice $invoice, string $format, TabularDocumentExporter $exporter)
+    {
+        $this->authorizeInvoice($invoice);
+
+        if ($format === 'pdf') {
+            return $this->downloadPdf($invoice);
+        }
+
+        $invoice->load(['items', 'user']);
+        $filename = 'facture-'.$invoice->invoice_number;
+        $title = 'Facture '.$invoice->invoice_number.' — '.$invoice->client_name;
+
+        $summary = [
+            ['Emetteur', $invoice->user->company_name ?? $invoice->user->name ?? '-'],
+            ['Client', $invoice->client_name],
+            ['Date d\'emission', $invoice->issue_date->format('d/m/Y')],
+            ['Echeance', $invoice->due_date->format('d/m/Y')],
+            ['Statut', strtoupper((string) $invoice->status)],
+            ['Devise', $invoice->currency],
+            ['Sous-total', number_format((float) $invoice->subtotal, 0, ',', ' ').' '.$invoice->currency],
+            ['TVA ('.$invoice->tax_rate.'%)', number_format((float) $invoice->tax_amount, 0, ',', ' ').' '.$invoice->currency],
+            ['Total TTC', number_format((float) $invoice->total_amount, 0, ',', ' ').' '.$invoice->currency],
+            ['Montant paye', number_format((float) $invoice->amount_paid, 0, ',', ' ').' '.$invoice->currency],
+            ['Solde du', number_format($invoice->balanceDue(), 0, ',', ' ').' '.$invoice->currency],
+        ];
+
+        $headers = ['Libelle', 'Quantite', 'Prix unitaire', 'Total'];
+        $rows = $invoice->items->map(fn ($item) => [
+            $item->description,
+            $item->quantity,
+            number_format((float) $item->unit_price, 0, ',', ' ').' '.$invoice->currency,
+            number_format((float) $item->line_total, 0, ',', ' ').' '.$invoice->currency,
+        ])->all();
+
+        return match ($format) {
+            'csv' => $exporter->csv($filename, $title, $summary, $headers, $rows),
+            'xlsx' => $exporter->excel($filename, $title, $summary, $headers, $rows),
+            'docx' => $exporter->word($filename, $title, $summary, $headers, $rows),
+            default => abort(404),
+        };
     }
 
     private function authorizeInvoice(Invoice $invoice): void

@@ -10,8 +10,14 @@
             <h2 class="h3 mb-1"><strong>{{ $product->name }}</strong></h2>
             <p class="text-muted small mb-0">{{ $product->sku ?? 'Sans SKU' }} · {{ $product->unit }}</p>
         </div>
-        <div class="d-flex gap-2">
-            <a href="{{ route('stock.pdf', $product) }}" class="btn btn-outline-secondary btn-sm">Télécharger PDF</a>
+        <div class="d-flex gap-2 align-items-center">
+            <select id="stockExportFormat" class="form-select form-select-sm" style="width:auto;" aria-label="Format de téléchargement">
+                <option value="pdf">PDF</option>
+                <option value="xlsx">Excel (XLSX)</option>
+                <option value="csv">CSV</option>
+                <option value="docx">Word (DOCX)</option>
+            </select>
+            <a id="stockExportLink" href="{{ route('stock.export', [$product, 'pdf']) }}" class="btn btn-outline-secondary btn-sm">Télécharger</a>
             <a href="{{ route('stock.edit', $product) }}" class="btn btn-outline-primary btn-sm">Éditer</a>
             <form action="{{ route('stock.destroy', $product) }}" method="POST" onsubmit="return confirm('Supprimer ce produit ? S\'il a déjà des mouvements, il sera archivé (conservé pour l\'historique) plutôt que supprimé.');">
                 @csrf
@@ -165,6 +171,16 @@
 
     typeSelect.addEventListener('change', update);
     update();
+})();
+</script>
+<script>
+(function () {
+    var formatSelect = document.getElementById('stockExportFormat');
+    var link = document.getElementById('stockExportLink');
+    var baseUrl = link.getAttribute('href').replace(/\/pdf$/, '');
+    formatSelect.addEventListener('change', function () {
+        link.setAttribute('href', baseUrl + '/' + formatSelect.value);
+    });
 })();
 </script>
 @endsection
