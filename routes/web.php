@@ -629,6 +629,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/stock/create', [StockController::class, 'create'])->name('stock.create');
         Route::post('/stock', [StockController::class, 'store'])->middleware('throttle:finance-write')->name('stock.store');
         Route::get('/stock/{product}', [StockController::class, 'show'])->name('stock.show');
+        Route::get('/stock/{product}/pdf', [StockController::class, 'downloadPdf'])->name('stock.pdf');
         Route::get('/stock/{product}/edit', [StockController::class, 'edit'])->name('stock.edit');
         Route::put('/stock/{product}', [StockController::class, 'update'])->middleware('throttle:finance-write')->name('stock.update');
         Route::delete('/stock/{product}', [StockController::class, 'destroy'])->middleware('throttle:finance-write')->name('stock.destroy');

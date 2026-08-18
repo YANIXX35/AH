@@ -6,6 +6,8 @@ use App\Domain\Inventory\StockService;
 use App\Http\Controllers\Concerns\UsesClientWorkspace;
 use App\Http\Requests\StockProductRequest;
 use App\Models\StockProduct;
+use App\Support\CompanyLogo;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -65,6 +67,19 @@ class StockController extends Controller
         $product->load('movements');
 
         return view('stock.show', ['product' => $product]);
+    }
+
+    public function downloadPdf(StockProduct $product)
+    {
+        $this->authorizeProduct($product);
+        $product->load(['movements', 'user']);
+
+        $pdf = Pdf::loadView('stock.pdf', [
+            'product' => $product,
+            'companyLogo' => CompanyLogo::toDataUri($product->user->company_logo),
+        ]);
+
+        return $pdf->download('fiche-stock-'.($product->sku ?: $product->id).'.pdf');
     }
 
     public function edit(StockProduct $product): View

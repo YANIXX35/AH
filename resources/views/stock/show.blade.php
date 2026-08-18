@@ -11,6 +11,7 @@
             <p class="text-muted small mb-0">{{ $product->sku ?? 'Sans SKU' }} · {{ $product->unit }}</p>
         </div>
         <div class="d-flex gap-2">
+            <a href="{{ route('stock.pdf', $product) }}" class="btn btn-outline-secondary btn-sm">Télécharger PDF</a>
             <a href="{{ route('stock.edit', $product) }}" class="btn btn-outline-primary btn-sm">Éditer</a>
             <form action="{{ route('stock.destroy', $product) }}" method="POST" onsubmit="return confirm('Supprimer ce produit ? S\'il a déjà des mouvements, il sera archivé (conservé pour l\'historique) plutôt que supprimé.');">
                 @csrf
