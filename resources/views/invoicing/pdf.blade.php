@@ -9,51 +9,56 @@
         }
         body {
             font-family: DejaVu Sans, sans-serif;
-            color: #222;
+            color: #1E293B;
             font-size: 12px;
             margin: 0;
         }
         .header {
-            border-bottom: 1px solid #d9dee7;
-            padding-bottom: 10px;
+            border-bottom: 2px solid #0F2747;
+            padding-bottom: 12px;
             margin-bottom: 14px;
         }
         .footer {
-            border-top: 1px solid #d9dee7;
+            border-top: 1px solid #E2E8F0;
             font-size: 10px;
-            color: #6b7280;
+            color: #94A3B8;
             padding-top: 8px;
             margin-top: 20px;
         }
-        .row { width: 100%; clear: both; }
-        .col-left { float: left; width: 58%; }
-        .col-right { float: right; width: 40%; text-align: right; }
+        .row { width: 100%; border-collapse: collapse; }
+        .row td { border: none; padding: 0; vertical-align: top; }
+        .col-left { width: 58%; }
+        .col-right { width: 40%; text-align: right; }
         .brand-table { border-collapse: collapse; margin-bottom: 4px; }
         .brand-table td { border: none; padding: 0; vertical-align: middle; }
         .brand-logo-cell { width: 60px; padding-right: 12px !important; }
         .brand-logo { max-height: 56px; max-width: 56px; }
-        .brand-name { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0; }
-        .brand-sub { margin: 2px 0 0; color: #6b7280; font-size: 10px; }
-        .invoice-title { font-size: 20px; font-weight: 700; margin: 14px 0 2px; }
-        .muted { color: #666; }
-        .meta-card { border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px; margin-bottom: 12px; }
-        .meta-label { color: #6b7280; font-size: 10px; margin-bottom: 2px; }
-        .meta-value { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+        .brand-name { font-size: 19px; font-weight: 700; color: #0F2747; margin: 0; }
+        .brand-sub { margin: 2px 0 0; color: #64748B; font-size: 10px; }
+        .invoice-title { font-size: 22px; font-weight: 700; color: #0F2747; letter-spacing: 1px; margin: 14px 0 2px; }
+        .muted { color: #64748B; }
+        .meta-card { border: 1px solid #E2E8F0; background: #F8FAFC; border-radius: 6px; padding: 11px 13px; margin-bottom: 12px; }
+        .meta-label { color: #94A3B8; font-size: 9px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 2px; }
+        .meta-value { font-size: 12px; font-weight: 600; color: #1E293B; margin-bottom: 8px; }
         .spacer { height: 10px; clear: both; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
-        th { background: #f8fafc; color: #334155; font-size: 11px; }
+        th, td { border: 1px solid #E2E8F0; padding: 8px; text-align: left; color: #1E293B; }
+        th { background: #0F2747; color: #ffffff; font-size: 10.5px; font-weight: 700; letter-spacing: 0.3px; }
+        tbody tr:nth-child(even) td { background: #F8FAFC; }
         .totals { margin-top: 14px; width: 45%; margin-left: auto; }
-        .totals th { width: 55%; }
-        .totals .balance-row th, .totals .balance-row td { font-weight: 700; }
+        .totals th { width: 55%; background: #ffffff; color: #475569; font-weight: 600; }
+        .totals td { font-weight: 600; }
+        .totals .balance-row th, .totals .balance-row td {
+            font-weight: 700; font-size: 13px; color: #ffffff; background: #0F2747; border-color: #0F2747;
+        }
         .bank-table { width: 100%; margin-top: 8px; }
         .text-right { text-align: right; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="row">
-            <div class="col-left">
+        <table class="row"><tr>
+            <td class="col-left">
                 @if ($companyLogo)
                     <table class="brand-table"><tr>
                         <td class="brand-logo-cell"><img src="{{ $companyLogo }}" alt="Logo" class="brand-logo"></td>
@@ -82,21 +87,21 @@
                 @if ($invoice->user->company_tax_id)
                     <p class="brand-sub">NIF : {{ $invoice->user->company_tax_id }}</p>
                 @endif
-            </div>
-            <div class="col-right">
+            </td>
+            <td class="col-right">
                 <p class="brand-sub">Date d'emission</p>
-                <p style="margin:0; font-weight:700;">{{ $invoice->issue_date->format('d/m/Y') }}</p>
+                <p style="margin:0; font-weight:700; color:#0F2747;">{{ $invoice->issue_date->format('d/m/Y') }}</p>
                 <p class="brand-sub" style="margin-top:8px;">Reference facture</p>
-                <p style="margin:0; font-weight:700;">{{ $invoice->invoice_number }}</p>
-            </div>
-        </div>
+                <p style="margin:0; font-weight:700; color:#0F2747;">{{ $invoice->invoice_number }}</p>
+            </td>
+        </tr></table>
     </div>
 
     <div class="invoice-title">FACTURE</div>
     <p class="muted" style="margin:0 0 12px;">Echeance de paiement : {{ $invoice->due_date->format('d/m/Y') }}</p>
 
-    <div class="row">
-        <div class="col-left">
+    <table class="row"><tr>
+        <td class="col-left" style="padding-right:12px !important;">
             <div class="meta-card">
                 <div class="meta-label">Client</div>
                 <div class="meta-value">{{ $invoice->client_name }}</div>
@@ -112,11 +117,19 @@
                     <div class="meta-value">{{ $invoice->client_tax_id }}</div>
                 @endif
             </div>
-        </div>
-        <div class="col-right">
+        </td>
+        <td class="col-right">
             <div class="meta-card" style="text-align:left;">
                 <div class="meta-label">Statut</div>
-                <div class="meta-value">{{ strtoupper((string) $invoice->status) }}</div>
+                @php
+                    $statusColor = match ((string) $invoice->status) {
+                        'paid' => '#15803D',
+                        'partially_paid', 'unpaid' => '#B45309',
+                        'cancelled' => '#64748B',
+                        default => '#0F2747',
+                    };
+                @endphp
+                <div class="meta-value" style="color: {{ $statusColor }};">{{ strtoupper((string) $invoice->status) }}</div>
 
                 <div class="meta-label">Devise</div>
                 <div class="meta-value">{{ $invoice->currency }}</div>
@@ -124,8 +137,8 @@
                 <div class="meta-label">Solde du</div>
                 <div class="meta-value">{{ number_format($invoice->balanceDue(), 0, ',', ' ') }} {{ $invoice->currency }}</div>
             </div>
-        </div>
-    </div>
+        </td>
+    </tr></table>
     <div class="spacer"></div>
 
     <table>
