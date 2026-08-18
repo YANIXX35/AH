@@ -805,7 +805,7 @@
                         <i data-feather="bell" style="width:16px; height:16px;"></i>
                     </a>
                     <a href="{{ route('profile') }}" class="d-block">
-                        <img src="{{ (Auth::user()?->avatar) ? asset('storage/' . Auth::user()->avatar) : asset('images/sitiam.png') }}" class="rounded-circle border" style="width:36px; height:36px; object-fit: cover;" alt="Profil" />
+                        <img src="{{ (Auth::user()?->avatar) ? route('user.avatar', Auth::user()) : asset('images/sitiam.png') }}" class="rounded-circle border" style="width:36px; height:36px; object-fit: cover;" alt="Profil" />
                     </a>
                 </div>
             </div>

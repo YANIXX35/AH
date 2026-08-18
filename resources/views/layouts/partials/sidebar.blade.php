@@ -69,7 +69,7 @@
         <ul class="sidebar-nav">
             @if($sidebarIsCommercial)
                 <li class="commercial-mobile-header d-lg-none">
-                    <img src="{{ ($sidebarUser->avatar) ? asset('storage/' . $sidebarUser->avatar) : asset('images/sitiam.png') }}" class="rounded-circle" width="44" height="44" alt="{{ $sidebarUser->name }}">
+                    <img src="{{ ($sidebarUser->avatar) ? route('user.avatar', $sidebarUser) : asset('images/sitiam.png') }}" class="rounded-circle" width="44" height="44" alt="{{ $sidebarUser->name }}">
                     <div>
                         <div class="commercial-mobile-header-name">{{ $sidebarUser->name }}</div>
                         <span class="badge bg-primary text-white">💼 Commercial</span>
@@ -134,7 +134,7 @@
 
             @elseif($sidebarIsCommercialSupervisor)
                 <li class="commercial-mobile-header d-lg-none">
-                    <img src="{{ ($sidebarUser->avatar) ? asset('storage/' . $sidebarUser->avatar) : asset('images/sitiam.png') }}" class="rounded-circle" width="44" height="44" alt="{{ $sidebarUser->name }}">
+                    <img src="{{ ($sidebarUser->avatar) ? route('user.avatar', $sidebarUser) : asset('images/sitiam.png') }}" class="rounded-circle" width="44" height="44" alt="{{ $sidebarUser->name }}">
                     <div>
                         <div class="commercial-mobile-header-name">{{ $sidebarUser->name }}</div>
                         <span class="badge bg-info text-dark">📊 Superviseur Commercial</span>

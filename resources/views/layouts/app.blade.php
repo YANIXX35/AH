@@ -590,7 +590,7 @@
                             @endphp
                             <a class="nav-link dropdown-toggle d-inline-block" href="#" data-bs-toggle="dropdown">
                                 @if(Auth::user()?->avatar)
-                                    <img src="{{ asset('storage/' . Auth::user()->avatar) }}" class="avatar img-fluid rounded me-1" alt="{{ $topbarUserName }}" style="object-fit: cover;" />
+                                    <img src="{{ route('user.avatar', Auth::user()) }}" class="avatar img-fluid rounded me-1" alt="{{ $topbarUserName }}" style="object-fit: cover;" />
                                 @else
                                     <span class="avatar rounded-circle d-inline-flex align-items-center justify-content-center me-1 fw-bold" style="background: #0F2747; color: #F2D89B; font-size: 0.8rem;">{{ $topbarInitials ?: '?' }}</span>
                                 @endif

@@ -117,6 +117,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/ai/live', [DashboardController::class, 'liveInsights'])->name('dashboard.ai.live');
 
+    // Sert l'avatar via Laravel plutôt que l'URL directe /storage/... : sur
+    // l'hébergement de production, Apache renvoie 403 sur tout fichier servi
+    // à travers le lien symbolique public/storage, quel que soit le contenu
+    // du .htaccess (AllowOverride semble limité et ignorer nos directives) —
+    // ce contournement lit le fichier directement, sans passer par Apache.
+    Route::get('/avatar/{user}', function (User $user) {
+        abort_unless($user->avatar && Storage::disk('public')->exists($user->avatar), 404);
+
+        return Storage::disk('public')->response($user->avatar);
+    })->name('user.avatar');
+
     Route::get('/profile', function (Request $request) {
         return view('profile', [
             'user' => $request->user(),

@@ -44,7 +44,7 @@
                 <div class="card-body text-center">
                     <div class="mb-4">
                         @if($user->avatar)
-                            <img src="{{ asset('storage/' . $user->avatar) }}" class="img-fluid rounded-circle" alt="Avatar de {{ $user->name }}" style="width: 140px; height: 140px; object-fit: cover;">
+                            <img src="{{ route('user.avatar', $user) }}" class="img-fluid rounded-circle" alt="Avatar de {{ $user->name }}" style="width: 140px; height: 140px; object-fit: cover;">
                         @else
                             <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 140px; height: 140px; font-size: 2.5rem;">
                                 {{ strtoupper(substr($user->name, 0, 1)) }}
