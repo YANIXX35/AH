@@ -1308,26 +1308,28 @@
             };
 
             // PASSIF - aligné sur les agrégations des feuilles BILAN PASSIF.
-            $capitalN = $sumByPrefixes(['101']);
-            $capitalN1 = $sumByPrefixesN1(['101']);
-            $primesReservesN = $sumByPrefixes(['104', '105', '106', '107']);
-            $primesReservesN1 = $sumByPrefixesN1(['104', '105', '106', '107']);
-            $equityResult = (float) ($income - $expenses);
-            $equityResultN1 = (float) (($incomeByYear[$previousYear] ?? 0) - ($expensesByYear[$previousYear] ?? 0));
-            $subventionsInvestissementN = $sumByPrefixes(['131']);
-            $subventionsInvestissementN1 = $sumByPrefixesN1(['131']);
-            $provisionsAssimileesN = $sumByPrefixes(['141', '142', '143', '144', '145', '146', '147', '148']);
-            $provisionsAssimileesN1 = $sumByPrefixesN1(['141', '142', '143', '144', '145', '146', '147', '148']);
+            $capitalN = $sumByPrefixes(['101', '102', '103', '104']);
+            $capitalN1 = $sumByPrefixesN1(['101', '102', '103', '104']);
+            $primesReservesN = $sumByPrefixes(['105', '106', '111', '112', '113', '118']);
+            $primesReservesN1 = $sumByPrefixesN1(['105', '106', '111', '112', '113', '118']);
+            $reportANouveauN = $sumByPrefixes(['12']);
+            $reportANouveauN1 = $sumByPrefixesN1(['12']);
+            $equityResult = (float) ($income - $expenses) + $sumByPrefixes(['13']);
+            $equityResultN1 = (float) (($incomeByYear[$previousYear] ?? 0) - ($expensesByYear[$previousYear] ?? 0)) + $sumByPrefixesN1(['13']);
+            $subventionsInvestissementN = $sumByPrefixes(['14']);
+            $subventionsInvestissementN1 = $sumByPrefixesN1(['14']);
+            $provisionsAssimileesN = $sumByPrefixes(['15']);
+            $provisionsAssimileesN1 = $sumByPrefixesN1(['15']);
 
-            $equityPositive = $capitalN + $primesReservesN + $equityResult + $subventionsInvestissementN + $provisionsAssimileesN;
-            $equityPositiveN1 = $capitalN1 + $primesReservesN1 + $equityResultN1 + $subventionsInvestissementN1 + $provisionsAssimileesN1;
+            $equityPositive = $capitalN + $primesReservesN + $reportANouveauN + $equityResult + $subventionsInvestissementN + $provisionsAssimileesN;
+            $equityPositiveN1 = $capitalN1 + $primesReservesN1 + $reportANouveauN1 + $equityResultN1 + $subventionsInvestissementN1 + $provisionsAssimileesN1;
 
-            $dettesFinancieresN = $sumByPrefixes(['161', '162', '163']);
-            $dettesFinancieresN1 = $sumByPrefixesN1(['161', '162', '163']);
-            $dettesCreditBailN = $sumByPrefixes(['164']);
-            $dettesCreditBailN1 = $sumByPrefixesN1(['164']);
-            $dettesFinDiversesN = $sumByPrefixes(['109', '165', '166']);
-            $dettesFinDiversesN1 = $sumByPrefixesN1(['109', '165', '166']);
+            $dettesFinancieresN = $sumByPrefixes(['161', '162', '163', '164', '166', '167']);
+            $dettesFinancieresN1 = $sumByPrefixesN1(['161', '162', '163', '164', '166', '167']);
+            $dettesCreditBailN = $sumByPrefixes(['17']);
+            $dettesCreditBailN1 = $sumByPrefixesN1(['17']);
+            $dettesFinDiversesN = $sumByPrefixes(['165', '168', '18']);
+            $dettesFinDiversesN1 = $sumByPrefixesN1(['165', '168', '18']);
             $provisionsFinN = $sumByPrefixes(['19']);
             $provisionsFinN1 = $sumByPrefixesN1(['19']);
             $totalDettesFinN = $dettesFinancieresN + $dettesCreditBailN + $dettesFinDiversesN + $provisionsFinN;
@@ -1335,29 +1337,32 @@
             $totalRessourcesStablesN = $equityPositive + $totalDettesFinN;
             $totalRessourcesStablesN1 = $equityPositiveN1 + $totalDettesFinN1;
 
-            $fournisseursExploitN = $sumByPrefixes(['401', '403', '408']);
-            $fournisseursExploitN1 = $sumByPrefixesN1(['401', '403', '408']);
-            $dettesFiscalesN = $sumByPrefixes(['441', '442', '443', '444', '445', '447']);
-            $dettesFiscalesN1 = $sumByPrefixesN1(['441', '442', '443', '444', '445', '447']);
-            $dettesSocialesN = $sumByPrefixes(['428', '431']);
-            $dettesSocialesN1 = $sumByPrefixesN1(['428', '431']);
-            $autresDettesN = $sumByPrefixes(['421', '451', '455', '467']);
-            $autresDettesN1 = $sumByPrefixesN1(['421', '451', '455', '467']);
-            $risquesProvisionnesN = $sumByPrefixes(['19', '49']);
-            $risquesProvisionnesN1 = $sumByPrefixesN1(['19', '49']);
-            $passifCirculant = $fournisseursExploitN + $dettesFiscalesN + $dettesSocialesN + $autresDettesN + $risquesProvisionnesN;
-            $passifCirculantN1 = $fournisseursExploitN1 + $dettesFiscalesN1 + $dettesSocialesN1 + $autresDettesN1 + $risquesProvisionnesN1;
+            $avancesClientsN = $sumByPrefixes(['41']);
+            $avancesClientsN1 = $sumByPrefixesN1(['41']);
+            $fournisseursExploitN = $sumByPrefixes(['40']);
+            $fournisseursExploitN1 = $sumByPrefixesN1(['40']);
+            $dettesFiscalesN = $sumByPrefixes(['44']);
+            $dettesFiscalesN1 = $sumByPrefixesN1(['44']);
+            $dettesSocialesN = $sumByPrefixes(['42', '43']);
+            $dettesSocialesN1 = $sumByPrefixesN1(['42', '43']);
+            $autresDettesN = $sumByPrefixes(['45', '46', '47']) - $sumByPrefixes(['479']);
+            $autresDettesN1 = $sumByPrefixesN1(['45', '46', '47']) - $sumByPrefixesN1(['479']);
+            $risquesProvisionnesN = $sumByPrefixes(['49']);
+            $risquesProvisionnesN1 = $sumByPrefixesN1(['49']);
+            $passifCirculant = $avancesClientsN + $fournisseursExploitN + $dettesFiscalesN + $dettesSocialesN + $autresDettesN + $risquesProvisionnesN;
+            $passifCirculantN1 = $avancesClientsN1 + $fournisseursExploitN1 + $dettesFiscalesN1 + $dettesSocialesN1 + $autresDettesN1 + $risquesProvisionnesN1;
 
-            $tresoreriePassif = $sumByPrefixes(['512', '514', '515', '521', '531', '541', '542', '566', '581']);
-            $tresoreriePassifN1 = $sumByPrefixesN1(['512', '514', '515', '521', '531', '541', '542', '566', '581']);
-            $ecartsConversionPassif = 0.0;
-            $ecartsConversionPassifN1 = 0.0;
+            $tresoreriePassifPrefixes = ['50', '51', '52', '53', '54', '55', '57', '58'];
+            $tresoreriePassif = $sumByPrefixes($tresoreriePassifPrefixes);
+            $tresoreriePassifN1 = $sumByPrefixesN1($tresoreriePassifPrefixes);
+            $ecartsConversionPassif = $sumByPrefixes(['479']);
+            $ecartsConversionPassifN1 = $sumByPrefixesN1(['479']);
             $totalPassifGeneral = $totalRessourcesStablesN + $passifCirculant + $tresoreriePassif + $ecartsConversionPassif;
             $totalPassifGeneralN1 = $totalRessourcesStablesN1 + $passifCirculantN1 + $tresoreriePassifN1 + $ecartsConversionPassifN1;
 
             // ACTIF - aligné sur les agrégations des feuilles BILAN ACTIF.
-            $chargesImmobN = max($sumByPrefixes(['201'], 'solde_debit') - $sumByPrefixes(['291'], 'solde_credit'), 0);
-            $chargesImmobN1 = max($sumByPrefixesN1(['201'], 'solde_debit_n1') - $sumByPrefixesN1(['291'], 'solde_credit_n1'), 0);
+            $chargesImmobN = max($sumByPrefixes(['20'], 'solde_debit') - $sumByPrefixes(['206'], 'solde_debit'), 0);
+            $chargesImmobN1 = max($sumByPrefixesN1(['20'], 'solde_debit_n1') - $sumByPrefixesN1(['206'], 'solde_debit_n1'), 0);
             $primesRemboursementN = max($sumByPrefixes(['206'], 'solde_debit'), 0);
             $primesRemboursementN1 = max($sumByPrefixesN1(['206'], 'solde_debit_n1'), 0);
             $actifIncorporelN = max(
@@ -1371,39 +1376,66 @@
                 0
             );
             $actifCorporelN = max(
-                ($sumByPrefixes(['211', '212', '213', '221', '215', '241', '244', '231'], 'solde_debit'))
-                - ($sumByPrefixes(['2812', '2813', '2814', '2815', '2818', '292'], 'solde_credit')),
+                ($sumByPrefixes(['22', '23', '24', '25'], 'solde_debit'))
+                - ($sumByPrefixes(['282', '283', '284', '292'], 'solde_credit')),
                 0
             );
             $actifCorporelN1 = max(
-                ($sumByPrefixesN1(['211', '212', '213', '221', '215', '241', '244', '231'], 'solde_debit_n1'))
-                - ($sumByPrefixesN1(['2812', '2813', '2814', '2815', '2818', '292'], 'solde_credit_n1')),
+                ($sumByPrefixesN1(['22', '23', '24', '25'], 'solde_debit_n1'))
+                - ($sumByPrefixesN1(['282', '283', '284', '292'], 'solde_credit_n1')),
                 0
             );
-            $actifFinancierN = max($sumByPrefixes(['261', '271', '275'], 'solde_debit'), 0);
-            $actifFinancierN1 = max($sumByPrefixesN1(['261', '271', '275'], 'solde_debit_n1'), 0);
+            $actifFinancierN = max(
+                ($sumByPrefixes(['26', '27'], 'solde_debit'))
+                - ($sumByPrefixes(['296', '297'], 'solde_credit')),
+                0
+            );
+            $actifFinancierN1 = max(
+                ($sumByPrefixesN1(['26', '27'], 'solde_debit_n1'))
+                - ($sumByPrefixesN1(['296', '297'], 'solde_credit_n1')),
+                0
+            );
 
             $immobilisationsBrutes = $chargesImmobN + $primesRemboursementN + $actifIncorporelN + $actifCorporelN + $actifFinancierN;
             $immobilisationsBrutesN1 = $chargesImmobN1 + $primesRemboursementN1 + $actifIncorporelN1 + $actifCorporelN1 + $actifFinancierN1;
 
             $stocksActifN = max(
-                ($sumByPrefixes(['311', '321', '322', '331', '335', '341', '351', '355'], 'solde_debit'))
-                - ($sumByPrefixes(['391', '392'], 'solde_credit')),
+                ($sumByPrefixes(['31', '32', '33', '34', '35', '36', '37', '38'], 'solde_debit'))
+                - ($sumByPrefixes(['39'], 'solde_credit')),
                 0
             );
             $stocksActifN1 = max(
-                ($sumByPrefixesN1(['311', '321', '322', '331', '335', '341', '351', '355'], 'solde_debit_n1'))
-                - ($sumByPrefixesN1(['391', '392'], 'solde_credit_n1')),
+                ($sumByPrefixesN1(['31', '32', '33', '34', '35', '36', '37', '38'], 'solde_debit_n1'))
+                - ($sumByPrefixesN1(['39'], 'solde_credit_n1')),
                 0
             );
-            $creancesActifN = max($sumByPrefixes(['401', '403', '411', '413', '418', '421', '425', '428', '431', '438', '441', '442', '443', '444', '445', '447', '451', '455', '467'], 'solde_debit'), 0);
-            $creancesActifN1 = max($sumByPrefixesN1(['401', '403', '411', '413', '418', '421', '425', '428', '431', '438', '441', '442', '443', '444', '445', '447', '451', '455', '467'], 'solde_debit_n1'), 0);
+            $creancesActifN = max(
+                ($sumByPrefixes(['40', '41', '42', '43', '44', '45', '46', '47'], 'solde_debit'))
+                - ($sumByPrefixes(['478'], 'solde_debit'))
+                - ($sumByPrefixes(['49'], 'solde_credit')),
+                0
+            );
+            $creancesActifN1 = max(
+                ($sumByPrefixesN1(['40', '41', '42', '43', '44', '45', '46', '47'], 'solde_debit_n1'))
+                - ($sumByPrefixesN1(['478'], 'solde_debit_n1'))
+                - ($sumByPrefixesN1(['49'], 'solde_credit_n1')),
+                0
+            );
             $actifCirculant = $stocksActifN + $creancesActifN;
             $actifCirculantN1 = $stocksActifN1 + $creancesActifN1;
-            $tresorerieActif = max($sumByPrefixes(['512', '514', '515', '521', '531', '541', '542', '566', '581'], 'solde_debit'), 0);
-            $tresorerieActifN1 = max($sumByPrefixesN1(['512', '514', '515', '521', '531', '541', '542', '566', '581'], 'solde_debit_n1'), 0);
-            $ecartsConversionActif = 0.0;
-            $ecartsConversionActifN1 = 0.0;
+            $tresorerieActifPrefixes = ['50', '51', '52', '53', '54', '55', '57', '58'];
+            $tresorerieActif = max(
+                ($sumByPrefixes($tresorerieActifPrefixes, 'solde_debit'))
+                - ($sumByPrefixes(['59'], 'solde_credit')),
+                0
+            );
+            $tresorerieActifN1 = max(
+                ($sumByPrefixesN1($tresorerieActifPrefixes, 'solde_debit_n1'))
+                - ($sumByPrefixesN1(['59'], 'solde_credit_n1')),
+                0
+            );
+            $ecartsConversionActif = $sumByPrefixes(['478'], 'solde_debit');
+            $ecartsConversionActifN1 = $sumByPrefixesN1(['478'], 'solde_debit_n1');
             $totalActifGeneral = $immobilisationsBrutes + $actifCirculant + $tresorerieActif + $ecartsConversionActif;
             $totalActifGeneralN1 = $immobilisationsBrutesN1 + $actifCirculantN1 + $tresorerieActifN1 + $ecartsConversionActifN1;
         @endphp
@@ -1463,7 +1495,7 @@
                             <tr><td class="text-center">CE</td><td>Ecarts de réévaluation</td><td class="text-end">0</td><td class="text-end">0</td></tr>
                             <tr><td class="text-center">CF</td><td>Réserves indisponibles</td><td class="text-end">0</td><td class="text-end">0</td></tr>
                             <tr><td class="text-center">CG</td><td>Réserves libres</td><td class="text-end">0</td><td class="text-end">0</td></tr>
-                            <tr><td class="text-center">CH</td><td>Report à nouveau</td><td class="text-end">0</td><td class="text-end">0</td></tr>
+                            <tr><td class="text-center">CH</td><td>Report à nouveau</td><td class="text-end">{{ number_format($reportANouveauN, 0, ',', ' ') }}</td><td class="text-end">{{ number_format($reportANouveauN1, 0, ',', ' ') }}</td></tr>
                             <tr><td class="text-center">CI</td><td>Résultat net de l'exercice (bénéfice + ou perte -)</td><td class="text-end">{{ number_format($equityResult, 0, ',', ' ') }}</td><td class="text-end">{{ number_format($equityResultN1, 0, ',', ' ') }}</td></tr>
                             <tr><td class="text-center">CK</td><td>Autres capitaux propres</td><td class="text-end">0</td><td class="text-end">0</td></tr>
                             <tr><td class="text-center">CL</td><td>Subventions d'investissement</td><td class="text-end">{{ number_format($subventionsInvestissementN, 0, ',', ' ') }}</td><td class="text-end">{{ number_format($subventionsInvestissementN1, 0, ',', ' ') }}</td></tr>
@@ -1482,7 +1514,7 @@
                             <tr><td></td><td></td><td class="text-end">{{ number_format($totalRessourcesStablesN, 0, ',', ' ') }}</td><td class="text-end">{{ number_format($totalRessourcesStablesN1, 0, ',', ' ') }}</td></tr>
                             <tr class="section-title"><td colspan="4">PASSIF CIRCULANT (III)</td></tr>
                             <tr><td class="text-center">DH</td><td>Dettes circulantes H.A.O. et ressources assimilées</td><td class="text-end">0</td><td class="text-end">0</td></tr>
-                            <tr><td class="text-center">DI</td><td>Clients, avances reçues</td><td class="text-end">0</td><td class="text-end">0</td></tr>
+                            <tr><td class="text-center">DI</td><td>Clients, avances reçues</td><td class="text-end">{{ number_format($avancesClientsN, 0, ',', ' ') }}</td><td class="text-end">{{ number_format($avancesClientsN1, 0, ',', ' ') }}</td></tr>
                             <tr><td class="text-center">DJ</td><td>Fournisseurs d'exploitation</td><td class="text-end">{{ number_format($fournisseursExploitN, 0, ',', ' ') }}</td><td class="text-end">{{ number_format($fournisseursExploitN1, 0, ',', ' ') }}</td></tr>
                             <tr><td class="text-center">DK</td><td>Dettes fiscales</td><td class="text-end">{{ number_format($dettesFiscalesN, 0, ',', ' ') }}</td><td class="text-end">{{ number_format($dettesFiscalesN1, 0, ',', ' ') }}</td></tr>
                             <tr><td class="text-center">DL</td><td>Dettes sociales</td><td class="text-end">{{ number_format($dettesSocialesN, 0, ',', ' ') }}</td><td class="text-end">{{ number_format($dettesSocialesN1, 0, ',', ' ') }}</td></tr>
@@ -1557,28 +1589,28 @@
             // CPTE RESULTAT 1
             $raN = $sumResultByPrefixes(['601']);
             $raN1 = $sumResultByPrefixes(['601'], false, true);
-            $rbN = $sumResultByPrefixes(['311']) - $sumResultByPrefixes(['311'], false, true);
-            $rbN1 = 0.0;
-            $rcN = $sumResultByPrefixes(['602', '604']);
-            $rcN1 = $sumResultByPrefixes(['602', '604'], false, true);
-            $rdN = $sumResultByPrefixes(['321', '322']) - $sumResultByPrefixes(['321', '322'], false, true);
-            $rdN1 = 0.0;
-            $reN = $sumResultByPrefixes(['605', '606', '607']);
-            $reN1 = $sumResultByPrefixes(['605', '606', '607'], false, true);
-            $rhN = $sumResultByPrefixes(['331', '335', '341', '351', '355']) - $sumResultByPrefixes(['331', '335', '341', '351', '355'], false, true);
-            $rhN1 = 0.0;
-            $riN = $sumResultByPrefixes(['611', '612']);
-            $riN1 = $sumResultByPrefixes(['611', '612'], false, true);
-            $rjN = $sumResultByPrefixes(['613', '614', '616', '618', '621', '622', '623', '624', '625', '626', '627']);
-            $rjN1 = $sumResultByPrefixes(['613', '614', '616', '618', '621', '622', '623', '624', '625', '626', '627'], false, true);
-            $rkN = $sumResultByPrefixes(['631', '632']);
-            $rkN1 = $sumResultByPrefixes(['631', '632'], false, true);
-            $rlN = $sumResultByPrefixes(['671']);
-            $rlN1 = $sumResultByPrefixes(['671'], false, true);
-            $rpN = $sumResultByPrefixes(['641', '645', '646']);
-            $rpN1 = $sumResultByPrefixes(['641', '645', '646'], false, true);
-            $rsN = $sumResultByPrefixes(['681']);
-            $rsN1 = $sumResultByPrefixes(['681'], false, true);
+            $rbN = $sumResultByPrefixes(['6031']) - $sumResultByPrefixes(['6031'], true);
+            $rbN1 = $sumResultByPrefixes(['6031'], false, true) - $sumResultByPrefixes(['6031'], true, true);
+            $rcN = $sumResultByPrefixes(['602']);
+            $rcN1 = $sumResultByPrefixes(['602'], false, true);
+            $rdN = $sumResultByPrefixes(['6032']) - $sumResultByPrefixes(['6032'], true);
+            $rdN1 = $sumResultByPrefixes(['6032'], false, true) - $sumResultByPrefixes(['6032'], true, true);
+            $reN = $sumResultByPrefixes(['604', '605', '608']);
+            $reN1 = $sumResultByPrefixes(['604', '605', '608'], false, true);
+            $rhN = $sumResultByPrefixes(['6033']) - $sumResultByPrefixes(['6033'], true);
+            $rhN1 = $sumResultByPrefixes(['6033'], false, true) - $sumResultByPrefixes(['6033'], true, true);
+            $riN = $sumResultByPrefixes(['61']);
+            $riN1 = $sumResultByPrefixes(['61'], false, true);
+            $rjN = $sumResultByPrefixes(['62', '63']);
+            $rjN1 = $sumResultByPrefixes(['62', '63'], false, true);
+            $rkN = $sumResultByPrefixes(['64']);
+            $rkN1 = $sumResultByPrefixes(['64'], false, true);
+            $rlN = $sumResultByPrefixes(['65']);
+            $rlN1 = $sumResultByPrefixes(['65'], false, true);
+            $rpN = $sumResultByPrefixes(['66']);
+            $rpN1 = $sumResultByPrefixes(['66'], false, true);
+            $rsN = $sumResultByPrefixes(['681', '691']);
+            $rsN1 = $sumResultByPrefixes(['681', '691'], false, true);
             $rwN = $raN + $rbN + $rcN + $rdN + $reN + $rhN + $riN + $rjN + $rkN + $rlN + $rpN + $rsN;
             $rwN1 = $raN1 + $rbN1 + $rcN1 + $rdN1 + $reN1 + $rhN1 + $riN1 + $rjN1 + $rkN1 + $rlN1 + $rpN1 + $rsN1;
 
@@ -1587,40 +1619,40 @@
             $taN1 = $sumResultByPrefixes(['701'], true, true);
             $tbN = $taN - $raN + $rbN;
             $tbN1 = $taN1 - $raN1 + $rbN1;
-            $tcN = $sumResultByPrefixes(['702'], true);
-            $tcN1 = $sumResultByPrefixes(['702'], true, true);
-            $tdN = $sumResultByPrefixes(['704', '706'], true);
-            $tdN1 = $sumResultByPrefixes(['704', '706'], true, true);
-            $teN = $sumResultByPrefixes(['703', '713'], true);
-            $teN1 = $sumResultByPrefixes(['703', '713'], true, true);
-            $tfN = $sumResultByPrefixes(['721'], true);
-            $tfN1 = $sumResultByPrefixes(['721'], true, true);
+            $tcN = $sumResultByPrefixes(['702', '703', '704'], true);
+            $tcN1 = $sumResultByPrefixes(['702', '703', '704'], true, true);
+            $tdN = $sumResultByPrefixes(['705', '706'], true);
+            $tdN1 = $sumResultByPrefixes(['705', '706'], true, true);
+            $teN = $sumResultByPrefixes(['73'], true);
+            $teN1 = $sumResultByPrefixes(['73'], true, true);
+            $tfN = $sumResultByPrefixes(['72'], true);
+            $tfN1 = $sumResultByPrefixes(['72'], true, true);
             $tgN = ($tcN + $tdN + $teN + $tfN) - $rcN + $rdN;
             $tgN1 = ($tcN1 + $tdN1 + $teN1 + $tfN1) - $rcN1 + $rdN1;
             $thN = $sumResultByPrefixes(['707', '708'], true);
             $thN1 = $sumResultByPrefixes(['707', '708'], true, true);
             $tiN = $taN + $tcN + $tdN + $teN + $tfN + $thN;
             $tiN1 = $taN1 + $tcN1 + $tdN1 + $teN1 + $tfN1 + $thN1;
-            $tkN = $sumResultByPrefixes(['74'], true);
-            $tkN1 = $sumResultByPrefixes(['74'], true, true);
-            $tlN = $sumResultByPrefixes(['791'], true);
-            $tlN1 = $sumResultByPrefixes(['791'], true, true);
+            $tkN = $sumResultByPrefixes(['71'], true);
+            $tkN1 = $sumResultByPrefixes(['71'], true, true);
+            $tlN = $sumResultByPrefixes(['75'], true);
+            $tlN1 = $sumResultByPrefixes(['75'], true, true);
             $tnN = $tiN - $reN - $rhN - $riN - $rjN - $rkN - $rlN + $tkN + $tlN;
             $tnN1 = $tiN1 - $reN1 - $rhN1 - $riN1 - $rjN1 - $rkN1 - $rlN1 + $tkN1 + $tlN1;
             $tqN = $tnN - $rpN;
             $tqN1 = $tnN1 - $rpN1;
-            $tsN = $sumResultByPrefixes(['781'], true);
-            $tsN1 = $sumResultByPrefixes(['781'], true, true);
-            $ttN = $sumResultByPrefixes(['791'], true);
-            $ttN1 = $sumResultByPrefixes(['791'], true, true);
+            $tsN = $sumResultByPrefixes(['79'], true);
+            $tsN1 = $sumResultByPrefixes(['79'], true, true);
+            $ttN = $sumResultByPrefixes(['78'], true);
+            $ttN1 = $sumResultByPrefixes(['78'], true, true);
             $twN = $tiN + $tkN + $tlN + $tsN + $ttN;
             $twN1 = $tiN1 + $tkN1 + $tlN1 + $tsN1 + $ttN1;
             $txN = $twN - $rwN;
             $txN1 = $twN1 - $rwN1;
 
             // CPTE RESULTAT 3 (charges 2e partie)
-            $saN = $sumResultByPrefixes(['651']);
-            $saN1 = $sumResultByPrefixes(['651'], false, true);
+            $saN = $sumResultByPrefixes(['67']);
+            $saN1 = $sumResultByPrefixes(['67'], false, true);
             $scN = 0.0;
             $scN1 = 0.0;
             $sdN = 0.0;
@@ -1629,32 +1661,32 @@
             $sfN1 = $saN1 + $scN1 + $sdN1;
             $shN = $rwN + $sfN;
             $shN1 = $rwN1 + $sfN1;
-            $skN = $sumResultByPrefixes(['811']);
-            $skN1 = $sumResultByPrefixes(['811'], false, true);
-            $slN = $sumResultByPrefixes(['671']);
-            $slN1 = $sumResultByPrefixes(['671'], false, true);
-            $smN = 0.0;
-            $smN1 = 0.0;
+            $skN = $sumResultByPrefixes(['81']);
+            $skN1 = $sumResultByPrefixes(['81'], false, true);
+            $slN = $sumResultByPrefixes(['83']);
+            $slN1 = $sumResultByPrefixes(['83'], false, true);
+            $smN = $sumResultByPrefixes(['85']);
+            $smN1 = $sumResultByPrefixes(['85'], false, true);
             $soN = $skN + $slN + $smN;
             $soN1 = $skN1 + $slN1 + $smN1;
-            $sqN = $sumResultByPrefixes(['861']);
-            $sqN1 = $sumResultByPrefixes(['861'], false, true);
-            $srN = $sumResultByPrefixes(['871', '691']);
-            $srN1 = $sumResultByPrefixes(['871', '691'], false, true);
+            $sqN = $sumResultByPrefixes(['87']);
+            $sqN1 = $sumResultByPrefixes(['87'], false, true);
+            $srN = $sumResultByPrefixes(['89']);
+            $srN1 = $sumResultByPrefixes(['89'], false, true);
             $ssN = $sqN + $srN;
             $ssN1 = $sqN1 + $srN1;
             $stN = $shN + $soN + $ssN;
             $stN1 = $shN1 + $soN1 + $ssN1;
 
             // CPTE RESULTAT 4 (produits 2e partie)
-            $uaN = $sumResultByPrefixes(['751'], true);
-            $uaN1 = $sumResultByPrefixes(['751'], true, true);
+            $uaN = $sumResultByPrefixes(['77'], true);
+            $uaN1 = $sumResultByPrefixes(['77'], true, true);
             $ucN = 0.0;
             $ucN1 = 0.0;
-            $udN = $sumResultByPrefixes(['781'], true);
-            $udN1 = $sumResultByPrefixes(['781'], true, true);
-            $ueN = $sumResultByPrefixes(['791'], true);
-            $ueN1 = $sumResultByPrefixes(['791'], true, true);
+            $udN = $sumResultByPrefixes(['796'], true);
+            $udN1 = $sumResultByPrefixes(['796'], true, true);
+            $ueN = $sumResultByPrefixes(['787'], true);
+            $ueN1 = $sumResultByPrefixes(['787'], true, true);
             $ufN = $uaN + $ucN + $udN + $ueN;
             $ufN1 = $uaN1 + $ucN1 + $udN1 + $ueN1;
             $ugN = $ufN - $sfN;
@@ -1663,14 +1695,14 @@
             $uhN1 = $twN1 + $ufN1;
             $uiN = $uhN - $shN;
             $uiN1 = $uhN1 - $shN1;
-            $ukN = $sumResultByPrefixes(['821'], true);
-            $ukN1 = $sumResultByPrefixes(['821'], true, true);
-            $ulN = $sumResultByPrefixes(['771'], true);
-            $ulN1 = $sumResultByPrefixes(['771'], true, true);
-            $umN = 0.0;
-            $umN1 = 0.0;
-            $unN = 0.0;
-            $unN1 = 0.0;
+            $ukN = $sumResultByPrefixes(['82'], true);
+            $ukN1 = $sumResultByPrefixes(['82'], true, true);
+            $ulN = $sumResultByPrefixes(['84'], true);
+            $ulN1 = $sumResultByPrefixes(['84'], true, true);
+            $umN = $sumResultByPrefixes(['86'], true);
+            $umN1 = $sumResultByPrefixes(['86'], true, true);
+            $unN = $sumResultByPrefixes(['88'], true);
+            $unN1 = $sumResultByPrefixes(['88'], true, true);
             $uoN = $ukN + $ulN + $umN + $unN;
             $uoN1 = $ukN1 + $ulN1 + $umN1 + $unN1;
             $upN = $uoN - $soN;
@@ -1856,8 +1888,8 @@
 
     <section id="tafire-section" class="report-section mb-5">
         @php
-            $tafireCafgN = ($tqN ?? 0) - ($saN ?? 0) - ($scN ?? 0) - ($slN ?? 0) - ($sqN ?? 0) - ($srN ?? 0) + ($ttN ?? 0) + ($uaN ?? 0) + ($ueN ?? 0) + ($ucN ?? 0) + ($ulN ?? 0) + ($unN ?? 0);
-            $tafireCafgN1 = ($tqN1 ?? 0) - ($saN1 ?? 0) - ($scN1 ?? 0) - ($slN1 ?? 0) - ($sqN1 ?? 0) - ($srN1 ?? 0) + ($ttN1 ?? 0) + ($uaN1 ?? 0) + ($ueN1 ?? 0) + ($ucN1 ?? 0) + ($ulN1 ?? 0) + ($unN1 ?? 0);
+            $tafireCafgN = ($uzN ?? 0) + ($rsN ?? 0) + ($sdN ?? 0) + ($smN ?? 0) - ($tsN ?? 0) - ($udN ?? 0) - ($umN ?? 0) - ($ukN ?? 0) + ($skN ?? 0);
+            $tafireCafgN1 = ($uzN1 ?? 0) + ($rsN1 ?? 0) + ($sdN1 ?? 0) + ($smN1 ?? 0) - ($tsN1 ?? 0) - ($udN1 ?? 0) - ($umN1 ?? 0) - ($ukN1 ?? 0) + ($skN1 ?? 0);
             $tafireAfN = $tafireCafgN;
             $tafireAfN1 = $tafireCafgN1;
             $tafireVarStocksN = ($rbN ?? 0) + ($rdN ?? 0) + ($rhN ?? 0);
@@ -1903,34 +1935,43 @@
             $fjFluxN = $splitFlux($fjN);
             $fjFluxN1 = $splitFlux($fjN1);
 
-            $fkEmploiN = $ffN + $fiFluxN['emploi'] + $fjFluxN['emploi'];
-            $fkEmploiN1 = $ffN1 + $fiFluxN1['emploi'] + $fjFluxN1['emploi'];
+            $fgFluxN = $splitFlux($fgN);
+            $fgFluxN1 = $splitFlux($fgN1);
+            $fkEmploiN = $ffN + $fgFluxN['emploi'] + $fiFluxN['emploi'] + $fjFluxN['emploi'];
+            $fkEmploiN1 = $ffN1 + $fgFluxN1['emploi'] + $fiFluxN1['emploi'] + $fjFluxN1['emploi'];
 
             $flN = $tafireAfN;
             $flN1 = $tafireAfN1;
-            $fmN = 0.0;
+            $fmN = max(0.0, ($capitalN ?? 0) - ($capitalN1 ?? 0));
             $fmN1 = 0.0;
             $fnN = $subventionsInvestissementN ?? 0;
             $fnN1 = $subventionsInvestissementN1 ?? 0;
-            $fpN = 0.0;
+            $fpN = max(0.0, ($capitalN1 ?? 0) - ($capitalN ?? 0));
             $fpN1 = 0.0;
             $fqN = $dettesFinancieresN ?? 0;
             $fqN1 = $dettesFinancieresN1 ?? 0;
             $frN = $dettesFinDiversesN ?? 0;
             $frN1 = $dettesFinDiversesN1 ?? 0;
 
-            $flFluxN = $splitFlux($flN);
-            $flFluxN1 = $splitFlux($flN1);
-            $fmFluxN = $splitFlux($fmN);
-            $fmFluxN1 = $splitFlux($fmN1);
-            $fnFluxN = $splitFlux($fnN);
-            $fnFluxN1 = $splitFlux($fnN1);
+            $splitFluxRessource = static function (float $value): array {
+                if ($value >= 0) {
+                    return ['emploi' => 0.0, 'ressource' => $value];
+                }
+                return ['emploi' => abs($value), 'ressource' => 0.0];
+            };
+
+            $flFluxN = $splitFluxRessource($flN);
+            $flFluxN1 = $splitFluxRessource($flN1);
+            $fmFluxN = $splitFluxRessource($fmN);
+            $fmFluxN1 = $splitFluxRessource($fmN1);
+            $fnFluxN = $splitFluxRessource($fnN);
+            $fnFluxN1 = $splitFluxRessource($fnN1);
             $fpFluxN = $splitFlux($fpN);
             $fpFluxN1 = $splitFlux($fpN1);
-            $fqFluxN = $splitFlux($fqN);
-            $fqFluxN1 = $splitFlux($fqN1);
-            $frFluxN = $splitFlux($frN);
-            $frFluxN1 = $splitFlux($frN1);
+            $fqFluxN = $splitFluxRessource($fqN);
+            $fqFluxN1 = $splitFluxRessource($fqN1);
+            $frFluxN = $splitFluxRessource($frN);
+            $frFluxN1 = $splitFluxRessource($frN1);
 
             $fsRessourceN = $flFluxN['ressource'] + $fmFluxN['ressource'] + $fnFluxN['ressource'] + $fqFluxN['ressource'] + $frFluxN['ressource'];
             $fsRessourceN1 = $flFluxN1['ressource'] + $fmFluxN1['ressource'] + $fnFluxN1['ressource'] + $fqFluxN1['ressource'] + $frFluxN1['ressource'];

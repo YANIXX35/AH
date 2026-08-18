@@ -139,10 +139,15 @@ class BceaoLiasseService
         $ag_net_n = max(0.0, $ag_brut - $ag_prov);
         $ag_net_n1 = max(0.0, $this->sumAccountPrefixes($balancesN1, ['26', '27'], 'debit_net'));
 
-        $az_brut = $aa_brut + $ab_brut + $ac_brut + $ad_brut + $ae_brut + $af_brut + $ag_brut;
-        $az_prov = $aa_prov + $ab_prov + $ac_prov + $ad_prov + $ae_prov + $af_prov + $ag_prov;
+        $ah_brut = $this->sumAccountPrefixes($balancesN, ['25'], 'debit_gross');
+        $ah_prov = $this->sumAccountPrefixes($balancesN, ['295'], 'credit_gross');
+        $ah_net_n = max(0.0, $ah_brut - $ah_prov);
+        $ah_net_n1 = max(0.0, $this->sumAccountPrefixes($balancesN1, ['25'], 'debit_net'));
+
+        $az_brut = $aa_brut + $ab_brut + $ac_brut + $ad_brut + $ae_brut + $af_brut + $ag_brut + $ah_brut;
+        $az_prov = $aa_prov + $ab_prov + $ac_prov + $ad_prov + $ae_prov + $af_prov + $ag_prov + $ah_prov;
         $az_net_n = $az_brut - $az_prov;
-        $az_net_n1 = $aa_net_n1 + $ab_net_n1 + $ac_net_n1 + $ad_net_n1 + $ae_net_n1 + $af_net_n1 + $ag_net_n1;
+        $az_net_n1 = $aa_net_n1 + $ab_net_n1 + $ac_net_n1 + $ad_net_n1 + $ae_net_n1 + $af_net_n1 + $ag_net_n1 + $ah_net_n1;
 
         // Actif Circulant
         $ba_brut = $this->sumAccountPrefixes($balancesN, ['31', '32', '33', '34', '35', '36', '37', '38'], 'debit_gross');
@@ -150,15 +155,17 @@ class BceaoLiasseService
         $ba_net_n = max(0.0, $ba_brut - $ba_prov);
         $ba_net_n1 = max(0.0, $this->sumAccountPrefixes($balancesN1, ['3'], 'debit_net'));
 
-        $bb_brut = $this->sumAccountPrefixes($balancesN, ['41'], 'debit_gross');
+        $bb_brut = $this->sumAccountPrefixes($balancesN, ['41'], 'debit_net');
         $bb_prov = $this->sumAccountPrefixes($balancesN, ['491'], 'credit_gross');
         $bb_net_n = max(0.0, $bb_brut - $bb_prov);
         $bb_net_n1 = max(0.0, $this->sumAccountPrefixes($balancesN1, ['41'], 'debit_net'));
 
-        $bc_brut = $this->sumAccountPrefixes($balancesN, ['409', '42', '43', '44', '45', '46', '47'], 'debit_net');
+        $bc_brut = $this->sumAccountPrefixes($balancesN, ['409', '42', '43', '44', '45', '46', '47'], 'debit_net')
+            - $this->sumAccountPrefixes($balancesN, ['478'], 'debit_net');
         $bc_prov = $this->sumAccountPrefixes($balancesN, ['492', '493', '494', '495', '496', '497'], 'credit_gross');
         $bc_net_n = max(0.0, $bc_brut - $bc_prov);
-        $bc_net_n1 = max(0.0, $this->sumAccountPrefixes($balancesN1, ['409', '42', '43', '44', '45', '46', '47'], 'debit_net'));
+        $bc_net_n1 = max(0.0, $this->sumAccountPrefixes($balancesN1, ['409', '42', '43', '44', '45', '46', '47'], 'debit_net')
+            - $this->sumAccountPrefixes($balancesN1, ['478'], 'debit_net'));
 
         $bz_brut = $ba_brut + $bb_brut + $bc_brut;
         $bz_prov = $ba_prov + $bb_prov + $bc_prov;
@@ -172,14 +179,14 @@ class BceaoLiasseService
         $ca_net_n1 = max(0.0, $this->sumAccountPrefixes($balancesN1, ['50'], 'debit_net'));
 
         $cb_brut = $this->sumAccountPrefixes($balancesN, ['51'], 'debit_gross');
-        $cb_prov = 0.0;
-        $cb_net_n = $cb_brut;
+        $cb_prov = $this->sumAccountPrefixes($balancesN, ['591'], 'credit_gross');
+        $cb_net_n = max(0.0, $cb_brut - $cb_prov);
         $cb_net_n1 = max(0.0, $this->sumAccountPrefixes($balancesN1, ['51'], 'debit_net'));
 
-        $cc_brut = $this->sumAccountPrefixes($balancesN, ['52', '53', '54', '57', '58'], 'debit_net');
-        $cc_prov = $this->sumAccountPrefixes($balancesN, ['591', '592', '594'], 'credit_gross');
+        $cc_brut = $this->sumAccountPrefixes($balancesN, ['52', '53', '54', '55', '57', '58'], 'debit_net');
+        $cc_prov = $this->sumAccountPrefixes($balancesN, ['592', '593', '594'], 'credit_gross');
         $cc_net_n = max(0.0, $cc_brut - $cc_prov);
-        $cc_net_n1 = max(0.0, $this->sumAccountPrefixes($balancesN1, ['52', '53', '54', '57', '58'], 'debit_net'));
+        $cc_net_n1 = max(0.0, $this->sumAccountPrefixes($balancesN1, ['52', '53', '54', '55', '57', '58'], 'debit_net'));
 
         $cz_brut = $ca_brut + $cb_brut + $cc_brut;
         $cz_prov = $ca_prov + $cb_prov + $cc_prov;
@@ -206,6 +213,7 @@ class BceaoLiasseService
                 'AE' => ['libelle' => 'Matériel, mobilier et actifs biologiques', 'brut' => $ae_brut, 'prov' => $ae_prov, 'net_n' => $ae_net_n, 'net_n1' => $ae_net_n1],
                 'AF' => ['libelle' => 'Matériel de transport', 'brut' => $af_brut, 'prov' => $af_prov, 'net_n' => $af_net_n, 'net_n1' => $af_net_n1],
                 'AG' => ['libelle' => 'Immobilisations financières', 'brut' => $ag_brut, 'prov' => $ag_prov, 'net_n' => $ag_net_n, 'net_n1' => $ag_net_n1],
+                'AH' => ['libelle' => 'Avances et acomptes versés sur immobilisations', 'brut' => $ah_brut, 'prov' => $ah_prov, 'net_n' => $ah_net_n, 'net_n1' => $ah_net_n1],
                 'AZ' => ['libelle' => 'TOTAL ACTIF IMMOBILISÉ', 'brut' => $az_brut, 'prov' => $az_prov, 'net_n' => $az_net_n, 'net_n1' => $az_net_n1, 'is_total' => true],
                 'BA' => ['libelle' => 'Stocks et en-cours', 'brut' => $ba_brut, 'prov' => $ba_prov, 'net_n' => $ba_net_n, 'net_n1' => $ba_net_n1],
                 'BB' => ['libelle' => 'Créances clients et comptes rattachés', 'brut' => $bb_brut, 'prov' => $bb_prov, 'net_n' => $bb_net_n, 'net_n1' => $bb_net_n1],
@@ -288,14 +296,19 @@ class BceaoLiasseService
         $eb_net_n = $this->sumAccountPrefixes($balancesN, ['42', '43', '44'], 'credit_net');
         $eb_net_n1 = $this->sumAccountPrefixes($balancesN1, ['42', '43', '44'], 'credit_net');
 
-        $ec_net_n = $this->sumAccountPrefixes($balancesN, ['419', '45', '46', '47'], 'credit_net');
-        $ec_net_n1 = $this->sumAccountPrefixes($balancesN1, ['419', '45', '46', '47'], 'credit_net');
+        $ec_net_n = $this->sumAccountPrefixes($balancesN, ['41', '45', '46', '47'], 'credit_net')
+            - $this->sumAccountPrefixes($balancesN, ['479'], 'credit_net');
+        $ec_net_n1 = $this->sumAccountPrefixes($balancesN1, ['41', '45', '46', '47'], 'credit_net')
+            - $this->sumAccountPrefixes($balancesN1, ['479'], 'credit_net');
 
         $ed_net_n = $this->sumAccountPrefixes($balancesN, ['499'], 'credit_net');
         $ed_net_n1 = $this->sumAccountPrefixes($balancesN1, ['499'], 'credit_net');
 
-        $ez_net_n = $ea_net_n + $eb_net_n + $ec_net_n + $ed_net_n;
-        $ez_net_n1 = $ea_net_n1 + $eb_net_n1 + $ec_net_n1 + $ed_net_n1;
+        $ee_net_n = $this->sumAccountPrefixes($balancesN, ['48'], 'credit_net');
+        $ee_net_n1 = $this->sumAccountPrefixes($balancesN1, ['48'], 'credit_net');
+
+        $ez_net_n = $ea_net_n + $eb_net_n + $ec_net_n + $ed_net_n + $ee_net_n;
+        $ez_net_n1 = $ea_net_n1 + $eb_net_n1 + $ec_net_n1 + $ed_net_n1 + $ee_net_n1;
 
         // Trésorerie Passif
         $fa_net_n = $this->sumAccountPrefixes($balancesN, ['561'], 'credit_net');
@@ -304,8 +317,11 @@ class BceaoLiasseService
         $fb_net_n = $this->sumAccountPrefixes($balancesN, ['564', '565', '566'], 'credit_net');
         $fb_net_n1 = $this->sumAccountPrefixes($balancesN1, ['564', '565', '566'], 'credit_net');
 
-        $fz_net_n = $fa_net_n + $fb_net_n;
-        $fz_net_n1 = $fa_net_n1 + $fb_net_n1;
+        $fc_net_n = $this->sumAccountPrefixes($balancesN, ['52', '53', '54', '55', '57', '58'], 'credit_net');
+        $fc_net_n1 = $this->sumAccountPrefixes($balancesN1, ['52', '53', '54', '55', '57', '58'], 'credit_net');
+
+        $fz_net_n = $fa_net_n + $fb_net_n + $fc_net_n;
+        $fz_net_n1 = $fa_net_n1 + $fb_net_n1 + $fc_net_n1;
 
         // Écart de conversion Passif
         $ga_net_n = $this->sumAccountPrefixes($balancesN, ['479'], 'credit_net');
@@ -334,9 +350,11 @@ class BceaoLiasseService
                 'EB' => ['libelle' => 'Dettes fiscales et sociales', 'net_n' => $eb_net_n, 'net_n1' => $eb_net_n1],
                 'EC' => ['libelle' => 'Autres dettes et provisions à court terme', 'net_n' => $ec_net_n, 'net_n1' => $ec_net_n1],
                 'ED' => ['libelle' => 'Provisions pour risques à court terme', 'net_n' => $ed_net_n, 'net_n1' => $ed_net_n1],
+                'EE' => ['libelle' => 'Autres dettes hors exploitation', 'net_n' => $ee_net_n, 'net_n1' => $ee_net_n1],
                 'EZ' => ['libelle' => 'TOTAL PASSIF CIRCULANT', 'net_n' => $ez_net_n, 'net_n1' => $ez_net_n1, 'is_total' => true],
                 'FA' => ['libelle' => 'Banques, crédits d\'escompte', 'net_n' => $fa_net_n, 'net_n1' => $fa_net_n1],
                 'FB' => ['libelle' => 'Banques, crédits de trésorerie et découverts', 'net_n' => $fb_net_n, 'net_n1' => $fb_net_n1],
+                'FC' => ['libelle' => 'Autres établissements financiers et instruments de trésorerie', 'net_n' => $fc_net_n, 'net_n1' => $fc_net_n1],
                 'FZ' => ['libelle' => 'TOTAL TRÉSORERIE PASSIF', 'net_n' => $fz_net_n, 'net_n1' => $fz_net_n1, 'is_total' => true],
                 'GA' => ['libelle' => 'Écart de conversion Passif', 'net_n' => $ga_net_n, 'net_n1' => $ga_net_n1],
             ],
@@ -837,7 +855,7 @@ class BceaoLiasseService
     {
         $provN = $this->sumAccountPrefixes($balancesN, ['19', '39', '49', '59', '15'], 'credit_gross');
         $provN1 = $this->sumAccountPrefixes($balancesN1, ['19', '39', '49', '59', '15'], 'credit_gross');
-        $dotN = $this->sumAccountPrefixes($balancesN, ['691', '691'], 'debit_net');
+        $dotN = $this->sumAccountPrefixes($balancesN, ['691'], 'debit_net');
         $reprisN = $this->sumAccountPrefixes($balancesN, ['791'], 'credit_net');
 
         return [
