@@ -2096,20 +2096,6 @@ class AccountingController extends Controller
 
     public function report(Request $request)
     {
-        // Bilan/résultat/TAFIRE/annexe : redirige vers la Liasse BCEAO, qui calcule
-        // les vraies masses SYSCOHADA par compte (BceaoLiasseService) — cette page
-        // ne les calculait qu'à partir de 2 agrégats globaux (actifs/passifs).
-        $liasseAnchor = match (true) {
-            $request->routeIs('accounting.report.bilan') => 'actif',
-            $request->routeIs('accounting.report.resultat') => 'resultat',
-            $request->routeIs('accounting.report.tafire') => 'tafire',
-            $request->routeIs('accounting.report.annexe') => 'annexes',
-            default => null,
-        };
-        if ($liasseAnchor !== null) {
-            return redirect(route('accounting.liasse-bceao', $request->query()).'#'.$liasseAnchor);
-        }
-
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
 
