@@ -10,6 +10,7 @@ use App\Models\TreasuryTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AccountingDocumentController extends Controller
 {
@@ -42,6 +43,21 @@ class AccountingDocumentController extends Controller
 
         $this->assertAccountBelongsToWorkspacePlan($validated['debit_account'], 'debit_account');
         $this->assertAccountBelongsToWorkspacePlan($validated['credit_account'], 'credit_account');
+
+        // Garde-fou serveur, en plus de l'avertissement affiché côté formulaire : on
+        // ne bloque pas la validation (le comptable a pu confirmer volontairement un
+        // cas particulier), mais on trace toute incohérence HT + TVA ≠ TTC restante
+        // pour qu'elle reste visible/analysable plutôt que de disparaître.
+        $expectedTtc = (float) ($validated['amount_ht'] ?? 0) + (float) ($validated['tva'] ?? 0);
+        if (abs($expectedTtc - (float) $validated['amount_ttc']) > 1.0) {
+            Log::warning('document_validation_amount_mismatch', [
+                'document_id' => $document->id,
+                'amount_ht' => $validated['amount_ht'] ?? 0,
+                'tva' => $validated['tva'] ?? 0,
+                'amount_ttc' => $validated['amount_ttc'],
+                'expected_ttc' => $expectedTtc,
+            ]);
+        }
 
         $existingData = (array) $document->extracted_data;
         $existingData['document_type'] = $document->document_type;

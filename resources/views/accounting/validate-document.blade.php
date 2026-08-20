@@ -125,7 +125,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Montant HT</label>
-                            <input type="number" step="0.01" name="amount_ht" value="{{ old('amount_ht', $document->extracted_data['amount_ht'] ?? ($ocrPrimary['amount_ht'] ?? '')) }}" class="form-control @error('amount_ht') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['amount_ht']) ? 'border-warning' : '' }}">
+                            <input type="number" step="0.01" id="validateAmountHt" name="amount_ht" value="{{ old('amount_ht', $document->extracted_data['amount_ht'] ?? ($ocrPrimary['amount_ht'] ?? '')) }}" class="form-control @error('amount_ht') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['amount_ht']) ? 'border-warning' : '' }}">
                             @if(isset($ocrFieldConfidence['amount_ht']))
                                 <div class="form-text">Confiance OCR: {{ number_format((float) $ocrFieldConfidence['amount_ht'], 1, ',', ' ') }}%</div>
                             @endif
@@ -133,7 +133,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Montant TTC</label>
-                            <input type="number" step="0.01" name="amount_ttc" value="{{ old('amount_ttc', $document->extracted_data['amount_ttc'] ?? ($ocrPrimary['amount_ttc'] ?? '')) }}" class="form-control @error('amount_ttc') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['amount_ttc']) ? 'border-warning' : '' }}">
+                            <input type="number" step="0.01" id="validateAmountTtc" name="amount_ttc" value="{{ old('amount_ttc', $document->extracted_data['amount_ttc'] ?? ($ocrPrimary['amount_ttc'] ?? '')) }}" class="form-control @error('amount_ttc') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['amount_ttc']) ? 'border-warning' : '' }}">
                             @if(isset($ocrFieldConfidence['amount_ttc']))
                                 <div class="form-text">Confiance OCR: {{ number_format((float) $ocrFieldConfidence['amount_ttc'], 1, ',', ' ') }}%</div>
                             @endif
@@ -141,9 +141,10 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Montant TVA</label>
-                            <input type="number" step="0.01" name="tva" value="{{ old('tva', $document->extracted_data['tva'] ?? ($ocrPrimary['amount_tva'] ?? '')) }}" class="form-control @error('tva') is-invalid @enderror">
+                            <input type="number" step="0.01" id="validateAmountTva" name="tva" value="{{ old('tva', $document->extracted_data['tva'] ?? ($ocrPrimary['amount_tva'] ?? '')) }}" class="form-control @error('tva') is-invalid @enderror">
                             @error('tva')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+                        <div id="amountConsistencyWarning" class="alert alert-danger py-2 small d-none"></div>
                         <div class="mb-3">
                             <label class="form-label">Devise</label>
                             <input type="text" name="currency" value="{{ old('currency', $document->extracted_data['currency'] ?? 'FCFA') }}" class="form-control @error('currency') is-invalid @enderror {{ isset($ocrLowConfidenceLookup['currency']) ? 'border-warning' : '' }}">
@@ -237,6 +238,40 @@
                     }
                 });
             });
+        })();
+
+        // Garde-fou visible : signale toute incohérence HT + TVA ≠ TTC pendant la
+        // correction manuelle, pour ne jamais laisser passer silencieusement une
+        // erreur — que ce soit un reste de mauvaise lecture OCR ou une saisie
+        // manuelle qui casse l'identité comptable.
+        (function setupAmountConsistencyCheck() {
+            const htInput = document.getElementById('validateAmountHt');
+            const ttcInput = document.getElementById('validateAmountTtc');
+            const tvaInput = document.getElementById('validateAmountTva');
+            const warningBox = document.getElementById('amountConsistencyWarning');
+            if (!htInput || !ttcInput || !tvaInput || !warningBox) {
+                return;
+            }
+
+            function checkConsistency() {
+                const ht = parseFloat(htInput.value) || 0;
+                const tva = parseFloat(tvaInput.value) || 0;
+                const ttc = parseFloat(ttcInput.value) || 0;
+                const expectedTtc = ht + tva;
+                const delta = Math.abs(expectedTtc - ttc);
+
+                if (delta > 1) {
+                    warningBox.textContent = 'Incohérence : HT (' + ht.toLocaleString('fr-FR') + ') + TVA (' + tva.toLocaleString('fr-FR') + ') = ' + expectedTtc.toLocaleString('fr-FR') + ', ce qui ne correspond pas au TTC saisi (' + ttc.toLocaleString('fr-FR') + '). Vérifiez ces trois montants avant de valider.';
+                    warningBox.classList.remove('d-none');
+                } else {
+                    warningBox.classList.add('d-none');
+                }
+            }
+
+            [htInput, ttcInput, tvaInput].forEach(function (input) {
+                input.addEventListener('input', checkConsistency);
+            });
+            checkConsistency();
         })();
     </script>
 @endsection
