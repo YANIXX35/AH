@@ -299,7 +299,7 @@ class FedaPaySandboxController extends Controller
                     ->route('login')
                     ->withErrors([
                         'fedapay' => 'Impossible d’associer la transaction FedaPay à un utilisateur.',
-                    ]);
+                    ], 'login');
             }
 
             $transaction = PaymentTransaction::create([

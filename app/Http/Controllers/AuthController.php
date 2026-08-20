@@ -274,7 +274,7 @@ class AuthController extends Controller
         if ($link === null) {
             return redirect()->route('login')->withErrors([
                 'reset_link' => 'Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau à votre administrateur.',
-            ]);
+            ], 'login');
         }
 
         return view('auth.reset-password-link', ['token' => $token, 'user' => $link->user]);
@@ -287,7 +287,7 @@ class AuthController extends Controller
         if ($link === null) {
             return redirect()->route('login')->withErrors([
                 'reset_link' => 'Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau à votre administrateur.',
-            ]);
+            ], 'login');
         }
 
         $data = $request->validate([
