@@ -4,7 +4,143 @@
 @section('page_title', 'Portefeuille Clients Soft-UI')
 
 @push('styles')
-@include('commercial.partials._dashboard-styles')
+<style>
+    .soft-dashboard-body {
+        background-color: #eef2f6;
+        min-height: 100vh;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        color: #1e293b;
+        padding: 24px;
+    }
+    
+    .soft-dashboard-container {
+        background: #f8fafc;
+        border-radius: 32px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
+        padding: 20px;
+    }
+
+    /* Soft White Cards */
+    .mockup-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 24px;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.03), 0 4px 12px rgba(15, 23, 42, 0.02);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .mockup-card:hover {
+        box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.06);
+        border-color: #cbd5e1;
+    }
+
+    /* Top Navigation Header */
+    .mockup-header-bar {
+        background: #ffffff;
+        border-radius: 9999px;
+        padding: 8px 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+    }
+
+    .pill-tab-btn {
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 8px 22px;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    .pill-tab-btn-active {
+        background: #ffffff;
+        color: #0f172a !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
+    }
+    .pill-tab-btn-inactive {
+        background: transparent;
+        color: #64748b;
+    }
+    .pill-tab-btn-inactive:hover {
+        color: #0f172a;
+    }
+
+    /* Portfolio & Retention Stats */
+    .portfolio-kpi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 20px 22px;
+        transition: all 0.22s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .portfolio-kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: 20px 20px 0 0;
+    }
+    .portfolio-kpi-card.kpi-total::before    { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+    .portfolio-kpi-card.kpi-trial::before    { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .portfolio-kpi-card.kpi-converted::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .portfolio-kpi-card.kpi-churned::before  { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .portfolio-kpi-card:hover {
+        box-shadow: 0 12px 28px -4px rgba(15,23,42,0.08);
+        transform: translateY(-2px);
+        border-color: #cbd5e1;
+    }
+    .kpi-number {
+        font-size: 2.2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.5px;
+    }
+    .kpi-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        margin-bottom: 4px;
+    }
+    .kpi-sub {
+        font-size: 0.78rem;
+        color: #64748b;
+        margin-top: 4px;
+    }
+    .retention-bar-outer {
+        background: #f1f5f9;
+        border-radius: 99px;
+        height: 12px;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+    }
+    .retention-bar-converted {
+        background: linear-gradient(90deg, #10b981, #34d399);
+        height: 100%;
+        border-radius: 99px 0 0 99px;
+        transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+    .retention-bar-churned {
+        background: linear-gradient(90deg, #ef4444, #f87171);
+        height: 100%;
+        border-radius: 0 99px 99px 0;
+        transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+    .retention-section-header {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 8px;
+        margin-bottom: 16px;
+    }
+</style>
 @endpush
 
 @section('content')

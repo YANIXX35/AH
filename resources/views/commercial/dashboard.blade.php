@@ -4,7 +4,323 @@
 @section('page_title', 'Dashboard Commercial Soft-UI')
 
 @push('styles')
-@include('commercial.partials._dashboard-styles')
+<style>
+    /* Exact Layout & Styling Replica of the User's Mockup */
+    .soft-dashboard-body {
+        background-color: #eef2f6;
+        min-height: 100vh;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        color: #1e293b;
+        padding: 24px;
+    }
+    
+    .soft-dashboard-container {
+        background: #f8fafc;
+        border-radius: 32px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
+        padding: 20px;
+    }
+
+    /* Soft White Cards */
+    .mockup-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 24px;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.03), 0 4px 12px rgba(15, 23, 42, 0.02);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .mockup-card:hover {
+        box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.06);
+        border-color: #cbd5e1;
+    }
+
+    /* Top Navigation Header (Matching Mockup) */
+    .mockup-header-bar {
+        background: #ffffff;
+        border-radius: 24px;
+        padding: 12px 18px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+    }
+
+    .header-search-input {
+        width: 220px;
+        transition: width .2s ease;
+    }
+    .header-search-input:focus {
+        width: 260px;
+    }
+
+    .header-divider {
+        width: 1px;
+        align-self: stretch;
+        background: #e2e8f0;
+        margin: 2px 4px;
+    }
+
+    .header-action-group {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 9999px;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .header-action-group .btn {
+        white-space: nowrap;
+    }
+
+    .pill-tab-btn {
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 8px 22px;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    .pill-tab-btn-active {
+        background: #ffffff;
+        color: #0f172a !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
+    }
+    .pill-tab-btn-inactive {
+        background: transparent;
+        color: #64748b;
+    }
+    .pill-tab-btn-inactive:hover {
+        color: #0f172a;
+    }
+
+    /* Mockup Status Badges */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 16px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .status-pill-green {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+    }
+    .status-pill-purple {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        color: #ffffff;
+    }
+    .status-pill-blue {
+        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+        color: #ffffff;
+    }
+
+    /* Amber Event Card (Left Bottom - Matching Mockup) */
+    .amber-event-card {
+        background: #facc15;
+        border-radius: 20px;
+        padding: 20px;
+        color: #1e293b;
+    }
+
+    /* Mini Grid Cards 2x2 (Middle Bottom - Matching Mockup) */
+    .mini-user-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 16px;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    .mini-user-card:hover {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    /* 3D Orb AI Copilot Card (Right Bottom - Matching Mockup) */
+    .copilot-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 24px;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.03);
+    }
+    .copilot-orb-3d {
+        width: 84px;
+        height: 84px;
+        margin: 0 auto 16px auto;
+        background: radial-gradient(circle at 35% 35%, #93c5fd 0%, #3b82f6 50%, #1d4ed8 100%);
+        border-radius: 50%;
+        box-shadow: 0 14px 35px rgba(59, 130, 246, 0.4), inset -8px -8px 16px rgba(0, 0, 0, 0.25), inset 8px 8px 16px rgba(255, 255, 255, 0.7);
+        animation: floatOrb 4s ease-in-out infinite alternate;
+    }
+    @keyframes floatOrb {
+        0% { transform: translateY(0px) scale(1); }
+        100% { transform: translateY(-8px) scale(1.04); }
+    }
+
+    .calendar-grid-cell {
+        background: #f8fafc;
+        border-radius: 12px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .calendar-grid-cell-active {
+        background: #3b82f6;
+        color: #ffffff;
+        font-weight: 700;
+        border-radius: 12px;
+    }
+
+    /* Portfolio & Retention Stats */
+    .portfolio-kpi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 20px 22px;
+        transition: all 0.22s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .portfolio-kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: 20px 20px 0 0;
+    }
+    .portfolio-kpi-card.kpi-total::before    { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+    .portfolio-kpi-card.kpi-trial::before    { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .portfolio-kpi-card.kpi-converted::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .portfolio-kpi-card.kpi-churned::before  { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .portfolio-kpi-card:hover {
+        box-shadow: 0 12px 28px -4px rgba(15,23,42,0.08);
+        transform: translateY(-2px);
+        border-color: #cbd5e1;
+    }
+    .kpi-number {
+        font-size: 2.2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.5px;
+    }
+    .kpi-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        margin-bottom: 4px;
+    }
+    .kpi-sub {
+        font-size: 0.78rem;
+        color: #64748b;
+        margin-top: 4px;
+    }
+    .retention-bar-outer {
+        background: #f1f5f9;
+        border-radius: 99px;
+        height: 12px;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+    }
+    .retention-bar-converted {
+        background: linear-gradient(90deg, #10b981, #34d399);
+        height: 100%;
+        border-radius: 99px 0 0 99px;
+        transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+    .retention-bar-churned {
+        background: linear-gradient(90deg, #ef4444, #f87171);
+        height: 100%;
+        border-radius: 0 99px 99px 0;
+        transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+    .retention-section-header {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 8px;
+        margin-bottom: 16px;
+    }
+
+    /* ============================================================ */
+    /* MOBILE — surcharge locale garantie (indépendante du cache CSS externe) */
+    /* ============================================================ */
+    @media (max-width: 767.98px) {
+        .soft-dashboard-body {
+            min-height: auto;
+            padding: 10px 8px;
+        }
+        .soft-dashboard-container {
+            padding: 0;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+            background: transparent;
+        }
+
+        /* Grille d'actions rapides : 3 colonnes icône + libellé, compacte */
+        .mobile-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .mobile-quick-actions .btn {
+            flex-direction: column;
+            gap: 4px;
+            height: 64px;
+            padding: 6px 4px;
+            font-size: 0.72rem;
+            line-height: 1.1;
+            white-space: normal;
+        }
+        .mobile-quick-actions .btn i,
+        .mobile-quick-actions .btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .mobile-stat-card {
+            padding: 12px 10px;
+        }
+        .mobile-stat-card .fs-3 {
+            font-size: 1.5rem !important;
+        }
+
+        .mobile-section-card {
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        /* Barre d'actions du formulaire "Nouveau Client" : empilée en pleine largeur,
+           bouton principal en premier, plutôt qu'une ligne qui déborde de l'écran */
+        .wizard-footer-actions {
+            flex-direction: column-reverse;
+            align-items: stretch;
+            gap: 10px;
+        }
+        .wizard-footer-actions > .wizard-footer-btn-group {
+            flex-direction: column;
+            width: 100%;
+            gap: 10px;
+        }
+        .wizard-footer-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
 @endpush
 
 @section('content')
@@ -231,10 +547,12 @@
         {{-- 💻 VERSION DESKTOP DU DASHBOARD                              --}}
         {{-- ============================================================ --}}
         <div class="d-none d-md-block">
-            <!-- TOP HEADER BAR : logo + navigation + actions rapides (recherche/notifications/avatar déjà gérés par la topbar globale) -->
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 mockup-header-bar">
-                <div class="d-flex align-items-center gap-2 flex-grow-1 min-w-0">
-                    <div class="rounded-circle p-2 d-none d-sm-flex align-items-center justify-content-center flex-shrink-0" style="width:40px; height:40px; background: var(--pme-navy); color: var(--pme-gold);">
+            <!-- TOP HEADER BAR -->
+            <div class="d-flex flex-column gap-3 mb-4">
+
+                <!-- Rangée 1 : Logo & Navigation -->
+                <div class="d-flex align-items-center gap-2 mockup-header-bar">
+                    <div class="bg-primary text-white rounded-circle p-2 d-none d-sm-flex align-items-center justify-content-center flex-shrink-0" style="width:40px; height:40px;">
                         <i data-feather="grid" style="width:20px; height:20px;"></i>
                     </div>
                     <div class="d-flex align-items-center gap-1 bg-light rounded-pill p-1 border overflow-auto scrollbar-none flex-nowrap">
@@ -255,52 +573,36 @@
                         </a>
                     </div>
                 </div>
-                <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-bold text-xs" data-bs-toggle="modal" data-bs-target="#smartImportClientModal" title="Importer une fiche entreprise">
-                        <i data-feather="upload-cloud" style="width:14px; height:14px;"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-bold text-xs" data-bs-toggle="modal" data-bs-target="#addProspectModal" title="Ajouter un lead">
-                        <i data-feather="user-plus" style="width:14px; height:14px;"></i>
-                    </button>
-                </div>
-            </div>
 
-            {{-- ============================================================ --}}
-            {{-- CARTE SOLDE (hero widget)                                    --}}
-            {{-- ============================================================ --}}
-            <div class="row g-3 mb-4">
-                <div class="col-lg-7">
-                    <div class="hero-balance-card h-100">
-                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 position-relative">
-                            <div>
-                                <div class="hero-balance-label">Solde de commissions</div>
-                                <div class="hero-balance-figure">{{ number_format($totalBalance, 0, ',', ' ') }} FCFA</div>
-                                <div class="hero-balance-chip">
-                                    <i data-feather="trending-up" style="width:12px; height:12px;"></i>
-                                    Taux de conversion : {{ $conversionRate }}%
-                                </div>
-                            </div>
-                            <div class="hero-sparkline-wrap" style="width: 140px;">
-                                <canvas id="heroBalanceSparkline" height="56"></canvas>
-                            </div>
-                        </div>
-                        <div class="hero-balance-actions d-flex gap-2 mt-4 position-relative">
-                            <a href="{{ route('commercial.balance') }}" class="btn btn-hero-primary px-4 py-2 text-decoration-none">
-                                <i data-feather="pie-chart" class="me-1" style="width:14px; height:14px;"></i> Voir le détail
-                            </a>
-                            <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-hero-outline px-4 py-2 text-decoration-none">
-                                <i data-feather="user-plus" class="me-1" style="width:14px; height:14px;"></i> Nouveau Client
-                            </a>
-                        </div>
+                <!-- Rangée 2 : Recherche, équipe, actions -->
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mockup-header-bar">
+                    <div class="position-relative">
+                        <i data-feather="search" class="position-absolute text-muted" style="left:14px; top:50%; transform:translateY(-50%); width:15px; height:15px;"></i>
+                        <input type="text" class="form-control rounded-pill border-0 bg-light ps-5 pe-4 header-search-input" placeholder="Rechercher un client, un lead…" style="font-size:0.85rem;">
                     </div>
-                </div>
-                <div class="col-lg-5">
-                    <div class="mockup-card p-4 h-100">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h3 class="h6 fw-bold text-dark mb-0">Évolution du Portefeuille</h3>
-                            <span class="small text-muted">Vue mensuelle</span>
+
+                    <div class="d-flex align-items-center gap-2 gap-lg-3 flex-wrap justify-content-end">
+                        <!-- Avatar Stack (équipe) -->
+                        <div class="d-none d-lg-flex align-items-center flex-shrink-0" title="Membres de l'équipe">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">EK</div>
+                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem; margin-right:-8px;">JK</div>
+                            <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold border border-white" style="width:32px; height:32px; font-size:0.75rem;">+{{ $totalClients }}</div>
                         </div>
-                        <canvas id="clientGrowthChart" height="120"></canvas>
+
+                        <div class="header-divider d-none d-lg-block"></div>
+
+                        <!-- Groupe d'actions -->
+                        <div class="header-action-group flex-wrap">
+                            <button type="button" class="btn btn-outline-success rounded-pill px-3 py-2 fw-bold text-xs" data-bs-toggle="modal" data-bs-target="#smartImportClientModal">
+                                <i data-feather="upload-cloud" class="me-1" style="width:12px; height:12px;"></i> Importer
+                            </button>
+                            <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 fw-bold text-xs" data-bs-toggle="modal" data-bs-target="#addProspectModal">
+                                <i data-feather="user-plus" class="me-1" style="width:12px; height:12px;"></i> + Lead
+                            </button>
+                            <a href="{{ route('commercial.dashboard', ['action' => 'add-client']) }}" class="btn btn-primary rounded-pill px-3 py-2 fw-bold text-xs shadow-sm text-decoration-none">
+                                <i data-feather="briefcase" class="me-1" style="width:12px; height:12px;"></i> + Client
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -344,7 +646,7 @@
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded-4 border d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="{{ $activity['type'] === 'client' ? 'activity-avatar' : 'bg-success text-white' }} rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:36px; height:36px; font-size:0.8rem;">
+                                    <div class="bg-{{ $activity['type'] === 'client' ? 'primary' : 'success' }} text-white rounded-circle fw-bold d-flex align-items-center justify-content-center" style="width:36px; height:36px; font-size:0.8rem;">
                                         {{ strtoupper(substr($activity['name'], 0, 2)) }}
                                     </div>
                                     <div>
@@ -369,33 +671,47 @@
 
             <!-- BOTTOM ROW (EXACT MOCKUP 3 COLUMNS: FUTURE EVENTS | ONBOARDING LEADS | WELCOME AI COPILOT) -->
             <div class="row g-4">
-                <!-- COLUMN 1 (LEFT ~33%): ÉCHÉANCES & RELANCES — essais clients qui expirent bientôt -->
+                <!-- COLUMN 1 (LEFT ~33%): FUTURE EVENTS / ÉVÉNEMENTS (Matching Mockup Left Card) -->
                 <div class="col-lg-4">
                     <div class="mockup-card p-4 h-100">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h3 class="h5 fw-bold text-dark mb-0">Échéances & Relances</h3>
-                            <a href="{{ route('commercial.portefeuille') }}" class="text-decoration-none small text-muted fw-semibold">Voir tout &rarr;</a>
+                            <h3 class="h5 fw-bold text-dark mb-0">Événements & Relances</h3>
+                            <a href="{{ route('commercial.showcase') }}" class="text-decoration-none small text-muted fw-semibold">Voir tout &rarr;</a>
                         </div>
-                        <div class="d-flex flex-column gap-2">
-                            @forelse($upcomingExpiries as $expiringClient)
-                                @php
-                                    $daysLeft = (int) floor(now()->diffInDays(\Carbon\Carbon::parse($expiringClient->premium_ends_at)));
-                                @endphp
-                                <div class="expiry-list-item {{ $daysLeft <= 7 ? 'is-urgent' : '' }}">
-                                    <div class="min-w-0">
-                                        <div class="fw-bold text-dark small text-truncate">{{ $expiringClient->company_name ?: $expiringClient->name }}</div>
-                                        <div class="text-muted small" style="font-size:0.75rem;">Essai en cours</div>
-                                    </div>
-                                    <span class="badge {{ $daysLeft <= 7 ? 'bg-warning text-dark' : 'bg-white text-dark border' }} rounded-pill px-3 py-2 fw-semibold text-nowrap">
-                                        {{ $daysLeft }} j restant{{ $daysLeft > 1 ? 's' : '' }}
-                                    </span>
-                                </div>
-                            @empty
-                                <div class="text-center text-muted py-3">
-                                    <i data-feather="calendar" class="mb-2" style="width:28px; height:28px; opacity:0.3;"></i>
-                                    <div class="small">Aucune échéance dans les 30 prochains jours.</div>
-                                </div>
-                            @endforelse
+
+                        <!-- Highlighted Yellow/Amber Top Event Card (Mockup Style) -->
+                        <div class="amber-event-card mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold fs-6">Webinaire Sitiame Capital</span>
+                                <span class="badge bg-dark text-white rounded-pill px-2 py-1 small">Dans 15 min</span>
+                            </div>
+                            <p class="small text-dark mb-3">Présentation du logiciel comptable SYSCOHADA & Trésorerie Mobile Money.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-semibold">
+                                    <i data-feather="clock" class="me-1" style="width:12px; height:12px;"></i> 14:00 - 15:30
+                                </span>
+                                <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-semibold">
+                                    <i data-feather="calendar" class="me-1" style="width:12px; height:12px;"></i> 15 Déc.
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Second Event Item -->
+                        <div class="p-3 bg-light rounded-4 border mb-2 d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold text-dark small">Relances Essais Expirés</div>
+                                <div class="text-muted small" style="font-size:0.75rem;">Session de conversion téléphonique</div>
+                            </div>
+                            <span class="badge bg-white text-dark border rounded-pill">09:00 - 12:00</span>
+                        </div>
+
+                        <!-- Third Event Item -->
+                        <div class="p-3 bg-light rounded-4 border d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold text-dark small">Atelier Sitiame Finance Club</div>
+                                <div class="text-muted small" style="font-size:0.75rem;">Rencontre Dirigeants PME</div>
+                            </div>
+                            <span class="badge bg-white text-dark border rounded-pill">Jeudi</span>
                         </div>
                     </div>
                 </div>
@@ -415,7 +731,7 @@
                             @forelse($prospects->take(4) as $prospect)
                                 <div class="col-6">
                                     <div class="mini-user-card">
-                                        <div class="quick-avatar fw-bold d-flex align-items-center justify-content-center mx-auto mb-2" style="margin-right:0;">
+                                        <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center mx-auto mb-2" style="width:44px; height:44px; font-size:0.9rem;">
                                             {{ strtoupper(substr($prospect->name ?? 'PR', 0, 2)) }}
                                         </div>
                                         <div class="fw-bold text-dark text-truncate small mb-0">{{ $prospect->name ?? 'Prospect' }}</div>
@@ -494,21 +810,6 @@
                 </div>
             </div>
 
-            <!-- CARTE SOLDE (hero widget mobile) -->
-            <div class="hero-balance-card mb-3">
-                <div class="hero-balance-label">Solde de commissions</div>
-                <div class="hero-balance-figure">{{ number_format($totalBalance, 0, ',', ' ') }} FCFA</div>
-                <div class="hero-balance-chip">
-                    <i data-feather="trending-up" style="width:12px; height:12px;"></i>
-                    Conversion : {{ $conversionRate }}%
-                </div>
-                <div class="hero-balance-actions d-flex gap-2 mt-3">
-                    <a href="{{ route('commercial.balance') }}" class="btn btn-hero-primary px-3 py-2 text-decoration-none flex-grow-1 text-center">
-                        Voir le détail
-                    </a>
-                </div>
-            </div>
-
             <!-- BOUTONS D'ACTIONS RAPIDES -->
             <div class="mobile-quick-actions mb-3">
                 <button type="button" class="btn btn-outline-success rounded-4" data-bs-toggle="modal" data-bs-target="#smartImportClientModal">
@@ -583,7 +884,7 @@
                         @endphp
                         <div class="p-3 bg-light rounded-3 border d-flex flex-column gap-2">
                             <div class="d-flex align-items-start gap-2">
-                                <div class="activity-avatar flex-shrink-0" style="width:36px; height:36px;">
+                                <div class="bg-primary text-white rounded-circle fw-bold d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px; height:36px; font-size:0.75rem;">
                                     {{ strtoupper(substr($client->name ?? 'PME', 0, 2)) }}
                                 </div>
                                 <div class="min-w-0 flex-grow-1">
@@ -658,33 +959,6 @@
                     @empty
                         <div class="text-center text-muted small py-3 bg-light rounded-3 border">
                             Aucun client parrainé.
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-
-            <!-- ÉCHÉANCES & RELANCES (essais qui expirent bientôt) -->
-            <div class="mobile-section-card card p-3 mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="h6 fw-bold text-dark mb-0">⏰ Échéances & Relances</h3>
-                </div>
-                <div class="d-flex flex-column gap-2">
-                    @forelse($upcomingExpiries as $expiringClient)
-                        @php
-                            $daysLeftMobile = (int) floor(now()->diffInDays(\Carbon\Carbon::parse($expiringClient->premium_ends_at)));
-                        @endphp
-                        <div class="expiry-list-item {{ $daysLeftMobile <= 7 ? 'is-urgent' : '' }}">
-                            <div class="min-w-0">
-                                <div class="fw-bold text-dark small text-truncate">{{ $expiringClient->company_name ?: $expiringClient->name }}</div>
-                                <div class="text-muted small" style="font-size:0.7rem;">Essai en cours</div>
-                            </div>
-                            <span class="badge {{ $daysLeftMobile <= 7 ? 'bg-warning text-dark' : 'bg-white text-dark border' }} rounded-pill px-2 py-1 text-nowrap" style="font-size:0.65rem;">
-                                {{ $daysLeftMobile }} j
-                            </span>
-                        </div>
-                    @empty
-                        <div class="text-center text-muted small py-3 bg-light rounded-3 border">
-                            Aucune échéance dans les 30 prochains jours.
                         </div>
                     @endforelse
                 </div>
@@ -1050,44 +1324,17 @@
                     datasets: [{
                         label: 'Clients cumulés',
                         data: @json($growthData ?? []),
-                        borderColor: '#0F2747',
-                        backgroundColor: 'rgba(15, 39, 71, 0.08)',
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.08)',
                         tension: 0.35,
                         fill: true,
                         pointRadius: 3,
-                        pointBackgroundColor: '#F2D89B',
-                        pointBorderColor: '#0F2747',
+                        pointBackgroundColor: '#3b82f6',
                     }]
                 },
                 options: {
                     plugins: { legend: { display: false } },
                     scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-                }
-            });
-        }
-
-        // Mini-graphique de la carte solde : même série que ci-dessus, sans axes/légende.
-        const sparklineCanvas = document.getElementById('heroBalanceSparkline');
-        if (sparklineCanvas && window.Chart) {
-            new Chart(sparklineCanvas.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: @json($growthLabels ?? []),
-                    datasets: [{
-                        data: @json($growthData ?? []),
-                        borderColor: '#F2D89B',
-                        backgroundColor: 'rgba(242, 216, 155, 0.18)',
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 0,
-                        borderWidth: 2,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                    scales: { x: { display: false }, y: { display: false } },
                 }
             });
         }
