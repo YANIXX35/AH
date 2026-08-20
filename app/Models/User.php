@@ -269,6 +269,20 @@ class User extends Authenticatable
             return true;
         }
 
+        // is_accountant est la source de vérité pour un compte « comptable cabinet » —
+        // renseigné indépendamment par l'écran Admin > Utilisateurs. Ce dernier ne
+        // touche jamais role_key/module_permissions, qui appartiennent à l'écran RBAC
+        // séparé (pensé pour les collaborateurs internes PME). Un compte promu
+        // comptable via Admin > Utilisateurs pouvait donc garder un role_key périmé
+        // (viewer/analyst/commercial...) issu d'un état antérieur et se retrouver
+        // bloqué sur des modules qui fonctionnaient chez d'autres comptables — d'où
+        // l'incohérence « ça passe chez certains comptables, pas chez d'autres ». On
+        // court-circuite donc role_key/module_permissions pour tout compte comptable :
+        // l'accès aux modules ne dépend plus que de is_accountant.
+        if ($this->isAccountant()) {
+            return in_array($module, ['dashboard', 'accounting', 'treasury', 'support', 'invoicing', 'investor'], true);
+        }
+
         $permissions = (array) ($this->module_permissions ?? []);
         if (array_key_exists($module, $permissions)) {
             return (bool) $permissions[$module];
@@ -276,7 +290,6 @@ class User extends Authenticatable
 
         return match ((string) ($this->role_key ?? '')) {
             'manager' => in_array($module, ['dashboard', 'accounting', 'treasury', 'payments', 'investor', 'support', 'invoicing', 'stock'], true),
-            'accountant' => in_array($module, ['dashboard', 'accounting', 'treasury', 'support', 'invoicing', 'investor'], true),
             'analyst' => in_array($module, ['dashboard', 'investor', 'support'], true),
             'viewer' => in_array($module, ['dashboard'], true),
             'commercial' => in_array($module, ['dashboard', 'clients_management', 'support'], true),
