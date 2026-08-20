@@ -118,7 +118,7 @@ class AccountingController extends Controller
             'document_reference' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'attachment' => ['nullable', 'file', 'max:51200', 'mimes:pdf,jpg,jpeg,png,xlsx,xls,doc,docx,zip'],
+            'attachment' => ['nullable', 'file', 'max:51200', 'mimes:pdf,jpg,jpeg,png,heic,heif,xlsx,xls,doc,docx,zip'],
             'debit_account' => ['required', 'string', 'max:255'],
             'credit_account' => ['required', 'string', 'max:255'],
         ]);
@@ -284,7 +284,7 @@ class AccountingController extends Controller
             'document_reference' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'attachment' => ['nullable', 'file', 'max:51200', 'mimes:pdf,jpg,jpeg,png,xlsx,xls,doc,docx,zip'],
+            'attachment' => ['nullable', 'file', 'max:51200', 'mimes:pdf,jpg,jpeg,png,heic,heif,xlsx,xls,doc,docx,zip'],
             'remove_attachment' => ['nullable', 'boolean'],
             'debit_account' => ['required', 'string', 'max:255'],
             'credit_account' => ['required', 'string', 'max:255'],
@@ -2562,7 +2562,7 @@ class AccountingController extends Controller
     {
         $request->validate([
             'documents' => ['required', 'array', 'min:1'],
-            'documents.*' => ['file', 'max:51200', 'mimes:pdf,jpg,jpeg,png,xls,xlsx,csv'],
+            'documents.*' => ['file', 'max:51200', 'mimes:pdf,jpg,jpeg,png,heic,heif,xls,xlsx,csv'],
         ], [
             'documents.required' => 'Veuillez sélectionner au moins un document.',
             'documents.array' => 'Le lot de documents envoyé est invalide.',
@@ -2813,7 +2813,7 @@ class AccountingController extends Controller
     public function uploadDocumentForEntryPrefill(Request $request)
     {
         $request->validate([
-            'document' => ['required', 'file', 'max:51200', 'mimes:pdf,jpg,jpeg,png,xlsx,xls,doc,docx,zip'],
+            'document' => ['required', 'file', 'max:51200', 'mimes:pdf,jpg,jpeg,png,heic,heif,xlsx,xls,doc,docx,zip'],
         ], [
             'document.required' => 'Veuillez sélectionner un fichier.',
             'document.max' => 'Fichier trop volumineux. Taille maximale : 50 Mo.',

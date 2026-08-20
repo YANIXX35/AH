@@ -163,7 +163,7 @@
                             <label class="form-label">Sélectionnez les fichiers (plusieurs possibles)</label>
                             <div class="border rounded p-4" id="drop-zone">
                                 <p class="mb-2">Glissez-déposez vos fichiers ici ou cliquez pour sélectionner.</p>
-                                <input type="file" name="documents[]" id="documents" class="form-control @error('documents') is-invalid @enderror" multiple accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv,image/*" style="cursor: pointer;" />
+                                <input type="file" name="documents[]" id="documents" class="form-control @error('documents') is-invalid @enderror" multiple accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.xls,.xlsx,.csv,image/*" style="cursor: pointer;" />
                                 @error('documents')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                 @error('documents.*')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                 <div class="form-text">Formats autorisés : PDF, JPG, PNG, XLS, XLSX, CSV · Taille max application : 20 MB · Les PDF/images sont analysés via le service OCR.space.</div>

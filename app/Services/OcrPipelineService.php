@@ -40,11 +40,16 @@ class OcrPipelineService
             'global_confidence' => $globalConfidence,
             'compliance_rate' => $requiredFieldsStatus['compliance_rate'],
             'missing_required_fields' => $requiredFieldsStatus['missing'],
-            // Filtre de qualité (PRD 4.1, D2/A1) : le blocage se base uniquement sur la
-            // présence des champs obligatoires (numéro de pièce, dates, identification du
-            // tiers) — le score de confiance OCR reste un signal affiché, plus un critère
-            // bloquant à lui seul.
-            'review_required' => ! empty($requiredFieldsStatus['missing']),
+            // Filtre de qualité (PRD 4.1, D2/A1) : le blocage se base sur la présence des
+            // champs obligatoires (numéro de pièce, dates, identification du tiers) — MAIS
+            // "présent" ne veut pas dire "fiable" : un document confus (ex. un bon de
+            // commande manuscrit) peut faire lire à l'OCR un texte qui remplit
+            // techniquement un champ avec une valeur fausse/sans rapport (une quantité,
+            // un prix...), sans que ça ne soit jamais détecté comme "manquant". On ajoute
+            // donc un second déclencheur : si la confiance globale du document est trop
+            // basse, la relecture manuelle reste exigée même quand les 3 champs
+            // obligatoires paraissent renseignés.
+            'review_required' => ! empty($requiredFieldsStatus['missing']) || $globalConfidence < 50.0,
         ];
     }
 
