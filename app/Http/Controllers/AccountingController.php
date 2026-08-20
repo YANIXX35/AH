@@ -194,6 +194,8 @@ class AccountingController extends Controller
      */
     public function searchAccounts(Request $request)
     {
+        $this->ensureWorkspacePlanSeeded();
+
         $search = trim((string) $request->query('q', ''));
         $classe = trim((string) $request->query('classe', ''));
 
