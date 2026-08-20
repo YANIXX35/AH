@@ -2528,16 +2528,22 @@ class AccountingController extends Controller
         return $this->getPlanAccount($account)['subtype'] ?? null;
     }
 
-    public function documents()
+    public function documents(Request $request)
     {
-        $documents = AccountingDocument::with(['entries' => function ($query) {
+        $statusFilter = $request->query('status');
+
+        $query = AccountingDocument::with(['entries' => function ($query) {
             $query->orderByDesc('id');
         }])
-            ->whereIn('user_id', $this->workspaceDataUserIds())
-            ->orderByDesc('created_at')
-            ->get();
+            ->whereIn('user_id', $this->workspaceDataUserIds());
 
-        return view('accounting.documents', compact('documents'));
+        if ($statusFilter === 'needs_review') {
+            $query->whereIn('status', ['pending_validation', 'ocr_failed']);
+        }
+
+        $documents = $query->orderByDesc('created_at')->get();
+
+        return view('accounting.documents', compact('documents', 'statusFilter'));
     }
 
     public function documentsComparison()
@@ -2598,6 +2604,7 @@ class AccountingController extends Controller
         $failedCount = 0;
         $autoValidatedCount = 0;
         $pendingReviewCount = 0;
+        $createdDocuments = [];
 
         foreach ($uploadedFiles as $file) {
             $hash = sha1_file($file->getRealPath());
@@ -2661,6 +2668,7 @@ class AccountingController extends Controller
                 }
             }
 
+            $createdDocuments[] = $document;
             $createdCount++;
         }
 
@@ -2678,7 +2686,23 @@ class AccountingController extends Controller
             $messageParts[] = "{$pendingReviewCount} en revue manuelle";
         }
 
-        return redirect()->route('accounting.documents')->with('status', implode(' · ', $messageParts).'.');
+        $needsReviewDocuments = collect($createdDocuments)
+            ->filter(fn ($doc) => in_array($doc->status, ['pending_validation', 'ocr_failed'], true))
+            ->values();
+
+        if ($needsReviewDocuments->isEmpty()) {
+            return redirect()->route('accounting.documents')->with('status', implode(' · ', $messageParts).'.');
+        }
+
+        if (count($uploadedFiles) === 1 && $needsReviewDocuments->count() === 1) {
+            return redirect()
+                ->route('accounting.documents.validate', $needsReviewDocuments->first())
+                ->with('status', "Certaines informations n'ont pas pu être lues automatiquement — merci de les compléter.");
+        }
+
+        return redirect()
+            ->route('accounting.documents', ['status' => 'needs_review'])
+            ->with('status', implode(' · ', $messageParts).'.');
     }
 
     /**

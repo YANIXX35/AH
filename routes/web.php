@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountantChangeRequestController;
 use App\Http\Controllers\AccountantClientController;
 use App\Http\Controllers\AccountantCommercialBalanceController;
 use App\Http\Controllers\AccountantDashboardController;
+use App\Http\Controllers\AccountantDocumentController;
 use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\AccountingDocumentController;
 use App\Http\Controllers\AccountingDocumentViewerController;
@@ -426,6 +427,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/documents/{user}/{type}', [AccountantClientController::class, 'updateDocument'])
             ->whereIn('type', ['company_logo', 'trade_register'])
             ->name('documents.update');
+        Route::get('/files-ocr', [AccountantDocumentController::class, 'index'])->name('files.index');
+        Route::get('/files-ocr/{document}/open', [AccountantDocumentController::class, 'open'])->name('files.open');
         // Déclarer /workspace/clear avant /workspace/{user}, sinon « clear » est capturé comme identifiant client (POST bloqué).
         Route::match(['get', 'post'], '/workspace/clear', [AccountantClientController::class, 'clearWorkspace'])->name('workspace.clear');
         Route::post('/workspace/{user}', [AccountantClientController::class, 'selectWorkspace'])->name('workspace.select');

@@ -204,6 +204,11 @@
                                 </a>
                             </li>
                             <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('accountant.files.*') ? 'active' : '' }}" href="{{ route('accountant.files.index') }}">
+                                    <i class="align-middle" data-feather="folder" style="width:14px;height:14px;"></i> <span class="align-middle">Gestionnaire de fichiers</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('accountant.commercials.*') ? 'active' : '' }}" href="{{ route('accountant.commercials.index') }}">
                                     <i class="align-middle" data-feather="users" style="width:14px;height:14px;"></i> <span class="align-middle">Suivi Commerciaux</span>
                                 </a>
