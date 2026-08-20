@@ -2160,21 +2160,28 @@ class AccountingController extends Controller
 
             $liasseForVerification = $liasseService->generateLiasse($entries);
 
-            DocumentVerification::updateOrCreate(
-                ['reference' => $bilanReference],
-                [
-                    'type' => 'bilan',
-                    'user_id' => $this->workspaceUserId(),
-                    'company_name' => $companyName,
-                    'company_sigle' => $companySigle,
-                    'company_tax_id' => $companyTaxId,
-                    'exercise_year' => $exerciseDate->format('Y'),
-                    'total_actif' => $liasseForVerification['actif']['total']['net_n'] ?? null,
-                    'total_passif' => $liasseForVerification['passif']['total']['net_n'] ?? null,
-                    'resultat_net' => $liasseForVerification['resultat']['totals']['XZ']['net_n'] ?? null,
-                    'generated_at' => now(),
-                ]
-            );
+            try {
+                DocumentVerification::updateOrCreate(
+                    ['reference' => $bilanReference],
+                    [
+                        'type' => 'bilan',
+                        'user_id' => $this->workspaceUserId(),
+                        'company_name' => $companyName,
+                        'company_sigle' => $companySigle,
+                        'company_tax_id' => $companyTaxId,
+                        'exercise_year' => $exerciseDate->format('Y'),
+                        'total_actif' => $liasseForVerification['actif']['total']['net_n'] ?? null,
+                        'total_passif' => $liasseForVerification['passif']['total']['net_n'] ?? null,
+                        'resultat_net' => $liasseForVerification['resultat']['totals']['XZ']['net_n'] ?? null,
+                        'generated_at' => now(),
+                    ]
+                );
+            } catch (\Throwable $exception) {
+                Log::warning('document_verification_write_failed', [
+                    'reference' => $bilanReference,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
 
             $verificationUrl = route('documents.verify', $bilanReference);
             $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='.urlencode($verificationUrl);
@@ -2283,21 +2290,28 @@ class AccountingController extends Controller
         $referenceInput = sprintf('%s|%s|%s|%s', $companyName, $companyTaxId, $exerciseDate->format('Y'), $this->workspaceUserId());
         $liasseReference = 'BCEAO-'.strtoupper(Str::substr(hash('sha256', $referenceInput), 0, 12));
 
-        DocumentVerification::updateOrCreate(
-            ['reference' => $liasseReference],
-            [
-                'type' => 'liasse',
-                'user_id' => $this->workspaceUserId(),
-                'company_name' => $companyName,
-                'company_sigle' => $companySigle,
-                'company_tax_id' => $companyTaxId,
-                'exercise_year' => $exerciseDate->format('Y'),
-                'total_actif' => $liasse['actif']['total']['net_n'] ?? null,
-                'total_passif' => $liasse['passif']['total']['net_n'] ?? null,
-                'resultat_net' => $liasse['resultat']['totals']['XZ']['net_n'] ?? null,
-                'generated_at' => now(),
-            ]
-        );
+        try {
+            DocumentVerification::updateOrCreate(
+                ['reference' => $liasseReference],
+                [
+                    'type' => 'liasse',
+                    'user_id' => $this->workspaceUserId(),
+                    'company_name' => $companyName,
+                    'company_sigle' => $companySigle,
+                    'company_tax_id' => $companyTaxId,
+                    'exercise_year' => $exerciseDate->format('Y'),
+                    'total_actif' => $liasse['actif']['total']['net_n'] ?? null,
+                    'total_passif' => $liasse['passif']['total']['net_n'] ?? null,
+                    'resultat_net' => $liasse['resultat']['totals']['XZ']['net_n'] ?? null,
+                    'generated_at' => now(),
+                ]
+            );
+        } catch (\Throwable $exception) {
+            Log::warning('document_verification_write_failed', [
+                'reference' => $liasseReference,
+                'error' => $exception->getMessage(),
+            ]);
+        }
 
         $verificationUrl = route('documents.verify', $liasseReference);
         $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='.urlencode($verificationUrl);
