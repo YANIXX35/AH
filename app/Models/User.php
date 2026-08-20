@@ -276,7 +276,7 @@ class User extends Authenticatable
 
         return match ((string) ($this->role_key ?? '')) {
             'manager' => in_array($module, ['dashboard', 'accounting', 'treasury', 'payments', 'investor', 'support', 'invoicing', 'stock'], true),
-            'accountant' => in_array($module, ['dashboard', 'accounting', 'treasury', 'support', 'invoicing'], true),
+            'accountant' => in_array($module, ['dashboard', 'accounting', 'treasury', 'support', 'invoicing', 'investor'], true),
             'analyst' => in_array($module, ['dashboard', 'investor', 'support'], true),
             'viewer' => in_array($module, ['dashboard'], true),
             'commercial' => in_array($module, ['dashboard', 'clients_management', 'support'], true),
