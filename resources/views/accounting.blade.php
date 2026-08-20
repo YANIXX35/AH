@@ -854,6 +854,9 @@
                     
                     <form action="{{ route('accounting.entries.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
+                        @error('access_denied')
+                            <div class="alert alert-danger">{{ $message }}</div>
+                        @enderror
                         <input type="hidden" name="document_id" id="documentIdValue" value="{{ old('document_id', $prefillData['document_id'] ?? '') }}">
                         <div id="entryPrefillStatus" class="mb-3" style="display:none;"></div>
                         @php
@@ -1189,7 +1192,7 @@
                             <button type="reset" class="btn btn-outline-secondary">
                                 <i data-feather="x-circle" class="me-1"></i>Réinitialiser
                             </button>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" id="createEntrySubmitBtn" class="btn btn-primary">
                                 <i data-feather="check-circle" class="me-1"></i>Créer entrée
                             </button>
                         </div>
@@ -1526,6 +1529,22 @@
             @endif
 
             openOnly(sections[0]);
+
+            // Un champ obligatoire (ex: compte débit/crédit) resté dans une
+            // section repliée par l'accordéon empêchait la validation HTML5
+            // native de s'afficher au clic sur « Créer entrée » : le
+            // navigateur bloquait l'envoi sans rien montrer à l'écran (pas de
+            // rechargement, pas de message). On ouvre donc tout juste avant
+            // l'envoi pour que la validation (et son message éventuel) reste
+            // toujours visible.
+            const submitBtn = document.getElementById('createEntrySubmitBtn');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', function () {
+                    sections.forEach(function (section) {
+                        section.setAttribute('open', 'open');
+                    });
+                });
+            }
         })();
 
         // Initial calculation
