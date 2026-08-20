@@ -185,6 +185,33 @@ class CommercialController extends Controller
             ];
         }))->sortByDesc('date')->take(10);
 
+        // Solde de commissions (même calcul que la page "Mon Solde"), affiché en vedette
+        // sur le dashboard.
+        $balance = $this->commission->calculateBalance($commercial);
+        $totalBalance = $balance['totalBalance'];
+
+        // Échéances d'essai à venir (30 prochains jours), triées par date la plus proche —
+        // calculé ici plutôt qu'en Blade pour ne pas dupliquer la logique déjà présente
+        // ci-dessus (branche mobile actuelle le faisait inline).
+        $upcomingExpiries = $clients
+            ->filter(function ($client) {
+                if (! $client || ! ($client->is_premium ?? false) || empty($client->premium_ends_at)) {
+                    return false;
+                }
+                try {
+                    $endsAt = $client->premium_ends_at instanceof Carbon
+                        ? $client->premium_ends_at
+                        : Carbon::parse($client->premium_ends_at);
+
+                    return $endsAt->isFuture() && $endsAt->lte(now()->addDays(30));
+                } catch (\Throwable $e) {
+                    return false;
+                }
+            })
+            ->sortBy(fn ($client) => Carbon::parse($client->premium_ends_at))
+            ->take(5)
+            ->values();
+
         return view('commercial.dashboard', compact(
             'clients',
             'prospects',
@@ -201,7 +228,9 @@ class CommercialController extends Controller
             'newProspects',
             'qualifiedProspects',
             'convertedProspects',
-            'recentActivities'
+            'recentActivities',
+            'totalBalance',
+            'upcomingExpiries'
         ));
     }
 

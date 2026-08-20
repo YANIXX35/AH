@@ -4,6 +4,7 @@
 @section('page_title', 'Pipeline Leads CRM')
 
 @push('styles')
+@include('commercial.partials._dashboard-styles')
 <style>
     .prospects-bg {
         background-color: #f1f5f9;
@@ -16,36 +17,6 @@
         border: 1px solid #e2e8f0;
         border-radius: 24px;
         box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.03);
-    }
-    /* Exact Layout & Styling Replica of the User's Mockup */
-    .mockup-header-bar {
-        background: #ffffff;
-        border-radius: 9999px;
-        padding: 8px 16px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
-    }
-
-    .pill-tab-btn {
-        border-radius: 9999px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        padding: 8px 22px;
-        border: none;
-        transition: all 0.2s ease;
-    }
-    .pill-tab-btn-active {
-        background: #ffffff;
-        color: #0f172a !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        border: 1px solid #e2e8f0;
-    }
-    .pill-tab-btn-inactive {
-        background: transparent;
-        color: #64748b;
-    }
-    .pill-tab-btn-inactive:hover {
-        color: #0f172a;
     }
 </style>
 @endpush

@@ -32,3 +32,6 @@ signing-key-info.txt
 *.sqlite
 *.sqlite3
 /sitiame_capital
+
+# Mockups temporaires du compagnon visuel de brainstorming
+/.superpowers/
