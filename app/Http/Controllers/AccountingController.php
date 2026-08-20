@@ -3189,7 +3189,13 @@ class AccountingController extends Controller
         if ($amountTtc === null && $amountHt !== null && $amountTva !== null) {
             $amountTtc = $amountHt + $amountTva;
         }
-        if ($amountTva === null && $amountHt !== null && $amountTtc !== null && $amountTtc >= $amountHt) {
+        // Quand le HT et le TTC sont tous les deux connus, TVA = TTC - HT est une
+        // identité comptable garantie — plus fiable que le montant "TVA" repéré par
+        // mot-clé dans le texte OCR, qui peut se tromper de ligne sur un document au
+        // tableau de taxes détaillé (plusieurs lignes "TVA sur ...", sous-totaux
+        // intermédiaires...). On recalcule donc systématiquement dans ce cas, même si
+        // une valeur de TVA avait déjà été trouvée par ailleurs.
+        if ($amountHt !== null && $amountTtc !== null && $amountTtc >= $amountHt) {
             $amountTva = $amountTtc - $amountHt;
         }
 
