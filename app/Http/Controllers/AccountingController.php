@@ -2888,6 +2888,24 @@ class AccountingController extends Controller
                 'confidence' => $extraction['confidence'],
                 'compliance_rate' => (float) ($extraction['pipeline_result']['compliance_rate'] ?? 0),
             ]);
+        } elseif ($document->status !== 'validated') {
+            // Le même fichier avait déjà été importé mais jamais validé par un humain :
+            // on relit avec le moteur OCR actuel plutôt que de renvoyer les anciennes
+            // données extraites telles quelles. Sans ça, réimporter le même fichier
+            // depuis cet écran (bouton « Importer ») après un correctif OCR continuait
+            // à afficher les anciennes valeurs, potentiellement fausses, tant que
+            // personne n'allait cliquer « Réanalyser » sur la fiche de validation
+            // dédiée — un chemin que la plupart des comptables n'empruntent jamais
+            // puisqu'ils importent directement depuis ce formulaire de saisie.
+            $extraction = $this->runOcrExtractionForDocument($document->original_name, $document->stored_path, new OcrService, new OcrPipelineService);
+            $document->update([
+                'document_type' => $extraction['document_type'],
+                'status' => $extraction['status'],
+                'extracted_data' => $extraction['extracted_data'],
+                'confidence' => $extraction['confidence'],
+                'compliance_rate' => (float) ($extraction['pipeline_result']['compliance_rate'] ?? 0),
+                'actor_user_id' => Auth::id(),
+            ]);
         }
 
         if ($document->status === 'ocr_failed') {
