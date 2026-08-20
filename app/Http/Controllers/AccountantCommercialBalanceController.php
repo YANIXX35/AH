@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -99,7 +100,9 @@ class AccountantCommercialBalanceController extends Controller
             $remaining = max(0, $balance['totalBalance'] - $totalPaid);
 
             if ($validated['amount'] > $remaining) {
-                abort(422, "Le montant dépasse le solde restant dû ({$remaining} FCFA).");
+                throw ValidationException::withMessages([
+                    'amount' => "Le montant dépasse le solde restant dû ({$remaining} FCFA).",
+                ]);
             }
 
             $receiptNumber = $this->commission->allocateReceiptNumber($commercial->id, now());
