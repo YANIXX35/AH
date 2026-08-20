@@ -1759,8 +1759,12 @@ class AccountingController extends Controller
 
     private function computePrefillTvaRate(float $amountHt, float $amountTva): float
     {
+        // Aucune TVA détectée sur le document (ex: petit reçu manuscrit sans taxe) :
+        // le taux affiché doit rester à 0, pas un taux inventé — afficher "18%" alors
+        // que le montant TVA est à 0 (donc HT = TTC) est une contradiction visible à
+        // l'écran, comme si une taxe était appliquée sans jamais l'être réellement.
         if ($amountHt <= 0 || $amountTva <= 0) {
-            return 18.0;
+            return 0.0;
         }
 
         return round(($amountTva / $amountHt) * 100, 2);
