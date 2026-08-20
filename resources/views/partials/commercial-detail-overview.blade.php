@@ -30,7 +30,7 @@
 
 <div class="row">
     <div class="col-12 col-xl-7">
-        <div class="card admin-card border-0 p-4 mb-4">
+        <div id="commercial-portefeuille" class="card admin-card border-0 p-4 mb-4" style="scroll-margin-top: 90px;">
             <h3 class="h6 fw-bold text-dark mb-3">Clients parrainés — détail des commissions</h3>
             @if($clientRows->isEmpty())
                 <div class="text-muted small text-center py-3">Aucun client parrainé pour le moment.</div>
@@ -73,7 +73,7 @@
             @endif
         </div>
 
-        <div class="card admin-card border-0 p-4 mb-4">
+        <div id="commercial-prospections" class="card admin-card border-0 p-4 mb-4" style="scroll-margin-top: 90px;">
             <h3 class="h6 fw-bold text-dark mb-3">Prospections envoyées</h3>
             @if($prospections->isEmpty())
                 <div class="text-muted small text-center py-3">Aucune prospection envoyée.</div>
@@ -103,7 +103,7 @@
     </div>
 
     <div class="col-12 col-xl-5">
-        <div class="card admin-card border-0 p-4 mb-4">
+        <div id="commercial-pipeline" class="card admin-card border-0 p-4 mb-4" style="scroll-margin-top: 90px;">
             <h3 class="h6 fw-bold text-dark mb-3">Pipeline de prospects</h3>
             @if($prospects->isEmpty())
                 <div class="text-muted small text-center py-3">Aucun prospect enregistré.</div>
@@ -122,7 +122,7 @@
             @endif
         </div>
 
-        <div class="card admin-card border-0 p-4">
+        <div id="commercial-historique" class="card admin-card border-0 p-4" style="scroll-margin-top: 90px;">
             <h3 class="h6 fw-bold text-dark mb-3">Historique de connexion</h3>
             @if($loginHistory->isEmpty())
                 <div class="text-muted small text-center py-3">Aucune connexion enregistrée.</div>

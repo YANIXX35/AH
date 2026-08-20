@@ -157,6 +157,31 @@
                         <i class="align-middle" data-feather="target"></i> <span class="align-middle">Pipeline de prospects</span>
                     </a>
                 </li>
+                @isset($commercial)
+                    @if(request()->routeIs('commercial-supervisor.commercial.show'))
+                        <li class="sidebar-header">{{ $commercial->name }}</li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link" href="{{ url()->current() }}#commercial-portefeuille">
+                                <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Portefeuille &amp; commissions</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link" href="{{ url()->current() }}#commercial-prospections">
+                                <i class="align-middle" data-feather="send"></i> <span class="align-middle">Prospections envoyées</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link" href="{{ url()->current() }}#commercial-pipeline">
+                                <i class="align-middle" data-feather="target"></i> <span class="align-middle">Pipeline de prospects</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link" href="{{ url()->current() }}#commercial-historique">
+                                <i class="align-middle" data-feather="clock"></i> <span class="align-middle">Historique de connexion</span>
+                            </a>
+                        </li>
+                    @endif
+                @endisset
             @else
             @if($sidebarUser && (($sidebarUser->is_accountant ?? false) || $sidebarUser->is_platform_admin))
                 {{-- Cabinet comptable : dossiers clients et synthèse. --}}
@@ -232,6 +257,23 @@
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.commercial-dashboard') ? 'active' : '' }}" href="{{ route('admin.commercial-dashboard') }}">Dashboard Commercial</a>
                             </li>
+                            @isset($commercial)
+                                @if(request()->routeIs('admin.commercial-dashboard.show'))
+                                    <li class="sidebar-header">{{ $commercial->name }}</li>
+                                    <li class="sidebar-item">
+                                        <a class="sidebar-link" href="{{ url()->current() }}#commercial-portefeuille">Portefeuille &amp; commissions</a>
+                                    </li>
+                                    <li class="sidebar-item">
+                                        <a class="sidebar-link" href="{{ url()->current() }}#commercial-prospections">Prospections envoyées</a>
+                                    </li>
+                                    <li class="sidebar-item">
+                                        <a class="sidebar-link" href="{{ url()->current() }}#commercial-pipeline">Pipeline de prospects</a>
+                                    </li>
+                                    <li class="sidebar-item">
+                                        <a class="sidebar-link" href="{{ url()->current() }}#commercial-historique">Historique de connexion</a>
+                                    </li>
+                                @endif
+                            @endisset
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.prospections.*') ? 'active' : '' }}" href="{{ route('admin.prospections.index') }}">Prospections commerciales</a>
                             </li>
