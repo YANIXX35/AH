@@ -39,7 +39,14 @@
                         <a href="{{ route('accounting', ['prefill_document' => $document->id]) }}#moteur-ecritures" class="btn btn-sm btn-outline-info">
                             Pré-remplir dans le moteur comptable
                         </a>
+                        <form action="{{ route('accounting.documents.reprocess', $document) }}" method="POST" class="d-inline" onsubmit="return confirm('Relancer la lecture OCR de ce document avec le moteur actuel ? Les champs pré-remplis ci-dessous seront remplacés.');">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <i data-feather="refresh-cw" class="icon-sm"></i> Réanalyser
+                            </button>
+                        </form>
                     </div>
+                    <p class="small text-muted mb-3">Document importé une seule fois par l’OCR : si le moteur de lecture a été amélioré depuis, utilisez « Réanalyser » pour recalculer les champs avec la dernière version.</p>
                     @if($document->status === 'ocr_failed' && !empty($document->extracted_data['ocr_error']))
                         <div class="alert alert-danger">
                             <div class="fw-semibold mb-2">OCR en échec</div>

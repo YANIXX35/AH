@@ -558,6 +558,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/accounting/documents/{document}/source', [AccountingDocumentViewerController::class, 'streamDocument'])->name('accounting.documents.stream');
         Route::post('/accounting/documents/{document}/ocr/retry', [AccountingController::class, 'retryDocumentOcr'])->middleware('throttle:ocr-intensive')->name('accounting.documents.ocr.retry');
         Route::delete('/accounting/documents/{document}', [AccountingController::class, 'destroyDocument'])->name('accounting.documents.destroy');
+        Route::post('/accounting/documents/{document}/reprocess', [AccountingController::class, 'reprocessDocument'])->name('accounting.documents.reprocess');
         Route::get('/accounting/documents/{document}/validate', [AccountingDocumentController::class, 'showValidation'])->name('accounting.documents.validate');
         Route::post('/accounting/documents/{document}/validate', [AccountingDocumentController::class, 'storeValidation'])->name('accounting.documents.validate.store');
         Route::get('/accounting/plan-comptable', [AccountingController::class, 'planComptable'])->name('accounting.plan');

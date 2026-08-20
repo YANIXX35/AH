@@ -2623,7 +2623,7 @@ class AccountingController extends Controller
             }
 
             $storedPath = $file->store('accounting-documents', 'public');
-            $extraction = $this->runOcrExtractionForDocument($file, $storedPath, $ocrService, $ocrPipeline);
+            $extraction = $this->runOcrExtractionForDocument($file->getClientOriginalName(), $storedPath, $ocrService, $ocrPipeline);
             $pipelineResult = $extraction['pipeline_result'];
             $documentType = $extraction['document_type'];
             $status = $extraction['status'];
@@ -2715,11 +2715,11 @@ class AccountingController extends Controller
      * uploadDocuments() pour être réutilisé par l'import ponctuel déclenché
      * depuis le formulaire de saisie d'écriture (uploadDocumentForEntryPrefill).
      */
-    private function runOcrExtractionForDocument(UploadedFile $file, string $storedPath, OcrService $ocrService, OcrPipelineService $ocrPipeline): array
+    private function runOcrExtractionForDocument(string $originalName, string $storedPath, OcrService $ocrService, OcrPipelineService $ocrPipeline): array
     {
         $pipelineResult = $ocrPipeline->processStoredDocument($storedPath);
         $ocrResult = (array) ($pipelineResult['ocr_result'] ?? []);
-        $documentType = $this->guessDocumentTypeFromFilename($file->getClientOriginalName());
+        $documentType = $this->guessDocumentTypeFromFilename($originalName);
         $status = 'ocr_failed';
         $confidence = 0;
         $extractedData = [
@@ -2807,6 +2807,42 @@ class AccountingController extends Controller
     }
 
     /**
+     * Relance l'extraction OCR d'un document déjà importé, avec le pipeline
+     * actuel. Nécessaire car extracted_data est calculé une seule fois à
+     * l'import et jamais recalculé automatiquement : un document importé
+     * avant un correctif de lecture OCR reste affiché avec les anciennes
+     * valeurs (potentiellement fausses) tant qu'il n'est pas réanalysé ou
+     * réimporté. Ne touche pas au fichier stocké, uniquement aux champs
+     * extraits — l'utilisateur revoit et valide comme pour un nouvel import.
+     */
+    public function reprocessDocument(AccountingDocument $document): RedirectResponse
+    {
+        if (! $this->workspaceOwnsDataUserId((int) $document->user_id)) {
+            abort(403);
+        }
+
+        $extraction = $this->runOcrExtractionForDocument(
+            $document->original_name,
+            $document->stored_path,
+            new OcrService,
+            new OcrPipelineService
+        );
+
+        $document->update([
+            'document_type' => $extraction['document_type'],
+            'status' => $extraction['status'],
+            'extracted_data' => $extraction['extracted_data'],
+            'confidence' => $extraction['confidence'],
+            'compliance_rate' => (float) ($extraction['pipeline_result']['compliance_rate'] ?? 0),
+            'actor_user_id' => Auth::id(),
+        ]);
+
+        return redirect()
+            ->route('accounting.documents.validate', $document)
+            ->with('status', 'Document réanalysé avec la dernière version du moteur OCR — merci de vérifier les champs avant de valider.');
+    }
+
+    /**
      * Import ponctuel d'un seul fichier depuis le formulaire de saisie
      * d'écriture ("1. Informations du document") : lance la même extraction
      * OCR que l'import en masse (uploadDocuments), mais répond en JSON avec
@@ -2838,7 +2874,7 @@ class AccountingController extends Controller
 
         if (! $document) {
             $storedPath = $file->store('accounting-documents', 'public');
-            $extraction = $this->runOcrExtractionForDocument($file, $storedPath, new OcrService, new OcrPipelineService);
+            $extraction = $this->runOcrExtractionForDocument($file->getClientOriginalName(), $storedPath, new OcrService, new OcrPipelineService);
 
             $document = AccountingDocument::create([
                 'user_id' => $this->workspaceUserId(),
