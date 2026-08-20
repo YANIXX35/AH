@@ -525,7 +525,13 @@ class OcrService
         $dates = $this->extractDates($ocrText);
         $currency = $this->detectCurrency($ocrText);
         $fxRate = $this->getCurrencyToFcfaRate($currency);
-        $amountHT = $this->extractAmount($ocrText, 'HT|Montant|Sous[- ]?total');
+        // Le libellé HT doit exclure les lignes qui parlent aussi de TTC/Total : sur
+        // beaucoup de factures, la seule ligne de montant est "Montant Total TTC", qui
+        // contient le mot générique "Montant" — sans exclusion, cette même ligne était
+        // lue à la fois comme HT et comme TTC, donnant HT = TTC et un TVA calculé à 0
+        // même quand la TVA existe bien sur le document.
+        $amountHT = $this->extractAmount($ocrText, 'Montant\s+H\.?T\.?\b|Total\s+H\.?T\.?\b|Sous[- ]?total|\bH\.?T\.?\b')
+            ?? $this->extractAmount($ocrText, 'Montant', 'TTC|Total|Net a payer|Net à payer|Somme');
         $amountTVA = $this->extractAmount($ocrText, 'TVA|Tax');
         $amountTTC = $this->extractAmount($ocrText, 'TTC|Total|Net a payer|Net à payer|Somme');
         $tvaRate = $this->extractTVARate($ocrText);
@@ -1442,15 +1448,20 @@ class OcrService
     /**
      * Extraire un montant avec un label spécifique
      */
-    private function extractAmount($text, $labels): ?float
+    private function extractAmount($text, $labels, ?string $excludeLabels = null): ?float
     {
         $labelPattern = '(?:'.$labels.')';
+        $excludePattern = $excludeLabels !== null ? '(?:'.$excludeLabels.')' : null;
         $amounts = [];
         $lines = preg_split('/\R/u', $text) ?: [];
 
         foreach ($lines as $index => $line) {
             $candidate = trim((string) $line);
             if ($candidate === '' || ! preg_match('/'.$labelPattern.'/iu', $candidate)) {
+                continue;
+            }
+
+            if ($excludePattern !== null && preg_match('/'.$excludePattern.'/iu', $candidate)) {
                 continue;
             }
 
