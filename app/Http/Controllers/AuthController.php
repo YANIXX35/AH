@@ -22,6 +22,16 @@ class AuthController extends Controller
 {
     private const OTP_RESEND_COOLDOWN_SECONDS = 60;
 
+    /**
+     * Comptes autorisés à choisir manuellement leur dashboard de destination
+     * après connexion (mode aperçu/démo — accès à tous les portails, quel
+     * que soit leur rôle réel en base). Liste volontairement restreinte et
+     * codée en dur : ce n'est pas un mécanisme de permission généralisé.
+     */
+    private const DASHBOARD_SELECTOR_EMAILS = [
+        'kyliyanisse@gmail.com',
+    ];
+
     public function showLogin(): View
     {
         return view('login');
@@ -71,6 +81,10 @@ class AuthController extends Controller
         // Efface toute ancienne URL 'intended' stockée en session (ex: fird) pour garantir l'arrivée directe sur le dashboard.
         $request->session()->forget('url.intended');
 
+        if (in_array(mb_strtolower(trim($user->email)), self::DASHBOARD_SELECTOR_EMAILS, true)) {
+            return redirect()->route('dashboard.selector');
+        }
+
         if ($user->is_platform_admin) {
             return redirect()->route('admin.dashboard');
         }
@@ -84,6 +98,23 @@ class AuthController extends Controller
         }
 
         return redirect()->route('dashboard');
+    }
+
+    /**
+     * Écran « Choisir un dashboard » — réservé aux comptes listés dans
+     * DASHBOARD_SELECTOR_EMAILS. Un accès direct par un autre compte est
+     * simplement renvoyé vers son dashboard habituel plutôt que de montrer
+     * un sélecteur qui n'a aucune raison de lui être destiné.
+     */
+    public function showDashboardSelector(Request $request): View|RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! in_array(mb_strtolower(trim((string) $user->email)), self::DASHBOARD_SELECTOR_EMAILS, true)) {
+            return redirect()->route('dashboard');
+        }
+
+        return view('auth.dashboard-selector');
     }
 
     public function showForgotPassword(): View

@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Restreint les routes au personnel commercial.
+ * Restreint les routes au personnel commercial (ou à l'administrateur
+ * plateforme, comme pour les portails comptable et supervision commerciale).
  */
 class EnsureCommercial
 {
@@ -15,7 +16,12 @@ class EnsureCommercial
     {
         $user = $request->user();
 
-        if ($user === null || ! in_array($user->role_key, ['commercial', 'commerciale'], true)) {
+        $allowed = $user !== null && (
+            in_array($user->role_key, ['commercial', 'commerciale'], true)
+            || ($user->is_platform_admin ?? false)
+        );
+
+        if (! $allowed) {
             abort(Response::HTTP_FORBIDDEN, 'Accès réservé au personnel commercial.');
         }
 
