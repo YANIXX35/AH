@@ -32,6 +32,28 @@ class AuthController extends Controller
         'kyliyanisse@sitiame-capital.com',
     ];
 
+    /**
+     * Portails accessibles depuis l'écran de sélection, et la route
+     * d'accueil réelle de chacun. Utilisé à la fois pour la redirection et
+     * pour valider le contexte stocké en session (voir sidebar.blade.php).
+     */
+    private const DASHBOARD_PORTAL_ROUTES = [
+        'entreprise' => 'dashboard',
+        'accountant' => 'accountant.dashboard',
+        'commercial' => 'commercial.dashboard',
+        'commercial_supervisor' => 'commercial-supervisor.dashboard',
+        'admin' => 'admin.dashboard',
+    ];
+
+    public static function isDashboardSelectorEmail(?string $email): bool
+    {
+        if ($email === null || trim($email) === '') {
+            return false;
+        }
+
+        return in_array(mb_strtolower(trim($email)), self::DASHBOARD_SELECTOR_EMAILS, true);
+    }
+
     public function showLogin(): View
     {
         return view('login');
@@ -81,7 +103,9 @@ class AuthController extends Controller
         // Efface toute ancienne URL 'intended' stockée en session (ex: fird) pour garantir l'arrivée directe sur le dashboard.
         $request->session()->forget('url.intended');
 
-        if (in_array(mb_strtolower(trim($user->email)), self::DASHBOARD_SELECTOR_EMAILS, true)) {
+        if (self::isDashboardSelectorEmail($user->email)) {
+            $request->session()->forget('dashboard_preview_context');
+
             return redirect()->route('dashboard.selector');
         }
 
@@ -110,11 +134,34 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        if (! in_array(mb_strtolower(trim((string) $user->email)), self::DASHBOARD_SELECTOR_EMAILS, true)) {
+        if (! self::isDashboardSelectorEmail($user->email ?? null)) {
             return redirect()->route('dashboard');
         }
 
         return view('auth.dashboard-selector');
+    }
+
+    /**
+     * Bascule le compte vers le portail choisi sur l'écran de sélection.
+     * Enregistre le portail en session ("contexte d'aperçu") afin que le
+     * sidebar (voir layouts/partials/sidebar.blade.php) affiche la vraie
+     * navigation de ce portail plutôt que celle liée au rôle réel du
+     * compte — sans ça, un compte administrateur ouvrant par exemple le
+     * dashboard Commercial continuait de voir le menu Admin autour, puisque
+     * le sidebar se base normalement sur is_platform_admin/is_accountant/
+     * role_key, pas sur la page effectivement affichée.
+     */
+    public function enterDashboardPreview(Request $request, string $portal): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! self::isDashboardSelectorEmail($user->email ?? null) || ! array_key_exists($portal, self::DASHBOARD_PORTAL_ROUTES)) {
+            return redirect()->route('dashboard');
+        }
+
+        $request->session()->put('dashboard_preview_context', $portal);
+
+        return redirect()->route(self::DASHBOARD_PORTAL_ROUTES[$portal]);
     }
 
     public function showForgotPassword(): View

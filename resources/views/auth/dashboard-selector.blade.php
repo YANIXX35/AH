@@ -68,27 +68,27 @@
         <p class="sub">Ce compte a accès à plusieurs interfaces — sélectionnez celle que vous voulez ouvrir.</p>
 
         <div class="grid">
-            <a href="{{ route('dashboard') }}" class="card">
+            <a href="{{ route('dashboard.selector.enter', 'entreprise') }}" class="card">
                 <div class="icon">🏢</div>
                 <h3>Entreprise</h3>
                 <p>Comptabilité, trésorerie, facturation, stock — le portail client PME.</p>
             </a>
-            <a href="{{ route('accountant.dashboard') }}" class="card">
+            <a href="{{ route('dashboard.selector.enter', 'accountant') }}" class="card">
                 <div class="icon">📊</div>
                 <h3>Cabinet Comptable</h3>
                 <p>Dossiers clients, validation des documents OCR, gestionnaire de fichiers.</p>
             </a>
-            <a href="{{ route('commercial.dashboard') }}" class="card">
+            <a href="{{ route('dashboard.selector.enter', 'commercial') }}" class="card">
                 <div class="icon">🤝</div>
                 <h3>Commercial</h3>
                 <p>Portefeuille, prospection, commissions et suivi des leads.</p>
             </a>
-            <a href="{{ route('commercial-supervisor.dashboard') }}" class="card">
+            <a href="{{ route('dashboard.selector.enter', 'commercial_supervisor') }}" class="card">
                 <div class="icon">🧭</div>
                 <h3>Supervision Commerciale</h3>
                 <p>Vue d'ensemble de l'équipe commerciale et de ses performances.</p>
             </a>
-            <a href="{{ route('admin.dashboard') }}" class="card">
+            <a href="{{ route('dashboard.selector.enter', 'admin') }}" class="card">
                 <div class="icon">🛡️</div>
                 <h3>Administration Plateforme</h3>
                 <p>RBAC, KYC, licences, facturation, ops center — accès super-admin.</p>

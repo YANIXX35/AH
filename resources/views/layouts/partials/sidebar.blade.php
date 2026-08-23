@@ -8,24 +8,51 @@
         @php
             $sidebarUser = auth()->user();
             $sidebarBrandName = config('app.name', 'Sitiame Capital');
+
+            // Contexte d'aperçu : pour les comptes autorisés à choisir leur dashboard
+            // (écran "Choisissez votre dashboard"), le sidebar doit refléter le
+            // portail réellement affiché plutôt que le rôle réel du compte — sinon
+            // un administrateur ouvrant par exemple le portail Commercial continue
+            // de voir le menu Administration/Cabinet comptable autour, puisque tout
+            // ce fichier se base normalement sur is_platform_admin/is_accountant/
+            // role_key. Les variables $sidebarEff* ci-dessous portent ce rôle
+            // "effectif" (celui du portail choisi si applicable, sinon le rôle réel)
+            // et remplacent partout ailleurs les accès directs à ces 3 champs.
+            $sidebarPreviewContext = null;
+            if ($sidebarUser && \App\Http\Controllers\AuthController::isDashboardSelectorEmail($sidebarUser->email ?? null)) {
+                $sidebarPreviewContextCandidate = session('dashboard_preview_context');
+                if (in_array($sidebarPreviewContextCandidate, ['entreprise', 'accountant', 'commercial', 'commercial_supervisor', 'admin'], true)) {
+                    $sidebarPreviewContext = $sidebarPreviewContextCandidate;
+                }
+            }
+            $sidebarEffIsPlatformAdmin = $sidebarPreviewContext !== null
+                ? ($sidebarPreviewContext === 'admin')
+                : (bool) ($sidebarUser->is_platform_admin ?? false);
+            $sidebarEffIsAccountant = $sidebarPreviewContext !== null
+                ? ($sidebarPreviewContext === 'accountant')
+                : (bool) ($sidebarUser->is_accountant ?? false);
+            $sidebarEffRoleKey = $sidebarPreviewContext !== null
+                ? (in_array($sidebarPreviewContext, ['commercial', 'commercial_supervisor'], true) ? $sidebarPreviewContext : null)
+                : ($sidebarUser->role_key ?? null);
+
             if (
                 $sidebarUser
-                && ! ($sidebarUser->is_platform_admin ?? false)
-                && ! ($sidebarUser->is_accountant ?? false)
-                && $sidebarUser->role_key !== 'commercial'
-                && $sidebarUser->role_key !== 'commercial_supervisor'
+                && ! $sidebarEffIsPlatformAdmin
+                && ! $sidebarEffIsAccountant
+                && $sidebarEffRoleKey !== 'commercial'
+                && $sidebarEffRoleKey !== 'commercial_supervisor'
             ) {
                 $sidebarBrandName = (string) ($sidebarUser->company_name ?: $sidebarBrandName);
             }
-            $sidebarIsCommercial = $sidebarUser && $sidebarUser->role_key === 'commercial';
-            $sidebarIsCommercialSupervisor = $sidebarUser && $sidebarUser->role_key === 'commercial_supervisor' && ! ($sidebarUser->is_platform_admin ?? false);
-            if ($sidebarUser && $sidebarUser->is_platform_admin) {
+            $sidebarIsCommercial = $sidebarUser && $sidebarEffRoleKey === 'commercial';
+            $sidebarIsCommercialSupervisor = $sidebarUser && $sidebarEffRoleKey === 'commercial_supervisor' && ! $sidebarEffIsPlatformAdmin;
+            if ($sidebarUser && $sidebarEffIsPlatformAdmin) {
                 $sidebarPremiumActive = $sidebarUser->hasActivePremiumPeriod();
                 $sidebarPremiumLabel = $sidebarPremiumActive ? 'Premium Admin' : 'Administrateur';
                 $sidebarPremiumBadge = $sidebarPremiumActive ? 'bg-warning text-dark' : 'bg-primary';
                 $sidebarPremiumIcon = $sidebarPremiumActive ? '⭐' : '🛡️';
                 $sidebarShowPremiumExpiry = $sidebarPremiumActive && ! empty($sidebarUser->premium_ends_at);
-            } elseif ($sidebarUser && ($sidebarUser->is_accountant ?? false)) {
+            } elseif ($sidebarUser && $sidebarEffIsAccountant) {
                 $sidebarPremiumLabel = 'Comptable';
                 $sidebarPremiumBadge = 'bg-info text-dark';
                 $sidebarPremiumIcon = '📒';
@@ -52,7 +79,7 @@
                 $sidebarPremiumIcon = $sidebarPremiumActive ? '⭐' : '🟢';
                 $sidebarShowPremiumExpiry = true;
             }
-            $sidebarAccountantOnly = $sidebarUser && ($sidebarUser->is_accountant ?? false) && ! ($sidebarUser->is_platform_admin ?? false);
+            $sidebarAccountantOnly = $sidebarUser && $sidebarEffIsAccountant && ! $sidebarEffIsPlatformAdmin;
             $sidebarWorkspaceOpen = $sidebarAccountantOnly && \App\Support\ClientWorkspace::isViewingClient();
         @endphp
         <a class="sidebar-brand d-flex align-items-center gap-2" href="{{ $sidebarIsCommercial ? route('commercial.dashboard') : ($sidebarIsCommercialSupervisor ? route('commercial-supervisor.dashboard') : ($sidebarAccountantOnly ? route('accountant.dashboard') : route('dashboard'))) }}">
@@ -173,7 +200,7 @@
                     @endif
                 @endisset
             @else
-            @if($sidebarUser && (($sidebarUser->is_accountant ?? false) || $sidebarUser->is_platform_admin))
+            @if($sidebarUser && ($sidebarEffIsAccountant || $sidebarEffIsPlatformAdmin))
                 {{-- Cabinet comptable : dossiers clients et synthèse. --}}
                 <li class="sidebar-item {{ request()->routeIs('accountant.*') ? 'active' : '' }}">
                     <a class="sidebar-link {{ request()->routeIs('accountant.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseAccountant" role="button" aria-expanded="{{ request()->routeIs('accountant.*') ? 'true' : 'false' }}" aria-controls="collapseAccountant">
@@ -222,7 +249,7 @@
                     </div>
                 </li>
             @endif
-            @if($sidebarUser && $sidebarUser->is_platform_admin)
+            @if($sidebarUser && $sidebarEffIsPlatformAdmin)
                 {{-- Administration : tableau de bord, annuaire, analyse financière PME. --}}
                 <li class="sidebar-item {{ request()->routeIs('admin.*') ? 'active' : '' }}">
                     <a class="sidebar-link {{ request()->routeIs('admin.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapseAdmin" role="button" aria-expanded="{{ request()->routeIs('admin.*') ? 'true' : 'false' }}" aria-controls="collapseAdmin">
@@ -329,7 +356,7 @@
             @endif
             @php
                 // Administrateur plateforme : menu « Pages » remplacé par le déroulant « Espace métier » (navbar).
-                $sidebarAdminCompactNav = (bool) ($sidebarUser?->is_platform_admin ?? false);
+                $sidebarAdminCompactNav = $sidebarEffIsPlatformAdmin;
                 $sidebarAccountingLocked = $sidebarUser
                     && ! $sidebarUser->isPlatformAdmin()
                     && ! $sidebarUser->isAccountant()
@@ -516,7 +543,7 @@
                                 <i class="align-middle" data-feather="file" style="width:16px;height:16px;"></i> <span class="align-middle">Fiche entreprise (FIRD)</span>
                             </a>
                         </li>
-                        @if($sidebarUser && ! $sidebarUser->is_platform_admin && ! ($sidebarUser->is_accountant ?? false) && $sidebarUser->enterprise_license_id)
+                        @if($sidebarUser && ! $sidebarEffIsPlatformAdmin && ! $sidebarEffIsAccountant && $sidebarUser->enterprise_license_id)
                             @if($sidebarTeamLocked)
                                 <li class="sidebar-item opacity-50">
                                     <a class="sidebar-link" href="{{ route('payments.sandbox') }}" title="Passez en Premium pour activer l'équipe licence.">
@@ -623,6 +650,14 @@
                     </ul>
                 </div>
             </li>
+            @endif
+
+            @if($sidebarPreviewContext !== null)
+                <li class="sidebar-item">
+                    <a class="sidebar-link text-warning fw-bold" href="{{ route('dashboard.selector') }}">
+                        <i class="align-middle" data-feather="grid"></i> <span class="align-middle">Changer de dashboard</span>
+                    </a>
+                </li>
             @endif
 
             <li class="sidebar-item mt-3 pt-2 border-top border-secondary border-opacity-25">

@@ -124,6 +124,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/choisir-dashboard', [AuthController::class, 'showDashboardSelector'])->name('dashboard.selector');
+    Route::get('/choisir-dashboard/{portal}', [AuthController::class, 'enterDashboardPreview'])->name('dashboard.selector.enter');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/ai/live', [DashboardController::class, 'liveInsights'])->name('dashboard.ai.live');
 
