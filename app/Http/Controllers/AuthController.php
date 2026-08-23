@@ -29,7 +29,7 @@ class AuthController extends Controller
      * codée en dur : ce n'est pas un mécanisme de permission généralisé.
      */
     private const DASHBOARD_SELECTOR_EMAILS = [
-        'kyliyanisse@gmail.com',
+        'kyliyanisse@sitiame-capital.com',
     ];
 
     public function showLogin(): View
