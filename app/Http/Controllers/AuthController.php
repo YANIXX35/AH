@@ -30,6 +30,8 @@ class AuthController extends Controller
      */
     private const DASHBOARD_SELECTOR_EMAILS = [
         'kyliyanisse@sitiame-capital.com',
+        'endabian@sitiame-capital.com',
+        'fnguessan@sitiame-capital.com',
     ];
 
     /**
