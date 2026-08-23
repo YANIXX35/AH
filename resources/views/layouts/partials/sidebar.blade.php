@@ -115,11 +115,6 @@
                         <i class="align-middle" data-feather="book-open"></i> <span class="align-middle">Guides & Lead Magnets</span>
                     </a>
                 </li>
-                <li class="sidebar-item {{ request()->routeIs('commercial.club') ? 'active' : '' }}">
-                    <a class="sidebar-link" href="{{ route('commercial.club') }}">
-                        <i class="align-middle" data-feather="users"></i> <span class="align-middle">Sitiame Finance Club</span>
-                    </a>
-                </li>
                 <li class="sidebar-item {{ request()->routeIs('commercial.import') ? 'active' : '' }}">
                     <a class="sidebar-link text-success fw-bold" href="{{ route('commercial.import') }}">
                         <i class="align-middle text-success" data-feather="file-text"></i> <span class="align-middle">Importer & Analyser Fichier</span>
