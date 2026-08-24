@@ -15,7 +15,7 @@ class EnsurePremiumAccountingAccess
             return $next($request);
         }
 
-        if ($user->isPlatformAdmin() || $user->isAccountant()) {
+        if ($user->isPlatformAdmin() || $user->isAccountant() || $user->isFinancialAnalyst()) {
             return $next($request);
         }
 

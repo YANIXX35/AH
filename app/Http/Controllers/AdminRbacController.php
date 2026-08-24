@@ -25,6 +25,7 @@ class AdminRbacController extends Controller
                 'manager' => 'Manager',
                 'accountant' => 'Comptable',
                 'analyst' => 'Analyste',
+                'financial_analyst' => 'Analyste financier',
                 'viewer' => 'Lecture seule',
             ],
             'modules' => ['dashboard', 'accounting', 'treasury', 'invoicing', 'stock', 'investor', 'payments', 'support'],
@@ -34,7 +35,7 @@ class AdminRbacController extends Controller
     public function update(Request $request, User $user): RedirectResponse
     {
         $data = $request->validate([
-            'role_key' => ['required', 'in:manager,accountant,analyst,viewer'],
+            'role_key' => ['required', 'in:manager,accountant,analyst,financial_analyst,viewer'],
             'modules' => ['nullable', 'array'],
         ]);
 

@@ -151,6 +151,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Analyste financier habilité — accès /analyste et portefeuille multi-PME.
+     */
+    public function isFinancialAnalyst(): bool
+    {
+        return ($this->role_key ?? null) === 'financial_analyst';
+    }
+
+    /**
      * Libellé du statut métier (administrateur, comptable ou entreprise).
      */
     public function accountRoleLabel(): string
@@ -281,6 +289,14 @@ class User extends Authenticatable
         // l'accès aux modules ne dépend plus que de is_accountant.
         if ($this->isAccountant()) {
             return in_array($module, ['dashboard', 'accounting', 'treasury', 'support', 'invoicing', 'investor'], true);
+        }
+
+        // Même logique que pour le comptable : l'analyste financier a son propre
+        // portail dédié (/analyste) et n'accède aux modules « entreprise » (rapports
+        // comptables, investisseur) qu'une fois un dossier PME ouvert via
+        // ClientWorkspace — en lecture, pas de facturation/stock/paiements.
+        if ($this->isFinancialAnalyst()) {
+            return in_array($module, ['dashboard', 'accounting', 'treasury', 'support', 'investor'], true);
         }
 
         $permissions = (array) ($this->module_permissions ?? []);

@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureAccountant;
 use App\Http\Middleware\EnsureAccountNotSuspended;
 use App\Http\Middleware\EnsureCommercial;
 use App\Http\Middleware\EnsureCommercialSupervisor;
+use App\Http\Middleware\EnsureFinancialAnalyst;
 use App\Http\Middleware\EnsureModulePermission;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsurePremiumAccountingAccess;
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'module.permission' => EnsureModulePermission::class,
             'commercial' => EnsureCommercial::class,
             'commercial.supervisor' => EnsureCommercialSupervisor::class,
+            'financial.analyst' => EnsureFinancialAnalyst::class,
         ]);
         $middleware->appendToGroup('web', SetAppLocale::class);
         $middleware->appendToGroup('web', EnsureAccountNotSuspended::class);

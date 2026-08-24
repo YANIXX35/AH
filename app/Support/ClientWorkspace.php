@@ -78,11 +78,16 @@ final class ClientWorkspace
 
     public static function canUseWorkspace(User $user): bool
     {
-        return (bool) (($user->is_accountant ?? false) || ($user->is_platform_admin ?? false));
+        return (bool) (
+            ($user->is_accountant ?? false)
+            || ($user->is_platform_admin ?? false)
+            || ($user->role_key ?? null) === 'financial_analyst'
+        );
     }
 
     /**
-     * Dossiers ouvrables par le cabinet (pas admin plateforme, pas comptable).
+     * Dossiers ouvrables par le cabinet ou l'analyste financier (pas admin
+     * plateforme, pas comptable, pas un autre analyste financier).
      */
     public static function isAssignableClient(User $target): bool
     {
@@ -90,6 +95,9 @@ final class ClientWorkspace
             return false;
         }
         if ($target->is_accountant ?? false) {
+            return false;
+        }
+        if (($target->role_key ?? null) === 'financial_analyst') {
             return false;
         }
 
