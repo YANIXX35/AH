@@ -38,6 +38,7 @@ use App\Http\Controllers\CommercialProspectionController;
 use App\Http\Controllers\CommercialSupervisorController;
 use App\Http\Controllers\CompanyFirdController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FinancialAnalystController;
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\DocumentVerificationController;
 use App\Http\Controllers\EnterpriseTeamController;
@@ -717,6 +718,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/prospections/{prospection}', [CommercialSupervisorController::class, 'showProspection'])->name('prospections.show');
         Route::get('/prospections/{prospection}/download', [CommercialSupervisorController::class, 'downloadProspectionFile'])->name('prospections.download');
         Route::get('/{commercial}', [CommercialSupervisorController::class, 'showCommercial'])->name('commercial.show');
+    });
+
+    Route::middleware('financial.analyst')->prefix('analyste')->name('analyst.')->group(function () {
+        Route::get('/', [FinancialAnalystController::class, 'index'])->name('portfolio');
+        Route::get('/historique', [FinancialAnalystController::class, 'history'])->name('history');
+        Route::get('/pme/{company}', [FinancialAnalystController::class, 'show'])->name('pme.show');
+        Route::post('/pme/{company}/notes', [FinancialAnalystController::class, 'storeNote'])->name('pme.notes.store');
+        Route::get('/pme/{company}/ouvrir', [FinancialAnalystController::class, 'openDossier'])->name('pme.open');
     });
 
     Route::middleware('commercial')->get('/dashboard/commercial', [CommercialController::class, 'index']);
