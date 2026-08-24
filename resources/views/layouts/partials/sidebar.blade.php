@@ -411,6 +411,12 @@
                                     <span class="align-middle">Plan comptable OHADA</span>
                                 </a>
                             </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('accounting.caisse-banque') ? 'active' : '' }}" href="{{ route('accounting.caisse-banque') }}">
+                                    <span class="icon-wrapper">💰</span>
+                                    <span class="align-middle">Caisse Banque</span>
+                                </a>
+                            </li>
                             <li class="sidebar-item-category">Moteur comptable</li>
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('accounting.bank-reconciliation') ? 'active' : '' }}" href="{{ route('accounting.bank-reconciliation') }}">

@@ -751,6 +751,16 @@
                 </div>
             </a>
         </div>
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{{ route('accounting.caisse-banque') }}" class="text-decoration-none text-reset">
+                <div class="card summary-card h-100 border shadow-sm">
+                    <div class="card-body py-3">
+                        <h6 class="card-title text-primary mb-1">Caisse Banque</h6>
+                        <p class="text-muted small mb-0">Suivi payé / impayé de vos écritures.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
     </div>
 
     <div class="row g-4 mb-4">
