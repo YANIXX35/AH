@@ -1626,7 +1626,7 @@
 
                                     <label class="mb-0 d-flex flex-column">
                                         <span class="small text-muted">Type</span>
-                                        <select name="document_type" class="form-select form-select-sm">
+                                        <select name="document_type" class="form-select form-select-sm" onchange="this.form.submit()">
                                             <option value="">Tous</option>
                                             <option value="Vente" {{ request('document_type') === 'Vente' ? 'selected' : '' }}>Vente</option>
                                             <option value="Achat" {{ request('document_type') === 'Achat' ? 'selected' : '' }}>Achat</option>
