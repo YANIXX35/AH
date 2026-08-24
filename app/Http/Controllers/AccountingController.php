@@ -2556,6 +2556,106 @@ class AccountingController extends Controller
         return view('accounting.documents', compact('documents', 'statusFilter'));
     }
 
+    public function caisseBanque(Request $request)
+    {
+        $statusFilter = trim((string) $request->query('payment_status', ''));
+        $documentType = trim((string) $request->query('document_type', ''));
+        $account = trim((string) $request->query('account', ''));
+        $dateFrom = $request->query('date_from', '');
+        $dateTo = $request->query('date_to', '');
+
+        $entriesQuery = AccountingEntry::with(['payments' => fn ($q) => $q->orderByDesc('payment_date')])
+            ->whereIn('user_id', $this->workspaceDataUserIds())
+            ->when($statusFilter, fn ($query, $statusFilter) => $query->where('payment_status', $statusFilter))
+            ->when($documentType, fn ($query, $documentType) => $query->where('document_type', $documentType))
+            ->when($account, function ($query, $account) {
+                $query->where(function ($query) use ($account) {
+                    $query->where('debit_account', 'like', "%{$account}%")
+                        ->orWhere('credit_account', 'like', "%{$account}%");
+                });
+            })
+            ->when($dateFrom, fn ($query, $dateFrom) => $query->whereDate('date', '>=', $dateFrom))
+            ->when($dateTo, fn ($query, $dateTo) => $query->whereDate('date', '<=', $dateTo))
+            ->orderByDesc('date')
+            ->orderByDesc('id');
+
+        $entries = $entriesQuery->get();
+
+        return view('accounting.caisse-banque', [
+            'entries' => $entries,
+            'statusFilter' => $statusFilter,
+            'documentType' => $documentType,
+            'account' => $account,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'totalUnpaid' => $entries->where('payment_status', 'unpaid')->sum(fn ($e) => (float) $e->amount - (float) $e->amount_paid),
+            'totalPartial' => $entries->where('payment_status', 'partial')->sum(fn ($e) => (float) $e->amount - (float) $e->amount_paid),
+            'totalPaid' => $entries->where('payment_status', 'paid')->sum('amount'),
+        ]);
+    }
+
+    public function storeEntryPayment(Request $request, AccountingEntry $entry)
+    {
+        if (! $this->workspaceOwnsDataUserId((int) $entry->user_id)) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'payment_date' => ['required', 'date'],
+            'method' => ['required', 'string', 'in:mobile_money,banque,especes,autre'],
+            'reference' => ['nullable', 'string', 'max:255'],
+            'bank_account' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $remaining = (float) $entry->amount - (float) $entry->amount_paid;
+        if ((float) $validated['amount'] > $remaining + 0.01) {
+            return back()->withErrors([
+                'amount' => sprintf('Le montant dépasse le solde dû (%s FCFA).', number_format($remaining, 2, ',', ' ')),
+            ])->withInput();
+        }
+
+        $treasuryTransaction = null;
+        $movementType = $entry->inferPaymentMovementType();
+        if ($movementType !== null) {
+            $treasuryTransaction = TreasuryTransaction::create([
+                'user_id' => $entry->user_id,
+                'actor_user_id' => Auth::id(),
+                'type' => $movementType,
+                'transaction_type' => 'mouvement_bancaire',
+                'payment_provider' => 'Caisse Banque',
+                'payment_module' => 'accounting_entry_payment',
+                'amount' => $validated['amount'],
+                'description' => '[Règlement] '.$entry->description,
+                'transaction_date' => $validated['payment_date'],
+                'reference' => $validated['reference'] ?? null,
+                'bank_account' => $validated['bank_account'] ?: '512 Banque',
+                'status' => 'effectue',
+                'notes' => 'Généré automatiquement depuis le règlement de l\'écriture #'.$entry->id,
+            ]);
+        }
+
+        $payment = $entry->payments()->create([
+            'user_id' => $entry->user_id,
+            'actor_user_id' => Auth::id(),
+            'amount' => $validated['amount'],
+            'payment_date' => $validated['payment_date'],
+            'method' => $validated['method'],
+            'reference' => $validated['reference'] ?? null,
+            'treasury_transaction_id' => $treasuryTransaction?->id,
+        ]);
+
+        $entry->recalculatePaymentStatus();
+
+        TreasuryAudit::log($entry->user_id, 'accounting.entry.payment_recorded', $entry, [
+            'payment_id' => $payment->id,
+            'amount' => $validated['amount'],
+            'new_status' => $entry->fresh()->payment_status,
+        ]);
+
+        return redirect()->route('accounting.caisse-banque')->with('status', 'Paiement enregistré.');
+    }
+
     public function documentsComparison()
     {
         $documents = AccountingDocument::with(['entries' => function ($query) {
