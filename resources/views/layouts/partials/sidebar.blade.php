@@ -41,11 +41,13 @@
                 && ! $sidebarEffIsAccountant
                 && $sidebarEffRoleKey !== 'commercial'
                 && $sidebarEffRoleKey !== 'commercial_supervisor'
+                && $sidebarEffRoleKey !== 'financial_analyst'
             ) {
                 $sidebarBrandName = (string) ($sidebarUser->company_name ?: $sidebarBrandName);
             }
             $sidebarIsCommercial = $sidebarUser && $sidebarEffRoleKey === 'commercial';
             $sidebarIsCommercialSupervisor = $sidebarUser && $sidebarEffRoleKey === 'commercial_supervisor' && ! $sidebarEffIsPlatformAdmin;
+            $sidebarIsFinancialAnalyst = $sidebarUser && $sidebarEffRoleKey === 'financial_analyst' && ! $sidebarEffIsPlatformAdmin;
             if ($sidebarUser && $sidebarEffIsPlatformAdmin) {
                 $sidebarPremiumActive = $sidebarUser->hasActivePremiumPeriod();
                 $sidebarPremiumLabel = $sidebarPremiumActive ? 'Premium Admin' : 'Administrateur';
@@ -70,6 +72,12 @@
                 $sidebarPremiumIcon = '📊';
                 $sidebarPremiumActive = false;
                 $sidebarShowPremiumExpiry = false;
+            } elseif ($sidebarIsFinancialAnalyst) {
+                $sidebarPremiumLabel = 'Analyste Financier';
+                $sidebarPremiumBadge = 'bg-dark text-white';
+                $sidebarPremiumIcon = '📈';
+                $sidebarPremiumActive = false;
+                $sidebarShowPremiumExpiry = false;
             } else {
                 $sidebarPremiumActive = $sidebarUser
                     && ($sidebarUser->is_premium ?? false)
@@ -82,7 +90,7 @@
             $sidebarAccountantOnly = $sidebarUser && $sidebarEffIsAccountant && ! $sidebarEffIsPlatformAdmin;
             $sidebarWorkspaceOpen = $sidebarAccountantOnly && \App\Support\ClientWorkspace::isViewingClient();
         @endphp
-        <a class="sidebar-brand d-flex align-items-center gap-2" href="{{ $sidebarIsCommercial ? route('commercial.dashboard') : ($sidebarIsCommercialSupervisor ? route('commercial-supervisor.dashboard') : ($sidebarAccountantOnly ? route('accountant.dashboard') : route('dashboard'))) }}">
+        <a class="sidebar-brand d-flex align-items-center gap-2" href="{{ $sidebarIsCommercial ? route('commercial.dashboard') : ($sidebarIsCommercialSupervisor ? route('commercial-supervisor.dashboard') : ($sidebarIsFinancialAnalyst ? route('analyst.portfolio') : ($sidebarAccountantOnly ? route('accountant.dashboard') : route('dashboard')))) }}">
             <img src="{{ asset('images/sitiam.png') }}" alt="Logo Sitiame Capital" style="height: 28px; width: auto;">
             <span class="align-middle">{{ $sidebarBrandName }}</span>
         </a>
@@ -199,6 +207,18 @@
                         </li>
                     @endif
                 @endisset
+            @elseif($sidebarIsFinancialAnalyst)
+                <li class="sidebar-header">Analyste Financier</li>
+                <li class="sidebar-item {{ request()->routeIs('analyst.portfolio') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('analyst.portfolio') }}">
+                        <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Portefeuille de PME</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {{ request()->routeIs('analyst.history') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('analyst.history') }}">
+                        <i class="align-middle" data-feather="clock"></i> <span class="align-middle">Historique de mes analyses</span>
+                    </a>
+                </li>
             @else
             @if($sidebarUser && ($sidebarEffIsAccountant || $sidebarEffIsPlatformAdmin))
                 {{-- Cabinet comptable : dossiers clients et synthèse. --}}
