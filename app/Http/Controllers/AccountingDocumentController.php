@@ -104,6 +104,7 @@ class AccountingDocumentController extends Controller
             'debit' => $data['debit_account'] ?? $accountMap[$type]['debit'] ?? '471 Compte transitoire',
             'credit' => $data['credit_account'] ?? $accountMap[$type]['credit'] ?? "472 Compte d'attente",
         ];
+        $paymentState = AccountingEntry::defaultPaymentState($accounts['debit'], $accounts['credit'], $amount);
 
         AccountingEntry::updateOrCreate(
             [
@@ -119,6 +120,8 @@ class AccountingDocumentController extends Controller
                 'debit_account' => $accounts['debit'],
                 'credit_account' => $accounts['credit'],
                 'amount' => $amount,
+                'payment_status' => $paymentState['payment_status'],
+                'amount_paid' => $paymentState['amount_paid'],
             ]
         );
 

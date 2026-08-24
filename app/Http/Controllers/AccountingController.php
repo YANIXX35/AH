@@ -162,7 +162,13 @@ class AccountingController extends Controller
             $ocrData['ocr_status'] = 'pending';
         }
 
-        $entryPayload = array_merge($data, $ocrData, [
+        $paymentState = AccountingEntry::defaultPaymentState(
+            $validated['debit_account'],
+            $validated['credit_account'],
+            (float) $validated['amount']
+        );
+
+        $entryPayload = array_merge($data, $ocrData, $paymentState, [
             'user_id' => $this->workspaceUserId(),
             'actor_user_id' => Auth::id(),
         ]);
@@ -3117,6 +3123,7 @@ class AccountingController extends Controller
         $accounts = $this->resolveAccountsForDocumentType($type);
         $debitAccount = (string) ($data['debit_account'] ?? $accounts['debit']);
         $creditAccount = (string) ($data['credit_account'] ?? $accounts['credit']);
+        $paymentState = AccountingEntry::defaultPaymentState($debitAccount, $creditAccount, $amount);
 
         $entry = AccountingEntry::updateOrCreate(
             ['document_id' => $document->id],
@@ -3135,6 +3142,8 @@ class AccountingController extends Controller
                 'ocr_detected_amount' => $amount,
                 'ocr_verified_at' => now(),
                 'ocr_text' => $data['ocr_text'] ?? null,
+                'payment_status' => $paymentState['payment_status'],
+                'amount_paid' => $paymentState['amount_paid'],
             ]
         );
 
