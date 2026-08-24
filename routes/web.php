@@ -551,6 +551,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/accounting/entries/bulk-delete', [AccountingController::class, 'bulkDeleteEntries'])->name('accounting.entries.bulk.delete');
         Route::post('/accounting/entries/bulk-ocr-retry', [AccountingController::class, 'bulkRetryEntryOcr'])->middleware('throttle:ocr-intensive')->name('accounting.entries.bulk.ocr.retry');
         Route::delete('/accounting/entries/{entry}', [AccountingController::class, 'destroyEntry'])->name('accounting.entries.destroy');
+        Route::get('/accounting/caisse-banque', [AccountingController::class, 'caisseBanque'])->name('accounting.caisse-banque');
+        Route::post('/accounting/entries/{entry}/payments', [AccountingController::class, 'storeEntryPayment'])->name('accounting.entries.payments.store');
         Route::get('/accounting/documents', [AccountingController::class, 'documents'])->name('accounting.documents');
         Route::get('/accounting/documents/comparison', [AccountingController::class, 'documentsComparison'])->name('accounting.documents.comparison');
 
