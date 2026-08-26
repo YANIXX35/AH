@@ -21,7 +21,7 @@
             $sidebarPreviewContext = null;
             if ($sidebarUser && \App\Http\Controllers\AuthController::isDashboardSelectorEmail($sidebarUser->email ?? null)) {
                 $sidebarPreviewContextCandidate = session('dashboard_preview_context');
-                if (in_array($sidebarPreviewContextCandidate, ['entreprise', 'accountant', 'commercial', 'commercial_supervisor', 'admin'], true)) {
+                if (in_array($sidebarPreviewContextCandidate, ['entreprise', 'accountant', 'commercial', 'commercial_supervisor', 'admin', 'financial_analyst'], true)) {
                     $sidebarPreviewContext = $sidebarPreviewContextCandidate;
                 }
             }
@@ -32,7 +32,7 @@
                 ? ($sidebarPreviewContext === 'accountant')
                 : (bool) ($sidebarUser->is_accountant ?? false);
             $sidebarEffRoleKey = $sidebarPreviewContext !== null
-                ? (in_array($sidebarPreviewContext, ['commercial', 'commercial_supervisor'], true) ? $sidebarPreviewContext : null)
+                ? (in_array($sidebarPreviewContext, ['commercial', 'commercial_supervisor', 'financial_analyst'], true) ? $sidebarPreviewContext : null)
                 : ($sidebarUser->role_key ?? null);
 
             if (

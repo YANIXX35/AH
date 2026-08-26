@@ -93,6 +93,11 @@
                 <h3>Administration Plateforme</h3>
                 <p>RBAC, KYC, licences, facturation, ops center — accès super-admin.</p>
             </a>
+            <a href="{{ route('dashboard.selector.enter', 'financial_analyst') }}" class="card">
+                <div class="icon">📈</div>
+                <h3>Analyste Financier</h3>
+                <p>Portefeuille de PME, scoring, ratios financiers et dossiers de financement.</p>
+            </a>
         </div>
 
         <div class="footer">

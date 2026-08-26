@@ -45,6 +45,7 @@ class AuthController extends Controller
         'commercial' => 'commercial.dashboard',
         'commercial_supervisor' => 'commercial-supervisor.dashboard',
         'admin' => 'admin.dashboard',
+        'financial_analyst' => 'analyst.portfolio',
     ];
 
     public static function isDashboardSelectorEmail(?string $email): bool
