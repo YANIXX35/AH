@@ -75,30 +75,16 @@
         </div>
     </div>
 
-    {{-- 3. Scoring --}}
+    {{-- 3. Scoring : onglet dédié --}}
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-body">
-                    <h6 class="card-title">Scoring 360</h6>
-                    @if($scoring360)
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <div class="text-muted small text-uppercase">Score composite</div>
-                                <div class="fs-4 fw-bold">{{ $scoring360['composite']['total'] ?? '—' }} / 100</div>
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ $scoring360['composite']['decision']['label'] ?? '' }}</span>
-                            </div>
-                            @foreach(['bank' => 'Vision bancaire', 'investor' => 'Vision investisseur', 'internal' => 'Vision interne'] as $key => $label)
-                                <div class="col-md-3">
-                                    <div class="text-muted small text-uppercase">{{ $label }}</div>
-                                    <div class="fs-5 fw-semibold">{{ $scoring360['blocks'][$key]['total'] ?? '—' }} / 100</div>
-                                    <span class="badge bg-light text-dark border">{{ $scoring360['blocks'][$key]['decision']['label'] ?? '' }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <p class="text-muted small mb-0">Score non calculable (pas assez de données comptables).</p>
-                    @endif
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h6 class="card-title mb-1">Scoring 360</h6>
+                        <p class="text-muted small mb-0">Score composite, vision bancaire/investisseur/interne — sur un onglet dédié.</p>
+                    </div>
+                    <a href="{{ route('analyst.pme.scoring', $company) }}" class="btn btn-sm btn-dark">Voir le scoring →</a>
                 </div>
             </div>
         </div>

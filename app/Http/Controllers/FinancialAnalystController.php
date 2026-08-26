@@ -121,8 +121,9 @@ class FinancialAnalystController extends Controller
     }
 
     /**
-     * Fiche PME : fiabilité des données, alertes, scoring, ratios, comparaison
-     * sectorielle, dossier de financement (avec décision), notes de l'analyste.
+     * Fiche PME : fiabilité des données, alertes, ratios, comparaison sectorielle,
+     * dossier de financement (avec décision), notes de l'analyste. Le scoring 360
+     * a son propre onglet (voir scoring()).
      */
     public function show(User $company): View
     {
@@ -131,12 +132,6 @@ class FinancialAnalystController extends Controller
         }
 
         $analysis = $this->ratioService->analyze($company->id);
-
-        try {
-            $scoring360 = $this->scoring360->scoreUser($company->id);
-        } catch (\Throwable) {
-            $scoring360 = null;
-        }
 
         $missingAttachmentsCount = AccountingEntry::where('user_id', $company->id)
             ->where(function ($query) {
@@ -156,12 +151,33 @@ class FinancialAnalystController extends Controller
         return view('financial-analyst.show', [
             'company' => $company,
             'analysis' => $analysis,
-            'scoring360' => $scoring360,
             'missingAttachmentsCount' => $missingAttachmentsCount,
             'investmentRequests' => $investmentRequests,
             'notes' => $notes,
             'sectorComparison' => $this->buildSectorComparison($company, $analysis),
             'allowedFundingTransitions' => self::ALLOWED_TRANSITIONS,
+        ]);
+    }
+
+    /**
+     * Onglet dédié Scoring 360 pour une PME — extrait de la fiche générale pour
+     * avoir sa propre entrée de navigation.
+     */
+    public function scoring(User $company): View
+    {
+        if (! ClientWorkspace::isAssignableClient($company)) {
+            abort(404);
+        }
+
+        try {
+            $scoring360 = $this->scoring360->scoreUser($company->id);
+        } catch (\Throwable) {
+            $scoring360 = null;
+        }
+
+        return view('financial-analyst.scoring', [
+            'company' => $company,
+            'scoring360' => $scoring360,
         ]);
     }
 

@@ -219,6 +219,21 @@
                         <i class="align-middle" data-feather="clock"></i> <span class="align-middle">Historique de mes analyses</span>
                     </a>
                 </li>
+                @isset($company)
+                    @if(request()->routeIs('analyst.pme.*'))
+                        <li class="sidebar-header">{{ $company->company_name ?: $company->name }}</li>
+                        <li class="sidebar-item {{ request()->routeIs('analyst.pme.show') ? 'active' : '' }}">
+                            <a class="sidebar-link" href="{{ route('analyst.pme.show', $company) }}">
+                                <i class="align-middle" data-feather="file-text" style="width:16px;height:16px;"></i> <span class="align-middle">Vue d'ensemble</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {{ request()->routeIs('analyst.pme.scoring') ? 'active' : '' }}">
+                            <a class="sidebar-link" href="{{ route('analyst.pme.scoring', $company) }}">
+                                <i class="align-middle" data-feather="pie-chart" style="width:16px;height:16px;"></i> <span class="align-middle">Scoring</span>
+                            </a>
+                        </li>
+                    @endif
+                @endisset
             @else
             @if($sidebarUser && ($sidebarEffIsAccountant || $sidebarEffIsPlatformAdmin))
                 {{-- Cabinet comptable : dossiers clients et synthèse. --}}
@@ -527,10 +542,32 @@
                 </div>
             </li>
             <li class="sidebar-item {{ request()->routeIs('payroll.*') ? 'active' : '' }}">
-                <a class="sidebar-link" href="{{ route('payroll.index') }}">
+                <a class="sidebar-link {{ request()->routeIs('payroll.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" href="#collapsePayroll" role="button" aria-expanded="{{ request()->routeIs('payroll.*') ? 'true' : 'false' }}" aria-controls="collapsePayroll">
                     <i class="align-middle" data-feather="credit-card"></i> <span class="align-middle">Paiement des Salaires</span>
                     <span class="badge bg-success rounded-pill ms-auto">Nouveau</span>
                 </a>
+                <div class="collapse {{ request()->routeIs('payroll.*') ? 'show' : '' }}" id="collapsePayroll">
+                    <ul class="sidebar-nav sidebar-nav-sub">
+                        <li class="sidebar-item">
+                            <a class="sidebar-link {{ request()->routeIs('payroll.index') ? 'active' : '' }}" href="{{ route('payroll.index') }}">
+                                <span class="icon-wrapper">📊</span>
+                                <span class="align-middle">Vue d'ensemble</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link {{ request()->routeIs('payroll.index') ? 'active' : '' }}" href="{{ route('payroll.index') }}#historique-paie">
+                                <span class="icon-wrapper">📜</span>
+                                <span class="align-middle">Historique des lots de paie</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link {{ request()->routeIs('payroll.create') ? 'active' : '' }}" href="{{ route('payroll.create') }}">
+                                <span class="icon-wrapper">➕</span>
+                                <span class="align-middle">Nouveau lot de paie</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </li>
             <li class="sidebar-item {{ request()->routeIs('invoicing.*') ? 'active' : '' }}">
                 <a class="sidebar-link" href="{{ route('invoicing.index') }}">

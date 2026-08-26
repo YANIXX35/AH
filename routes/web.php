@@ -724,6 +724,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [FinancialAnalystController::class, 'index'])->name('portfolio');
         Route::get('/historique', [FinancialAnalystController::class, 'history'])->name('history');
         Route::get('/pme/{company}', [FinancialAnalystController::class, 'show'])->name('pme.show');
+        Route::get('/pme/{company}/scoring', [FinancialAnalystController::class, 'scoring'])->name('pme.scoring');
         Route::post('/pme/{company}/notes', [FinancialAnalystController::class, 'storeNote'])->name('pme.notes.store');
         Route::get('/pme/{company}/ouvrir', [FinancialAnalystController::class, 'openDossier'])->name('pme.open');
         Route::get('/pme/{company}/export-pdf', [FinancialAnalystController::class, 'exportPdf'])->name('pme.export-pdf');

@@ -93,7 +93,7 @@
         </div>
 
         <!-- Payroll Runs Table Card -->
-        <div class="payroll-card p-4 mb-4">
+        <div class="payroll-card p-4 mb-4" id="historique-paie" style="scroll-margin-top: 90px;">
             <h3 class="h5 fw-bold text-dark mb-4">Historique des Lots de Paie</h3>
             <div class="table-responsive">
                 <table class="table table-hover align-middle border-0 mb-0">
