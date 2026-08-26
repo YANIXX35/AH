@@ -271,6 +271,11 @@ class User extends Authenticatable
         return $this->hasMany(\App\Models\AccountingEntry::class);
     }
 
+    public function investmentRequests(): HasMany
+    {
+        return $this->hasMany(InvestmentRequest::class);
+    }
+
     public function canAccessModule(string $module): bool
     {
         if ($this->isPlatformAdmin()) {

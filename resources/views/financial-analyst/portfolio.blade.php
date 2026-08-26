@@ -15,6 +15,42 @@
         </div>
     </div>
 
+    {{-- Vue consolidée --}}
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase">PME suivies</div>
+                    <div class="fs-4 fw-bold">{{ $summary['total'] }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-secondary-subtle">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase">Jamais évaluées</div>
+                    <div class="fs-4 fw-bold">{{ $summary['never_evaluated'] }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-danger-subtle">
+                <div class="card-body">
+                    <div class="text-danger small text-uppercase">PME à risque</div>
+                    <div class="fs-4 fw-bold">{{ $summary['at_risk'] }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 border-warning-subtle">
+                <div class="card-body">
+                    <div class="text-warning small text-uppercase">Dossiers de financement en attente</div>
+                    <div class="fs-5 fw-bold">{{ $summary['pending_requests_count'] }} · {{ number_format((float) $summary['pending_requests_amount'], 0, ',', ' ') }} FCFA</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-body">
             <form action="{{ route('analyst.portfolio') }}" method="GET" class="row g-2 align-items-end mb-4">
@@ -23,7 +59,30 @@
                     <input type="search" name="q" class="form-control form-control-sm" placeholder="Nom, entreprise, e-mail..." value="{{ $search }}">
                 </div>
                 <div class="col-auto">
-                    <button type="submit" class="btn btn-sm btn-primary">Rechercher</button>
+                    <label class="small text-muted d-block">Secteur</label>
+                    <select name="sector" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Tous</option>
+                        @foreach($sectors as $s)
+                            <option value="{{ $s }}" {{ $sector === $s ? 'selected' : '' }}>{{ $s }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label class="small text-muted d-block">Niveau de risque</label>
+                    <select name="risk" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Tous</option>
+                        <option value="bon" {{ $risk === 'bon' ? 'selected' : '' }}>Bon (≥ 70)</option>
+                        <option value="moyen" {{ $risk === 'moyen' ? 'selected' : '' }}>Moyen (40-69)</option>
+                        <option value="eleve" {{ $risk === 'eleve' ? 'selected' : '' }}>Élevé (&lt; 40)</option>
+                        <option value="jamais_evalue" {{ $risk === 'jamais_evalue' ? 'selected' : '' }}>Jamais évalué</option>
+                    </select>
+                </div>
+                <div class="col-auto form-check pb-2">
+                    <input type="checkbox" name="pending_financing" value="1" id="pendingFinancing" class="form-check-input" onchange="this.form.submit()" {{ $pendingFinancingOnly ? 'checked' : '' }}>
+                    <label class="form-check-label small" for="pendingFinancing">Dossier de financement en attente</label>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">Filtrer</button>
                     <a href="{{ route('analyst.portfolio') }}" class="btn btn-sm btn-outline-secondary">Effacer</a>
                 </div>
             </form>
@@ -34,6 +93,7 @@
                         <tr>
                             <th>Entreprise</th>
                             <th>Contact</th>
+                            <th>Secteur</th>
                             <th>Santé financière</th>
                             <th>Fiabilité des données</th>
                             <th></th>
@@ -49,6 +109,7 @@
                                     </a>
                                 </td>
                                 <td class="small text-muted">{{ $company->name }}<br>{{ $company->email }}</td>
+                                <td class="small text-muted">{{ $company->sector ?: '—' }}</td>
                                 <td>
                                     @if($profile)
                                         @php($niveau = ($profile->risk_score ?? 0) >= 70 ? 'success' : (($profile->risk_score ?? 0) >= 40 ? 'warning' : 'danger'))
@@ -71,7 +132,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="5" class="text-center text-muted py-4">Aucune entreprise ne correspond à cette recherche.</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted py-4">Aucune entreprise ne correspond à ce filtre.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
