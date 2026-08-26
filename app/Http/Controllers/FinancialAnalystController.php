@@ -160,6 +160,36 @@ class FinancialAnalystController extends Controller
     }
 
     /**
+     * Vue d'ensemble « Scoring » — lien permanent du menu Analyste Financier.
+     * Liste toutes les PME avec leur dernier score investisseur déjà calculé (pas
+     * de recalcul ici, même logique de coût que le portefeuille) ; chaque ligne
+     * mène vers le détail Scoring 360 complet de cette PME (voir scoring()).
+     */
+    public function scoringOverview(Request $request): View
+    {
+        $search = trim((string) $request->query('q', ''));
+
+        $companies = User::query()
+            ->clients()
+            ->with('investorProfile')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('company_name', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('company_name')
+            ->orderBy('name')
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('financial-analyst.scoring-overview', [
+            'companies' => $companies,
+            'search' => $search,
+        ]);
+    }
+
+    /**
      * Onglet dédié Scoring 360 pour une PME — extrait de la fiche générale pour
      * avoir sa propre entrée de navigation.
      */

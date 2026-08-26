@@ -214,6 +214,11 @@
                         <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Portefeuille de PME</span>
                     </a>
                 </li>
+                <li class="sidebar-item {{ request()->routeIs('analyst.scoring') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('analyst.scoring') }}">
+                        <i class="align-middle" data-feather="pie-chart"></i> <span class="align-middle">Scoring</span>
+                    </a>
+                </li>
                 <li class="sidebar-item {{ request()->routeIs('analyst.history') ? 'active' : '' }}">
                     <a class="sidebar-link" href="{{ route('analyst.history') }}">
                         <i class="align-middle" data-feather="clock"></i> <span class="align-middle">Historique de mes analyses</span>

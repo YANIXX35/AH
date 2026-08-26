@@ -723,6 +723,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('financial.analyst')->prefix('analyste')->name('analyst.')->group(function () {
         Route::get('/', [FinancialAnalystController::class, 'index'])->name('portfolio');
         Route::get('/historique', [FinancialAnalystController::class, 'history'])->name('history');
+        Route::get('/scoring', [FinancialAnalystController::class, 'scoringOverview'])->name('scoring');
         Route::get('/pme/{company}', [FinancialAnalystController::class, 'show'])->name('pme.show');
         Route::get('/pme/{company}/scoring', [FinancialAnalystController::class, 'scoring'])->name('pme.scoring');
         Route::post('/pme/{company}/notes', [FinancialAnalystController::class, 'storeNote'])->name('pme.notes.store');
