@@ -123,6 +123,10 @@ class AuthController extends Controller
             return redirect()->route('commercial-supervisor.dashboard');
         }
 
+        if (($user->role_key ?? null) === 'financial_analyst') {
+            return redirect()->route('analyst.portfolio');
+        }
+
         return redirect()->route('dashboard');
     }
 
