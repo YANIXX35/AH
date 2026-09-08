@@ -39,6 +39,7 @@ use App\Http\Controllers\CommercialSupervisorController;
 use App\Http\Controllers\CompanyFirdController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FinancialAnalystController;
+use App\Http\Controllers\FinancingDossierController;
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\DocumentVerificationController;
 use App\Http\Controllers\EnterpriseTeamController;
@@ -728,6 +729,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/pme/{company}/scoring', [FinancialAnalystController::class, 'scoring'])->name('pme.scoring');
         Route::post('/pme/{company}/notes', [FinancialAnalystController::class, 'storeNote'])->name('pme.notes.store');
         Route::get('/pme/{company}/ouvrir', [FinancialAnalystController::class, 'openDossier'])->name('pme.open');
+        Route::post('/pme/{company}/financement', [FinancingDossierController::class, 'store'])->name('financement.store');
+        Route::get('/financement/{dossier}/etape/{step}', [FinancingDossierController::class, 'showStep'])->name('financement.step');
+        Route::post('/financement/{dossier}/etape/{step}', [FinancingDossierController::class, 'updateStep'])->name('financement.step.update');
         Route::get('/pme/{company}/export-pdf', [FinancialAnalystController::class, 'exportPdf'])->name('pme.export-pdf');
         Route::post('/financement/{investmentRequest}/workflow', [FinancialAnalystController::class, 'updateFundingRequest'])->name('financement.workflow');
     });
