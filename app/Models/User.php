@@ -276,6 +276,11 @@ class User extends Authenticatable
         return $this->hasMany(InvestmentRequest::class);
     }
 
+    public function financingDossiers(): HasMany
+    {
+        return $this->hasMany(FinancingDossier::class);
+    }
+
     public function canAccessModule(string $module): bool
     {
         if ($this->isPlatformAdmin()) {

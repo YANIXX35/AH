@@ -197,6 +197,34 @@
         </div>
     </div>
 
+    {{-- 5bis. Dossiers de financement (nouveau format, 12 étapes) --}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="card-title mb-0">Dossiers de financement (nouveau format)</h6>
+                        <form action="{{ route('analyst.financement.store', $company) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-primary">+ Nouveau dossier de financement</button>
+                        </form>
+                    </div>
+                    @forelse($company->financingDossiers()->orderByDesc('created_at')->get() as $fd)
+                        <div class="border-bottom py-2 d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{{ route('analyst.financement.step', [$fd, 'demande']) }}" class="fw-semibold text-decoration-none">{{ $fd->reference }}</a>
+                                <div class="small text-muted">{{ $fd->financing_purpose ?: 'Sans objet renseigné' }} — {{ number_format((float) $fd->amount_requested, 0, ',', ' ') }} FCFA</div>
+                            </div>
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ $fd->status }}</span>
+                        </div>
+                    @empty
+                        <p class="text-muted small mb-0">Aucun dossier de financement (nouveau format) pour cette entreprise.</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- 6. Notes de l'analyste --}}
     <div class="row mb-4">
         <div class="col-12">
