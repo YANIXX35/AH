@@ -133,4 +133,14 @@ return [
         'host' => env('POSTHOG_HOST', 'https://eu.i.posthog.com'),
     ],
 
+    'erpnext' => [
+        'base_url' => env('ERPNEXT_BASE_URL'),
+        'api_key' => env('ERPNEXT_API_KEY'),
+        'api_secret' => env('ERPNEXT_API_SECRET'),
+        'timeout' => env('ERPNEXT_TIMEOUT', 15),
+        'default_warehouse' => env('ERPNEXT_DEFAULT_WAREHOUSE'),
+        'default_tax_template' => env('ERPNEXT_DEFAULT_TAX_TEMPLATE'),
+        'default_item_group' => env('ERPNEXT_DEFAULT_ITEM_GROUP', 'All Item Groups'),
+    ],
+
 ];
