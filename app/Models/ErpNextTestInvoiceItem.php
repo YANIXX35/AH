@@ -10,6 +10,8 @@ class ErpNextTestInvoiceItem extends Model
 {
     use HasFactory;
 
+    protected $table = 'erpnext_test_invoice_items';
+
     protected $fillable = [
         'erpnext_test_invoice_id',
         'description',
