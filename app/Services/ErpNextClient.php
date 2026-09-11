@@ -184,16 +184,21 @@ class ErpNextClient
         ?string $dueDate = null
     ): array {
         $resolvedWarehouse = $warehouse ?: config('services.erpnext.default_warehouse');
+        $incomeAccount = config('services.erpnext.default_income_account');
 
         $items = [];
         foreach ($lines as $line) {
             $itemCode = $this->findOrCreateItem($line['description']);
-            $items[] = [
+            $item = [
                 'item_code' => $itemCode,
                 'qty' => $line['quantity'],
                 'rate' => $line['unit_price'],
                 'warehouse' => $resolvedWarehouse,
             ];
+            if (! empty($incomeAccount)) {
+                $item['income_account'] = $incomeAccount;
+            }
+            $items[] = $item;
         }
 
         $payload = [
@@ -206,6 +211,16 @@ class ErpNextClient
         $resolvedTaxTemplate = $taxTemplate ?: config('services.erpnext.default_tax_template');
         if (! empty($resolvedTaxTemplate)) {
             $payload['taxes_and_charges'] = $resolvedTaxTemplate;
+
+            $template = $this->get('/api/resource/'.rawurlencode('Sales Taxes and Charges Template').'/'.rawurlencode($resolvedTaxTemplate));
+            if (! empty($template['taxes'])) {
+                $payload['taxes'] = array_map(fn ($row) => [
+                    'charge_type' => $row['charge_type'] ?? 'On Net Total',
+                    'account_head' => $row['account_head'],
+                    'description' => $row['description'] ?? $row['account_head'],
+                    'rate' => $row['rate'] ?? 0,
+                ], $template['taxes']);
+            }
         }
 
         return $this->post('/api/resource/Sales Invoice', $payload);

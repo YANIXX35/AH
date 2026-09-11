@@ -140,7 +140,8 @@ return [
         'timeout' => env('ERPNEXT_TIMEOUT', 15),
         'default_warehouse' => env('ERPNEXT_DEFAULT_WAREHOUSE'),
         'default_tax_template' => env('ERPNEXT_DEFAULT_TAX_TEMPLATE'),
-        'default_item_group' => env('ERPNEXT_DEFAULT_ITEM_GROUP', 'All Item Groups'),
+        'default_item_group' => env('ERPNEXT_DEFAULT_ITEM_GROUP', 'Services'),
+        'default_income_account' => env('ERPNEXT_DEFAULT_INCOME_ACCOUNT'),
     ],
 
 ];
