@@ -116,6 +116,88 @@ class ErpNextClient
         return $erpNextId;
     }
 
+    /**
+     * @return array{company: string, warehouse: string, tax_template: string, income_account: string}
+     */
+    public function provisionCompanyForPme(User $pme): array
+    {
+        $baseName = $pme->company_name ?: $pme->name;
+        $companyName = trim($baseName).' #'.$pme->id;
+        $abbr = strtoupper(Str::limit(preg_replace('/[^A-Za-z]/', '', $baseName) ?: 'PME', 3, '')).$pme->id;
+
+        $company = $this->post('/api/resource/Company', [
+            'company_name' => $companyName,
+            'abbr' => $abbr,
+            'default_currency' => 'XOF',
+            'country' => 'Ivory Coast',
+            'chart_of_accounts' => 'Syscohada - Plan Comptable',
+        ]);
+
+        $resolvedCompanyName = (string) ($company['name'] ?? '');
+        if ($resolvedCompanyName === '') {
+            throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom de société après création.');
+        }
+
+        $incomeAccount = $this->findAccountByNumber($resolvedCompanyName, '7061');
+        $taxAccount = $this->findAccountByNumber($resolvedCompanyName, '4431');
+        $stockAccount = $this->findAccountByNumber($resolvedCompanyName, '3111');
+
+        $warehouse = $this->post('/api/resource/Warehouse', [
+            'warehouse_name' => 'Magasin principal',
+            'company' => $resolvedCompanyName,
+            'account' => $stockAccount,
+        ]);
+        $warehouseName = (string) ($warehouse['name'] ?? '');
+        if ($warehouseName === '') {
+            throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom d\'entrepôt après création.');
+        }
+
+        $taxTemplate = $this->post('/api/resource/'.rawurlencode('Sales Taxes and Charges Template'), [
+            'title' => 'TVA 18%',
+            'company' => $resolvedCompanyName,
+            'taxes' => [
+                [
+                    'charge_type' => 'On Net Total',
+                    'account_head' => $taxAccount,
+                    'description' => 'TVA 18%',
+                    'rate' => 18,
+                ],
+            ],
+        ]);
+        $taxTemplateName = (string) ($taxTemplate['name'] ?? '');
+        if ($taxTemplateName === '') {
+            throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom de gabarit de TVA après création.');
+        }
+
+        return [
+            'company' => $resolvedCompanyName,
+            'warehouse' => $warehouseName,
+            'tax_template' => $taxTemplateName,
+            'income_account' => $incomeAccount,
+        ];
+    }
+
+    private function findAccountByNumber(string $company, string $accountNumber): string
+    {
+        $query = http_build_query([
+            'filters' => json_encode([
+                ['company', '=', $company],
+                ['account_name', 'like', $accountNumber.'-%'],
+            ]),
+            'fields' => json_encode(['name']),
+            'limit_page_length' => 1,
+        ]);
+
+        $accounts = $this->get('/api/resource/Account?'.$query);
+        $account = $accounts[0] ?? null;
+
+        if (empty($account['name'])) {
+            throw new ErpNextApiException("Compte $accountNumber introuvable pour la société $company.");
+        }
+
+        return (string) $account['name'];
+    }
+
     public function findOrCreateItem(string $description): string
     {
         $itemCode = Str::limit(Str::slug($description), 140, '');
