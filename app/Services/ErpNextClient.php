@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Exceptions\ErpNextApiException;
+use App\Models\Invoice;
+use App\Models\InvoiceErpNextCustomer;
+use App\Models\InvoicePayment;
 use App\Models\User;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -77,6 +80,27 @@ class ErpNextClient
         return (array) ($response->json('data') ?? []);
     }
 
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function put(string $path, array $payload): array
+    {
+        try {
+            $response = Http::withHeaders(['Authorization' => $this->authHeader()])
+                ->timeout($this->timeout())
+                ->put($this->baseUrl().$path, $payload);
+        } catch (\Throwable $exception) {
+            throw new ErpNextApiException('ERPNext injoignable: '.$exception->getMessage());
+        }
+
+        if ($response->failed()) {
+            throw new ErpNextApiException($this->extractErrorMessage($response));
+        }
+
+        return (array) ($response->json('data') ?? []);
+    }
+
     private function extractErrorMessage(Response $response): string
     {
         $message = $response->json('exception') ?? $response->json('message') ?? $response->json('_server_messages');
@@ -114,6 +138,48 @@ class ErpNextClient
         $pme->save();
 
         return $erpNextId;
+    }
+
+    public function findOrCreateCustomerForPme(User $pme, string $clientName, ?string $clientTaxId): string
+    {
+        $dedupKey = $this->customerDedupKey($clientName, $clientTaxId);
+
+        $mapping = InvoiceErpNextCustomer::where('user_id', $pme->id)
+            ->where('dedup_key', $dedupKey)
+            ->first();
+
+        if ($mapping) {
+            $existing = $this->get('/api/resource/Customer/'.rawurlencode($mapping->erpnext_customer_name));
+            if (! empty($existing)) {
+                return $mapping->erpnext_customer_name;
+            }
+        }
+
+        $created = $this->post('/api/resource/Customer', [
+            'customer_name' => $clientName,
+            'company' => $pme->erpnext_company_name,
+            'customer_group' => 'Commercial',
+            'territory' => 'Ivory Coast',
+        ]);
+
+        $erpNextCustomerName = (string) ($created['name'] ?? '');
+        if ($erpNextCustomerName === '') {
+            throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom de client après création.');
+        }
+
+        InvoiceErpNextCustomer::updateOrCreate(
+            ['user_id' => $pme->id, 'dedup_key' => $dedupKey],
+            ['erpnext_customer_name' => $erpNextCustomerName]
+        );
+
+        return $erpNextCustomerName;
+    }
+
+    private function customerDedupKey(string $clientName, ?string $clientTaxId): string
+    {
+        $source = $clientTaxId ?: $clientName;
+
+        return Str::of($source)->lower()->squish()->value();
     }
 
     /**
@@ -169,12 +235,68 @@ class ErpNextClient
             throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom de gabarit de TVA après création.');
         }
 
+        $this->put('/api/resource/Company/'.rawurlencode($resolvedCompanyName), [
+            'round_off_account' => $incomeAccount,
+        ]);
+
         return [
             'company' => $resolvedCompanyName,
             'warehouse' => $warehouseName,
             'tax_template' => $taxTemplateName,
             'income_account' => $incomeAccount,
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function createAndSubmitSalesInvoiceForPme(User $pme, string $erpNextCustomerName, Invoice $invoice): array
+    {
+        $items = [];
+        foreach ($invoice->items as $line) {
+            $itemCode = $this->findOrCreateItem($line->description);
+            $items[] = [
+                'item_code' => $itemCode,
+                'qty' => (float) $line->quantity,
+                'rate' => (float) $line->unit_price,
+                'warehouse' => $pme->erpnext_warehouse,
+                'income_account' => $pme->erpnext_income_account,
+            ];
+        }
+
+        $payload = [
+            'company' => $pme->erpnext_company_name,
+            'customer' => $erpNextCustomerName,
+            'items' => $items,
+            'posting_date' => $invoice->issue_date->format('Y-m-d'),
+            'due_date' => $invoice->due_date->format('Y-m-d'),
+        ];
+
+        if ((float) $invoice->tax_rate > 0 && ! empty($pme->erpnext_tax_template)) {
+            $payload['taxes_and_charges'] = $pme->erpnext_tax_template;
+
+            $template = $this->get('/api/resource/'.rawurlencode('Sales Taxes and Charges Template').'/'.rawurlencode($pme->erpnext_tax_template));
+            if (! empty($template['taxes'])) {
+                $payload['taxes'] = array_map(fn ($row) => [
+                    'charge_type' => $row['charge_type'] ?? 'On Net Total',
+                    'account_head' => $row['account_head'],
+                    'description' => $row['description'] ?? $row['account_head'],
+                    'rate' => $row['rate'] ?? 0,
+                ], $template['taxes']);
+            }
+        }
+
+        $created = $this->post('/api/resource/Sales Invoice', $payload);
+        $erpNextInvoiceName = (string) ($created['name'] ?? '');
+        if ($erpNextInvoiceName === '') {
+            throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom de facture après création.');
+        }
+
+        $submitted = $this->put('/api/resource/Sales Invoice/'.rawurlencode($erpNextInvoiceName), [
+            'docstatus' => 1,
+        ]);
+
+        return $submitted ?: $created;
     }
 
     private function findAccountByNumber(string $company, string $accountNumber): string
@@ -306,5 +428,44 @@ class ErpNextClient
         }
 
         return $this->post('/api/resource/Sales Invoice', $payload);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function recordPaymentForPme(User $pme, string $erpNextInvoiceName, string $erpNextCustomerName, InvoicePayment $payment): array
+    {
+        $created = $this->post('/api/resource/Payment Entry', [
+            'payment_type' => 'Receive',
+            'company' => $pme->erpnext_company_name,
+            'party_type' => 'Customer',
+            'party' => $erpNextCustomerName,
+            'paid_amount' => (float) $payment->amount,
+            'received_amount' => (float) $payment->amount,
+            'posting_date' => $payment->paid_at->format('Y-m-d'),
+            'references' => [
+                [
+                    'reference_doctype' => 'Sales Invoice',
+                    'reference_name' => $erpNextInvoiceName,
+                    'allocated_amount' => (float) $payment->amount,
+                ],
+            ],
+        ]);
+
+        $erpNextPaymentName = (string) ($created['name'] ?? '');
+        if ($erpNextPaymentName === '') {
+            throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom d\'écriture de paiement après création.');
+        }
+
+        return $this->put('/api/resource/Payment Entry/'.rawurlencode($erpNextPaymentName), [
+            'docstatus' => 1,
+        ]);
+    }
+
+    public function cancelSalesInvoiceForPme(string $erpNextInvoiceName): void
+    {
+        $this->put('/api/resource/Sales Invoice/'.rawurlencode($erpNextInvoiceName), [
+            'docstatus' => 2,
+        ]);
     }
 }
