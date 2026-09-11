@@ -21,17 +21,33 @@ class ErpNextTestController extends Controller
         return view('admin.erpnext-test.index', compact('invoices'));
     }
 
-    public function create(): View
+    public function create(ErpNextClient $erpNext): View
     {
         $pmes = User::clients()->orderBy('company_name')->get();
 
-        return view('admin.erpnext-test.create', compact('pmes'));
+        $warehouses = [];
+        $taxTemplates = [];
+
+        if ($erpNext->enabled()) {
+            try {
+                $warehouses = $erpNext->listWarehouses();
+                $taxTemplates = $erpNext->listTaxTemplates();
+            } catch (\Throwable) {
+                // ERPNext injoignable au chargement du formulaire : on retombe sur des champs texte libres.
+            }
+        }
+
+        return view('admin.erpnext-test.create', compact('pmes', 'warehouses', 'taxTemplates'));
     }
 
     public function store(Request $request, ErpNextClient $erpNext): RedirectResponse
     {
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id'],
+            'posting_date' => ['required', 'date'],
+            'due_date' => ['required', 'date', 'after_or_equal:posting_date'],
+            'warehouse' => ['nullable', 'string', 'max:255'],
+            'tax_template' => ['nullable', 'string', 'max:255'],
             'lines' => ['required', 'array', 'min:1'],
             'lines.*.description' => ['required', 'string', 'max:255'],
             'lines.*.quantity' => ['required', 'numeric', 'min:0.01'],
@@ -57,7 +73,15 @@ class ErpNextTestController extends Controller
 
         try {
             $customerName = $erpNext->findOrCreateCustomer($pme);
-            $response = $erpNext->createSalesInvoice($pme, $customerName, $validated['lines']);
+            $response = $erpNext->createSalesInvoice(
+                $pme,
+                $customerName,
+                $validated['lines'],
+                $validated['warehouse'] ?? null,
+                $validated['tax_template'] ?? null,
+                $validated['posting_date'],
+                $validated['due_date']
+            );
 
             $invoice->update([
                 'status' => 'synced',

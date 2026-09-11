@@ -20,6 +20,42 @@
             </select>
         </div>
 
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <label class="form-label" for="posting_date">Date de facturation</label>
+                <input type="date" class="form-control" id="posting_date" name="posting_date" value="{{ now()->toDateString() }}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="due_date">Date d'échéance</label>
+                <input type="date" class="form-control" id="due_date" name="due_date" value="{{ now()->addDays(30)->toDateString() }}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="warehouse">Entrepôt</label>
+                @if (count($warehouses) > 0)
+                    <select class="form-select" id="warehouse" name="warehouse">
+                        @foreach ($warehouses as $warehouse)
+                            <option value="{{ $warehouse }}" {{ $warehouse === config('services.erpnext.default_warehouse') ? 'selected' : '' }}>{{ $warehouse }}</option>
+                        @endforeach
+                    </select>
+                @else
+                    <input type="text" class="form-control" id="warehouse" name="warehouse" value="{{ config('services.erpnext.default_warehouse') }}" placeholder="Nom exact de l'entrepôt ERPNext">
+                @endif
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="tax_template">Gabarit de TVA</label>
+                @if (count($taxTemplates) > 0)
+                    <select class="form-select" id="tax_template" name="tax_template">
+                        <option value="">— Aucune TVA —</option>
+                        @foreach ($taxTemplates as $template)
+                            <option value="{{ $template }}" {{ $template === config('services.erpnext.default_tax_template') ? 'selected' : '' }}>{{ $template }}</option>
+                        @endforeach
+                    </select>
+                @else
+                    <input type="text" class="form-control" id="tax_template" name="tax_template" value="{{ config('services.erpnext.default_tax_template') }}" placeholder="Nom exact du gabarit de TVA ERPNext">
+                @endif
+            </div>
+        </div>
+
         <label class="form-label">Lignes de facture</label>
         <div id="lines-container">
             <div class="row g-2 mb-2 line-row">

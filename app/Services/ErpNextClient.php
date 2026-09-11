@@ -140,11 +140,51 @@ class ErpNextClient
     }
 
     /**
+     * @return array<int, string>
+     */
+    public function listWarehouses(): array
+    {
+        $query = http_build_query([
+            'fields' => json_encode(['name']),
+            'filters' => json_encode([['is_group', '=', 0]]),
+            'limit_page_length' => 0,
+        ]);
+
+        $data = $this->get('/api/resource/Warehouse?'.$query);
+
+        return array_values(array_map(fn ($row) => (string) $row['name'], $data));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function listTaxTemplates(): array
+    {
+        $query = http_build_query([
+            'fields' => json_encode(['name']),
+            'limit_page_length' => 0,
+        ]);
+
+        $data = $this->get('/api/resource/'.rawurlencode('Sales Taxes and Charges Template').'?'.$query);
+
+        return array_values(array_map(fn ($row) => (string) $row['name'], $data));
+    }
+
+    /**
      * @param  array<int, array{description: string, quantity: float, unit_price: float}>  $lines
      * @return array<string, mixed>
      */
-    public function createSalesInvoice(User $pme, string $erpNextCustomerName, array $lines): array
-    {
+    public function createSalesInvoice(
+        User $pme,
+        string $erpNextCustomerName,
+        array $lines,
+        ?string $warehouse = null,
+        ?string $taxTemplate = null,
+        ?string $postingDate = null,
+        ?string $dueDate = null
+    ): array {
+        $resolvedWarehouse = $warehouse ?: config('services.erpnext.default_warehouse');
+
         $items = [];
         foreach ($lines as $line) {
             $itemCode = $this->findOrCreateItem($line['description']);
@@ -152,20 +192,20 @@ class ErpNextClient
                 'item_code' => $itemCode,
                 'qty' => $line['quantity'],
                 'rate' => $line['unit_price'],
-                'warehouse' => config('services.erpnext.default_warehouse'),
+                'warehouse' => $resolvedWarehouse,
             ];
         }
 
         $payload = [
             'customer' => $erpNextCustomerName,
             'items' => $items,
-            'posting_date' => now()->toDateString(),
-            'due_date' => now()->addDays(30)->toDateString(),
+            'posting_date' => $postingDate ?: now()->toDateString(),
+            'due_date' => $dueDate ?: now()->addDays(30)->toDateString(),
         ];
 
-        $taxTemplate = config('services.erpnext.default_tax_template');
-        if (! empty($taxTemplate)) {
-            $payload['taxes_and_charges'] = $taxTemplate;
+        $resolvedTaxTemplate = $taxTemplate ?: config('services.erpnext.default_tax_template');
+        if (! empty($resolvedTaxTemplate)) {
+            $payload['taxes_and_charges'] = $resolvedTaxTemplate;
         }
 
         return $this->post('/api/resource/Sales Invoice', $payload);
