@@ -31,13 +31,17 @@ class ProvisionErpNextCompanyForPme implements ShouldQueue
             return;
         }
 
-        $result = $erpNext->provisionCompanyForPme($this->pme);
+        try {
+            $result = $erpNext->provisionCompanyForPme($this->pme);
 
-        $this->pme->update([
-            'erpnext_company_name' => $result['company'],
-            'erpnext_warehouse' => $result['warehouse'],
-            'erpnext_tax_template' => $result['tax_template'],
-            'erpnext_income_account' => $result['income_account'],
-        ]);
+            $this->pme->update([
+                'erpnext_company_name' => $result['company'],
+                'erpnext_warehouse' => $result['warehouse'],
+                'erpnext_tax_template' => $result['tax_template'],
+                'erpnext_income_account' => $result['income_account'],
+            ]);
+        } catch (\Throwable $exception) {
+            Log::warning('Échec du provisionnement ERPNext pour la PME #'.$this->pme->id.': '.$exception->getMessage());
+        }
     }
 }
