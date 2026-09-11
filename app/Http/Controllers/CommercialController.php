@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProvisionErpNextCompanyForPme;
 use App\Models\CommercialDocument;
 use App\Models\CommercialFeedback;
 use App\Models\PlanComptableAccount;
@@ -556,7 +557,7 @@ class CommercialController extends Controller
 
         $commercial = $request->user();
 
-        DB::transaction(function () use ($validated, $commercial, $request, $plainPassword) {
+        $user = DB::transaction(function () use ($validated, $commercial, $request, $plainPassword) {
             $user = User::create([
                 ...$validated,
                 'password' => Hash::make($plainPassword),
@@ -579,7 +580,11 @@ class CommercialController extends Controller
                 ['commercial_id' => $commercial->id],
                 $request
             );
+
+            return $user;
         });
+
+        ProvisionErpNextCompanyForPme::dispatch($user);
 
         return back()->with('status', "Client enregistré avec succès. Son compte a été créé avec un mois d’essai gratuit. Identifiants de connexion — E-mail : {$validated['email']} / Mot de passe : {$plainPassword}");
     }

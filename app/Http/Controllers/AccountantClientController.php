@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\FinancialRatioServiceContract;
+use App\Jobs\ProvisionErpNextCompanyForPme;
 use App\Models\PlanComptableAccount;
 use App\Models\User;
 use App\Services\UserPremiumService;
@@ -98,7 +99,7 @@ class AccountantClientController extends Controller
 
         $accountant = $request->user();
 
-        DB::transaction(function () use ($validated, $accountant, $request, $plainPassword) {
+        $user = DB::transaction(function () use ($validated, $accountant, $request, $plainPassword) {
             $user = User::create([
                 ...$validated,
                 'password' => Hash::make($plainPassword),
@@ -120,7 +121,11 @@ class AccountantClientController extends Controller
                 ['accountant_id' => $accountant->id],
                 $request
             );
+
+            return $user;
         });
+
+        ProvisionErpNextCompanyForPme::dispatch($user);
 
         return back()->with('status', "Dossier client enregistré avec succès. Son compte a été initialisé avec 1 mois d’accès gratuit. Identifiants de connexion — E-mail : {$validated['email']} / Mot de passe : {$plainPassword}");
     }
