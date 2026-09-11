@@ -435,6 +435,8 @@ class ErpNextClient
      */
     public function recordPaymentForPme(User $pme, string $erpNextInvoiceName, string $erpNextCustomerName, InvoicePayment $payment): array
     {
+        $paidToAccount = $this->findAccountByNumber($pme->erpnext_company_name, '5711');
+
         $created = $this->post('/api/resource/Payment Entry', [
             'payment_type' => 'Receive',
             'company' => $pme->erpnext_company_name,
@@ -442,6 +444,10 @@ class ErpNextClient
             'party' => $erpNextCustomerName,
             'paid_amount' => (float) $payment->amount,
             'received_amount' => (float) $payment->amount,
+            'source_exchange_rate' => 1,
+            'target_exchange_rate' => 1,
+            'paid_to' => $paidToAccount,
+            'paid_to_account_currency' => 'XOF',
             'posting_date' => $payment->paid_at->format('Y-m-d'),
             'references' => [
                 [

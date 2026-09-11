@@ -2,6 +2,9 @@
 
 namespace App\Domain\Invoicing;
 
+use App\Jobs\SyncInvoiceCancellationToErpNext;
+use App\Jobs\SyncInvoicePaymentToErpNext;
+use App\Jobs\SyncInvoiceToErpNext;
 use App\Models\AccountingEntry;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -33,7 +36,7 @@ class InvoiceService
         ?string $notes = null,
         string $currency = 'XOF'
     ): Invoice {
-        return DB::transaction(function () use (
+        $invoice = DB::transaction(function () use (
             $workspaceUserId, $actorUserId, $clientName, $clientContact, $clientAddress,
             $clientTaxId, $issueDate, $dueDate, $items, $taxRate, $notes, $currency
         ) {
@@ -87,6 +90,10 @@ class InvoiceService
 
             return $invoice->fresh('items');
         });
+
+        SyncInvoiceToErpNext::dispatch($invoice);
+
+        return $invoice;
     }
 
     /**
@@ -94,7 +101,7 @@ class InvoiceService
      */
     public function recordPayment(Invoice $invoice, array $data, int $actorUserId): InvoicePayment
     {
-        return DB::transaction(function () use ($invoice, $data, $actorUserId) {
+        $payment = DB::transaction(function () use ($invoice, $data, $actorUserId) {
             $amount = round((float) $data['amount'], 2);
             $balanceDue = $invoice->balanceDue();
 
@@ -150,6 +157,10 @@ class InvoiceService
 
             return $payment;
         });
+
+        SyncInvoicePaymentToErpNext::dispatch($payment);
+
+        return $payment;
     }
 
     /**
@@ -240,6 +251,8 @@ class InvoiceService
             'reason' => $reason,
             'actor_user_id' => $actorUserId,
         ]);
+
+        SyncInvoiceCancellationToErpNext::dispatch($invoice);
     }
 
     public function deleteInvoice(Invoice $invoice, int $actorUserId): void
