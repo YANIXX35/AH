@@ -101,8 +101,8 @@ class ErpNextClient
 
         $created = $this->post('/api/resource/Customer', [
             'customer_name' => $customerName,
-            'customer_group' => 'All Customer Groups',
-            'territory' => 'All Territories',
+            'customer_group' => 'Commercial',
+            'territory' => 'Ivory Coast',
         ]);
 
         $erpNextId = (string) ($created['name'] ?? '');
