@@ -46,6 +46,6 @@ class ErpNextTestInvoice extends Model
 
     public function items(): HasMany
     {
-        return $this->hasMany(ErpNextTestInvoiceItem::class);
+        return $this->hasMany(ErpNextTestInvoiceItem::class, 'erpnext_test_invoice_id');
     }
 }
