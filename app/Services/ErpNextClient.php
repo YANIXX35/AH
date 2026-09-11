@@ -132,7 +132,7 @@ class ErpNextClient
             'item_code' => $itemCode,
             'item_name' => $description,
             'item_group' => config('services.erpnext.default_item_group', 'All Item Groups'),
-            'stock_uom' => 'Unité',
+            'stock_uom' => 'Unit',
             'is_stock_item' => 1,
         ]);
 
