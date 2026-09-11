@@ -52,6 +52,7 @@ use Illuminate\Notifications\Notifiable;
     'social_security_number',
     'importer_code',
     'primary_activity_code',
+    'erpnext_customer_id',
     'company_designation',
     'company_fax',
     'postal_code',
