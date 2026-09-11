@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProvisionErpNextCompanyForPme;
 use App\Mail\AccountCreatedMail;
 use App\Models\BillingPlan;
 use App\Models\BillingSubscription;
@@ -117,6 +118,7 @@ class RegisterController extends Controller
             ]);
 
             PlanComptableAccount::seedDefaultsFor($created->id);
+            ProvisionErpNextCompanyForPme::dispatch($created);
 
             // Chaque nouvel inscrit dispose de sa propre donnée d'abonnement.
             $freePlan = BillingPlan::query()->where('slug', 'free-trial')->first();
