@@ -16,6 +16,7 @@ use App\Http\Controllers\AdminCommercialController;
 use App\Http\Controllers\AdminCommercialDashboardController;
 use App\Http\Controllers\AdminComplianceKycController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ErpNextTestController;
 use App\Http\Controllers\AdminDatabaseBackupController;
 use App\Http\Controllers\AdminEnterpriseLicenseController;
 use App\Http\Controllers\AdminExecutiveDashboardController;
@@ -534,6 +535,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/commercial-dashboard/prospects', [AdminCommercialDashboardController::class, 'prospects'])->name('commercial-dashboard.prospects');
         Route::get('/commercial-dashboard/export', [AdminCommercialDashboardController::class, 'exportCsv'])->name('commercial-dashboard.export');
         Route::get('/commercial-dashboard/{commercial}', [AdminCommercialDashboardController::class, 'showCommercial'])->name('commercial-dashboard.show');
+
+        Route::prefix('erpnext-test')->name('erpnext-test.')->group(function () {
+            Route::get('/', [ErpNextTestController::class, 'index'])->name('index');
+            Route::get('/create', [ErpNextTestController::class, 'create'])->name('create');
+            Route::post('/', [ErpNextTestController::class, 'store'])->name('store');
+            Route::get('/{erpNextTestInvoice}', [ErpNextTestController::class, 'show'])->name('show');
+        });
     });
 
     Route::middleware(['premium.accounting', 'module.permission:accounting'])->group(function () {

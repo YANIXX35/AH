@@ -360,6 +360,9 @@
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.ops.*') ? 'active' : '' }}" href="{{ route('admin.ops.index') }}">Ops Center IT Manager</a>
                             </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.erpnext-test.*') ? 'active' : '' }}" href="{{ route('admin.erpnext-test.index') }}">ERPNext Test</a>
+                            </li>
 
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.financial-analysis') ? 'active' : '' }}" href="{{ route('admin.financial-analysis') }}">Analyse financière PME</a>
