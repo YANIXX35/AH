@@ -71,6 +71,10 @@ Route::get('/', function () {
         ? redirect()->route('dashboard')
         : app(AuthController::class)->showLogin();
 })->name('home');
+
+Route::get('/internal/opcache-reset', \App\Http\Controllers\OpcacheResetController::class)
+    ->middleware('throttle:30,1')
+    ->name('internal.opcache-reset');
 Route::view('/about-us', 'about-us')->name('about-us');
 Route::view('/tarifs', 'pricing')->name('pricing');
 Route::view('/documentation', 'documentation')->name('documentation');

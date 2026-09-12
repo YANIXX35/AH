@@ -144,4 +144,6 @@ return [
         'default_income_account' => env('ERPNEXT_DEFAULT_INCOME_ACCOUNT'),
     ],
 
+    'opcache_reset_token' => env('OPCACHE_RESET_TOKEN'),
+
 ];
