@@ -554,25 +554,35 @@ class ErpNextClient
      */
     public function getTrialBalanceForCompany(string $company, string $fromDate, string $toDate): array
     {
-        $entries = $this->getGeneralLedgerForCompany($company, $fromDate, $toDate);
+        $fiscalYear = (string) ((int) substr($toDate, 0, 4));
 
-        $totals = [];
-        foreach ($entries as $entry) {
-            $account = (string) $entry['account'];
-            if (! isset($totals[$account])) {
-                $totals[$account] = ['account' => $account, 'debit' => 0.0, 'credit' => 0.0];
+        $result = $this->postForm('/api/method/frappe.desk.query_report.run', [
+            'report_name' => 'Trial Balance',
+            'filters' => json_encode([
+                'company' => $company,
+                'filter_based_on' => 'Date Range',
+                'period_start_date' => $fromDate,
+                'period_end_date' => $toDate,
+                'fiscal_year' => $fiscalYear,
+            ]),
+        ]);
+
+        $rows = [];
+        foreach ((array) ($result['result'] ?? []) as $row) {
+            if (empty($row['account']) || str_starts_with((string) $row['account'], "'")) {
+                continue;
             }
-            $totals[$account]['debit'] += (float) ($entry['debit'] ?? 0);
-            $totals[$account]['credit'] += (float) ($entry['credit'] ?? 0);
-        }
 
-        $rows = array_values($totals);
-        foreach ($rows as &$row) {
-            $row['balance'] = round($row['debit'] - $row['credit'], 2);
-        }
-        unset($row);
+            $debit = (float) ($row['debit'] ?? 0);
+            $credit = (float) ($row['credit'] ?? 0);
 
-        usort($rows, fn ($a, $b) => strcmp($a['account'], $b['account']));
+            $rows[] = [
+                'account' => (string) ($row['account_name'] ?? $row['account']),
+                'debit' => $debit,
+                'credit' => $credit,
+                'balance' => round($debit - $credit, 2),
+            ];
+        }
 
         return $rows;
     }
