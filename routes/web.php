@@ -16,6 +16,7 @@ use App\Http\Controllers\AdminCommercialController;
 use App\Http\Controllers\AdminCommercialDashboardController;
 use App\Http\Controllers\AdminComplianceKycController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ErpNextAccountingTestController;
 use App\Http\Controllers\ErpNextTestController;
 use App\Http\Controllers\AdminDatabaseBackupController;
 use App\Http\Controllers\AdminEnterpriseLicenseController;
@@ -545,6 +546,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', [ErpNextTestController::class, 'create'])->name('create');
             Route::post('/', [ErpNextTestController::class, 'store'])->name('store');
             Route::get('/{erpNextTestInvoice}', [ErpNextTestController::class, 'show'])->name('show');
+        });
+
+        Route::prefix('erpnext-accounting-test')->name('erpnext-accounting-test.')->group(function () {
+            Route::get('/', [ErpNextAccountingTestController::class, 'index'])->name('index');
+            Route::get('/show', [ErpNextAccountingTestController::class, 'show'])->name('show');
         });
     });
 

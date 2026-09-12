@@ -363,6 +363,9 @@
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.erpnext-test.*') ? 'active' : '' }}" href="{{ route('admin.erpnext-test.index') }}">ERPNext Test</a>
                             </li>
+                            <li class="sidebar-item">
+                                <a class="sidebar-link {{ request()->routeIs('admin.erpnext-accounting-test.*') ? 'active' : '' }}" href="{{ route('admin.erpnext-accounting-test.index') }}">Comptabilité ERPNext Test</a>
+                            </li>
 
                             <li class="sidebar-item">
                                 <a class="sidebar-link {{ request()->routeIs('admin.financial-analysis') ? 'active' : '' }}" href="{{ route('admin.financial-analysis') }}">Analyse financière PME</a>
