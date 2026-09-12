@@ -555,6 +555,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/create-entry', [ErpNextAccountingTestController::class, 'storeEntry'])->name('store-entry');
             Route::get('/create-bank-transaction', [ErpNextAccountingTestController::class, 'createBankTransaction'])->name('create-bank-transaction');
             Route::post('/create-bank-transaction', [ErpNextAccountingTestController::class, 'storeBankTransaction'])->name('store-bank-transaction');
+            Route::get('/reconcile-bank-transaction', [ErpNextAccountingTestController::class, 'reconcileBankTransaction'])->name('reconcile-bank-transaction');
+            Route::post('/reconcile-bank-transaction', [ErpNextAccountingTestController::class, 'storeReconcileBankTransaction'])->name('store-reconcile-bank-transaction');
         });
     });
 

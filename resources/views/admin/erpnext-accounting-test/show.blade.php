@@ -124,7 +124,7 @@
                     <a href="{{ route('admin.erpnext-accounting-test.create-bank-transaction') }}" class="btn btn-outline-primary btn-sm">+ Nouvelle ligne de relevé</a>
                 </div>
                 <table class="table table-sm">
-                    <thead><tr><th>Date</th><th>Compte bancaire</th><th>Dépôt</th><th>Retrait</th><th>Description</th><th>Statut</th><th>Montant non alloué</th></tr></thead>
+                    <thead><tr><th>Date</th><th>Compte bancaire</th><th>Dépôt</th><th>Retrait</th><th>Description</th><th>Statut</th><th>Montant non alloué</th><th></th></tr></thead>
                     <tbody>
                         @foreach ($bankTransactions as $tx)
                             <tr>
@@ -141,6 +141,11 @@
                                     @endif
                                 </td>
                                 <td>{{ number_format((float) $tx['unallocated_amount'], 0, ',', ' ') }}</td>
+                                <td>
+                                    @if ($tx['status'] !== 'Reconciled' && (float) $tx['unallocated_amount'] > 0)
+                                        <a href="{{ route('admin.erpnext-accounting-test.reconcile-bank-transaction', ['user_id' => $pme->id, 'bank_transaction_name' => $tx['name'], 'unallocated_amount' => $tx['unallocated_amount']]) }}">Pointer</a>
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>

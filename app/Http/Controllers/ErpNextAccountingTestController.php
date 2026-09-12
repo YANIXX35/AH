@@ -235,4 +235,52 @@ class ErpNextAccountingTestController extends Controller
             'error' => $error,
         ]);
     }
+
+    public function reconcileBankTransaction(Request $request): View
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+            'bank_transaction_name' => ['required', 'string', 'max:255'],
+            'unallocated_amount' => ['required', 'numeric'],
+        ]);
+
+        return view('admin.erpnext-accounting-test.reconcile-bank-transaction', [
+            'userId' => $validated['user_id'],
+            'bankTransactionName' => $validated['bank_transaction_name'],
+            'unallocatedAmount' => $validated['unallocated_amount'],
+        ]);
+    }
+
+    public function storeReconcileBankTransaction(Request $request, ErpNextClient $erpNext): View
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+            'bank_transaction_name' => ['required', 'string', 'max:255'],
+            'voucher_type' => ['required', 'in:Journal Entry,Payment Entry,Sales Invoice'],
+            'voucher_name' => ['required', 'string', 'max:255'],
+            'allocated_amount' => ['required', 'numeric', 'min:0.01'],
+        ]);
+
+        $result = null;
+        $error = null;
+
+        try {
+            $result = $erpNext->reconcileBankTransactionForPme(
+                $validated['bank_transaction_name'],
+                $validated['voucher_type'],
+                $validated['voucher_name'],
+                (float) $validated['allocated_amount']
+            );
+        } catch (\Throwable $e) {
+            $error = $e->getMessage();
+        }
+
+        return view('admin.erpnext-accounting-test.reconcile-bank-transaction', [
+            'userId' => $validated['user_id'],
+            'bankTransactionName' => $validated['bank_transaction_name'],
+            'unallocatedAmount' => $result['unallocated_amount'] ?? $validated['allocated_amount'],
+            'result' => $result,
+            'error' => $error,
+        ]);
+    }
 }
