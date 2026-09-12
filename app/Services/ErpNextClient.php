@@ -745,4 +745,35 @@ class ErpNextClient
 
         return $this->get('/api/resource/'.rawurlencode('Bank Transaction').'?'.$query);
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function reconcileBankTransactionForPme(
+        string $bankTransactionName,
+        string $voucherType,
+        string $voucherName,
+        float $allocatedAmount
+    ): array {
+        $current = $this->get('/api/resource/'.rawurlencode('Bank Transaction').'/'.rawurlencode($bankTransactionName));
+
+        $paymentEntries = (array) ($current['payment_entries'] ?? []);
+        $paymentEntries[] = [
+            'payment_document' => $voucherType,
+            'payment_entry' => $voucherName,
+            'allocated_amount' => $allocatedAmount,
+        ];
+
+        $updated = $this->put('/api/resource/'.rawurlencode('Bank Transaction').'/'.rawurlencode($bankTransactionName), [
+            'payment_entries' => $paymentEntries,
+        ]);
+
+        if ((float) ($updated['unallocated_amount'] ?? 0) <= 0) {
+            $updated = $this->put('/api/resource/'.rawurlencode('Bank Transaction').'/'.rawurlencode($bankTransactionName), [
+                'status' => 'Reconciled',
+            ]);
+        }
+
+        return $updated;
+    }
 }
