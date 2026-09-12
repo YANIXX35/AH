@@ -6,6 +6,15 @@ set -e
 echo "=== 1. Récupération du code ==="
 git pull origin master
 
+# Le script vient potentiellement de se mettre à jour lui-même (git pull peut
+# modifier deploy.sh) : on se relance dans un nouveau processus pour être sûr
+# de lire la version fraîche du fichier plutôt qu'un mélange ancien/nouveau
+# resté en mémoire dans le processus bash actuel.
+if [ -z "$DEPLOY_SH_REEXEC" ]; then
+    export DEPLOY_SH_REEXEC=1
+    exec bash "$0" "$@"
+fi
+
 echo "=== 2. Migrations ==="
 php artisan migrate --force
 
