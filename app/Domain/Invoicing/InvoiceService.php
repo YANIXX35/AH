@@ -95,6 +95,8 @@ class InvoiceService
 
         SyncInvoiceToErpNext::dispatch($invoice);
 
+        \Illuminate\Support\Facades\Log::info('DIAGNOSTIC-ERPNEXT-MARKER-V2: dispatch() de SyncInvoiceToErpNext termine sans exception.');
+
         return $invoice;
     }
 
