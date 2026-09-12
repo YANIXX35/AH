@@ -15,14 +15,16 @@ php artisan route:clear
 php artisan cache:clear
 
 echo "=== 4. Purge de l'OPcache PHP-FPM (plusieurs appels pour couvrir tous les workers) ==="
-TOKEN=$(grep "^OPCACHE_RESET_TOKEN=" .env | cut -d '=' -f2-)
-APP_URL=$(grep "^APP_URL=" .env | cut -d '=' -f2-)
+TOKEN=$( (grep "^OPCACHE_RESET_TOKEN=" .env || true) | cut -d '=' -f2-)
+APP_URL=$( (grep "^APP_URL=" .env || true) | cut -d '=' -f2-)
 
 if [ -z "$TOKEN" ]; then
     echo "ATTENTION : OPCACHE_RESET_TOKEN absent du .env, purge OPcache ignorée."
 else
-    for i in $(seq 1 10); do
+    COUNT=0
+    while [ $COUNT -lt 10 ]; do
         curl -s "${APP_URL}/internal/opcache-reset?token=${TOKEN}" > /dev/null || true
+        COUNT=$((COUNT + 1))
     done
     echo "Purge OPcache envoyée (10 appels)."
 fi
