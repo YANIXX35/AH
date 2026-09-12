@@ -234,6 +234,7 @@ class ErpNextClient
         $incomeAccount = $this->findAccountByNumber($resolvedCompanyName, '7061');
         $taxAccount = $this->findAccountByNumber($resolvedCompanyName, '4431');
         $stockAccount = $this->findAccountByNumber($resolvedCompanyName, '3111');
+        $stockAdjustmentAccount = $this->findAccountByNumber($resolvedCompanyName, '6031');
 
         $expectedWarehouseName = 'Magasin principal - '.$abbr;
         $existingWarehouse = $this->get('/api/resource/Warehouse/'.rawurlencode($expectedWarehouseName));
@@ -276,6 +277,7 @@ class ErpNextClient
 
         $this->put('/api/resource/Company/'.rawurlencode($resolvedCompanyName), [
             'round_off_account' => $incomeAccount,
+            'stock_adjustment_account' => $stockAdjustmentAccount,
         ]);
 
         return [
@@ -775,5 +777,90 @@ class ErpNextClient
         }
 
         return $updated;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function createStockMovementForPme(User $pme, string $itemDescription, float $quantity, float $unitRate, string $direction): array
+    {
+        $itemCode = $this->findOrCreateItem($itemDescription);
+
+        $item = [
+            'item_code' => $itemCode,
+            'qty' => $quantity,
+            'basic_rate' => $unitRate,
+        ];
+
+        if ($direction === 'in') {
+            $item['t_warehouse'] = $pme->erpnext_warehouse;
+        } else {
+            $item['s_warehouse'] = $pme->erpnext_warehouse;
+        }
+
+        $created = $this->post('/api/resource/'.rawurlencode('Stock Entry'), [
+            'stock_entry_type' => $direction === 'in' ? 'Material Receipt' : 'Material Issue',
+            'company' => $pme->erpnext_company_name,
+            'items' => [$item],
+        ]);
+
+        $stockEntryName = (string) ($created['name'] ?? '');
+        if ($stockEntryName === '') {
+            throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom de mouvement de stock après création.');
+        }
+
+        return $this->put('/api/resource/'.rawurlencode('Stock Entry').'/'.rawurlencode($stockEntryName), [
+            'docstatus' => 1,
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function adjustStockForPme(User $pme, string $itemDescription, float $newQuantity): array
+    {
+        $itemCode = $this->findOrCreateItem($itemDescription);
+
+        $created = $this->post('/api/resource/'.rawurlencode('Stock Reconciliation'), [
+            'company' => $pme->erpnext_company_name,
+            'purpose' => 'Stock Reconciliation',
+            'items' => [
+                [
+                    'item_code' => $itemCode,
+                    'warehouse' => $pme->erpnext_warehouse,
+                    'qty' => $newQuantity,
+                ],
+            ],
+        ]);
+
+        $stockReconciliationName = (string) ($created['name'] ?? '');
+        if ($stockReconciliationName === '') {
+            throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom d\'ajustement de stock après création.');
+        }
+
+        return $this->put('/api/resource/'.rawurlencode('Stock Reconciliation').'/'.rawurlencode($stockReconciliationName), [
+            'docstatus' => 1,
+        ]);
+    }
+
+    /**
+     * @return array<int, array{item_code: string, warehouse: string, actual_qty: float}>
+     */
+    public function getStockLevelsForCompany(User $pme): array
+    {
+        $query = http_build_query([
+            'filters' => json_encode([['warehouse', '=', $pme->erpnext_warehouse]]),
+            'fields' => json_encode(['item_code', 'warehouse', 'actual_qty']),
+            'limit_page_length' => 0,
+            'order_by' => 'item_code asc',
+        ]);
+
+        $rows = $this->get('/api/resource/Bin?'.$query);
+
+        return array_map(fn ($row) => [
+            'item_code' => (string) $row['item_code'],
+            'warehouse' => (string) $row['warehouse'],
+            'actual_qty' => (float) $row['actual_qty'],
+        ], $rows);
     }
 }
