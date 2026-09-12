@@ -17,6 +17,7 @@ use App\Http\Controllers\AdminCommercialDashboardController;
 use App\Http\Controllers\AdminComplianceKycController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ErpNextAccountingTestController;
+use App\Http\Controllers\ErpNextStockTestController;
 use App\Http\Controllers\ErpNextTestController;
 use App\Http\Controllers\AdminDatabaseBackupController;
 use App\Http\Controllers\AdminEnterpriseLicenseController;
@@ -557,6 +558,13 @@ Route::middleware('auth')->group(function () {
             Route::post('/create-bank-transaction', [ErpNextAccountingTestController::class, 'storeBankTransaction'])->name('store-bank-transaction');
             Route::get('/reconcile-bank-transaction', [ErpNextAccountingTestController::class, 'reconcileBankTransaction'])->name('reconcile-bank-transaction');
             Route::post('/reconcile-bank-transaction', [ErpNextAccountingTestController::class, 'storeReconcileBankTransaction'])->name('store-reconcile-bank-transaction');
+        });
+
+        Route::prefix('erpnext-stock-test')->name('erpnext-stock-test.')->group(function () {
+            Route::get('/', [ErpNextStockTestController::class, 'index'])->name('index');
+            Route::get('/show', [ErpNextStockTestController::class, 'show'])->name('show');
+            Route::get('/create-movement', [ErpNextStockTestController::class, 'createMovement'])->name('create-movement');
+            Route::post('/create-movement', [ErpNextStockTestController::class, 'storeMovement'])->name('store-movement');
         });
     });
 
