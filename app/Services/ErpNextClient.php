@@ -84,6 +84,28 @@ class ErpNextClient
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
+    private function postForm(string $path, array $payload): array
+    {
+        try {
+            $response = Http::withHeaders(['Authorization' => $this->authHeader()])
+                ->asForm()
+                ->timeout($this->timeout())
+                ->post($this->baseUrl().$path, $payload);
+        } catch (\Throwable $exception) {
+            throw new ErpNextApiException('ERPNext injoignable: '.$exception->getMessage());
+        }
+
+        if ($response->failed()) {
+            throw new ErpNextApiException($this->extractErrorMessage($response));
+        }
+
+        return (array) ($response->json('message') ?? []);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
     private function put(string $path, array $payload): array
     {
         try {
@@ -490,5 +512,87 @@ class ErpNextClient
         $this->put('/api/resource/Sales Invoice/'.rawurlencode($erpNextInvoiceName), [
             'docstatus' => 2,
         ]);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getChartOfAccountsForCompany(string $company): array
+    {
+        $query = http_build_query([
+            'filters' => json_encode([['company', '=', $company]]),
+            'fields' => json_encode(['name', 'account_name', 'is_group', 'root_type', 'parent_account']),
+            'limit_page_length' => 0,
+            'order_by' => 'name asc',
+        ]);
+
+        return $this->get('/api/resource/Account?'.$query);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getGeneralLedgerForCompany(string $company, string $fromDate, string $toDate): array
+    {
+        $query = http_build_query([
+            'filters' => json_encode([
+                ['company', '=', $company],
+                ['posting_date', '>=', $fromDate],
+                ['posting_date', '<=', $toDate],
+                ['is_cancelled', '=', 0],
+            ]),
+            'fields' => json_encode(['account', 'posting_date', 'debit', 'credit', 'voucher_type', 'voucher_no', 'remarks']),
+            'limit_page_length' => 0,
+            'order_by' => 'posting_date asc',
+        ]);
+
+        return $this->get('/api/resource/'.rawurlencode('GL Entry').'?'.$query);
+    }
+
+    /**
+     * @return array<int, array{account: string, debit: float, credit: float, balance: float}>
+     */
+    public function getTrialBalanceForCompany(string $company, string $fromDate, string $toDate): array
+    {
+        $entries = $this->getGeneralLedgerForCompany($company, $fromDate, $toDate);
+
+        $totals = [];
+        foreach ($entries as $entry) {
+            $account = (string) $entry['account'];
+            if (! isset($totals[$account])) {
+                $totals[$account] = ['account' => $account, 'debit' => 0.0, 'credit' => 0.0];
+            }
+            $totals[$account]['debit'] += (float) ($entry['debit'] ?? 0);
+            $totals[$account]['credit'] += (float) ($entry['credit'] ?? 0);
+        }
+
+        $rows = array_values($totals);
+        foreach ($rows as &$row) {
+            $row['balance'] = round($row['debit'] - $row['credit'], 2);
+        }
+        unset($row);
+
+        usort($rows, fn ($a, $b) => strcmp($a['account'], $b['account']));
+
+        return $rows;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getFinancialStatementForCompany(string $company, string $reportName, string $fromDate, string $toDate): array
+    {
+        $result = $this->postForm('/api/method/frappe.desk.query_report.run', [
+            'report_name' => $reportName,
+            'filters' => json_encode([
+                'company' => $company,
+                'filter_based_on' => 'Date Range',
+                'period_start_date' => $fromDate,
+                'period_end_date' => $toDate,
+                'periodicity' => 'Yearly',
+            ]),
+        ]);
+
+        return (array) ($result['result'] ?? []);
     }
 }
