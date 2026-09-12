@@ -36,8 +36,6 @@ class InvoiceService
         ?string $notes = null,
         string $currency = 'XOF'
     ): Invoice {
-        \Illuminate\Support\Facades\Log::info('DIAGNOSTIC-ERPNEXT-MARKER-V2: createInvoice() nouvelle version en cours d\'execution.');
-
         $invoice = DB::transaction(function () use (
             $workspaceUserId, $actorUserId, $clientName, $clientContact, $clientAddress,
             $clientTaxId, $issueDate, $dueDate, $items, $taxRate, $notes, $currency
@@ -94,8 +92,6 @@ class InvoiceService
         });
 
         SyncInvoiceToErpNext::dispatch($invoice);
-
-        \Illuminate\Support\Facades\Log::info('DIAGNOSTIC-ERPNEXT-MARKER-V2: dispatch() de SyncInvoiceToErpNext termine sans exception.');
 
         return $invoice;
     }

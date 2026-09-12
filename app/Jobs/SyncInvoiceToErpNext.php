@@ -21,8 +21,6 @@ class SyncInvoiceToErpNext implements ShouldQueue
 
     public function handle(ErpNextClient $erpNext): void
     {
-        \Illuminate\Support\Facades\Log::info('DIAGNOSTIC-ERPNEXT-MARKER-V2: SyncInvoiceToErpNext::handle() execute pour facture #'.$this->invoice->id);
-
         $sync = InvoiceErpNextSync::firstOrCreate(
             ['invoice_id' => $this->invoice->id],
             ['status' => 'pending']
