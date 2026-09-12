@@ -595,4 +595,51 @@ class ErpNextClient
 
         return (array) ($result['result'] ?? []);
     }
+
+    /**
+     * @param  array<int, array{account_number: string, debit: float, credit: float}>  $lines
+     * @return array<string, mixed>
+     */
+    public function createJournalEntryForPme(
+        User $pme,
+        string $voucherType,
+        string $postingDate,
+        array $lines,
+        ?string $referenceNumber = null,
+        ?string $referenceDate = null
+    ): array {
+        $accounts = [];
+        foreach ($lines as $line) {
+            $resolvedAccount = $this->findAccountByNumber($pme->erpnext_company_name, $line['account_number']);
+            $accounts[] = [
+                'account' => $resolvedAccount,
+                'debit_in_account_currency' => (float) $line['debit'],
+                'credit_in_account_currency' => (float) $line['credit'],
+            ];
+        }
+
+        $payload = [
+            'company' => $pme->erpnext_company_name,
+            'voucher_type' => $voucherType,
+            'posting_date' => $postingDate,
+            'accounts' => $accounts,
+        ];
+
+        if (! empty($referenceNumber)) {
+            $payload['cheque_no'] = $referenceNumber;
+        }
+        if (! empty($referenceDate)) {
+            $payload['cheque_date'] = $referenceDate;
+        }
+
+        $created = $this->post('/api/resource/'.rawurlencode('Journal Entry'), $payload);
+        $journalEntryName = (string) ($created['name'] ?? '');
+        if ($journalEntryName === '') {
+            throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom d\'écriture après création.');
+        }
+
+        return $this->put('/api/resource/'.rawurlencode('Journal Entry').'/'.rawurlencode($journalEntryName), [
+            'docstatus' => 1,
+        ]);
+    }
 }
