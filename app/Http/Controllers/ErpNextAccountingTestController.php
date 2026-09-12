@@ -94,4 +94,69 @@ class ErpNextAccountingTestController extends Controller
             'profitAndLoss', 'profitAndLossError'
         ));
     }
+
+    public function createEntry(Request $request, ErpNextClient $erpNext): View
+    {
+        $pmes = User::whereNotNull('erpnext_company_name')->orderBy('company_name')->get();
+
+        $accounts = [];
+        $selectedUserId = $request->query('user_id');
+        if ($selectedUserId) {
+            $pme = User::find($selectedUserId);
+            if ($pme && $pme->erpnext_company_name) {
+                try {
+                    $accounts = $erpNext->getChartOfAccountsForCompany($pme->erpnext_company_name);
+                } catch (\Throwable) {
+                    $accounts = [];
+                }
+            }
+        }
+
+        return view('admin.erpnext-accounting-test.create-entry', [
+            'pmes' => $pmes,
+            'accounts' => $accounts,
+            'selectedUserId' => $selectedUserId,
+        ]);
+    }
+
+    public function storeEntry(Request $request, ErpNextClient $erpNext): View
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+            'voucher_type' => ['required', 'string', 'max:255'],
+            'posting_date' => ['required', 'date'],
+            'reference_number' => ['nullable', 'string', 'max:255'],
+            'reference_date' => ['nullable', 'date'],
+            'lines' => ['required', 'array', 'min:2'],
+            'lines.*.account_number' => ['required', 'string', 'max:255'],
+            'lines.*.debit' => ['required', 'numeric', 'min:0'],
+            'lines.*.credit' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $pme = User::findOrFail($validated['user_id']);
+
+        $result = null;
+        $error = null;
+
+        try {
+            $result = $erpNext->createJournalEntryForPme(
+                $pme,
+                $validated['voucher_type'],
+                $validated['posting_date'],
+                $validated['lines'],
+                $validated['reference_number'] ?? null,
+                $validated['reference_date'] ?? null
+            );
+        } catch (\Throwable $e) {
+            $error = $e->getMessage();
+        }
+
+        return view('admin.erpnext-accounting-test.create-entry', [
+            'pmes' => User::whereNotNull('erpnext_company_name')->orderBy('company_name')->get(),
+            'accounts' => [],
+            'selectedUserId' => $validated['user_id'],
+            'result' => $result,
+            'error' => $error,
+        ]);
+    }
 }

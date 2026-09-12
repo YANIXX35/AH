@@ -5,7 +5,10 @@
 
 @section('content')
 <div class="container-fluid py-4">
-    <h1 class="h3 mb-3">Comptabilité ERPNext — Test</h1>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Comptabilité ERPNext — Test</h1>
+        <a href="{{ route('admin.erpnext-accounting-test.create-entry') }}" class="btn btn-outline-primary">+ Nouvelle écriture</a>
+    </div>
 
     <form method="GET" action="{{ route('admin.erpnext-accounting-test.show') }}">
         <div class="row g-3 mb-3">

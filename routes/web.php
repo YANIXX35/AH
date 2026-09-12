@@ -551,6 +551,8 @@ Route::middleware('auth')->group(function () {
         Route::prefix('erpnext-accounting-test')->name('erpnext-accounting-test.')->group(function () {
             Route::get('/', [ErpNextAccountingTestController::class, 'index'])->name('index');
             Route::get('/show', [ErpNextAccountingTestController::class, 'show'])->name('show');
+            Route::get('/create-entry', [ErpNextAccountingTestController::class, 'createEntry'])->name('create-entry');
+            Route::post('/create-entry', [ErpNextAccountingTestController::class, 'storeEntry'])->name('store-entry');
         });
     });
 
