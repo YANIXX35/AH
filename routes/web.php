@@ -553,6 +553,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/show', [ErpNextAccountingTestController::class, 'show'])->name('show');
             Route::get('/create-entry', [ErpNextAccountingTestController::class, 'createEntry'])->name('create-entry');
             Route::post('/create-entry', [ErpNextAccountingTestController::class, 'storeEntry'])->name('store-entry');
+            Route::get('/create-bank-transaction', [ErpNextAccountingTestController::class, 'createBankTransaction'])->name('create-bank-transaction');
+            Route::post('/create-bank-transaction', [ErpNextAccountingTestController::class, 'storeBankTransaction'])->name('store-bank-transaction');
         });
     });
 

@@ -16,6 +16,7 @@
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tb" type="button">Balance générale</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-bs" type="button">Bilan</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-pl" type="button">Compte de résultat</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-bank" type="button">Rapprochement bancaire</button></li>
     </ul>
 
     <div class="tab-content">
@@ -108,6 +109,38 @@
                             <tr>
                                 <td style="padding-left: {{ ($row['indent'] ?? 0) * 20 }}px">{{ $row['account_name'] ?? $row['account'] ?? '' }}</td>
                                 <td>{{ isset($row['total']) ? number_format((float) $row['total'], 0, ',', ' ') : '' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+
+        <div class="tab-pane fade" id="tab-bank">
+            @if ($bankTransactionsError)
+                <div class="alert alert-danger">{{ $bankTransactionsError }}</div>
+            @else
+                <div class="mb-2">
+                    <a href="{{ route('admin.erpnext-accounting-test.create-bank-transaction') }}" class="btn btn-outline-primary btn-sm">+ Nouvelle ligne de relevé</a>
+                </div>
+                <table class="table table-sm">
+                    <thead><tr><th>Date</th><th>Compte bancaire</th><th>Dépôt</th><th>Retrait</th><th>Description</th><th>Statut</th><th>Montant non alloué</th></tr></thead>
+                    <tbody>
+                        @foreach ($bankTransactions as $tx)
+                            <tr>
+                                <td>{{ $tx['date'] }}</td>
+                                <td>{{ $tx['bank_account'] }}</td>
+                                <td>{{ number_format((float) $tx['deposit'], 0, ',', ' ') }}</td>
+                                <td>{{ number_format((float) $tx['withdrawal'], 0, ',', ' ') }}</td>
+                                <td>{{ $tx['description'] }}</td>
+                                <td>
+                                    @if ($tx['status'] === 'Reconciled')
+                                        <span class="badge bg-success">{{ $tx['status'] }}</span>
+                                    @else
+                                        <span class="badge bg-secondary">{{ $tx['status'] }}</span>
+                                    @endif
+                                </td>
+                                <td>{{ number_format((float) $tx['unallocated_amount'], 0, ',', ' ') }}</td>
                             </tr>
                         @endforeach
                     </tbody>
