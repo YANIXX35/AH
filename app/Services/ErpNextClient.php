@@ -652,4 +652,97 @@ class ErpNextClient
             'docstatus' => 1,
         ]);
     }
+
+    private function findOrCreateBankAccountForPme(User $pme, string $resolvedTreasuryAccount): string
+    {
+        $query = http_build_query([
+            'filters' => json_encode([
+                ['company', '=', $pme->erpnext_company_name],
+                ['account', '=', $resolvedTreasuryAccount],
+            ]),
+            'fields' => json_encode(['name']),
+            'limit_page_length' => 1,
+        ]);
+
+        $existing = $this->get('/api/resource/'.rawurlencode('Bank Account').'?'.$query);
+        if (! empty($existing[0]['name'])) {
+            return (string) $existing[0]['name'];
+        }
+
+        $bankQuery = http_build_query([
+            'filters' => json_encode([['bank_name', '=', 'Banque interne']]),
+            'fields' => json_encode(['name']),
+            'limit_page_length' => 1,
+        ]);
+        $existingBank = $this->get('/api/resource/Bank?'.$bankQuery);
+        if (empty($existingBank[0]['name'])) {
+            $this->post('/api/resource/Bank', ['bank_name' => 'Banque interne']);
+        }
+
+        $created = $this->post('/api/resource/'.rawurlencode('Bank Account'), [
+            'account_name' => 'Compte '.$resolvedTreasuryAccount,
+            'bank' => 'Banque interne',
+            'company' => $pme->erpnext_company_name,
+            'account' => $resolvedTreasuryAccount,
+            'is_company_account' => 1,
+        ]);
+
+        $bankAccountName = (string) ($created['name'] ?? '');
+        if ($bankAccountName === '') {
+            throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom de compte bancaire après création.');
+        }
+
+        return $bankAccountName;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function createBankTransactionForPme(
+        User $pme,
+        string $treasuryAccountNumber,
+        string $date,
+        float $amount,
+        string $direction,
+        string $description,
+        ?string $referenceNumber = null
+    ): array {
+        $resolvedTreasuryAccount = $this->findAccountByNumber($pme->erpnext_company_name, $treasuryAccountNumber);
+        $bankAccount = $this->findOrCreateBankAccountForPme($pme, $resolvedTreasuryAccount);
+
+        $payload = [
+            'date' => $date,
+            'bank_account' => $bankAccount,
+            'deposit' => $direction === 'deposit' ? $amount : 0,
+            'withdrawal' => $direction === 'withdrawal' ? $amount : 0,
+            'description' => $description,
+            'currency' => 'XOF',
+        ];
+
+        if (! empty($referenceNumber)) {
+            $payload['reference_number'] = $referenceNumber;
+        }
+
+        $created = $this->post('/api/resource/'.rawurlencode('Bank Transaction'), $payload);
+        if (empty($created['name'])) {
+            throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom de transaction bancaire après création.');
+        }
+
+        return $created;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getBankTransactionsForCompany(string $company): array
+    {
+        $query = http_build_query([
+            'filters' => json_encode([['company', '=', $company]]),
+            'fields' => json_encode(['name', 'status', 'bank_account', 'date', 'deposit', 'withdrawal', 'description', 'unallocated_amount']),
+            'limit_page_length' => 0,
+            'order_by' => 'date desc',
+        ]);
+
+        return $this->get('/api/resource/'.rawurlencode('Bank Transaction').'?'.$query);
+    }
 }
