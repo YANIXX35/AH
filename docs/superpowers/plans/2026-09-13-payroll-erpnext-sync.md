@@ -12,7 +12,7 @@
 
 - The job must never let an exception propagate — production runs `QUEUE_CONNECTION=sync`, so an uncaught exception here would break the real payroll validation request for a real user. Every `\Throwable` is caught and recorded as `failed`, exactly like `SyncInvoiceToErpNext::handle()` and `SyncStockMovementToErpNext::handle()`.
 - If the PME has no `erpnext_company_name`, mark the sync `failed` with a clear message and return — never attempt the API call.
-- The accrual entry is Débit `661` / Crédit `422`, amount = `$payroll->total_gross` if `> 0`, else `$payroll->total_net` (same fallback `PayrollController::sync()` already uses for the local `AccountingEntry`, at `app/Http/Controllers/PayrollController.php:166`).
+- The accrual entry is Débit `6611` (leaf account "Appointements salaires et commissions" under the `661` group) / Crédit `422`, amount = `$payroll->total_gross` if `> 0`, else `$payroll->total_net` (same fallback `PayrollController::sync()` already uses for the local `AccountingEntry`, at `app/Http/Controllers/PayrollController.php:166`). Note: `661` itself is a Group Account on ERPNext's imported SYSCOHADA chart (`is_group: 1`) and cannot be posted to directly — verified live, `6611` is the correct leaf.
 - The payment entry is Débit `422` / Crédit `5711`, amount = `$payroll->total_net`. The treasury credit account is always `5711` regardless of `payment_method` — same simplification already used by `ErpNextClient::recordPaymentForPme()` for Invoicing.
 - Do not modify `PayrollRun`, `PayrollItem`, the gross/CNPS/ITS/net calculation in `PayrollController::store()`, or the local `AccountingEntry`/`TreasuryTransaction` creation in `sync()` — only add a dispatch call after the existing transaction.
 - Do not modify `ErpNextClient` — `createJournalEntryForPme()` already exists and is already verified against the real ERPNext trial.
@@ -214,7 +214,7 @@ class SyncPayrollToErpNext implements ShouldQueue
                 'Journal Entry',
                 $postingDate,
                 [
-                    ['account_number' => '661', 'debit' => $grossAmount, 'credit' => 0],
+                    ['account_number' => '6611', 'debit' => $grossAmount, 'credit' => 0],
                     ['account_number' => '422', 'debit' => 0, 'credit' => $grossAmount],
                 ]
             );
