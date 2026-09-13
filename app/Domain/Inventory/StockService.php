@@ -2,6 +2,7 @@
 
 namespace App\Domain\Inventory;
 
+use App\Jobs\SyncStockMovementToErpNext;
 use App\Models\StockMovement;
 use App\Models\StockProduct;
 use App\Services\TreasuryAudit;
@@ -121,7 +122,7 @@ class StockService
             throw new \InvalidArgumentException('Type de mouvement invalide.');
         }
 
-        return DB::transaction(function () use ($product, $type, $quantity, $unitCost, $date, $reason, $notes, $actorUserId) {
+        $movement = DB::transaction(function () use ($product, $type, $quantity, $unitCost, $date, $reason, $notes, $actorUserId) {
             $locked = StockProduct::where('id', $product->id)->lockForUpdate()->firstOrFail();
 
             $currentQty = (float) $locked->quantity_on_hand;
@@ -188,5 +189,9 @@ class StockService
 
             return $movement;
         });
+
+        SyncStockMovementToErpNext::dispatch($movement);
+
+        return $movement;
     }
 }
