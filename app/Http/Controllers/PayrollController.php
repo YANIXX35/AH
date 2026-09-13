@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SyncPayrollToErpNext;
 use App\Models\AccountingEntry;
 use App\Models\PayrollItem;
 use App\Models\PayrollRun;
@@ -186,6 +187,8 @@ class PayrollController extends Controller
             $payroll->synced_at = now();
             $payroll->save();
         });
+
+        SyncPayrollToErpNext::dispatch($payroll);
 
         return redirect()->back()->with('status', 'Lot de paie validé et synchronisé en Comptabilité & Trésorerie !');
     }
