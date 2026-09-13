@@ -83,6 +83,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StockMovementErpNextSync extends Model
 {
+    protected $table = 'stock_movement_erpnext_syncs';
+
     protected $fillable = [
         'stock_movement_id',
         'status',
