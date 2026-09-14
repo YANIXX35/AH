@@ -9,6 +9,7 @@ use App\Models\InvoicePayment;
 use App\Models\User;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ErpNextClient
@@ -123,6 +124,28 @@ class ErpNextClient
         return (array) ($response->json('data') ?? []);
     }
 
+    /**
+     * @param  array<string, mixed>  $fields
+     * @return array<string, mixed>
+     */
+    private function uploadFile(string $path, string $fileContents, string $fileName, array $fields): array
+    {
+        try {
+            $response = Http::withHeaders(['Authorization' => $this->authHeader()])
+                ->timeout($this->timeout())
+                ->attach('file', $fileContents, $fileName)
+                ->post($this->baseUrl().$path, $fields);
+        } catch (\Throwable $exception) {
+            throw new ErpNextApiException('ERPNext injoignable: '.$exception->getMessage());
+        }
+
+        if ($response->failed()) {
+            throw new ErpNextApiException($this->extractErrorMessage($response));
+        }
+
+        return (array) ($response->json('message') ?? []);
+    }
+
     private function extractErrorMessage(Response $response): string
     {
         $message = $response->json('exception') ?? $response->json('message') ?? $response->json('_server_messages');
@@ -132,6 +155,24 @@ class ErpNextClient
         }
 
         return 'ERPNext a répondu avec une erreur HTTP '.$response->status().'.';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function uploadFileForPme(User $pme, string $localDisk, string $storedPath, string $originalName): array
+    {
+        $fileContents = Storage::disk($localDisk)->get($storedPath);
+
+        if ($fileContents === null) {
+            throw new ErpNextApiException("Fichier introuvable sur le disque local: $storedPath");
+        }
+
+        return $this->uploadFile('/api/method/upload_file', $fileContents, $originalName, [
+            'doctype' => 'Company',
+            'docname' => $pme->erpnext_company_name,
+            'is_private' => 1,
+        ]);
     }
 
     public function findOrCreateCustomer(User $pme): string
