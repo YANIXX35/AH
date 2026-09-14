@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\UsesClientWorkspace;
 use App\Http\Controllers\Concerns\ValidatesPlanComptableAccount;
+use App\Jobs\SyncAccountingDocumentToErpNext;
 use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
 use App\Models\TreasuryTransaction;
@@ -83,6 +84,8 @@ class AccountingDocumentController extends Controller
         ]);
 
         $this->createEntryFromDocument($document);
+
+        SyncAccountingDocumentToErpNext::dispatch($document);
 
         return redirect()->route('accounting.documents')->with('status', 'Document validé et écriture générée.');
     }
