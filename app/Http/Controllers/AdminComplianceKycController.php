@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SyncKycDocumentsToErpNext;
 use App\Models\KycDocument;
 use App\Models\User;
 use App\Services\AdminAuditTrailService;
@@ -117,6 +118,8 @@ class AdminComplianceKycController extends Controller
                 'reviewed_by_user_id' => $request->user()?->id,
                 'review_note' => (string) $request->input('note', ''),
             ]);
+
+        SyncKycDocumentsToErpNext::dispatch($user);
 
         $this->auditTrail->log(
             'kyc.approve',
