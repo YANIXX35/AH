@@ -32,6 +32,28 @@
     </form>
 
     @if (! empty($accounts))
+        <div class="mb-4">
+            <label class="form-label">Comptes disponibles (mêmes comptes que le Plan comptable, groupes exclus)</label>
+            <div style="max-height: 320px; overflow-y: auto;">
+                <table class="table table-sm">
+                    <thead>
+                        <tr><th>Compte</th><th>Type racine</th><th>Groupe ?</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($accounts as $account)
+                            @if (! $account['is_group'])
+                                <tr>
+                                    <td>{{ $account['account_name'] }}</td>
+                                    <td>{{ $account['root_type'] }}</td>
+                                    <td>{{ $account['is_group'] ? 'Oui' : 'Non' }}</td>
+                                </tr>
+                            @endif
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <form method="POST" action="{{ route('admin.erpnext-accounting-test.store-entry') }}">
             @csrf
             <input type="hidden" name="user_id" value="{{ $selectedUserId }}">
