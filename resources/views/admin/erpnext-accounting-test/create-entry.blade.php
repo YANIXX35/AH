@@ -89,9 +89,7 @@
                         <select class="form-select" name="lines[0][account_number]" required>
                             <option value="">— Compte —</option>
                             @foreach ($accounts as $account)
-                                @if (! $account['is_group'])
-                                    <option value="{{ \Illuminate\Support\Str::before($account['account_name'], '-') }}">{{ $account['account_name'] }}</option>
-                                @endif
+                                <option value="{{ \Illuminate\Support\Str::before($account['account_name'], '-') }}" {{ $account['is_group'] ? 'disabled' : '' }}>{{ $account['account_name'] }}{{ $account['is_group'] ? ' (groupe — non sélectionnable)' : '' }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -103,9 +101,7 @@
                         <select class="form-select" name="lines[1][account_number]" required>
                             <option value="">— Compte —</option>
                             @foreach ($accounts as $account)
-                                @if (! $account['is_group'])
-                                    <option value="{{ \Illuminate\Support\Str::before($account['account_name'], '-') }}">{{ $account['account_name'] }}</option>
-                                @endif
+                                <option value="{{ \Illuminate\Support\Str::before($account['account_name'], '-') }}" {{ $account['is_group'] ? 'disabled' : '' }}>{{ $account['account_name'] }}{{ $account['is_group'] ? ' (groupe — non sélectionnable)' : '' }}</option>
                             @endforeach
                         </select>
                     </div>
