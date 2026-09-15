@@ -13,7 +13,7 @@
 - No local creation forms for members, cotisations, or events — this is a read-only mirror of ERPNext, matching the Stock/Invoicing/Accounting pattern.
 - Members are **not** stored locally — always a live `GET` to ERPNext at page-render time (low volume, no background sync needed).
 - Isolate each PME's members via a per-PME `Customer Group` named `"Membre Club Sportif - {abbr}"` (same abbreviation convention as `"Magasin principal - {abbr}"` already used in `provisionCompanyForPme()`).
-- Isolate each PME's events via `Event.reference_doctype = "Company"` / `Event.reference_name = <the PME's erpnext_company_name>`.
+- Isolate each PME's events via `Event.reference_doctype = "Company"` / `Event.reference_docname = <the PME's erpnext_company_name>`.
 - Cotisations are ordinary `Invoice` rows created by the **existing, unmodified** Invoicing webhook flow — only tag them via a new nullable `erpnext_subscription` column, never duplicate the creation logic.
 - Reuse the existing shared webhook token (`config('services.erpnext.webhook_token')`) and the same CSRF-exemption mechanism already used for the 3 existing webhooks.
 - Do not modify `InvoiceService`, `StockService`, `AccountingController`, or anything already shipped this session beyond the one small addition to `ErpNextInvoicingWebhookController::handleCreation()`.
@@ -462,7 +462,7 @@ class ErpNextSportEventWebhookController extends Controller
             return response()->json(['status' => 'ignored', 'reason' => 'événement non rattaché à une Company'], 200);
         }
 
-        $company = (string) ($document['reference_name'] ?? '');
+        $company = (string) ($document['reference_docname'] ?? '');
         $pme = User::where('erpnext_company_name', $company)->first();
 
         if (! $pme) {
@@ -551,7 +551,7 @@ php artisan tinker --execute="
     'starts_on' => now()->addDays(3)->toDateTimeString(),
     'event_type' => 'Public',
     'reference_doctype' => 'Company',
-    'reference_name' => \$pme->erpnext_company_name,
+    'reference_docname' => \$pme->erpnext_company_name,
 ]);
 \$name = \$created['name'];
 echo 'NAME='.\$name.PHP_EOL;
@@ -1168,7 +1168,7 @@ Expected: output ends with `=== Déploiement terminé ===`. This runs `php artis
 1. Confirm the "Club Sportif" sidebar entry appears and `/sport` loads with its 3 tiles.
 2. On ERPNext, create a `Customer` directly in the group `"Membre Club Sportif - NOT69"` (find-or-create it first by visiting `/sport/membres` once, which calls `findOrCreateSportMemberGroup()`) → confirm it appears on `/sport/membres`, and confirm the same member does **not** appear when checking a different PME's `/sport/membres`.
 3. On ERPNext, create a `Subscription Plan` and a `Subscription` for that member (reusing the item/plan mechanics verified during design) → wait for ERPNext to generate (or manually trigger, if ERPNext's UI offers a "Generate Invoice" action on the Subscription) a real `Sales Invoice` with a populated `subscription` field → confirm it appears on both `/invoicing` and `/sport/cotisations`.
-4. On ERPNext, create an `Event` with `reference_doctype: Company`, `reference_name: <NotifyMails' company>` → confirm it appears on `/sport/evenements` within a few seconds, and not on another PME's events page.
+4. On ERPNext, create an `Event` with `reference_doctype: Company`, `reference_docname: <NotifyMails' company>` → confirm it appears on `/sport/evenements` within a few seconds, and not on another PME's events page.
 5. Test the webhook security guard: `curl -X POST https://sitiame-capital.com/webhooks/erpnext/sport-event -H "Content-Type: application/json" -d '{"doctype":"Event","name":"x"}'` (no token) → expect `403`.
 6. Try creating a member from PME360 (`/sport/membres`, the "Nouveau membre" form) → confirm it appears immediately in the same list (no webhook involved, since Task 6's `members()` reads live) and that it also appears as a real `Customer` on ERPNext in the right group.
 
@@ -1178,7 +1178,7 @@ No commit for this task (deployment/verification only).
 
 ## Self-Review Notes
 
-**Spec coverage:** All decisions covered — no local storage for members with live reads scoped by a per-PME `Customer Group` (Task 1, Task 6), cotisations reusing the unmodified Invoicing webhook plus the new tagging column (Task 3, Task 5), events via a dedicated webhook scoped by `reference_doctype`/`reference_name` = Company (Task 2, Task 4), the new `/sport` module with its 3 sub-pages (Task 6), sidebar entry (Task 7). All 6 manual tests from the spec are folded into Task 9 Step 3. The spec's optional "creation of members possibly from PME360 too" note is resolved concretely: `SportController::storeMember()` calls `ErpNextClient::createSportMember()` directly (Task 6), matching the spec's "à trancher lors du plan, pas bloquant" — resolved as "yes, PME360 can create members too, but always by writing straight to ERPNext, never to a local table," consistent with every other module this session.
+**Spec coverage:** All decisions covered — no local storage for members with live reads scoped by a per-PME `Customer Group` (Task 1, Task 6), cotisations reusing the unmodified Invoicing webhook plus the new tagging column (Task 3, Task 5), events via a dedicated webhook scoped by `reference_doctype`/`reference_docname` = Company (Task 2, Task 4), the new `/sport` module with its 3 sub-pages (Task 6), sidebar entry (Task 7). All 6 manual tests from the spec are folded into Task 9 Step 3. The spec's optional "creation of members possibly from PME360 too" note is resolved concretely: `SportController::storeMember()` calls `ErpNextClient::createSportMember()` directly (Task 6), matching the spec's "à trancher lors du plan, pas bloquant" — resolved as "yes, PME360 can create members too, but always by writing straight to ERPNext, never to a local table," consistent with every other module this session.
 
 **Placeholder scan:** No TBD/TODO; every step has literal code or literal commands.
 

@@ -55,6 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhooks/erpnext/stock-movement',
             'webhooks/erpnext/invoicing',
             'webhooks/erpnext/accounting-entry',
+            'webhooks/erpnext/sport-event',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

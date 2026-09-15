@@ -11,8 +11,8 @@ Contrairement à tous les sous-projets précédents (Stock, Facturation, Comptab
 - **Le module "Non-Profit" natif d'ERPNext (`Member`, `Membership`, `Chapter`, `Donor`) n'est pas réellement installé** sur cette instance — même limitation que pour le module RH/Paie découverte précédemment (`Error: No module named 'frappe.core.doctype.member'`, malgré le doctype visible dans les métadonnées). Écarté.
 - **`Customer`** (déjà utilisé pour la Facturation) fonctionne parfaitement comme substitut pour un "membre" — testé implicitement via `findOrCreateCustomer()` déjà existant, réutilisable tel quel.
 - **`Subscription` + `Subscription Plan`** fonctionnent réellement (testés en direct : création d'un plan à 5000 XOF/mois, puis d'une souscription liée à un client, statut `Active` confirmé). ERPNext génère automatiquement de vraies `Sales Invoice` selon le calendrier de facturation défini — **ces factures sont déjà captées par le webhook Facturation existant** (`ErpNextInvoicingWebhookController`), sans rien construire de neuf pour ce flux.
-- **`Event`** (doctype natif du cœur Frappe, pas d'une app optionnelle) fonctionne réellement — testé en direct, création réussie (`EV00001`). Porte un champ `reference_doctype`/`reference_name` générique, permettant de lier chaque événement à un document quelconque.
-- **Problème d'isolement identifié et résolu** : contrairement au Stock/à la Facturation (scopés par Company), `Customer` n'a pas de champ "company" natif — un simple filtre par `customer_group` partagerait les membres entre PME. Parade : un `Customer Group` **par PME** (`"Membre Club Sportif - {abrégé}"`, même convention que `"Magasin principal - NOT69"`). Pour `Event`, on utilise `reference_doctype: "Company"` / `reference_name: <company de la PME>` pour le même isolement.
+- **`Event`** (doctype natif du cœur Frappe, pas d'une app optionnelle) fonctionne réellement — testé en direct, création réussie (`EV00001`). Porte un champ `reference_doctype`/`reference_docname` générique, permettant de lier chaque événement à un document quelconque.
+- **Problème d'isolement identifié et résolu** : contrairement au Stock/à la Facturation (scopés par Company), `Customer` n'a pas de champ "company" natif — un simple filtre par `customer_group` partagerait les membres entre PME. Parade : un `Customer Group` **par PME** (`"Membre Club Sportif - {abrégé}"`, même convention que `"Magasin principal - NOT69"`). Pour `Event`, on utilise `reference_doctype: "Company"` / `reference_docname: <company de la PME>` pour le même isolement.
 
 ## Décisions verrouillées
 
@@ -47,7 +47,7 @@ Crée un `Customer` directement rattaché au groupe dédié de la PME (utilisabl
 
 ### Nouveau contrôleur webhook
 
-`ErpNextSportEventWebhookController::handle()` — même patron que les 3 webhooks existants (jeton partagé, résolution PME via `reference_name` = Company), `SportEvent::updateOrCreate()`.
+`ErpNextSportEventWebhookController::handle()` — même patron que les 3 webhooks existants (jeton partagé, résolution PME via `reference_docname` = Company), `SportEvent::updateOrCreate()`.
 
 ### Modification du webhook Facturation existant
 
@@ -61,7 +61,7 @@ Crée un `Customer` directement rattaché au groupe dédié de la PME (utilisabl
 
 1. Créer un `Customer` directement sur ERPNext dans le groupe dédié d'une PME → vérifier qu'il apparaît dans `/sport/membres` de cette PME, et **pas** dans celle d'une autre PME.
 2. Créer un `Subscription Plan` + une `Subscription` liée à ce membre sur ERPNext → vérifier qu'une facture apparaît normalement sur `/invoicing`, ET dans `/sport/cotisations` (filtrée grâce à `erpnext_subscription`).
-3. Créer un `Event` sur ERPNext lié (`reference_name`) à la Company d'une PME → vérifier qu'il apparaît dans `/sport/evenements` de cette PME uniquement.
+3. Créer un `Event` sur ERPNext lié (`reference_docname`) à la Company d'une PME → vérifier qu'il apparaît dans `/sport/evenements` de cette PME uniquement.
 
 ## Fichiers concernés
 

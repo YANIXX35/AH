@@ -86,6 +86,9 @@ Route::post('/webhooks/erpnext/invoicing', [\App\Http\Controllers\ErpNextInvoici
 Route::post('/webhooks/erpnext/accounting-entry', [\App\Http\Controllers\ErpNextAccountingEntryWebhookController::class, 'handle'])
     ->middleware('throttle:60,1')
     ->name('webhooks.erpnext.accounting-entry');
+Route::post('/webhooks/erpnext/sport-event', [\App\Http\Controllers\ErpNextSportEventWebhookController::class, 'handle'])
+    ->middleware('throttle:60,1')
+    ->name('webhooks.erpnext.sport-event');
 Route::view('/about-us', 'about-us')->name('about-us');
 Route::view('/tarifs', 'pricing')->name('pricing');
 Route::view('/documentation', 'documentation')->name('documentation');
