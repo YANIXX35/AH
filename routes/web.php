@@ -624,8 +624,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/accounting/report/journal', [AccountingController::class, 'report'])->name('accounting.report.journal');
         Route::get('/accounting/report/grand-livre', [AccountingController::class, 'report'])->name('accounting.report.grand-livre');
         Route::get('/accounting/report/balance', [AccountingController::class, 'report'])->name('accounting.report.balance');
-        Route::get('/accounting/report/bilan', [AccountingController::class, 'report'])->name('accounting.report.bilan');
-        Route::get('/accounting/report/resultat', [AccountingController::class, 'report'])->name('accounting.report.resultat');
+        Route::get('/accounting/report/bilan', [AccountingController::class, 'reportBilanRedirect'])->name('accounting.report.bilan');
+        Route::get('/accounting/report/resultat', [AccountingController::class, 'reportResultatRedirect'])->name('accounting.report.resultat');
         Route::get('/accounting/report/tafire', [AccountingController::class, 'report'])->name('accounting.report.tafire');
         Route::get('/accounting/report/annexe', [AccountingController::class, 'report'])->name('accounting.report.annexe');
         Route::get('/accounting/report/bilan/viewer', [AccountingController::class, 'showBilanPdfViewer'])->name('accounting.report.bilan.viewer');

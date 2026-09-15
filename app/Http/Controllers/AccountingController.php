@@ -2056,10 +2056,6 @@ class AccountingController extends Controller
             $reportType = 'grand-livre';
         } elseif ($request->routeIs('accounting.report.balance')) {
             $reportType = 'balance';
-        } elseif ($request->routeIs('accounting.report.bilan')) {
-            $reportType = 'bilan';
-        } elseif ($request->routeIs('accounting.report.resultat')) {
-            $reportType = 'resultat';
         } elseif ($request->routeIs('accounting.report.tafire')) {
             $reportType = 'tafire';
         } elseif ($request->routeIs('accounting.report.annexe')) {
@@ -2068,48 +2064,6 @@ class AccountingController extends Controller
 
         $bilanReference = null;
         $qrUrl = null;
-        if ($reportType === 'bilan') {
-            $referenceInput = sprintf(
-                '%s|%s|%s|%s|%s|%s|%s',
-                $companyName,
-                $companySigle,
-                $companyTaxId,
-                $exerciseDate->format('Y'),
-                $periodEnd ? $periodEnd->format('Y-m-d') : '',
-                $this->workspaceUserId(),
-                now()->format('Y-m-d H:i:s')
-            );
-
-            $bilanReference = strtoupper(Str::substr(hash('sha256', $referenceInput), 0, 16));
-
-            $liasseForVerification = $liasseService->generateLiasse($entries);
-
-            try {
-                DocumentVerification::updateOrCreate(
-                    ['reference' => $bilanReference],
-                    [
-                        'type' => 'bilan',
-                        'user_id' => $this->workspaceUserId(),
-                        'company_name' => $companyName,
-                        'company_sigle' => $companySigle,
-                        'company_tax_id' => $companyTaxId,
-                        'exercise_year' => $exerciseDate->format('Y'),
-                        'total_actif' => $liasseForVerification['actif']['total']['net_n'] ?? null,
-                        'total_passif' => $liasseForVerification['passif']['total']['net_n'] ?? null,
-                        'resultat_net' => $liasseForVerification['resultat']['totals']['XZ']['net_n'] ?? null,
-                        'generated_at' => now(),
-                    ]
-                );
-            } catch (\Throwable $exception) {
-                Log::warning('document_verification_write_failed', [
-                    'reference' => $bilanReference,
-                    'error' => $exception->getMessage(),
-                ]);
-            }
-
-            $verificationUrl = route('documents.verify', $bilanReference);
-            $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='.urlencode($verificationUrl);
-        }
 
         return view('accounting.report', array_merge([
             'entries' => $entries,
@@ -2150,6 +2104,26 @@ class AccountingController extends Controller
     public function showBilanPdfViewer(Request $request)
     {
         return redirect()->route('accounting.liasse-bceao', array_merge($request->query(), ['_' => 'actif']));
+    }
+
+    /**
+     * @deprecated Cet onglet "Bilan" calculait ses lignes à partir de seulement
+     * 2 agrégats globaux (actifs/passifs), pas des vraies masses SYSCOHADA par
+     * compte — au contraire de BceaoLiasseService, déjà correct et déjà utilisé
+     * par la Liasse BCEAO. On y redirige plutôt que de dupliquer/corriger ce calcul.
+     */
+    public function reportBilanRedirect(Request $request)
+    {
+        return redirect()->route('accounting.liasse-bceao', $request->query());
+    }
+
+    /**
+     * @deprecated Même raison que reportBilanRedirect() ci-dessus, appliquée au
+     * Compte de résultat.
+     */
+    public function reportResultatRedirect(Request $request)
+    {
+        return redirect()->route('accounting.liasse-bceao', $request->query());
     }
 
     public function liasseBceao(Request $request, BceaoLiasseService $liasseService)
