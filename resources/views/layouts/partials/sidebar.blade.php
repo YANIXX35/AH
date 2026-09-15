@@ -594,6 +594,12 @@
                     <span class="badge bg-secondary rounded-pill ms-auto">Option</span>
                 </a>
             </li>
+            <li class="sidebar-item {{ request()->routeIs('sport.*') ? 'active' : '' }}">
+                <a class="sidebar-link" href="{{ route('sport.index') }}">
+                    <i class="align-middle" data-feather="activity"></i> <span class="align-middle">Club Sportif</span>
+                    <span class="badge bg-secondary rounded-pill ms-auto">Option</span>
+                </a>
+            </li>
             <li class="sidebar-item {{ request()->routeIs('investor.*') ? 'active' : '' }}">
                 <a class="sidebar-link" href="{{ route('investor.readiness') }}">
                     <i class="align-middle" data-feather="trending-up"></i> <span class="align-middle">Investisseurs</span>
