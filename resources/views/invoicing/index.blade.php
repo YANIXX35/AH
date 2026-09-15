@@ -139,15 +139,6 @@
                                 <td><span class="mondays-badge {{ $badgeClass }}">{{ ucfirst($invoice->status) }}</span></td>
                                 <td class="text-end">
                                     <a href="{{ route('invoicing.show', $invoice) }}" class="btn btn-sm btn-outline-primary rounded-pill">Détail</a>
-                                    @if ((float) $invoice->amount_paid <= 0 && $invoice->status !== 'cancelled')
-                                        <a href="{{ route('invoicing.edit', $invoice) }}" class="btn btn-sm btn-outline-secondary rounded-pill">Modifier</a>
-                                        <form action="{{ route('invoicing.destroy', $invoice) }}" method="POST" class="d-inline"
-                                              onsubmit="return confirm('Supprimer définitivement cette facture ? Cette action est irréversible.');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">Supprimer</button>
-                                        </form>
-                                    @endif
                                 </td>
                             </tr>
                         @empty
