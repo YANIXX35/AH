@@ -53,6 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', AddSecurityHeaders::class);
         $middleware->validateCsrfTokens(except: [
             'webhooks/erpnext/stock-movement',
+            'webhooks/erpnext/invoicing',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
