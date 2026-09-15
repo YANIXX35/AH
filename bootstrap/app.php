@@ -51,6 +51,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', LogMenuNavigation::class);
         $middleware->appendToGroup('web', AttachRequestContext::class);
         $middleware->appendToGroup('web', AddSecurityHeaders::class);
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/erpnext/stock-movement',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

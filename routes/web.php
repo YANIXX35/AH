@@ -77,6 +77,9 @@ Route::get('/', function () {
 Route::get('/internal/opcache-reset', \App\Http\Controllers\OpcacheResetController::class)
     ->middleware('throttle:30,1')
     ->name('internal.opcache-reset');
+Route::post('/webhooks/erpnext/stock-movement', [\App\Http\Controllers\ErpNextStockWebhookController::class, 'handle'])
+    ->middleware('throttle:60,1')
+    ->name('webhooks.erpnext.stock-movement');
 Route::view('/about-us', 'about-us')->name('about-us');
 Route::view('/tarifs', 'pricing')->name('pricing');
 Route::view('/documentation', 'documentation')->name('documentation');

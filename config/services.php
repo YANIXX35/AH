@@ -142,6 +142,7 @@ return [
         'default_tax_template' => env('ERPNEXT_DEFAULT_TAX_TEMPLATE'),
         'default_item_group' => env('ERPNEXT_DEFAULT_ITEM_GROUP', 'Services'),
         'default_income_account' => env('ERPNEXT_DEFAULT_INCOME_ACCOUNT'),
+        'webhook_token' => env('ERPNEXT_WEBHOOK_TOKEN'),
     ],
 
     'opcache_reset_token' => env('OPCACHE_RESET_TOKEN'),
