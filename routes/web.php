@@ -54,6 +54,7 @@ use App\Http\Controllers\MenuActivityLogController;
 use App\Http\Controllers\MobileMoneyReconciliationController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\SportController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\TreasuryController;
@@ -693,6 +694,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/stock/{product}/edit', [StockController::class, 'edit'])->name('stock.edit');
         Route::put('/stock/{product}', [StockController::class, 'update'])->middleware('throttle:finance-write')->name('stock.update');
         Route::delete('/stock/{product}', [StockController::class, 'destroy'])->middleware('throttle:finance-write')->name('stock.destroy');
+    });
+
+    Route::prefix('sport')->name('sport.')->group(function () {
+        Route::get('/', [SportController::class, 'index'])->name('index');
+        Route::get('/membres', [SportController::class, 'members'])->name('members');
+        Route::post('/membres', [SportController::class, 'storeMember'])->middleware('throttle:finance-write')->name('members.store');
+        Route::get('/cotisations', [SportController::class, 'cotisations'])->name('cotisations');
+        Route::get('/evenements', [SportController::class, 'events'])->name('events');
     });
 
     Route::get('/logout', function (Request $request) {
