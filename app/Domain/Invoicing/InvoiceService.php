@@ -241,6 +241,10 @@ class InvoiceService
 
     public function cancelInvoice(Invoice $invoice, string $reason, int $actorUserId, bool $skipErpNextSync = false): void
     {
+        if ($invoice->status === 'cancelled') {
+            return;
+        }
+
         if ($invoice->status === 'paid' || (float) $invoice->amount_paid > 0) {
             throw new \InvalidArgumentException('Facture déjà réglée (partiellement ou totalement) : impossible d\'annuler, établir un avoir.');
         }
@@ -251,6 +255,8 @@ class InvoiceService
             'cancelled_reason' => $reason,
         ]);
 
+        $this->reverseSaleAccountingEntries($invoice, $actorUserId);
+
         TreasuryAudit::log($invoice->user_id, 'invoicing.invoice.cancelled', $invoice, [
             'invoice_number' => $invoice->invoice_number,
             'reason' => $reason,
@@ -259,6 +265,27 @@ class InvoiceService
 
         if (! $skipErpNextSync) {
             SyncInvoiceCancellationToErpNext::dispatch($invoice);
+        }
+    }
+
+    private function reverseSaleAccountingEntries(Invoice $invoice, int $actorUserId): void
+    {
+        $entries = AccountingEntry::where('document_type', 'facture_vente')
+            ->where('document_reference', $invoice->invoice_number)
+            ->get();
+
+        foreach ($entries as $entry) {
+            AccountingEntry::create([
+                'user_id' => $invoice->user_id,
+                'actor_user_id' => $actorUserId,
+                'date' => now()->format('Y-m-d'),
+                'document_type' => 'annulation_facture',
+                'document_reference' => $invoice->invoice_number,
+                'description' => 'Annulation facture '.$invoice->invoice_number.' — contrepassation',
+                'debit_account' => $entry->credit_account,
+                'credit_account' => $entry->debit_account,
+                'amount' => $entry->amount,
+            ]);
         }
     }
 
