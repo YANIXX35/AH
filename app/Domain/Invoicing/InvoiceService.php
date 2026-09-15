@@ -34,7 +34,8 @@ class InvoiceService
         array $items,
         float $taxRate = 0,
         ?string $notes = null,
-        string $currency = 'XOF'
+        string $currency = 'XOF',
+        bool $skipErpNextSync = false
     ): Invoice {
         $invoice = DB::transaction(function () use (
             $workspaceUserId, $actorUserId, $clientName, $clientContact, $clientAddress,
@@ -91,7 +92,9 @@ class InvoiceService
             return $invoice->fresh('items');
         });
 
-        SyncInvoiceToErpNext::dispatch($invoice);
+        if (! $skipErpNextSync) {
+            SyncInvoiceToErpNext::dispatch($invoice);
+        }
 
         return $invoice;
     }
@@ -99,7 +102,7 @@ class InvoiceService
     /**
      * @param  array{amount: float, paid_at: \DateTimeInterface, treasury_transaction_id: ?int, method: ?string, reference: ?string, treasury_account_code: ?string, notes: ?string}  $data
      */
-    public function recordPayment(Invoice $invoice, array $data, int $actorUserId): InvoicePayment
+    public function recordPayment(Invoice $invoice, array $data, int $actorUserId, bool $skipErpNextSync = false): InvoicePayment
     {
         $payment = DB::transaction(function () use ($invoice, $data, $actorUserId) {
             $amount = round((float) $data['amount'], 2);
@@ -158,7 +161,9 @@ class InvoiceService
             return $payment;
         });
 
-        SyncInvoicePaymentToErpNext::dispatch($payment);
+        if (! $skipErpNextSync) {
+            SyncInvoicePaymentToErpNext::dispatch($payment);
+        }
 
         return $payment;
     }
@@ -234,7 +239,7 @@ class InvoiceService
         });
     }
 
-    public function cancelInvoice(Invoice $invoice, string $reason, int $actorUserId): void
+    public function cancelInvoice(Invoice $invoice, string $reason, int $actorUserId, bool $skipErpNextSync = false): void
     {
         if ($invoice->status === 'paid' || (float) $invoice->amount_paid > 0) {
             throw new \InvalidArgumentException('Facture déjà réglée (partiellement ou totalement) : impossible d\'annuler, établir un avoir.');
@@ -252,7 +257,9 @@ class InvoiceService
             'actor_user_id' => $actorUserId,
         ]);
 
-        SyncInvoiceCancellationToErpNext::dispatch($invoice);
+        if (! $skipErpNextSync) {
+            SyncInvoiceCancellationToErpNext::dispatch($invoice);
+        }
     }
 
     public function deleteInvoice(Invoice $invoice, int $actorUserId): void
