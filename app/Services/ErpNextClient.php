@@ -931,4 +931,12 @@ class ErpNextClient
             'valuation_rate' => (float) $row['valuation_rate'],
         ];
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getDocument(string $doctype, string $name): array
+    {
+        return $this->get('/api/resource/'.rawurlencode($doctype).'/'.rawurlencode($name));
+    }
 }
