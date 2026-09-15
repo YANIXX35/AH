@@ -676,6 +676,7 @@ class ErpNextClient
             'voucher_type' => $voucherType,
             'posting_date' => $postingDate,
             'accounts' => $accounts,
+            'user_remark' => 'PME360_SYNC',
         ];
 
         if (! empty($referenceNumber)) {
