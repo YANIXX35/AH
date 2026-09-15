@@ -117,6 +117,11 @@ class ErpNextInvoicingWebhookController extends Controller
             true
         );
 
+        $subscription = (string) ($document['subscription'] ?? '');
+        if ($subscription !== '') {
+            $invoice->update(['erpnext_subscription' => $subscription]);
+        }
+
         InvoiceErpNextSync::updateOrCreate(
             ['invoice_id' => $invoice->id],
             [
