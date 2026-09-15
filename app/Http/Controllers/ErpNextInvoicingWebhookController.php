@@ -60,7 +60,7 @@ class ErpNextInvoicingWebhookController extends Controller
             } elseif ($doctype === 'Sales Invoice') {
                 $this->handleCreation($pme, $docname, $document, $invoiceService);
             } elseif ($doctype === 'Payment Entry') {
-                $this->handlePayment($docname, $document, $invoiceService);
+                $this->handlePayment($pme, $docname, $document, $invoiceService, $erpNext);
             } else {
                 return response()->json(['status' => 'ignored', 'reason' => 'doctype non géré'], 200);
             }
@@ -136,8 +136,21 @@ class ErpNextInvoicingWebhookController extends Controller
     /**
      * @param  array<string, mixed>  $document
      */
-    private function handlePayment(string $docname, array $document, InvoiceService $invoiceService): void
+    private function handlePayment(User $pme, string $docname, array $document, InvoiceService $invoiceService, ErpNextClient $erpNext): void
     {
+        $treasuryAccountCode = null;
+
+        if (($document['payment_type'] ?? '') === 'Receive' && ! empty($document['paid_to'])) {
+            $treasuryAccountCode = $erpNext->resolveLocalAccountCode($pme, (string) $document['paid_to']);
+
+            if ($treasuryAccountCode === null) {
+                Log::warning('Webhook ERPNext Invoicing: compte de trésorerie sans correspondance locale.', [
+                    'name' => $docname,
+                    'paid_to' => $document['paid_to'],
+                ]);
+            }
+        }
+
         foreach ((array) ($document['references'] ?? []) as $reference) {
             if (($reference['reference_doctype'] ?? '') !== 'Sales Invoice') {
                 continue;
@@ -156,7 +169,7 @@ class ErpNextInvoicingWebhookController extends Controller
                     'paid_at' => Carbon::parse((string) ($document['posting_date'] ?? now()->toDateString())),
                     'method' => (string) ($document['mode_of_payment'] ?? null) ?: null,
                     'reference' => $docname,
-                    'treasury_account_code' => null,
+                    'treasury_account_code' => $treasuryAccountCode,
                     'treasury_transaction_id' => null,
                     'notes' => null,
                 ],
