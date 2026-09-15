@@ -940,4 +940,76 @@ class ErpNextClient
     {
         return $this->get('/api/resource/'.rawurlencode($doctype).'/'.rawurlencode($name));
     }
+
+    public function findOrCreateSportMemberGroup(User $pme): string
+    {
+        $baseName = $pme->company_name ?: $pme->name;
+        $abbr = strtoupper(Str::limit(preg_replace('/[^A-Za-z]/', '', $baseName) ?: 'PME', 3, '')).$pme->id;
+        $groupName = 'Membre Club Sportif - '.$abbr;
+
+        $existing = $this->get('/api/resource/'.rawurlencode('Customer Group').'/'.rawurlencode($groupName));
+        if (! empty($existing)) {
+            return (string) $existing['name'];
+        }
+
+        $created = $this->post('/api/resource/'.rawurlencode('Customer Group'), [
+            'customer_group_name' => $groupName,
+            'parent_customer_group' => 'All Customer Groups',
+            'is_group' => 0,
+        ]);
+
+        $createdName = (string) ($created['name'] ?? '');
+        if ($createdName === '') {
+            throw new ErpNextApiException('ERPNext n\'a pas renvoyé de nom de groupe de clients après création.');
+        }
+
+        return $createdName;
+    }
+
+    /**
+     * @return array<int, array{name: string, customer_name: string, mobile_no: ?string, email_id: ?string}>
+     */
+    public function listSportMembers(User $pme): array
+    {
+        $group = $this->findOrCreateSportMemberGroup($pme);
+
+        $query = http_build_query([
+            'filters' => json_encode([['customer_group', '=', $group]]),
+            'fields' => json_encode(['name', 'customer_name', 'mobile_no', 'email_id']),
+            'limit_page_length' => 0,
+            'order_by' => 'customer_name asc',
+        ]);
+
+        $rows = $this->get('/api/resource/Customer?'.$query);
+
+        return array_map(fn ($row) => [
+            'name' => (string) $row['name'],
+            'customer_name' => (string) $row['customer_name'],
+            'mobile_no' => $row['mobile_no'] ?? null,
+            'email_id' => $row['email_id'] ?? null,
+        ], $rows);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function createSportMember(User $pme, string $name, ?string $mobile, ?string $email): array
+    {
+        $group = $this->findOrCreateSportMemberGroup($pme);
+
+        $payload = [
+            'customer_name' => $name,
+            'customer_group' => $group,
+            'territory' => 'Ivory Coast',
+        ];
+
+        if (! empty($mobile)) {
+            $payload['mobile_no'] = $mobile;
+        }
+        if (! empty($email)) {
+            $payload['email_id'] = $email;
+        }
+
+        return $this->post('/api/resource/Customer', $payload);
+    }
 }
