@@ -904,4 +904,31 @@ class ErpNextClient
             'actual_qty' => (float) $row['actual_qty'],
         ], $rows);
     }
+
+    /**
+     * @return array{actual_qty: float, valuation_rate: float}|null
+     */
+    public function getBinForItem(User $pme, string $itemCode): ?array
+    {
+        $query = http_build_query([
+            'filters' => json_encode([
+                ['item_code', '=', $itemCode],
+                ['warehouse', '=', $pme->erpnext_warehouse],
+            ]),
+            'fields' => json_encode(['actual_qty', 'valuation_rate']),
+            'limit_page_length' => 1,
+        ]);
+
+        $rows = $this->get('/api/resource/Bin?'.$query);
+        $row = $rows[0] ?? null;
+
+        if ($row === null) {
+            return null;
+        }
+
+        return [
+            'actual_qty' => (float) $row['actual_qty'],
+            'valuation_rate' => (float) $row['valuation_rate'],
+        ];
+    }
 }
