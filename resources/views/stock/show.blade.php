@@ -72,37 +72,8 @@
         <div class="col-12 col-xl-4">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="mb-3">Enregistrer un mouvement</h5>
-                    <form action="{{ route('stock.movements.store', $product) }}" method="POST">
-                        @csrf
-                        <div class="mb-3">
-                            <label class="form-label">Type *</label>
-                            <select name="type" id="movement_type" class="form-select" required>
-                                <option value="entree">Entrée (approvisionnement)</option>
-                                <option value="sortie">Sortie (vente / consommation)</option>
-                                <option value="ajustement">Ajustement (correction inventaire)</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Quantité *</label>
-                            <input type="number" step="0.01" name="quantity" class="form-control" required>
-                            <small class="text-muted" id="quantity-help">Positive pour une entrée.</small>
-                        </div>
-                        <div class="mb-3" id="unit-cost-group">
-                            <label class="form-label">Coût unitaire</label>
-                            <input type="number" step="0.01" min="0" name="unit_cost" class="form-control">
-                            <small class="text-muted">Requis pour une entrée (recalcule le CUMP).</small>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Date *</label>
-                            <input type="date" name="movement_date" class="form-control" required value="{{ now()->toDateString() }}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Motif</label>
-                            <input type="text" name="reason" class="form-control" placeholder="Réception fournisseur, vente, inventaire…">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Enregistrer</button>
-                    </form>
+                    <h5 class="mb-3">Mouvements de stock</h5>
+                    <p class="text-muted small mb-0">Les mouvements de stock (entrées, sorties, ajustements) se créent désormais directement dans ERPNext. Ils apparaissent automatiquement ici une fois enregistrés là-bas.</p>
                 </div>
             </div>
         </div>
@@ -150,29 +121,6 @@
     </div>
 </div>
 
-<script>
-(function () {
-    const typeSelect = document.getElementById('movement_type');
-    const help = document.getElementById('quantity-help');
-    const unitCostGroup = document.getElementById('unit-cost-group');
-
-    function update() {
-        if (typeSelect.value === 'sortie') {
-            help.textContent = 'Positive : quantité retirée du stock.';
-            unitCostGroup.style.display = 'none';
-        } else if (typeSelect.value === 'ajustement') {
-            help.textContent = 'Positive pour augmenter le stock, négative pour le corriger à la baisse.';
-            unitCostGroup.style.display = '';
-        } else {
-            help.textContent = 'Positive pour une entrée.';
-            unitCostGroup.style.display = '';
-        }
-    }
-
-    typeSelect.addEventListener('change', update);
-    update();
-})();
-</script>
 <script>
 (function () {
     var formatSelect = document.getElementById('stockExportFormat');
