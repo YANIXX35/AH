@@ -10,8 +10,6 @@ use App\Support\CompanyLogo;
 use App\Support\Export\TabularDocumentExporter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class StockController extends Controller
@@ -156,41 +154,6 @@ class StockController extends Controller
             : "Produit archivé (des mouvements existent, l'historique est conservé) — retirable de la liste mais toujours consultable.";
 
         return redirect()->route('stock.index')->with('success', $message);
-    }
-
-    public function storeMovement(Request $request, StockProduct $product): RedirectResponse
-    {
-        $this->authorizeProduct($product);
-
-        $validated = $request->validate([
-            'type' => ['required', 'in:entree,sortie,ajustement'],
-            'quantity' => ['required', 'numeric'],
-            'unit_cost' => ['nullable', 'numeric', 'min:0'],
-            'movement_date' => ['required', 'date'],
-            'reason' => ['nullable', 'string', 'max:255'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        if (in_array($validated['type'], ['entree', 'sortie'], true) && (float) $validated['quantity'] <= 0) {
-            return back()->withErrors(['quantity' => 'La quantité doit être positive pour une entrée ou une sortie.']);
-        }
-
-        try {
-            $this->stockService->recordMovement(
-                $product,
-                $validated['type'],
-                (float) $validated['quantity'],
-                isset($validated['unit_cost']) ? (float) $validated['unit_cost'] : null,
-                Carbon::parse($validated['movement_date']),
-                $validated['reason'] ?? null,
-                $validated['notes'] ?? null,
-                auth()->id()
-            );
-        } catch (\InvalidArgumentException $e) {
-            return back()->withErrors(['quantity' => $e->getMessage()]);
-        }
-
-        return back()->with('success', 'Mouvement enregistré.');
     }
 
     private function authorizeProduct(StockProduct $product): void
