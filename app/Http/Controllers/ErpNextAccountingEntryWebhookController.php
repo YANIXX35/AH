@@ -90,8 +90,8 @@ class ErpNextAccountingEntryWebhookController extends Controller
             return response()->json(['status' => 'ignored', 'reason' => 'débit et crédit ne correspondent pas'], 200);
         }
 
-        $debitAccount = $this->resolveLocalAccount($pme, (string) $debitLine['account']);
-        $creditAccount = $this->resolveLocalAccount($pme, (string) $creditLine['account']);
+        $debitAccount = $erpNext->resolveLocalAccountCode($pme, (string) $debitLine['account']);
+        $creditAccount = $erpNext->resolveLocalAccountCode($pme, (string) $creditLine['account']);
 
         if ($debitAccount === null || $creditAccount === null) {
             Log::warning('Webhook ERPNext Accounting: compte sans correspondance locale.', [
@@ -116,28 +116,5 @@ class ErpNextAccountingEntryWebhookController extends Controller
         ]);
 
         return response()->json(['status' => 'ok'], 200);
-    }
-
-    private function resolveLocalAccount(User $pme, string $erpNextAccountName): ?string
-    {
-        $code = Str::before($erpNextAccountName, '-');
-
-        if (PlanComptableAccount::where('user_id', $pme->id)->where('numero_compte', $code)->exists()) {
-            return $code;
-        }
-
-        // Le plan comptable local numérote certains comptes feuilles sur 7
-        // chiffres (ex: 6011000) là où le plan importé sur ERPNext s'arrête
-        // à 4 (6011) — écart de granularité constaté empiriquement, pas un
-        // compte différent. On tente donc aussi le code local équivalent.
-        if (strlen($code) === 4) {
-            $paddedCode = $code.'000';
-
-            if (PlanComptableAccount::where('user_id', $pme->id)->where('numero_compte', $paddedCode)->exists()) {
-                return $paddedCode;
-            }
-        }
-
-        return null;
     }
 }

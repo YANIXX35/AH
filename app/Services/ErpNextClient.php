@@ -6,6 +6,7 @@ use App\Exceptions\ErpNextApiException;
 use App\Models\Invoice;
 use App\Models\InvoiceErpNextCustomer;
 use App\Models\InvoicePayment;
+use App\Models\PlanComptableAccount;
 use App\Models\User;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -939,6 +940,29 @@ class ErpNextClient
     public function getDocument(string $doctype, string $name): array
     {
         return $this->get('/api/resource/'.rawurlencode($doctype).'/'.rawurlencode($name));
+    }
+
+    public function resolveLocalAccountCode(User $pme, string $erpNextAccountName): ?string
+    {
+        $code = Str::before($erpNextAccountName, '-');
+
+        if (PlanComptableAccount::where('user_id', $pme->id)->where('numero_compte', $code)->exists()) {
+            return $code;
+        }
+
+        // Le plan comptable local numérote certains comptes feuilles sur 7
+        // chiffres (ex: 6011000) là où le plan importé sur ERPNext s'arrête
+        // à 4 (6011) — écart de granularité constaté empiriquement, pas un
+        // compte différent. On tente donc aussi le code local équivalent.
+        if (strlen($code) === 4) {
+            $paddedCode = $code.'000';
+
+            if (PlanComptableAccount::where('user_id', $pme->id)->where('numero_compte', $paddedCode)->exists()) {
+                return $paddedCode;
+            }
+        }
+
+        return null;
     }
 
     public function findOrCreateSportMemberGroup(User $pme): string
