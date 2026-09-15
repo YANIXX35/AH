@@ -4,17 +4,26 @@ namespace App\Domain\Inventory;
 
 use App\Jobs\SyncStockMovementToErpNext;
 use App\Models\StockMovement;
+use App\Models\StockMovementErpNextSync;
 use App\Models\StockProduct;
+use App\Services\ErpNextClient;
 use App\Services\TreasuryAudit;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Module "Extensions" du cadrage produit : optionnel, activable par segment
  * (négoce/distribution), sans dépendance sur le cœur Trésorerie/Facturation.
- * Valorisation au CUMP (coût unitaire moyen pondéré), méthode standard OHADA.
+ * Valorisation au CUMP (coût unitaire moyen pondéré), méthode standard OHADA
+ * en repli si ERPNext est indisponible — sinon la quantité/valorisation
+ * viennent directement d'ERPNext, qui fait foi (voir recordMovement()).
  */
 class StockService
 {
+    public function __construct(private readonly ErpNextClient $erpNext)
+    {
+    }
+
+
     /**
      * @param  array{sku?: ?string, name: string, unit?: string, sale_price?: float, reorder_threshold?: ?float}  $data
      */
@@ -105,6 +114,54 @@ class StockService
     }
 
     /**
+     * Tente d'enregistrer le mouvement sur ERPNext et d'en lire le résultat
+     * faisant foi. Retourne null si ERPNext est indisponible, la PME non
+     * provisionnée, ou en cas d'erreur — jamais d'exception : le mouvement
+     * local ne doit jamais être bloqué par une panne ERPNext.
+     *
+     * @return array{actual_qty: float, valuation_rate: float}|null
+     */
+    private function tryRecordMovementOnErpNext(
+        StockProduct $product,
+        string $type,
+        float $delta,
+        ?float $unitCost
+    ): ?array {
+        if (! $this->erpNext->enabled()) {
+            return null;
+        }
+
+        $pme = $product->user;
+
+        if (empty($pme) || empty($pme->erpnext_company_name) || empty($pme->erpnext_warehouse)) {
+            return null;
+        }
+
+        try {
+            $itemCode = $this->erpNext->findOrCreateItem($product->name);
+
+            if ($type === 'ajustement') {
+                $newAbsoluteQty = round(((float) $product->quantity_on_hand) + $delta, 2);
+                $newAbsoluteQty = max($newAbsoluteQty, 0);
+                $this->erpNext->adjustStockForPme($pme, $product->name, $newAbsoluteQty);
+            } else {
+                $direction = $delta > 0 ? 'in' : 'out';
+                $this->erpNext->createStockMovementForPme(
+                    $pme,
+                    $product->name,
+                    abs($delta),
+                    (float) ($unitCost ?? 0),
+                    $direction
+                );
+            }
+
+            return $this->erpNext->getBinForItem($pme, $itemCode);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
      * @param  string  $type  'entree' | 'sortie' | 'ajustement'
      * @param  float  $quantity  Toujours positive pour entree/sortie ; signée pour ajustement (négatif = correction à la baisse)
      */
@@ -122,21 +179,23 @@ class StockService
             throw new \InvalidArgumentException('Type de mouvement invalide.');
         }
 
-        $movement = DB::transaction(function () use ($product, $type, $quantity, $unitCost, $date, $reason, $notes, $actorUserId) {
+        $delta = match ($type) {
+            'entree' => abs($quantity),
+            'sortie' => -abs($quantity),
+            'ajustement' => $quantity,
+        };
+
+        if (abs($delta) < 0.001) {
+            throw new \InvalidArgumentException('La quantité ne peut pas être nulle.');
+        }
+
+        $erpNextResult = $this->tryRecordMovementOnErpNext($product, $type, $delta, $unitCost);
+
+        $movement = DB::transaction(function () use ($product, $type, $delta, $unitCost, $date, $reason, $notes, $actorUserId, $erpNextResult) {
             $locked = StockProduct::where('id', $product->id)->lockForUpdate()->firstOrFail();
 
             $currentQty = (float) $locked->quantity_on_hand;
             $currentAvg = (float) $locked->average_cost;
-
-            $delta = match ($type) {
-                'entree' => abs($quantity),
-                'sortie' => -abs($quantity),
-                'ajustement' => $quantity,
-            };
-
-            if (abs($delta) < 0.001) {
-                throw new \InvalidArgumentException('La quantité ne peut pas être nulle.');
-            }
 
             $newQty = round($currentQty + $delta, 2);
             if ($newQty < -0.001) {
@@ -148,7 +207,13 @@ class StockService
             }
             $newQty = max($newQty, 0);
 
-            if ($delta > 0) {
+            $storedUnitCost = $unitCost;
+
+            if ($erpNextResult !== null) {
+                $newQty = $erpNextResult['actual_qty'];
+                $newAvg = $erpNextResult['valuation_rate'];
+                $storedUnitCost = $storedUnitCost ?? $currentAvg;
+            } elseif ($delta > 0) {
                 if ($unitCost !== null) {
                     $newAvg = $newQty > 0
                         ? round((($currentQty * $currentAvg) + ($delta * $unitCost)) / $newQty, 2)
@@ -157,7 +222,7 @@ class StockService
                     $newAvg = $currentAvg;
                 }
             } else {
-                $unitCost = $unitCost ?? $currentAvg;
+                $storedUnitCost = $unitCost ?? $currentAvg;
                 $newAvg = $currentAvg;
             }
 
@@ -167,7 +232,7 @@ class StockService
                 'actor_user_id' => $actorUserId,
                 'type' => $type,
                 'quantity' => $delta,
-                'unit_cost' => $unitCost,
+                'unit_cost' => $storedUnitCost,
                 'quantity_after' => $newQty,
                 'average_cost_after' => $newAvg,
                 'movement_date' => $date->format('Y-m-d'),
@@ -185,12 +250,20 @@ class StockService
                 'type' => $type,
                 'quantity' => $delta,
                 'quantity_after' => $newQty,
+                'erpnext_engine' => $erpNextResult !== null,
             ]);
 
             return $movement;
         });
 
-        SyncStockMovementToErpNext::dispatch($movement);
+        if ($erpNextResult !== null) {
+            StockMovementErpNextSync::updateOrCreate(
+                ['stock_movement_id' => $movement->id],
+                ['status' => 'synced', 'last_synced_at' => now()]
+            );
+        } else {
+            SyncStockMovementToErpNext::dispatch($movement);
+        }
 
         return $movement;
     }
