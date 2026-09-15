@@ -626,6 +626,7 @@ php artisan tinker --execute="
 \$post = new ReflectionMethod(\$erpNext, 'post');
 \$post->setAccessible(true);
 \$result = \$post->invoke(\$erpNext, '/api/resource/Webhook', [
+    'name' => 'Stock Entry vers PME360',
     'webhook_doctype' => 'Stock Entry',
     'webhook_docevent' => 'on_submit',
     'request_url' => 'https://sitiame-capital.com/webhooks/erpnext/stock-movement',
@@ -643,11 +644,11 @@ echo 'created: '.\$result['name'].PHP_EOL;
 "
 ```
 
-Expected: `created: Stock Entry Webhook to PME360` (or whatever auto-generated name ERPNext assigns — the exact `name` value doesn't matter, only that creation succeeds).
+Expected: `created: Stock Entry vers PME360`. Note: the `Webhook` doctype on this ERPNext instance requires an explicit `name` field — omitting it fails with `frappe.exceptions.ValidationError: Please set the document name.` (discovered during execution; unlike most doctypes used elsewhere in this project, `Webhook` does not auto-generate its own name).
 
 - [ ] **Step 3: Create the `Stock Reconciliation` webhook**
 
-Same call, with `webhook_doctype` changed to `Stock Reconciliation` (everything else identical, same `request_url`, same token, same `webhook_json` template — the payload shape is the same for both doctypes since both have a `doctype`/`name`/`company` field).
+Same call, with `name` set to `'Stock Reconciliation vers PME360'` and `webhook_doctype` changed to `Stock Reconciliation` (everything else identical, same `request_url`, same token, same `webhook_json` template — the payload shape is the same for both doctypes since both have a `doctype`/`name`/`company` field).
 
 - [ ] **Step 4: Verify both webhooks exist and are enabled**
 
