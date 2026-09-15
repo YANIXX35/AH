@@ -29,6 +29,7 @@ class Invoice extends Model
         'amount_paid',
         'status',
         'notes',
+        'erpnext_subscription',
         'pdf_path',
         'cancelled_at',
         'cancelled_reason',
