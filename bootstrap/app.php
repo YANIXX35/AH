@@ -54,6 +54,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'webhooks/erpnext/stock-movement',
             'webhooks/erpnext/invoicing',
+            'webhooks/erpnext/accounting-entry',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
