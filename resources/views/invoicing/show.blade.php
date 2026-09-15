@@ -11,15 +11,6 @@
             <p class="text-muted small mb-0">{{ $invoice->client_name }} · Émise le {{ $invoice->issue_date->format('d/m/Y') }} · Échéance {{ $invoice->due_date->format('d/m/Y') }}</p>
         </div>
         <div class="d-flex gap-2">
-            @if ((float) $invoice->amount_paid <= 0 && $invoice->status !== 'cancelled')
-                <a href="{{ route('invoicing.edit', $invoice) }}" class="btn btn-outline-primary btn-sm">Modifier</a>
-                <form action="{{ route('invoicing.destroy', $invoice) }}" method="POST" class="d-inline"
-                      onsubmit="return confirm('Supprimer définitivement cette facture ? Cette action est irréversible.');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
-                </form>
-            @endif
             <select id="invoiceExportFormat" class="form-select form-select-sm d-inline-block" style="width:auto;" aria-label="Format de téléchargement">
                 <option value="pdf">PDF</option>
                 <option value="xlsx">Excel (XLSX)</option>
@@ -123,140 +114,16 @@
         </div>
 
         <div class="col-12 col-xl-4">
-            @if ($invoice->status !== 'paid' && $invoice->status !== 'cancelled')
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h5 class="mb-3">Enregistrer un encaissement</h5>
-                        <form action="{{ route('invoicing.payments.store', $invoice) }}" method="POST" id="payment-form" data-balance-due="{{ $invoice->balanceDue() }}">
-                            @csrf
-
-                            @if ($unlinkedTreasuryTransactions->count() > 0)
-                                <div class="mb-3">
-                                    <label class="form-label">Mouvement de trésorerie existant (optionnel)</label>
-                                    <select name="treasury_transaction_id" id="treasury_transaction_id" class="form-select">
-                                        <option value="">— Encaissement manuel —</option>
-                                        @foreach ($unlinkedTreasuryTransactions as $tx)
-                                            <option value="{{ $tx->id }}" data-amount="{{ $tx->amount }}" data-date="{{ $tx->transaction_date->format('Y-m-d') }}">
-                                                {{ $tx->transaction_date->format('d/m/Y') }} — {{ number_format((float) $tx->amount, 0, ',', ' ') }} FCFA — {{ $tx->description }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <small class="text-muted">Inclut les mouvements confirmés par le rapprochement Mobile Money.</small>
-                                </div>
-                            @endif
-
-                            <div class="mb-3">
-                                <label class="form-label">Montant *</label>
-                                <input type="number" step="0.01" min="0.01" max="{{ $invoice->balanceDue() }}" name="amount" id="payment_amount" class="form-control" required value="{{ old('amount', $invoice->balanceDue()) }}">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Date *</label>
-                                <input type="date" name="paid_at" id="payment_date" class="form-control" required value="{{ old('paid_at', now()->toDateString()) }}">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Méthode</label>
-                                <select name="method" id="payment_method" class="form-select">
-                                    <option value="">— Sélectionner —</option>
-                                    <option value="Wave">Wave</option>
-                                    <option value="Orange Money">Orange Money</option>
-                                    <option value="MTN Money">MTN Money</option>
-                                    <option value="Moov Money">Moov Money</option>
-                                    <option value="Virement bancaire">Virement bancaire</option>
-                                    <option value="Chèque">Chèque</option>
-                                    <option value="Espèces">Espèces</option>
-                                    <option value="autre">Autre…</option>
-                                </select>
-                                <input type="text" id="payment_method_other" class="form-control mt-2 d-none" placeholder="Préciser la méthode">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Référence</label>
-                                <input type="text" name="reference" class="form-control">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Compte de trésorerie (pour l'écriture comptable)</label>
-                                <select name="treasury_account_code" class="form-select">
-                                    <option value="">— Ne pas générer d'écriture —</option>
-                                    @foreach ($treasuryAccounts as $account)
-                                        <option value="{{ $account->prefix }}">{{ $account->prefix }} — {{ $account->label }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <button type="submit" class="btn btn-success w-100">Enregistrer l'encaissement</button>
-                        </form>
-                    </div>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-3">Facturation</h5>
+                    <p class="text-muted small mb-0">Les factures (création, encaissement, annulation) se créent désormais directement dans ERPNext. Les changements apparaissent automatiquement ici une fois enregistrés là-bas.</p>
                 </div>
-            @endif
-
-            @if ($invoice->status !== 'cancelled' && (float) $invoice->amount_paid <= 0)
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="mb-3">Annuler la facture</h5>
-                        <form action="{{ route('invoicing.cancel', $invoice) }}" method="POST">
-                            @csrf
-                            <div class="mb-3">
-                                <label class="form-label">Motif *</label>
-                                <input type="text" name="reason" class="form-control" required>
-                            </div>
-                            <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Annuler cette facture ? Le numéro reste réservé (conformité e-invoicing).');">Annuler la facture</button>
-                        </form>
-                    </div>
-                </div>
-            @endif
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-(function () {
-    const select = document.getElementById('treasury_transaction_id');
-    if (!select) return;
-    select.addEventListener('change', function () {
-        const option = select.options[select.selectedIndex];
-        const amount = option.getAttribute('data-amount');
-        const date = option.getAttribute('data-date');
-        if (amount) document.getElementById('payment_amount').value = amount;
-        if (date) document.getElementById('payment_date').value = date;
-    });
-})();
-
-(function () {
-    const methodSelect = document.getElementById('payment_method');
-    const otherInput = document.getElementById('payment_method_other');
-    const form = document.getElementById('payment-form');
-    if (!methodSelect || !otherInput || !form) return;
-
-    methodSelect.addEventListener('change', function () {
-        otherInput.classList.toggle('d-none', methodSelect.value !== 'autre');
-    });
-
-    form.addEventListener('submit', function () {
-        if (methodSelect.value === 'autre') {
-            const custom = otherInput.value.trim();
-            const option = methodSelect.options[methodSelect.selectedIndex];
-            option.value = custom;
-        }
-    });
-})();
-
-(function () {
-    const form = document.getElementById('payment-form');
-    const amountInput = document.getElementById('payment_amount');
-    if (!form || !amountInput) return;
-
-    form.addEventListener('submit', function (e) {
-        const amount = parseFloat(amountInput.value) || 0;
-        const balanceDue = parseFloat(form.dataset.balanceDue) || 0;
-        const isFullSettlement = Math.abs(amount - balanceDue) < 0.01;
-        const message = isFullSettlement
-            ? 'Ce montant solde entièrement la facture : elle passera au statut "Payée". Confirmer l\'encaissement ?'
-            : 'Confirmer l\'enregistrement de cet encaissement ?';
-        if (!confirm(message)) {
-            e.preventDefault();
-        }
-    });
-})();
-</script>
 <script>
 (function () {
     var formatSelect = document.getElementById('invoiceExportFormat');

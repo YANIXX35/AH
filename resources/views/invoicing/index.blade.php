@@ -36,9 +36,6 @@
                 </h1>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
-                <a href="{{ route('invoicing.create') }}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
-                    <i data-feather="plus" class="me-1" style="width:14px; height:14px;"></i> Nouvelle Facture
-                </a>
             </div>
         </div>
 
