@@ -15,7 +15,7 @@
             <div class="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
                 <p class="text-xs font-semibold uppercase tracking-[0.25em] text-brand-300/90 sm:text-sm">Plans & Pricing</p>
                 <h1 class="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">Tarifs alignés sur la plateforme</h1>
-                <p class="mx-auto mt-5 max-w-3xl text-base leading-relaxed text-slate-300 sm:text-lg">Authentification renforcée, paiement FedaPay sandbox, Premium et accès Comptabilité — des offres calées sur ce qui est déjà en production.</p>
+                <p class="mx-auto mt-5 max-w-3xl text-base leading-relaxed text-slate-300 sm:text-lg">Connexion sécurisée, paiement en ligne et accès au module Comptabilité pour votre PME.</p>
             </div>
         </section>
 
@@ -35,8 +35,7 @@
                         <li><i class="fa fa-check mr-2 text-brand-600"></i>Mot de passe oublié avec OTP par e-mail</li>
                         <li><i class="fa fa-check mr-2 text-brand-600"></i>Tableau de bord et profil</li>
                         <li><i class="fa fa-check mr-2 text-brand-600"></i>1 compte utilisateur</li>
-                        <li><i class="fa fa-check mr-2 text-brand-600"></i>Test paiement FedaPay sandbox</li>
-                        <li><i class="fa fa-times mr-2 text-rose-500"></i>Comptabilité Premium verrouillée</li>
+                        <li><i class="fa fa-times mr-2 text-rose-500"></i>Module Comptabilité verrouillé</li>
                     </ul>
                     <a href="{{ route('login') }}" class="mt-7 inline-block w-full rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700 hover:bg-emerald-100">Activer l'offre gratuite</a>
                 </article>
@@ -47,11 +46,9 @@
                     <p class="mt-2 text-sm text-slate-500">Le plan principal pour une utilisation métier complète.</p>
                     <p class="mt-6 text-4xl font-extrabold text-brand-800">15 000 <span class="text-lg font-semibold text-slate-500">FCFA / mois</span></p>
                     <ul class="mt-6 space-y-3 text-sm text-slate-600">
-                        <li><i class="fa fa-check mr-2 text-brand-600"></i>Activation Premium automatique 30 jours après paiement validé</li>
-                        <li><i class="fa fa-check mr-2 text-brand-600"></i>Accès au module Comptabilité (routes protégées Premium)</li>
-                        <li><i class="fa fa-check mr-2 text-brand-600"></i>Historique des paiements sandbox sur le profil</li>
-                        <li><i class="fa fa-check mr-2 text-brand-600"></i>Suivi des statuts d'abonnement (active/free)</li>
-                        <li><i class="fa fa-check mr-2 text-brand-600"></i>Journalisation des événements d'authentification</li>
+                        <li><i class="fa fa-check mr-2 text-brand-600"></i>Accès complet au module Comptabilité</li>
+                        <li><i class="fa fa-check mr-2 text-brand-600"></i>Historique de vos paiements</li>
+                        <li><i class="fa fa-check mr-2 text-brand-600"></i>Suivi de votre abonnement</li>
                         <li><i class="fa fa-check mr-2 text-brand-600"></i>Support standard</li>
                     </ul>
                     <a href="{{ auth()->check() ? route('payments.redirect') : route('login') }}" class="mt-7 inline-block w-full rounded-lg bg-brand-700 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-brand-800">Passer en Enterprise Premium</a>
@@ -73,30 +70,12 @@
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white">
                             <tr><td class="px-4 py-3">Connexion sécurisée</td><td class="px-4 py-3">Oui</td><td class="px-4 py-3">Oui</td></tr>
-                            <tr><td class="px-4 py-3">Réinitialisation mot de passe OTP (e-mail)</td><td class="px-4 py-3">Oui</td><td class="px-4 py-3">Oui</td></tr>
-                            <tr><td class="px-4 py-3">Paiement FedaPay sandbox</td><td class="px-4 py-3">Oui</td><td class="px-4 py-3">Oui</td></tr>
-                            <tr><td class="px-4 py-3">Activation Premium 30 jours</td><td class="px-4 py-3">Après paiement</td><td class="px-4 py-3">Oui</td></tr>
+                            <tr><td class="px-4 py-3">Réinitialisation du mot de passe par e-mail</td><td class="px-4 py-3">Oui</td><td class="px-4 py-3">Oui</td></tr>
                             <tr><td class="px-4 py-3">Accès module Comptabilité</td><td class="px-4 py-3">Non</td><td class="px-4 py-3">Oui</td></tr>
-                            <tr><td class="px-4 py-3">Gestion admin des paiements</td><td class="px-4 py-3">Back-office</td><td class="px-4 py-3">Back-office</td></tr>
                             <tr><td class="px-4 py-3">Support</td><td class="px-4 py-3">E-mail</td><td class="px-4 py-3">Standard</td></tr>
                             <tr><td class="px-4 py-3">Tarification</td><td class="px-4 py-3">0 FCFA (période d'essai)</td><td class="px-4 py-3">15 000 FCFA / mois</td></tr>
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </section>
-
-        <section class="py-14">
-            <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-                <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-                    <h3 class="text-2xl font-bold text-slate-900">Stratégie derrière ces 2 offres</h3>
-                    <ul class="mt-5 space-y-3 text-sm text-slate-700">
-                        <li><i class="fa fa-arrow-right mr-2 text-brand-600"></i>Gratuit (période d'essai): entrée sans friction avec les modules réellement actifs.</li>
-                        <li><i class="fa fa-arrow-right mr-2 text-brand-600"></i>Enterprise Premium: déverrouille la vraie valeur métier (Comptabilité + Premium).</li>
-                    </ul>
-                    <div class="mt-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
-                        <strong>Piège à éviter:</strong> un gratuit trop généreux réduit la conversion; un plan payant sans valeur évidente ne convertit pas.
-                    </div>
                 </div>
             </div>
         </section>
@@ -111,11 +90,11 @@
                     </article>
                     <article class="rounded-xl border border-slate-200 bg-white p-5">
                         <h4 class="font-semibold text-slate-900">Comment passer en Premium ?</h4>
-                        <p class="mt-2 text-sm text-slate-600">Un paiement FedaPay sandbox validé active automatiquement Premium pendant 30 jours sur le compte entreprise.</p>
+                        <p class="mt-2 text-sm text-slate-600">Après validation de votre paiement, l'offre Enterprise Premium est activée automatiquement pour 30 jours sur votre compte entreprise.</p>
                     </article>
                     <article class="rounded-xl border border-slate-200 bg-white p-5">
                         <h4 class="font-semibold text-slate-900">L'offre gratuite peut-elle être réactivée ?</h4>
-                        <p class="mt-2 text-sm text-slate-600">Oui. Depuis l'administration des paiements, un compte peut repasser en mode Gratuit (période d'essai) manuellement.</p>
+                        <p class="mt-2 text-sm text-slate-600">Oui, contactez notre support pour toute question sur votre offre.</p>
                     </article>
                 </div>
             </div>
