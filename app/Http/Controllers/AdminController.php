@@ -3,14 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AdminUpdateUserRequest;
-use App\Jobs\ProvisionErpNextCompanyForPme;
 use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
 use App\Models\AdminPasswordResetLink;
 use App\Models\EnterpriseLicense;
 use App\Models\InvestmentRequest;
 use App\Models\MenuActionLog;
-use App\Models\PlanComptableAccount;
 use App\Models\SupportTicket;
 use App\Models\TreasuryAuditLog;
 use App\Models\TreasuryTransaction;
@@ -768,63 +766,6 @@ class AdminController extends Controller
         return redirect()
             ->route('admin.users')
             ->with('status', 'Utilisateur créé et rattaché à l’entreprise sélectionnée.');
-    }
-
-    /**
-     * Mot de passe par défaut attribué par un admin lors de l’inscription
-     * directe d’une nouvelle PME, quand aucun mot de passe n’est saisi.
-     * À communiquer au client, qui devra le changer à sa première connexion.
-     */
-    public const DEFAULT_PME_PASSWORD = 'SITIAME2026!';
-
-    /**
-     * Inscription directe d’une nouvelle PME par un admin plateforme (nouvelle
-     * entreprise, pas un rattachement à une entreprise existante — voir store()
-     * ci-dessus pour ce second cas).
-     */
-    public function storePme(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:255'],
-            'password' => ['nullable', 'string', 'min:8'],
-            'company_name' => ['required', 'string', 'max:255'],
-            'company_sigle' => ['nullable', 'string', 'max:255'],
-            'company_tax_id' => ['nullable', 'string', 'max:255'],
-            'rccm' => ['nullable', 'string', 'max:255'],
-            'address' => ['nullable', 'string', 'max:255'],
-            'city' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        $plainPassword = empty($validated['password']) ? self::DEFAULT_PME_PASSWORD : $validated['password'];
-        $admin = $request->user();
-
-        $user = DB::transaction(function () use ($validated, $admin, $plainPassword) {
-            $newUser = User::create([
-                ...$validated,
-                'password' => Hash::make($plainPassword),
-                'must_change_password' => true,
-                'role_key' => 'manager',
-                'created_by_user_id' => $admin->id,
-                'kyc_status' => 'submitted',
-                'kyc_submitted_at' => now(),
-                // terms_accepted_at/ip volontairement laissés vides : ce compte est
-                // créé par un admin, pas via un consentement explicite du client sur
-                // le formulaire d'inscription (voir F-34) — à faire accepter les CGU
-                // au client lors de sa première connexion si besoin.
-            ]);
-
-            PlanComptableAccount::seedDefaultsFor($newUser->id);
-
-            return $newUser;
-        });
-
-        ProvisionErpNextCompanyForPme::dispatch($user);
-
-        return redirect()
-            ->route('admin.users')
-            ->with('status', "PME inscrite avec succès. Identifiants — E-mail : {$validated['email']} / Mot de passe : {$plainPassword} (à changer à la première connexion).");
     }
 
     /**

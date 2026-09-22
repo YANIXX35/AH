@@ -221,53 +221,6 @@
 
 <div class="card admin-users-shell mb-3">
     <div class="card-header py-2 bg-white">
-        <h6 class="card-title mb-0 fw-bold">Inscrire une nouvelle PME</h6>
-        <p class="text-muted small mb-0 mt-1">Crée directement un compte entreprise (comme si la PME s'inscrivait elle-même). Mot de passe par défaut si laissé vide : <code>{{ \App\Http\Controllers\AdminController::DEFAULT_PME_PASSWORD }}</code></p>
-    </div>
-    <div class="card-body py-2.5">
-        <form method="post" action="{{ route('admin.pme.store') }}" class="row g-2 align-items-end">
-            @csrf
-            <div class="col-lg-2">
-                <label class="form-label small mb-1">Nom du contact</label>
-                <input type="text" name="name" value="{{ old('name') }}" required class="form-control form-control-sm">
-            </div>
-            <div class="col-lg-2">
-                <label class="form-label small mb-1">E-mail</label>
-                <input type="email" name="email" value="{{ old('email') }}" required class="form-control form-control-sm">
-            </div>
-            <div class="col-lg-2">
-                <label class="form-label small mb-1">Téléphone</label>
-                <input type="text" name="phone" value="{{ old('phone') }}" class="form-control form-control-sm">
-            </div>
-            <div class="col-lg-2">
-                <label class="form-label small mb-1">Société</label>
-                <input type="text" name="company_name" value="{{ old('company_name') }}" required class="form-control form-control-sm">
-            </div>
-            <div class="col-lg-2">
-                <label class="form-label small mb-1">NIF</label>
-                <input type="text" name="company_tax_id" value="{{ old('company_tax_id') }}" class="form-control form-control-sm">
-            </div>
-            <div class="col-lg-2">
-                <label class="form-label small mb-1">RCCM</label>
-                <input type="text" name="rccm" value="{{ old('rccm') }}" class="form-control form-control-sm">
-            </div>
-            <div class="col-lg-2">
-                <label class="form-label small mb-1">Ville</label>
-                <input type="text" name="city" value="{{ old('city') }}" class="form-control form-control-sm">
-            </div>
-            <div class="col-lg-2">
-                <label class="form-label small mb-1">Mot de passe (optionnel)</label>
-                <input type="password" name="password" placeholder="défaut : {{ \App\Http\Controllers\AdminController::DEFAULT_PME_PASSWORD }}" class="form-control form-control-sm">
-            </div>
-            <div class="col-lg-2">
-                <button type="submit" class="btn btn-sm btn-success w-100 rounded-pill">Inscrire la PME</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="card admin-users-shell mb-3">
-    <div class="card-header py-2 bg-white">
         <h6 class="card-title mb-0 fw-bold">Créer un utilisateur et l’attribuer à une entreprise</h6>
     </div>
     <div class="card-body py-2.5">
