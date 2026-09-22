@@ -87,6 +87,12 @@
                 @if ($invoice->user->company_tax_id)
                     <p class="brand-sub">NIF : {{ $invoice->user->company_tax_id }}</p>
                 @endif
+                @if ($invoice->user->tax_regime)
+                    <p class="brand-sub">Régime d'imposition : {{ $invoice->user->tax_regime }}</p>
+                @endif
+                @if ($invoice->user->tax_center)
+                    <p class="brand-sub">Centre des impôts : {{ $invoice->user->tax_center }}</p>
+                @endif
             </td>
             <td class="col-right">
                 <p class="brand-sub">Date d'emission</p>

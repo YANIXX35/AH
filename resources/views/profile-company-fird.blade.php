@@ -131,6 +131,16 @@
                         <input type="text" name="primary_activity_code" value="{{ old('primary_activity_code', $user->primary_activity_code) }}" class="form-control @error('primary_activity_code') is-invalid @enderror">
                         @error('primary_activity_code')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Régime d'imposition</label>
+                        <input type="text" name="tax_regime" value="{{ old('tax_regime', $user->tax_regime) }}" placeholder="ex. Réel simplifié, Réel normal, TEE..." class="form-control @error('tax_regime') is-invalid @enderror">
+                        @error('tax_regime')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Centre des impôts de rattachement</label>
+                        <input type="text" name="tax_center" value="{{ old('tax_center', $user->tax_center) }}" class="form-control @error('tax_center') is-invalid @enderror">
+                        @error('tax_center')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
 
                     <div class="col-12">
                         <hr class="my-2">

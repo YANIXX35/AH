@@ -32,6 +32,8 @@ class CompanyFirdController extends Controller
             'company_designation' => ['nullable', 'string', 'max:512'],
             'company_sigle' => ['nullable', 'string', 'max:255'],
             'company_tax_id' => ['nullable', 'string', 'max:255'],
+            'tax_regime' => ['nullable', 'string', 'max:255'],
+            'tax_center' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:255'],
@@ -75,7 +77,7 @@ class CompanyFirdController extends Controller
             'bank_account_number' => ['nullable', 'array', 'max:8'],
             'bank_account_number.*' => ['nullable', 'string', 'max:128'],
             'trade_register' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
-            'company_logo' => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp', 'max:5120'],
+            'company_logo' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $auditors = [];
