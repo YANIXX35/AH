@@ -21,8 +21,8 @@ jobs:
           script: |
             cd ~/htdocs || cd ~/public_html || cd ~/site
             git pull origin master
-            composer install --no-dev --optimize-autoloader --no-interaction
-            php artisan migrate --force
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
+            php84 $(which composer) install --no-dev --optimize-autoloader --no-interaction
+            php84 artisan migrate --force
+            php84 artisan config:cache
+            php84 artisan route:cache
+            php84 artisan view:cache
