@@ -1,2 +1,14 @@
 User-agent: *
-Disallow:
+Allow: /$
+Allow: /login
+Allow: /register
+Allow: /forgot-password
+Allow: /tarifs
+Allow: /about-us
+Allow: /documentation
+Allow: /cgu
+Allow: /confidentialite
+Allow: /mentions-legales
+Disallow: /
+
+Sitemap: https://sitiame-capital.com/sitemap.xml
