@@ -96,6 +96,9 @@ Route::post('/webhooks/erpnext/register-pme', [\App\Http\Controllers\ErpNextPmeR
 Route::get('/webhooks/erpnext/financing-dossier', [\App\Http\Controllers\ErpNextFinancingDossierWebhookController::class, 'show'])
     ->middleware('throttle:60,1')
     ->name('webhooks.erpnext.financing-dossier');
+Route::post('/webhooks/erpnext/subscription-paid', [\App\Http\Controllers\ErpNextSubscriptionPaidWebhookController::class, 'handle'])
+    ->middleware('throttle:60,1')
+    ->name('webhooks.erpnext.subscription-paid');
 Route::view('/about-us', 'about-us')->name('about-us');
 Route::view('/tarifs', 'pricing')->name('pricing');
 Route::view('/documentation', 'documentation')->name('documentation');
