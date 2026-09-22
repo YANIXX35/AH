@@ -264,7 +264,7 @@ class ErpNextClient
                 'abbr' => $abbr,
                 'default_currency' => 'XOF',
                 'country' => 'Ivory Coast',
-                'chart_of_accounts' => 'Syscohada - Plan Comptable',
+                'chart_of_accounts' => 'Syscohada - Plan Comptable avec code',
             ]);
 
             $resolvedCompanyName = (string) ($company['name'] ?? '');
@@ -387,7 +387,7 @@ class ErpNextClient
         $query = http_build_query([
             'filters' => json_encode([
                 ['company', '=', $company],
-                ['account_name', 'like', $accountNumber.'-%'],
+                ['account_number', '=', $accountNumber],
             ]),
             'fields' => json_encode(['name']),
             'limit_page_length' => 1,
