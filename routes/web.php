@@ -469,6 +469,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [AdminController::class, 'index'])->name('dashboard');
         Route::get('/users', [AdminController::class, 'users'])->name('users');
         Route::post('/users', [AdminController::class, 'store'])->name('users.store');
+        Route::post('/pme', [AdminController::class, 'storePme'])->name('pme.store');
         Route::get('/users/{user}/edit', [AdminController::class, 'edit'])->name('users.edit');
         Route::put('/users/{user}', [AdminController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [AdminController::class, 'destroy'])->name('users.destroy');
