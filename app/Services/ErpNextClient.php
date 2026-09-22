@@ -944,7 +944,7 @@ class ErpNextClient
 
     public function resolveLocalAccountCode(User $pme, string $erpNextAccountName): ?string
     {
-        $code = Str::before($erpNextAccountName, '-');
+        $code = trim(Str::before($erpNextAccountName, '-'));
 
         if (PlanComptableAccount::where('user_id', $pme->id)->where('numero_compte', $code)->exists()) {
             return $code;
