@@ -165,8 +165,8 @@
 
                         <!-- Terms Checkbox -->
                         <label class="flex items-start gap-3 text-sm text-slate-600">
-                            <input id="register-terms" type="checkbox" required class="mt-1 rounded border-orange-300 text-orange-500 focus:ring-orange-500" />
-                            <span>J'accepte les <a href="#" class="font-semibold text-orange-600 hover:text-orange-700">conditions d'utilisation</a> et la <a href="#" class="font-semibold text-orange-600 hover:text-orange-700">politique de confidentialité</a></span>
+                            <input id="register-terms" name="terms_accepted" value="1" type="checkbox" required class="mt-1 rounded border-orange-300 text-orange-500 focus:ring-orange-500" />
+                            <span>J'accepte les <a href="{{ route('legal.cgu') }}" target="_blank" class="font-semibold text-orange-600 hover:text-orange-700">conditions d'utilisation</a> et la <a href="{{ route('legal.confidentialite') }}" target="_blank" class="font-semibold text-orange-600 hover:text-orange-700">politique de confidentialité</a></span>
                         </label>
 
                         <div class="flex items-center justify-between gap-3">

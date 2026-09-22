@@ -36,7 +36,7 @@ class RegisterController extends Controller
                 'string',
                 'max:255',
             ],
-            'company_logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf,doc,docx', 'max:5120'],
+            'company_logo' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
             'sector' => ['nullable', 'string', 'max:255'],
             'rccm' => ['nullable', 'string', 'max:255'],
             'trade_register' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx', 'max:5120'],
@@ -47,9 +47,11 @@ class RegisterController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', 'min:8'],
             'license_key' => ['nullable', 'string', 'max:64'],
+            'terms_accepted' => ['accepted'],
         ]);
 
         $licenseKeyInput = $validated['license_key'] ?? null;
+        unset($validated['terms_accepted']);
 
         if ($request->hasFile('company_logo')) {
             $validated['company_logo'] = $request->file('company_logo')->store('company-logos', 'public');
@@ -61,7 +63,9 @@ class RegisterController extends Controller
 
         unset($validated['trade_register'], $validated['license_key']);
 
-        $user = DB::transaction(function () use ($validated, $licenseKeyInput) {
+        $registrationIp = $request->ip();
+
+        $user = DB::transaction(function () use ($validated, $licenseKeyInput, $registrationIp) {
             $enterpriseLicenseId = null;
             $license = null;
 
@@ -115,6 +119,8 @@ class RegisterController extends Controller
                 'enterprise_license_id' => $enterpriseLicenseId,
                 'kyc_status' => 'submitted',
                 'kyc_submitted_at' => now(),
+                'terms_accepted_at' => now(),
+                'terms_accepted_ip' => $registrationIp,
             ]);
 
             PlanComptableAccount::seedDefaultsFor($created->id);

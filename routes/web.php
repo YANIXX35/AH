@@ -93,6 +93,10 @@ Route::post('/webhooks/erpnext/sport-event', [\App\Http\Controllers\ErpNextSport
 Route::view('/about-us', 'about-us')->name('about-us');
 Route::view('/tarifs', 'pricing')->name('pricing');
 Route::view('/documentation', 'documentation')->name('documentation');
+Route::view('/cgu', 'legal.cgu')->name('legal.cgu');
+Route::view('/confidentialite', 'legal.confidentialite')->name('legal.confidentialite');
+Route::view('/mentions-legales', 'legal.mentions-legales')->name('legal.mentions-legales');
+Route::redirect('/privacy', '/confidentialite', 301);
 Route::post('/locale', function (Request $request) {
     $data = $request->validate([
         'locale' => ['required', 'in:fr,en,es,de,pt,ar,it,nl'],
