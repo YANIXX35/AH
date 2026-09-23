@@ -208,6 +208,87 @@ class ErpNextClientTest extends TestCase
         });
     }
 
+    public function test_provision_company_for_pme_creates_erpnext_user_and_user_permission(): void
+    {
+        Http::fake([
+            'https://erp.test.local/api/resource/Company/*' => function ($request) {
+                return $request->method() === 'PUT'
+                    ? Http::response(['data' => ['name' => 'Test SARL #1']], 200)
+                    : Http::response([], 404);
+            },
+            'https://erp.test.local/api/resource/Company' => Http::response(['data' => ['name' => 'Test SARL #1']], 200),
+            'https://erp.test.local/api/resource/Account?*' => Http::response(['data' => [['name' => 'X']]], 200),
+            'https://erp.test.local/api/resource/Warehouse/*' => Http::response([], 404),
+            'https://erp.test.local/api/resource/Warehouse' => Http::response(['data' => ['name' => 'Magasin principal - TES1']], 200),
+            'https://erp.test.local/api/resource/Sales%20Taxes%20and%20Charges%20Template/*' => Http::response([], 404),
+            'https://erp.test.local/api/resource/Sales%20Taxes%20and%20Charges%20Template' => Http::response(['data' => ['name' => 'TVA 18% - TES1']], 200),
+            'https://erp.test.local/api/resource/Desktop%20Icon?*' => Http::response(['data' => [
+                ['label' => 'Financement'], ['label' => 'Scoring'], ['label' => 'Organisation'], ['label' => 'RH et Paie'],
+            ]], 200),
+            'https://erp.test.local/api/resource/User/*' => Http::response([], 404),
+            'https://erp.test.local/api/resource/User' => Http::response(['data' => ['name' => 'pme@test.local']], 200),
+            'https://erp.test.local/api/resource/User%20Permission' => Http::response(['data' => ['name' => 'UP-1']], 200),
+        ]);
+
+        $pme = $this->makePme(['email' => 'pme@test.local', 'erpnext_company_name' => null]);
+        $client = new ErpNextClient;
+
+        $client->provisionCompanyForPme($pme);
+
+        Http::assertSent(function ($request) {
+            if ($request->url() !== 'https://erp.test.local/api/resource/User') {
+                return false;
+            }
+            $body = $request->data();
+
+            return $body['email'] === 'pme@test.local'
+                && $body['new_password'] === 'SITIAME2026!'
+                && in_array(['role' => 'PME Client'], $body['roles'], true)
+                && ! in_array(['role' => 'System Manager'], $body['roles'], true)
+                && str_contains($body['sitiame_hidden_desktop_icons'], 'Organisation')
+                && ! str_contains($body['sitiame_hidden_desktop_icons'], 'Financement');
+        });
+
+        Http::assertSent(function ($request) {
+            if ($request->url() !== 'https://erp.test.local/api/resource/User%20Permission') {
+                return false;
+            }
+            $body = $request->data();
+
+            return $body['user'] === 'pme@test.local'
+                && $body['allow'] === 'Company'
+                && $body['for_value'] === 'Test SARL #1';
+        });
+    }
+
+    public function test_provision_company_for_pme_still_returns_company_when_user_creation_fails(): void
+    {
+        Http::fake([
+            'https://erp.test.local/api/resource/Company/*' => function ($request) {
+                return $request->method() === 'PUT'
+                    ? Http::response(['data' => ['name' => 'Test SARL #1']], 200)
+                    : Http::response([], 404);
+            },
+            'https://erp.test.local/api/resource/Company' => Http::response(['data' => ['name' => 'Test SARL #1']], 200),
+            'https://erp.test.local/api/resource/Account?*' => Http::response(['data' => [['name' => 'X']]], 200),
+            'https://erp.test.local/api/resource/Warehouse/*' => Http::response([], 404),
+            'https://erp.test.local/api/resource/Warehouse' => Http::response(['data' => ['name' => 'Magasin principal - TES1']], 200),
+            'https://erp.test.local/api/resource/Sales%20Taxes%20and%20Charges%20Template/*' => Http::response([], 404),
+            'https://erp.test.local/api/resource/Sales%20Taxes%20and%20Charges%20Template' => Http::response(['data' => ['name' => 'TVA 18% - TES1']], 200),
+            'https://erp.test.local/api/resource/Desktop%20Icon?*' => Http::response(['data' => []], 200),
+            'https://erp.test.local/api/resource/User/*' => Http::response([], 404),
+            'https://erp.test.local/api/resource/User' => Http::response(['exception' => 'DuplicateEntryError'], 409),
+        ]);
+
+        $pme = $this->makePme(['email' => 'pme@test.local', 'erpnext_company_name' => null]);
+        $client = new ErpNextClient;
+
+        // Must not throw, even though the User creation call fails (409).
+        $result = $client->provisionCompanyForPme($pme);
+
+        $this->assertSame('Test SARL #1', $result['company']);
+    }
+
     public function test_find_account_by_number_throws_when_account_missing(): void
     {
         Http::fake([
