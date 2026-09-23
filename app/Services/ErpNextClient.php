@@ -10,6 +10,7 @@ use App\Models\PlanComptableAccount;
 use App\Models\User;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -322,12 +323,102 @@ class ErpNextClient
             'stock_adjustment_account' => $stockAdjustmentAccount,
         ]);
 
+        try {
+            $this->createPmeErpNextUser($pme, $resolvedCompanyName);
+        } catch (\Throwable $exception) {
+            Log::warning('Échec de la création du compte ERPNext pour la PME #'.$pme->id.': '.$exception->getMessage());
+        }
+
         return [
             'company' => $resolvedCompanyName,
             'warehouse' => $warehouseName,
             'tax_template' => $taxTemplateName,
             'income_account' => $incomeAccount,
         ];
+    }
+
+    private const PME_DEFAULT_PASSWORD = 'SITIAME2026!';
+
+    /**
+     * Every module tile the PME account should NOT see is computed here,
+     * not hardcoded: fetch every Desktop Icon label that currently exists
+     * on ERPNext and subtract the 11 allowed ones, so a future tile added
+     * to the Desk stays hidden by default for PME accounts without a code
+     * change here.
+     *
+     * @return array<int, string>
+     */
+    private function hiddenDesktopIconLabelsForPme(): array
+    {
+        // These are the DocType's raw `label` values as stored (verified
+        // against the live DB), NOT the French display text: every native
+        // ERPNext tile's label is still the untranslated English name
+        // ("Selling", "Accounting", ...) -- only the /desk display goes
+        // through __() at render time. The REST API returns the raw field,
+        // so matching must use these exact strings, not the on-screen text.
+        $allowed = [
+            'Financement', 'Scoring', 'Selling', 'Buying', 'Stock',
+            'Accounting', 'Subcontracting', 'Abonnement',
+            'Manufacturing', 'Projects', 'Assets',
+        ];
+
+        $query = http_build_query([
+            'fields' => json_encode(['label']),
+            'limit_page_length' => 0,
+        ]);
+
+        try {
+            $response = Http::withHeaders(['Authorization' => $this->authHeader()])
+                ->timeout($this->timeout())
+                ->get($this->baseUrl().'/api/resource/Desktop Icon?'.$query);
+        } catch (\Throwable) {
+            return [];
+        }
+
+        if ($response->failed()) {
+            return [];
+        }
+
+        $labels = array_column((array) ($response->json('data') ?? []), 'label');
+
+        return array_values(array_diff($labels, $allowed));
+    }
+
+    private function createPmeErpNextUser(User $pme, string $companyName): void
+    {
+        $existing = $this->get('/api/resource/User/'.rawurlencode($pme->email));
+        if (! empty($existing)) {
+            return;
+        }
+
+        $hiddenDesktopIcons = $this->hiddenDesktopIconLabelsForPme();
+        $hiddenSidebarItems = ['erp-financial-ranking', 'Scoring 360 Settings'];
+
+        $roles = array_map(fn (string $role) => ['role' => $role], [
+            'PME Client',
+            'Sales User', 'Sales Manager',
+            'Purchase Manager', 'Purchase Master Manager',
+            'Stock Manager', 'Stock User', 'Item Manager',
+            'Accounts Manager',
+        ]);
+
+        $this->post('/api/resource/User', [
+            'email' => $pme->email,
+            'first_name' => $pme->name ?: $pme->email,
+            'send_welcome_email' => 0,
+            'enabled' => 1,
+            'user_type' => 'System User',
+            'new_password' => self::PME_DEFAULT_PASSWORD,
+            'roles' => $roles,
+            'sitiame_hidden_desktop_icons' => json_encode($hiddenDesktopIcons),
+            'sitiame_hidden_sidebar_items' => json_encode($hiddenSidebarItems),
+        ]);
+
+        $this->post('/api/resource/User Permission', [
+            'user' => $pme->email,
+            'allow' => 'Company',
+            'for_value' => $companyName,
+        ]);
     }
 
     /**
