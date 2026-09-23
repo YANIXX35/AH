@@ -394,12 +394,23 @@ class ErpNextClient
         $hiddenDesktopIcons = $this->hiddenDesktopIconLabelsForPme();
         $hiddenSidebarItems = ['erp-financial-ranking', 'Scoring 360 Settings'];
 
+        // Full list verified against each module's real DocPerm requirements
+        // (2026-09-23), not assumed: Frappe roles are not hierarchical, so
+        // "Manager" alone does not imply "User" -- e.g. Work Order's create
+        // permission is granted to "Manufacturing User", not "Manufacturing
+        // Manager", and Project/Task need "Projects User" specifically.
+        // Kept in sync with sitiame_core.api.register_company()'s role list
+        // (the second, ERPNext-native PME signup entry point).
         $roles = array_map(fn (string $role) => ['role' => $role], [
             'PME Client',
-            'Sales User', 'Sales Manager',
-            'Purchase Manager', 'Purchase Master Manager',
-            'Stock Manager', 'Stock User', 'Item Manager',
-            'Accounts Manager',
+            'Accounts Manager', 'Accounts User',
+            'Sales Manager', 'Sales User',
+            'Purchase Manager', 'Purchase Master Manager', 'Purchase User',
+            'Stock Manager', 'Stock User',
+            'Item Manager',
+            'Manufacturing Manager', 'Manufacturing User',
+            'Projects Manager', 'Projects User',
+            'Quality Manager',
         ]);
 
         $this->post('/api/resource/User', [
