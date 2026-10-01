@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
 
 class ErpNextRegistersPmeTest extends TestCase
@@ -39,7 +39,7 @@ class ErpNextRegistersPmeTest extends TestCase
 
     public function test_registers_pme_with_default_password_when_left_blank(): void
     {
-        Queue::fake();
+        Bus::fake();
 
         $response = $this->postWebhook([
             'name' => 'Jean Kouassi',
@@ -67,14 +67,14 @@ class ErpNextRegistersPmeTest extends TestCase
 
         $this->assertGreaterThan(0, PlanComptableAccount::where('user_id', $pme->id)->count());
 
-        Queue::assertPushed(ProvisionErpNextCompanyForPme::class, function ($job) use ($pme) {
+        Bus::assertDispatchedAfterResponse(ProvisionErpNextCompanyForPme::class, function ($job) use ($pme) {
             return $job->pme->is($pme);
         });
     }
 
     public function test_registers_pme_with_custom_password(): void
     {
-        Queue::fake();
+        Bus::fake();
 
         $response = $this->postWebhook([
             'name' => 'Awa Diallo',

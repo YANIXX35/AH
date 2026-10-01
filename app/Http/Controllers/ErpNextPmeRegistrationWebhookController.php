@@ -61,7 +61,7 @@ class ErpNextPmeRegistrationWebhookController extends Controller
             return $newUser;
         });
 
-        ProvisionErpNextCompanyForPme::dispatch($user);
+        ProvisionErpNextCompanyForPme::dispatchAfterResponse($user);
 
         return response()->json([
             'status' => 'ok',

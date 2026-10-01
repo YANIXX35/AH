@@ -25,6 +25,10 @@ class ProvisionErpNextCompanyForPme implements ShouldQueue
             return;
         }
 
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(300);
+        }
+
         if (! $erpNext->enabled()) {
             Log::info('ERPNext non configuré : provisionnement ignoré pour la PME #'.$this->pme->id);
 

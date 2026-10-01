@@ -84,6 +84,8 @@ use Illuminate\Notifications\Notifiable;
     'module_permissions',
     'kyc_status',
     'kyc_submitted_at',
+    'terms_accepted_at',
+    'terms_accepted_ip',
     'kyc_validated_at',
     'kyc_validated_by_user_id',
     'kyc_rejection_reason',

@@ -124,7 +124,6 @@ class RegisterController extends Controller
             ]);
 
             PlanComptableAccount::seedDefaultsFor($created->id);
-            ProvisionErpNextCompanyForPme::dispatch($created);
 
             // Chaque nouvel inscrit dispose de sa propre donnée d'abonnement.
             $freePlan = BillingPlan::query()->where('slug', 'free-trial')->first();
@@ -175,6 +174,8 @@ class RegisterController extends Controller
 
             return $created;
         });
+
+        ProvisionErpNextCompanyForPme::dispatchAfterResponse($user);
 
         Auth::login($user);
         $request->session()->regenerate();
