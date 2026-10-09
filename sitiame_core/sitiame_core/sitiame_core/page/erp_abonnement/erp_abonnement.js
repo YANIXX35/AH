@@ -23,7 +23,7 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 
 			// Grille informative : prix de toutes les offres (actuellement sélectionnée mise en évidence)
 			"<div id='abonnement-offre-select' style='margin:0 0 20px;display:none;text-align:left;'>" +
-				"<div style='font-size:14px;font-weight:700;color:#1e293b;margin-bottom:10px;'>" + __(\"Choisissez votre offre\") + \"</div>\" +
+				"<div style='font-size:14px;font-weight:700;color:#1e293b;margin-bottom:10px;'>" + __("Choisissez votre offre") + "</div>" +
 				"<div class='abonnement-offres-buttons' style='display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;'></div>" +
 				"<div id='abonnement-selected-price' style='margin-top:10px;font-size:13px;color:#475569;min-height:18px;'></div>" +
 			"</div>" +
