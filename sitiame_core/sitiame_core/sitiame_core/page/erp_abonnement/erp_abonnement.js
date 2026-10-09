@@ -21,8 +21,12 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 				"<a href='mailto:contact@sitiame-capital.com' style='color:#ea580c;font-weight:700;'>contact@sitiame-capital.com</a>" +
 			"</div>" +
 
-			// Grille tarifaire des offres
-			"<div id='abonnement-offres-grid' style='margin:0 0 20px;display:none;'></div>" +
+			// Grille informative : prix de toutes les offres (actuellement sélectionnée mise en évidence)
+			"<div id='abonnement-offre-select' style='margin:0 0 20px;display:none;text-align:left;'>" +
+				"<div style='font-size:14px;font-weight:700;color:#1e293b;margin-bottom:10px;'>" + __(\"Choisissez votre offre\") + \"</div>\" +
+				"<div class='abonnement-offres-buttons' style='display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;'></div>" +
+				"<div id='abonnement-selected-price' style='margin-top:10px;font-size:13px;color:#475569;min-height:18px;'></div>" +
+			"</div>" +
 
 			// State: Loading
 			"<div id='abonnement-state-loading' style='padding: 20px 0;'>" +
@@ -30,8 +34,9 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 				"<div id='abonnement-loading-text' style='font-size: 16px; font-weight: 600; color: #1e293b;'>" + __("Chargement...") + "</div>" +
 			"</div>" +
 
-			// State: pick the operator (J\u00e8ko needs it before the payment)
+			// State: pick the offer then the operator
 			"<div id='abonnement-state-choose' style='display: none; padding: 6px 0;'>" +
+
 				"<div style='font-size: 15px; font-weight: 600; color: #1e293b; margin-bottom: 14px;'>" + __("Choisissez votre moyen de paiement") + "</div>" +
 				"<div class='abonnement-methods' style='display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;'></div>" +
 				"<div style='font-size: 12px; color: #94a3b8; margin-top: 14px;'>" + __("Vous serez redirig\u00e9 vers votre application de paiement, puis ramen\u00e9 ici.") + "</div>" +
@@ -112,8 +117,8 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 
 		// Badge offre
 		$("#abonnement-offer-badge").text(offer).show();
-		// Grille tarifaire
-		_renderOffresGrid(offer, msg.regime || "TEE");
+		// Grille tarifaire informative (toujours visible)
+		renderOffreButtons(offer, msg.regime || "TEE");
 
 		if (is_devis) {
 			// Offre sur devis : cacher le flux de paiement, afficher la notice
@@ -169,6 +174,22 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 	});
 
 	var LOGOS = "/assets/sitiame_core/images/payment/";
+
+	// Grille tarifaire mensuelle (FCFA) miroir de subscription_api._TARIF
+	var _TARIF_JS = {
+		"TEE": [15000, 75000, null],
+		"RME": [25000, 100000, null],
+		"RSI": [50000, 175000, 250000],
+		"RNI": [80000, 250000, 400000],
+	};
+	var _OFFRES_DEF = [
+		{ key: "Essentiel",      label: "Essentiel",      color: "#0ea5e9" },
+		{ key: "Pilotage",       label: "Pilotage",       color: "#8b5cf6" },
+		{ key: "Transformation", label: "Transformation", color: "#f59e0b" },
+	];
+	var selectedOffer = null;  // initialisé depuis get_my_subscription
+	var currentRegime = "";    // régime fiscal de la PME
+
 	var METHODS = [
 		{ value: "wave", label: "Wave", color: "#1dc8f2", logo: "wave.png" },
 		{ value: "orange", label: "Orange Money", color: "#ff7900", logo: "orange.png" },
@@ -211,6 +232,7 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 
 	$("#btn-extend-subscription, #btn-retry-payment").on("click", function () {
 		showOnly("choose");
+		if (!staffMode) renderOffreButtons(selectedOffer, currentRegime);
 	});
 
 	function endsOnText(sub) {
@@ -268,6 +290,9 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 			method: "sitiame_core.subscription_api.get_my_subscription",
 		}).then(function (r) {
 			var sub = r.message || {};
+			// Mémoriser l'offre et le régime pour le sélecteur d'offre
+			selectedOffer = sub.offer || "Essentiel";
+			currentRegime = sub.regime || "";
 			if (!sub.company && sub.is_admin) {
 				$container.hide();
 				renderAdminPanel();
@@ -275,6 +300,7 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 				// chargé d'affaires, accountants: the PME view, picking the PME first
 				setupStaffCompanyPicker();
 				showOnly("choose");
+				// pas de sélecteur d'offre pour le staff (il n'est pas la PME)
 			} else if (!sub.company) {
 				showOnly("error");
 				$("#abonnement-state-error").html(__("Cette page est réservée aux comptes PME : aucune société n'est rattachée à votre compte. Connectez-vous avec le compte de la PME pour payer son abonnement."));
@@ -286,6 +312,7 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 				// an expired PME keeps its past receipts
 				loadReceipts();
 				showOnly("choose");
+				renderOffreButtons(selectedOffer, currentRegime);
 			}
 		}).catch(function () {
 			showOnly("choose");
@@ -468,21 +495,9 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 		});
 	}
 
-	// ── Grille tarifaire ─────────────────────────────────────────────────────
-	// Miroir de subscription_api._TARIF (ordre colonnes : Essentiel, Pilotage, Transformation)
-	var _TARIF_JS = {
-		"TEE": [15000,  75000,    null],
-		"RME": [25000,  100000,   null],
-		"RSI": [50000,  175000,   250000],
-		"RNI": [80000,  250000,   400000],
-	};
-	var _OFFRES_DEF = [
-		{ key: "Essentiel",      color: "#0ea5e9" },
-		{ key: "Pilotage",       color: "#8b5cf6" },
-		{ key: "Transformation", color: "#f59e0b" },
-	];
-
-	function _renderOffresGrid(currentOffer, regime) {
+	// ── Grille informative ────────────────────────────────────────────────────
+	// Affichée en haut de la page : prix de chaque offre, offre actuelle surlignée.
+	function renderOffreButtons(currentOffer, regime) {
 		var tarifs = _TARIF_JS[regime] || _TARIF_JS["TEE"];
 		var html = "<div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;\">";
 		_OFFRES_DEF.forEach(function (o, i) {
@@ -505,9 +520,59 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 				"</div>";
 		});
 		html += "</div>";
-		$("#abonnement-offres-grid").html(html).show();
+		$("#abonnement-offre-select").show();
+		$(".abonnement-offres-buttons").html(html);
 	}
-	// ── Fin grille tarifaire ──────────────────────────────────────────────────
+	// ── Fin grille informative ─────────────────────────────────────────────────
+
+	function renderOffreButtons(currentOffer, regime) {
+		var tarifs = _TARIF_JS[regime] || _TARIF_JS["TEE"];
+		var $btns = $(".abonnement-offres-buttons").empty();
+		_OFFRES_DEF.forEach(function (o, i) {
+			var prix = tarifs[i];
+			if (prix === null || prix === undefined) return; // Sur devis : non affiché
+			var isSelected = (o.key === currentOffer);
+			$("<button>")
+				.addClass("btn abonnement-offre-btn")
+				.attr("data-offer", o.key)
+				.css({
+					padding: "10px 12px",
+					"border-radius": "10px",
+					"font-weight": isSelected ? "700" : "500",
+					border: isSelected ? "2px solid #2563eb" : "1px solid #e2e8f0",
+					background: isSelected ? "#eff6ff" : "#f8fafc",
+					color: isSelected ? "#1d4ed8" : "#334155",
+					cursor: "pointer",
+					"font-size": "13px",
+					"text-align": "center",
+				})
+				.html(
+					"<div style='font-weight:600;margin-bottom:4px;'>" + frappe.utils.escape_html(o.label) + "</div>" +
+					"<div style='font-size:12px;color:" + (isSelected ? "#1d4ed8" : "#64748b") + ";'>" +
+						format_number(prix, null, 0) + " FCFA/mois" +
+					"</div>"
+				)
+				.on("click", (function (offerKey, offerPrix) {
+					return function () {
+						selectedOffer = offerKey;
+						renderOffreButtons(selectedOffer, regime);
+						$("#abonnement-selected-price").html(
+							"Montant : <strong>" + format_number(offerPrix, null, 0) + " FCFA/mois</strong>"
+						);
+					};
+				}(o.key, prix)))
+				.appendTo($btns);
+		});
+		// Afficher le prix de l'offre actuellement sélectionnée
+		var selIdx = _OFFRES_DEF.findIndex(function (x) { return x.key === currentOffer; });
+		var selPrix = (selIdx >= 0) ? tarifs[selIdx] : tarifs[0];
+		if (selPrix) {
+			$("#abonnement-selected-price").html(
+				"Montant : <strong>" + format_number(selPrix, null, 0) + " FCFA/mois</strong>"
+			);
+		}
+		$("#abonnement-offre-select").show();
+	}
 
 	function requestAndRedirect(paymentMethod) {
 		if (staffMode && !staffCompany) {
@@ -517,7 +582,7 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 		showLoading(__("Connexion \u00e0 votre op\u00e9rateur..."));
 		frappe.call({
 			method: "sitiame_core.subscription_api.get_or_create_pme_checkout_url",
-			args: { payment_method: paymentMethod, company: staffCompany },
+			args: { payment_method: paymentMethod, company: staffCompany, offer: staffMode ? null : selectedOffer },
 		}).then(function (r) {
 			var res = r.message || {};
 			if (res.status === "Pay\u00e9") {
