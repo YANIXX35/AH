@@ -299,7 +299,7 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 			"<div style='max-width: 1000px; margin: 24px auto; padding: 0 16px;'>" +
 				"<div style='background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 20px 22px; margin-bottom: 20px;'>" +
 					"<h4 style='font-weight: 700; margin: 0 0 4px;'>" + __("Générer un lien de paiement") + "</h4>" +
-					"<p style='color: #64748b; font-size: 13px; margin-bottom: 12px;'>" + __("Choisissez la PME, générez le lien Jèko (1 mois, à usage unique) et envoyez-le-lui : elle choisira son opérateur en l'ouvrant.") + " " + __("Montant : {0} FCFA.", ["<span class='abonnement-price'>15 000</span>"]) + "</p>" +
+					"<p style='color: #64748b; font-size: 13px; margin-bottom: 12px;'>" + __("Choisissez la PME, générez le lien Jèko (1 mois, à usage unique) et envoyez-le-lui : elle choisira son opérateur en l'ouvrant.") + "<br><span style='font-size:13px;'>" + __("Montant selon l'offre :") + " <strong id='admin-prix-par-offre' style='color:#0f172a;'>—</strong></span>" + "</p>" +
 					"<div style='display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;'>" +
 						"<div class='admin-company-field' style='min-width: 280px; flex: 1;'></div>" +
 						"<button class='btn btn-primary btn-generate-link' style='margin-bottom: 15px;'>" + __("Générer le lien") + "</button>" +
@@ -328,6 +328,27 @@ frappe.pages["erp-abonnement"].on_page_load = function (wrapper) {
 				label: __("Société (PME)"),
 				get_query: function () {
 					return { filters: { name: ["!=", "SITIAME"] } };
+				},
+				change: function () {
+					var company = this.get_value();
+					if (!company) {
+						$("#admin-prix-par-offre").text("—");
+						return;
+					}
+					frappe.call({
+						method: "sitiame_core.subscription_api.get_company_subscription_for",
+						args: { company: company },
+					}).then(function (r) {
+						var sub = r.message || {};
+						var _IDX = { "Essentiel": 0, "Pilotage": 1, "Transformation": 2 };
+						var tarifs = _TARIF_JS[sub.regime] || _TARIF_JS["TEE"];
+						var idx = _IDX[sub.offer] !== undefined ? _IDX[sub.offer] : 0;
+						var prix = tarifs[idx];
+						var priceStr = prix
+							? format_number(prix, null, 0) + " FCFA — " + (sub.offer || "Essentiel") + " / " + (sub.regime || "TEE")
+							: __("Sur devis (Transformation)");
+						$("#admin-prix-par-offre").text(priceStr);
+					});
 				},
 			},
 			render_input: true,
