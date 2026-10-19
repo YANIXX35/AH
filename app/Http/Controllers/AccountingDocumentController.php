@@ -8,6 +8,8 @@ use App\Jobs\SyncAccountingDocumentToErpNext;
 use App\Models\AccountingDocument;
 use App\Models\AccountingEntry;
 use App\Models\TreasuryTransaction;
+use App\Models\User;
+use App\Services\SecteurComptableService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -96,16 +98,13 @@ class AccountingDocumentController extends Controller
         $type = $document->document_type;
         $amount = (float) ($data['amount_ttc'] ?? 0);
 
-        $accountMap = [
-            'Achat' => ['debit' => '607 Achats de marchandises', 'credit' => '401 Fournisseurs'],
-            'Vente' => ['debit' => '411 Clients', 'credit' => '701 Ventes de marchandises'],
-            'Reçu' => ['debit' => '512 Banque', 'credit' => '411 Clients'],
-            'Justificatif' => ['debit' => '627 Services bancaires', 'credit' => '512 Banque'],
-        ];
+        $secteurService = new SecteurComptableService;
+        $sector = trim((string) (User::find($this->workspaceUserId())->sector ?? ''));
+        $fallback = $secteurService->resolve($sector, $type);
 
         $accounts = [
-            'debit' => $data['debit_account'] ?? $accountMap[$type]['debit'] ?? '471 Compte transitoire',
-            'credit' => $data['credit_account'] ?? $accountMap[$type]['credit'] ?? "472 Compte d'attente",
+            'debit' => $data['debit_account'] ?? $fallback['debit'],
+            'credit' => $data['credit_account'] ?? $fallback['credit'],
         ];
         $paymentState = AccountingEntry::defaultPaymentState($accounts['debit'], $accounts['credit'], $amount);
 
