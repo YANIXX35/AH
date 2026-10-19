@@ -18,6 +18,7 @@ use App\Services\AdminAuditTrailService;
 use App\Services\BceaoLiasseService;
 use App\Services\OcrPipelineService;
 use App\Services\OcrService;
+use App\Services\SecteurComptableService;
 use App\Services\TreasuryAudit;
 use App\Support\OcrStatus;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -161,30 +162,35 @@ class AccountingController extends Controller
     }
 
     /**
-     * Détermine automatiquement les comptes débit/crédit selon le type de document
-     * (utilisé uniquement par les flux automatiques sans saisie manuelle, ex: OCR).
-     */
-    /**
-     * Comptes débit/crédit par défaut associés à chaque type de document, au
-     * référentiel SYSCOHADA actuellement en place (post-remplacement du plan
-     * comptable). Utilisé à la fois pour les flux automatiques (OCR) et pour
-     * pré-remplir la saisie manuelle dès que l'utilisateur choisit un type,
-     * afin d'éviter d'avoir à rechercher le compte à la main à chaque fois.
+     * Comptes débit/crédit par type de document, adaptés au secteur d'activité
+     * de la PME connectée (via SecteurComptableService).
+     * Utilisé pour pré-remplir la saisie manuelle et pour les flux OCR automatiques.
      */
     private function documentTypeAccountMap(): array
     {
-        return [
-            'Achat' => ['debit' => '601 Achats de marchandises', 'credit' => '401 Fournisseurs, dettes en compte'],
-            'Vente' => ['debit' => '411 Clients', 'credit' => '701 Ventes de marchandises'],
-            'Reçu' => ['debit' => '521 Banques locales', 'credit' => '411 Clients'],
-            'Justificatif' => ['debit' => '631 Frais bancaires', 'credit' => '521 Banques locales'],
-        ];
+        $service = new SecteurComptableService;
+        return $service->fullMapForSector($this->workspaceSector());
     }
 
-    private function resolveAccountsForDocumentType(string $documentType): array
+    /**
+     * Résout les comptes débit/crédit pour un type de document donné.
+     * Utilise le secteur d'activité de la PME et, si disponible, le texte OCR
+     * pour affiner le compte d'achat (ex: BTP → matériaux vs sous-traitance).
+     */
+    private function resolveAccountsForDocumentType(string $documentType, string $ocrText = ''): array
     {
-        return $this->documentTypeAccountMap()[$documentType]
-            ?? ['debit' => '471 Débiteurs et créditeurs divers', 'credit' => '472 Créances et dettes sur titres de placement'];
+        $service = new SecteurComptableService;
+        return $service->resolve($this->workspaceSector(), $documentType, $ocrText);
+    }
+
+    /**
+     * Retourne le secteur d'activité de l'utilisateur workspace courant.
+     * Retourne une chaîne vide si non renseigné (SecteurComptableService utilisera le fallback).
+     */
+    private function workspaceSector(): string
+    {
+        $user = User::find($this->workspaceUserId());
+        return trim((string) ($user->sector ?? ''));
     }
 
     public function editEntry(AccountingEntry $entry)
@@ -783,7 +789,7 @@ class AccountingController extends Controller
 
         $documentType = $this->detectDocumentTypeFromOcrText($ocrText, $entry->document_type ?: 'Justificatif');
         $normalized = $this->buildValidationExtractedData($ocrText, $extracted, $richExtracted, $documentType);
-        $correctedPayload = $this->buildAutoCorrectedEntryPayload($entry, $normalized, $documentType);
+        $correctedPayload = $this->buildAutoCorrectedEntryPayload($entry, $normalized, $documentType, $ocrText);
         $verificationPayload = $this->buildAutoCorrectionVerificationPayload($correctedPayload, $normalized);
         $verifyResult = $ocrService->verifyCompleteDocument($ocrText, $verificationPayload);
         $ocrAnalysis = $this->buildEntryOcrDataFromVerification($verifyResult, $ocrText);
@@ -831,7 +837,7 @@ class AccountingController extends Controller
         $richExtracted = $ocrService->extractRichDocumentData($ocrText);
         $documentType = $this->detectDocumentTypeFromOcrText($ocrText, $entry->document_type ?: 'Justificatif');
         $normalized = $this->buildValidationExtractedData($ocrText, $extracted, $richExtracted, $documentType);
-        $correctedPayload = $this->buildAutoCorrectedEntryPayload($entry, $normalized, $documentType);
+        $correctedPayload = $this->buildAutoCorrectedEntryPayload($entry, $normalized, $documentType, $ocrText);
         $verificationPayload = $this->buildAutoCorrectionVerificationPayload($correctedPayload, $normalized);
 
         $changes = $this->buildAutoCorrectionChanges($entry, $correctedPayload);
@@ -1761,9 +1767,9 @@ class AccountingController extends Controller
         ];
     }
 
-    private function buildAutoCorrectedEntryPayload(AccountingEntry $entry, array $normalized, string $documentType): array
+    private function buildAutoCorrectedEntryPayload(AccountingEntry $entry, array $normalized, string $documentType, string $ocrText = ''): array
     {
-        $accounts = $this->resolveAccountsForDocumentType($documentType);
+        $accounts = $this->resolveAccountsForDocumentType($documentType, $ocrText);
         $partner = trim((string) ($normalized['partner'] ?? ''));
         $reference = trim((string) ($normalized['invoice_number'] ?? ''));
         $amountHt = $this->toFloatOrNull($normalized['amount_ht'] ?? null) ?? 0.0;
@@ -2750,7 +2756,7 @@ class AccountingController extends Controller
                 $richExtracted = $ocrService->extractRichDocumentData($ocrResult['text']);
             }
             $documentType = $this->detectDocumentTypeFromOcrText($ocrResult['text'], $documentType);
-            $accounts = $this->resolveAccountsForDocumentType($documentType);
+            $accounts = $this->resolveAccountsForDocumentType($documentType, $ocrResult['text']);
             $normalizedExtracted = $this->buildValidationExtractedData($ocrResult['text'], $extracted, $richExtracted, $documentType);
 
             $extractedData = [
