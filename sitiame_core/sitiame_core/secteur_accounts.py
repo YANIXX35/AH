@@ -26,12 +26,16 @@ import frappe
 # Chaque secteur du formulaire est mappé vers une clé courte.
 # ---------------------------------------------------------------------------
 _SECTOR_ALIASES = {
-    "commerce":         "commerce",
-    "retail":           "commerce",
-    "technologies":     "it",
-    "it":               "it",
-    "informatique":     "it",
-    "numerique":        "it",
+    # Valeurs exactes issues de Company Signup (production 2026-10-20)
+    "commerce & retail":    "commerce",
+    "technologies & it":    "it",
+    # Valeurs normalisées courtes
+    "commerce":             "commerce",
+    "retail":               "commerce",
+    "technologies":         "it",
+    "it":                   "it",
+    "informatique":         "it",
+    "numerique":            "it",
     "services":         "services",
     "conseil":          "services",
     "industrie":        "industrie",
