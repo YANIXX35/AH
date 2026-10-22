@@ -16,7 +16,6 @@ le passé mais reste dans un exercice ouvert (saisie tardive probable).
 
 import frappe
 from frappe import _
-from frappe.utils import date_diff, today
 
 
 def _get_fiscal_year_safe(posting_date, company):
@@ -24,6 +23,22 @@ def _get_fiscal_year_safe(posting_date, company):
     try:
         from frappe.utils.data import get_fiscal_year
         return get_fiscal_year(posting_date, company=company, as_dict=True)
+    except Exception:
+        return None
+
+
+def _get_user_active_fiscal_year():
+    """Retourne l'exercice fiscal actif sélectionné par l'utilisateur, ou None."""
+    try:
+        fy_name = frappe.db.get_default("sitiame_active_fy", parent=frappe.session.user)
+        if not fy_name:
+            return None
+        return frappe.db.get_value(
+            "Fiscal Year",
+            fy_name,
+            ["name", "year_start_date", "year_end_date"],
+            as_dict=True,
+        )
     except Exception:
         return None
 
@@ -41,14 +56,15 @@ def _is_period_closed(company, posting_date):
 
 
 def validate_posting_date_in_open_period(doc, method=None):
-    """before_submit : vérifie que la posting_date est dans un exercice ouvert."""
+    """before_submit : vérifie que la posting_date est dans l'exercice actif de l'utilisateur
+    et que cet exercice n'est pas clôturé."""
     posting_date = str(doc.posting_date or "")
     company = doc.company
 
     if not posting_date or not company:
         return
 
-    # 1. L'exercice fiscal existe-t-il ?
+    # 1. L'exercice fiscal existe-t-il pour cette date ?
     fy = _get_fiscal_year_safe(posting_date, company)
     if not fy:
         frappe.throw(
@@ -73,15 +89,18 @@ def validate_posting_date_in_open_period(doc, method=None):
             title=_("Période clôturée"),
         )
 
-    # 3. Avertissement si date > 60 jours dans le passé (saisie tardive probable)
-    days_back = date_diff(today(), posting_date)
-    if days_back > 60:
-        frappe.msgprint(
-            _(
-                "Attention : la date de ce document ({0}) remonte à {1} jours.<br>"
-                "Vérifiez qu'il s'agit bien d'une écriture de l'exercice {2} "
-                "et non d'une saisie dans le mauvais exercice."
-            ).format(posting_date, days_back, fy.get("year", "")),
-            title=_("Date ancienne détectée"),
-            indicator="orange",
-        )
+    # 3. La date est-elle dans l'exercice actif sélectionné par l'utilisateur ?
+    active_fy = _get_user_active_fiscal_year()
+    if active_fy:
+        start = str(active_fy.year_start_date)
+        end = str(active_fy.year_end_date)
+        if not (start <= posting_date <= end):
+            frappe.throw(
+                _(
+                    "Impossible de soumettre : la date {0} n'appartient pas à l'exercice "
+                    "actif <b>{1}</b> ({2} → {3}).<br>"
+                    "Changez l'exercice actif via le sélecteur <b>Exercice</b> en haut "
+                    "de la plateforme, ou corrigez la date du document."
+                ).format(posting_date, active_fy.name, start, end),
+                title=_("Date hors exercice actif"),
+            )
