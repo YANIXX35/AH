@@ -255,13 +255,35 @@ def keyword_account(company, label, is_purchase=True):
 	return _active_leaf(company, account_number=number) if number else None
 
 
-def remembered_account(is_purchase, party, company):
+def remembered_account(is_purchase, party, company, posting_date=None):
 	"""Account of the first line of this party's last submitted invoice in
-	this company: the accountant already validated it for this party."""
+	this company AND in the same fiscal year as posting_date.
+
+	posting_date limits the search to the active fiscal year so that an
+	account validated in a previous exercise is never carried over to the
+	current one (multi-exercise bug 2026-10-20).
+	"""
 	doctype = "Purchase Invoice" if is_purchase else "Sales Invoice"
+
+	filters = {
+		("supplier" if is_purchase else "customer"): party,
+		"company": company,
+		"docstatus": 1,
+	}
+
+	# Restrict to the fiscal year of posting_date when provided
+	if posting_date:
+		try:
+			from frappe.utils.data import get_fiscal_year
+			fy = get_fiscal_year(posting_date, company=company, as_dict=True)
+			filters["posting_date"] = ["between", [fy.year_start_date, fy.year_end_date]]
+		except Exception:
+			# Fiscal year not found for this date: no remembered account across years
+			return None
+
 	last = frappe.get_all(
 		doctype,
-		filters={("supplier" if is_purchase else "customer"): party, "company": company, "docstatus": 1},
+		filters=filters,
 		pluck="name",
 		order_by="posting_date desc, creation desc",
 		limit=1,

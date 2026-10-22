@@ -111,22 +111,39 @@ from sitiame_core.shared_masters import SHARED_MASTERS as _SHARED_MASTERS
 has_permission.update({doctype: "sitiame_core.shared_masters.has_permission" for doctype in _SHARED_MASTERS})
 
 doc_events = {
+	# Scan antivirus ClamAV sur chaque fichier uploadé (clamav_scanner.py)
+	"File": {
+		"after_insert": "sitiame_core.clamav_scanner.scan_uploaded_file",
+	},
 	# Email entrant avec pièce jointe → Incoming Document (pipeline.py)
 	"Communication": {
 		"after_insert": "sitiame_core.incoming_document_pipeline.create_from_email"
 	},
-	# Lettrage immédiat dès la soumission d'un paiement (auto_reconcile.py)
-	"Payment Entry": {"on_submit": "sitiame_core.auto_reconcile.on_payment_submit"},
 	# An invoice marked paid gets its Payment Entry at validation (pay_on_submit.py)
 	"Purchase Invoice": {
-		# Corrige l'imputation 4081→6011 quand update_stock=0 (account_guard.py)
-		"before_submit": "sitiame_core.account_guard.validate_purchase_expense_account",
+		"before_submit": [
+			# Vérifie que la posting_date est dans un exercice ouvert (fiscal_guard.py)
+			"sitiame_core.fiscal_guard.validate_posting_date_in_open_period",
+			# Corrige l'imputation 4081→6011 quand update_stock=0 (account_guard.py)
+			"sitiame_core.account_guard.validate_purchase_expense_account",
+		],
 		"on_submit": "sitiame_core.pay_on_submit.create_payment",
 	},
 	"Sales Invoice": {
-		# Assign FNE number (Facture Normalisée Électronique — DGI CI obligation)
-		"before_submit": "sitiame_core.fne.assign_fne_number",
+		"before_submit": [
+			# Vérifie que la posting_date est dans un exercice ouvert (fiscal_guard.py)
+			"sitiame_core.fiscal_guard.validate_posting_date_in_open_period",
+			# Assign FNE number (Facture Normalisée Électronique — DGI CI obligation)
+			"sitiame_core.fne.assign_fne_number",
+		],
 		"on_submit": "sitiame_core.pay_on_submit.create_payment",
+	},
+	"Journal Entry": {
+		"before_submit": "sitiame_core.fiscal_guard.validate_posting_date_in_open_period",
+	},
+	"Payment Entry": {
+		"before_submit": "sitiame_core.fiscal_guard.validate_posting_date_in_open_period",
+		"on_submit": "sitiame_core.auto_reconcile.on_payment_submit",
 	},
 	# a chargé d'affaires proposes, a validator decides (portfolio.py)
 	"Credit Scoring Dossier": {"validate": "sitiame_core.portfolio.check_decision"},
