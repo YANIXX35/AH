@@ -1177,9 +1177,12 @@ def _societes_de_larticle(code):
     soc = set(frappe.get_all("Item Default",
                              filters={"parent": code, "parenttype": "Item"},
                              pluck="company"))
-    soc |= set(frappe.get_all("Purchase Invoice Item",
-                              filters={"item_code": code, "docstatus": 1},
-                              pluck="company"))
+    rows = frappe.db.sql(
+        """SELECT pi.company FROM `tabPurchase Invoice Item` pii
+           INNER JOIN `tabPurchase Invoice` pi ON pi.name = pii.parent
+           WHERE pii.item_code = %s AND pi.docstatus = 1""",
+        code, as_list=True)
+    soc |= {r[0] for r in rows if r[0]}
     return {s for s in soc if s}
 
 
