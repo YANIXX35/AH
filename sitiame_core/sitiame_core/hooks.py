@@ -204,6 +204,10 @@ scheduler_events = {
 		"sitiame_core.tasks.block_expired_trials",
 		# lettre automatiquement paiements ↔ factures chaque nuit (auto_reconcile.py)
 		"sitiame_core.auto_reconcile.run_daily",
+		# alertes factures clients impayées > 30j (tasks.py)
+		"sitiame_core.tasks.alerter_factures_echues",
+		# alertes articles sous seuil de réapprovisionnement (tasks.py)
+		"sitiame_core.tasks.alerter_stock_bas",
 	],
 	"hourly": [
 		# referme automatiquement les dérogations de période expirées (mise_en_oeuvre_exercices.py)
